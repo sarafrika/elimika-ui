@@ -3,13 +3,11 @@
 
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useAssignmentsByIds, useCoursesByIds } from '@/hooks/use-batched-lookups';
+import { useClassAssessmentSchedules } from '@/hooks/use-class-assessment-schedules';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { useStudentCourseOverview } from '@/hooks/use-student-course-overview';
 import {
-  getAssignmentByUuidOptions,
-  getAssignmentSchedulesOptions,
-  getAssignmentSubmissionsOptions,
   getEnrollmentOverviewForStudentOptions,
   getInstructorByUuidOptions,
   getScheduledInstanceEnrollmentsForStudentOptions,
@@ -27,6 +25,7 @@ import type {
 } from '@/services/client/types.gen';
 import { dayjs, localDate } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
+import { useStudentSubmissionsByEnrollments } from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 export type LearningHubStat = {
@@ -374,27 +373,19 @@ export function useStudentLearningHubData(): LearningHubData {
     staleTime: 5 * 60 * 1000,
   });
 
-  const assignmentScheduleQueries = useQueries({
-    queries: classDefinitions.map(item => ({
-      ...getAssignmentSchedulesOptions({ path: { classUuid: item.uuid } }),
-      enabled: Boolean(item.uuid),
-    })),
-  });
-
-  const assignmentSchedules = useMemo(
-    () =>
-      assignmentScheduleQueries.flatMap((query, index) => {
-        const classInfo = classDefinitions[index];
-
-        if (!classInfo) return [];
-
-        return (query.data?.data ?? []).map(schedule => ({
-          schedule,
-          classInfo,
-        }));
-      }),
-    [assignmentScheduleQueries, classDefinitions]
+  const assessmentClassUuids = useMemo(
+    () => classDefinitions.map(item => item.uuid),
+    [classDefinitions]
   );
+  const schedulesQuery = useClassAssessmentSchedules(assessmentClassUuids);
+
+  const assignmentSchedules = useMemo(() => {
+    const classByUuid = new Map(classDefinitions.map(item => [item.uuid, item]));
+    return schedulesQuery.assignmentSchedules.flatMap(schedule => {
+      const classInfo = classByUuid.get(schedule.class_definition_uuid ?? '');
+      return classInfo ? [{ schedule, classInfo }] : [];
+    });
+  }, [classDefinitions, schedulesQuery.assignmentSchedules]);
 
   const assignmentIds = useMemo(
     () =>
@@ -408,49 +399,23 @@ export function useStudentLearningHubData(): LearningHubData {
     [assignmentSchedules]
   );
 
-  const assignmentQueries = useQueries({
-    queries: assignmentIds.map(uuid => ({
-      ...getAssignmentByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-    })),
-  });
+  const { assignmentMap, isLoading: assignmentsLoading } = useAssignmentsByIds(assignmentIds);
+  const assignmentsMap = useMemo(
+    () => new Map<string, Assignment>(Object.entries(assignmentMap)),
+    [assignmentMap]
+  );
 
-  const assignmentSubmissionsQueries = useQueries({
-    queries: assignmentIds.map(uuid => ({
-      ...getAssignmentSubmissionsOptions({ path: { assignmentUuid: uuid } }),
-      enabled: Boolean(uuid),
-    })),
-  });
-
-  const assignmentsMap = useMemo(() => {
-    const map = new Map<string, Assignment>();
-
-    assignmentQueries.forEach((query, index) => {
-      const assignment = query.data?.data;
-      const uuid = assignmentIds[index];
-
-      if (uuid && assignment) {
-        map.set(uuid, assignment);
-      }
-    });
-
-    return map;
-  }, [assignmentIds, assignmentQueries]);
-
-  const submissionsMap = useMemo(() => {
-    const map = new Map<string, AssignmentSubmission[]>();
-
-    assignmentSubmissionsQueries.forEach((query, index) => {
-      const uuid = assignmentIds[index];
-      const submissions = query.data?.data ?? [];
-
-      if (uuid) {
-        map.set(uuid, submissions);
-      }
-    });
-
-    return map;
-  }, [assignmentIds, assignmentSubmissionsQueries]);
+  const submissionEnrollmentUuids = useMemo(
+    () =>
+      classDefinitions.flatMap(classInfo =>
+        classInfo.classEnrollments
+          .map(enrollment => enrollment.enrollment_uuid)
+          .filter((value): value is string => Boolean(value))
+      ),
+    [classDefinitions]
+  );
+  const { submissionMap: submissionsMap, isLoading: submissionsLoading } =
+    useStudentSubmissionsByEnrollments(submissionEnrollmentUuids);
 
   const certificates = studentCertificatesResponse?.data ?? [];
   const scheduledInstanceEnrollments =
@@ -1058,8 +1023,8 @@ export function useStudentLearningHubData(): LearningHubData {
       certificatesLoading ||
       enrollmentOverviewLoading ||
       instructorQueries.some(query => query.isLoading) ||
-      assignmentScheduleQueries.some(query => query.isLoading) ||
-      assignmentQueries.some(query => query.isLoading) ||
-      assignmentSubmissionsQueries.some(query => query.isLoading),
+      schedulesQuery.isLoading ||
+      assignmentsLoading ||
+      submissionsLoading,
   };
 }

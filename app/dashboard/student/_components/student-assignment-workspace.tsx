@@ -198,7 +198,7 @@ function StudentAssignmentCard({
         {/* Meta grid */}
         <div className='divide-border/60 border-border/60 bg-background/60 grid grid-cols-3 divide-x rounded-xl border'>
           {stat('Points', row.assignment?.points_display || row.assignment?.max_points || '—')}
-          {stat('Resources', row.attachments.length)}
+          {stat('Resources', row.attachments.length || '—')}
           {stat(
             'Score',
             percentage == null ? 'Pending' : `${Math.round(percentage)}%`,
