@@ -111,13 +111,7 @@ export default function ClassEnrollmentPage({
   const [accountId, setAccountId] = useState<string | null>(null);
 
   // ── Data fetching ──────────────────────────────────────────────────────
-  const { classes = [], loading } = useBundledClassInfo(
-    courseId,
-    undefined,
-    undefined,
-    student,
-    classId
-  );
+  const { classes = [], loading } = useBundledClassInfo(courseId, student, classId);
   const { difficultyMap } = useDifficultyLevels()
 
   // The platform already knows the learner's date of birth and the course's limits, so it decides
