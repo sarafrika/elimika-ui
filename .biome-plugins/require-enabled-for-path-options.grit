@@ -6,7 +6,7 @@ or {
     register_diagnostic(
       span = $call,
       message = "Generated *Options with path params needs a top-level `enabled` gate; an undefined id sends a literal {uuid} placeholder (%7B) to the API.",
-      severity = "warn"
+      severity = "error"
     )
   },
   `useQuery({ $props })` where {
@@ -15,7 +15,7 @@ or {
     register_diagnostic(
       span = $props,
       message = "Generated *Options with path params needs a top-level `enabled` gate; an undefined id sends a literal {uuid} placeholder (%7B) to the API.",
-      severity = "warn"
+      severity = "error"
     )
   }
 }
