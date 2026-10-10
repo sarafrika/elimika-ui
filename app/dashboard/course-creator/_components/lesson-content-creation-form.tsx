@@ -48,7 +48,7 @@ import type {
   LessonContent,
   PagedDtoLesson,
 } from '../../../../services/client/types.gen';
-import { ContentItem } from '../../instructor/trainings/overview/[id]/page';
+import type { ContentItem } from '../../instructor/_components/class-overview/InstructorClassOverviewPage';
 import { PracticeActivityManager } from './practice-activity-management';
 
 type LessonCreationFormProps = {

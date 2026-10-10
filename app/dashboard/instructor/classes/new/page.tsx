@@ -107,12 +107,12 @@ import {
   RecurrenceTypeEnum,
 } from '../../../../../services/client/types.gen';
 import { TOKEN } from '../../../_components/color-charts';
-import {
+import { ClassScheduleEditor, type ClassScheduleEditState } from './_components/ClassScheduleEditor';
+import type {
   ClassDetails,
   NotificationSettings,
   ScheduleSettings,
-} from '../../trainings/create-new/page';
-import { ClassScheduleEditor, type ClassScheduleEditState } from './_components/ClassScheduleEditor';
+} from './_components/class-form-types';
 
 const LOCAL_CLASS_DRAFT_KEY = 'training-class-create-draft:new-class-creation';
 const DAY_NAMES = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY'];

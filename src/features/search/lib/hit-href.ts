@@ -274,7 +274,7 @@ export function seeAllHref(domain: PaletteAudience, type: SearchType, q: string)
     case 'instructor':
       switch (type) {
         case 'courses':
-          return url('learning');
+          return url('courses');
         case 'marketplace_jobs':
           return url('opportunities');
       }
@@ -338,7 +338,7 @@ export function quickLinks(domain: PaletteAudience): { label: string; href: stri
     case 'instructor':
       return [
         home,
-        { label: 'Courses', href: dashboardUrl(domain, 'learning') },
+        { label: 'Courses', href: dashboardUrl(domain, 'courses') },
         { label: 'Find work', href: dashboardUrl(domain, 'opportunities') },
       ];
     case 'parent':
