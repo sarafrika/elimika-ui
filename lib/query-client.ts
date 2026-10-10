@@ -32,7 +32,7 @@ export const APPROVAL_QUERY_FRESHNESS = {
 
 export const CLIENT_QUERY_CACHE_STORAGE_KEY = 'elimika-query-cache-v1';
 export const CLIENT_QUERY_CACHE_MAX_AGE_MS = 1000 * 60 * 30;
-export const CLIENT_QUERY_CACHE_BUSTER = 'elimika-query-cache:2026-10-09';
+export const CLIENT_QUERY_CACHE_BUSTER = 'elimika-query-cache:2026-10-10';
 
 /** One quick retry for a network blip or 5xx, instead of React Query's 1s/2s/4s backoff. */
 export const QUERY_RETRY_DELAY_MS = 500;
