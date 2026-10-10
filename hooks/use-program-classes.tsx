@@ -1,17 +1,15 @@
-import { localDate } from '@/lib/date';
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   getClassDefinitionsForProgramOptions,
-  getClassScheduleOptions,
-  getInstructorByUuidOptions,
   getProgramCoursesOptions,
-  getStudentScheduleOptions,
   getTrainingProgramByUuidOptions,
-  listCatalogItemsOptions,
 } from '../services/client/@tanstack/react-query.gen';
-import type { ClassDefinition, Instructor, StudentSchedule } from '../services/client/types.gen';
+import type { ClassDefinition } from '../services/client/types.gen';
 import type { ProgramBundledClass } from '../src/features/dashboard/courses/types';
+import { toCardInstructor, toCount, useClassListingSummaries } from './use-class-listing-summaries';
+import { useClassSchedule } from './use-class-schedule';
 
 type StudentLike =
   | {
@@ -20,134 +18,99 @@ type StudentLike =
   | null
   | undefined;
 
+// Seat counts, the learner's own enrolments, instructors and catalogue rows come from batched
+// lookups. Listings load no schedules; `onlyClassUuid` (the enrolment page) loads that class's.
 function useProgramBundledClassInfo(
   programUuid?: string,
-  startDate?: string,
-  endDate?: string,
-  student?: StudentLike
+  student?: StudentLike,
+  onlyClassUuid?: string
 ) {
-  const scheduleStart = localDate(startDate ?? '2024-10-10');
-  const scheduleEnd = localDate(endDate ?? '2030-10-10');
+  const studentUuid = student?.uuid ?? undefined;
 
-  // Fetch class definitions
   const { data, isLoading, isError, isFetching } = useQuery({
     ...getClassDefinitionsForProgramOptions({ path: { programUuid: programUuid ?? '' } }),
     enabled: !!programUuid,
   });
-  const classes: ClassDefinition[] =
-    data?.data
-      ?.map(item => item?.class_definition)
-      .filter((item): item is ClassDefinition => item !== undefined) ?? [];
+  const classes: ClassDefinition[] = useMemo(
+    () =>
+      data?.data
+        ?.map(item => item?.class_definition)
+        .filter((item): item is ClassDefinition => item !== undefined) ?? [],
+    [data]
+  );
+  const classUuids = useMemo(
+    () => classes.map(cls => cls.uuid).filter((uuid): uuid is string => !!uuid),
+    [classes]
+  );
 
-  // Fetch program courses
   const { data: pCourses } = useQuery({
-    ...getProgramCoursesOptions({ path: { programUuid: programUuid as string } }),
+    ...getProgramCoursesOptions({ path: { programUuid: programUuid ?? '' } }),
     enabled: !!programUuid,
+    staleTime: STALE_TIMES.entity,
   });
 
   const { data: program } = useQuery({
-    ...getTrainingProgramByUuidOptions({ path: { uuid: programUuid as string } }),
+    ...getTrainingProgramByUuidOptions({ path: { uuid: programUuid ?? '' } }),
     enabled: !!programUuid,
+    staleTime: STALE_TIMES.entity,
   });
 
-  // Extract unique instructor UUIDs to avoid duplicate fetches
-  const uniqueInstructorUuids = useMemo(() => {
-    const uuids = new Set<string>();
-    classes.forEach(cls => {
-      if (cls.default_instructor_uuid) {
-        uuids.add(cls.default_instructor_uuid);
-      }
-    });
-    return Array.from(uuids);
-  }, [classes]);
+  const detailSchedule = useClassSchedule(onlyClassUuid, !!onlyClassUuid);
 
-  // Fetch schedules for each class
-  const scheduleQueries = useQueries({
-    queries: classes.map(cls => ({
-      ...getClassScheduleOptions({
-        path: { uuid: cls.uuid as string },
-        query: { pageable: { size: 1000 } },
+  const {
+    summaryMap,
+    enrolledClassUuids,
+    catalogueMap,
+    isLoading: isSummariesLoading,
+  } = useClassListingSummaries(
+    classUuids,
+    programUuid ? { program_uuid: programUuid } : undefined,
+    studentUuid
+  );
+
+  const programCourses = pCourses?.data ?? null;
+  const programData = program?.data ?? null;
+
+  const bundledClassInfo: ProgramBundledClass[] = useMemo(
+    () =>
+      classes.map(cls => {
+        const isDetail = !!cls.uuid && cls.uuid === onlyClassUuid;
+        const summary = cls.uuid ? summaryMap[cls.uuid] : undefined;
+        return {
+          ...cls,
+          course: cls.program_uuid ? programCourses : null,
+          program: programData,
+          instructor: toCardInstructor(summary, cls.default_instructor_uuid),
+          schedule: isDetail ? detailSchedule.schedule : [],
+          scheduleLoaded: isDetail && detailSchedule.isLoaded,
+          sessionCount: isDetail && detailSchedule.isLoaded ? detailSchedule.sessionCount : null,
+          enrollments: [],
+          catalogue: cls.uuid ? (catalogueMap[cls.uuid] ?? null) : null,
+          enrolledCount: toCount(summary?.enrolled_count),
+          isStudentEnrolled: cls.uuid ? enrolledClassUuids.has(cls.uuid) : false,
+        };
       }),
-      enabled: !!cls.uuid,
-    })),
-  });
-
-  // Fetch unique instructors only
-  const instructorQueries = useQueries({
-    queries: uniqueInstructorUuids.map(uuid => ({
-      ...getInstructorByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-    })),
-  });
-
-  // Fetch catalogue items
-  const { data: catalogueData } = useQuery(listCatalogItemsOptions({}));
-  const catalogueItems = catalogueData?.data ?? [];
-
-  // Build a lookup map for catalogue by class_definition_uuid
-  const catalogueMap = useMemo(
-    () => Object.fromEntries(catalogueItems.map(item => [item.class_definition_uuid, item])),
-    [catalogueItems]
+    [
+      catalogueMap,
+      classes,
+      detailSchedule.isLoaded,
+      detailSchedule.schedule,
+      detailSchedule.sessionCount,
+      enrolledClassUuids,
+      onlyClassUuid,
+      programCourses,
+      programData,
+      summaryMap,
+    ]
   );
 
-  // Fetch student enrollments
-  const { data: enrollmentsData } = useQuery({
-    ...getStudentScheduleOptions({
-      path: { studentUuid: student?.uuid as string },
-      query: { start: scheduleStart, end: scheduleEnd },
-    }),
-    enabled: !!student?.uuid,
-  });
-  const enrollments: StudentSchedule[] = enrollmentsData?.data ?? [];
-
-  const instructorMap = useMemo(() => {
-    const map = new Map<string, Instructor>();
-    uniqueInstructorUuids.forEach((uuid, index) => {
-      const instructorData = instructorQueries[index]?.data;
-      if (instructorData) {
-        map.set(uuid, instructorData);
-      }
-    });
-    return map;
-  }, [uniqueInstructorUuids, instructorQueries]);
-
-  // Get schedules directly (no deduplication needed as each class has unique schedule)
-  const schedules = useMemo(
-    () => scheduleQueries.map(q => q.data?.data?.content ?? []),
-    [scheduleQueries]
-  );
-
-  // Bundle all class information
-  const bundledClassInfo = useMemo(() => {
-    return classes.map((cls, i): ProgramBundledClass => {
-      const classEnrollments = enrollments.filter(en => en.class_definition_uuid === cls.uuid);
-
-      return {
-        ...cls,
-        course: cls.program_uuid ? (pCourses?.data ?? null) : null,
-        program: program?.data ?? null,
-        instructor: cls.default_instructor_uuid
-          ? (instructorMap.get(cls.default_instructor_uuid) ?? null)
-          : null,
-        schedule: schedules[i] ?? [],
-        enrollments: classEnrollments,
-        catalogue: cls.uuid ? (catalogueMap[cls.uuid] ?? null) : null,
-      };
-    });
-  }, [classes, instructorMap, schedules, enrollments, catalogueMap]);
-
-  // Compute combined loading states
-  const isInstructorsLoading = instructorQueries.some(q => q.isLoading || q.isFetching);
-  const isSchedulesLoading = scheduleQueries.some(q => q.isLoading || q.isFetching);
-
-  const loading = isLoading || isFetching || isInstructorsLoading || isSchedulesLoading;
+  const loading = isLoading || isFetching || detailSchedule.isLoading || isSummariesLoading;
 
   return {
     classes: bundledClassInfo,
     loading,
     isError,
-    program: program?.data ?? null,
-    // Additional useful data
+    program: programData,
   };
 }
 
