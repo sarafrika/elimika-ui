@@ -16,7 +16,7 @@ export type DashboardClass = ClassDefinition & {
 
 export type DashboardResolvedStudent = User & {
   studentProfile: Student;
-  enrollmentCount: number;
+  enrollmentCount?: number;
   notes?: string;
 };
 export type EnrolledScheduleItem = StudentSchedule & {

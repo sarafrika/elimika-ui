@@ -1,6 +1,6 @@
 'use client';
 
-import { localDate } from '@/lib/date';
+import { dateWindow } from '@/lib/date';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { FileText, Mail, Phone, Shield, Tag, User, Users, VenusIcon } from 'lucide-react';
 import Link from 'next/link';
@@ -179,10 +179,11 @@ const STATUS_VARIANT: Record<EnrolledCourse['status'], 'default' | 'secondary' |
 };
 
 function StudentCoursesTab({ userUuid, sharedProfile }: DomainTabProps) {
+  const scheduleWindow = useMemo(() => dateWindow({ pastMonths: 24, futureMonths: 12 }), []);
   const { data: scheduleData, isLoading: isLoadingSchedule } = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: sharedProfile?.uuid as string },
-      query: { start: localDate('2000-01-01'), end: localDate('2100-12-31') },
+      query: { start: scheduleWindow.start, end: scheduleWindow.end },
     }),
     enabled: !!sharedProfile?.uuid,
   });

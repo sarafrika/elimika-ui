@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useUserProfile } from '@/context/profile-context';
-import { localDate, resolveDisplayZone } from '@/lib/date';
+import { dateWindow, resolveDisplayZone } from '@/lib/date';
 import { jobTimeKind, jobTimeTitle } from '@/lib/instructor-job-time';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorCalendarEntry } from '@/services/client/types.gen';
@@ -14,14 +14,8 @@ const Page = () => {
   const user = useUserProfile();
   const displayZone = useMemo(() => resolveDisplayZone(), []);
   const calendarRange = useMemo(() => {
-    const start = new Date();
-    start.setFullYear(start.getFullYear() - 2);
-    const end = new Date();
-    end.setFullYear(end.getFullYear() + 2);
-    return {
-      start_date: localDate(start),
-      end_date: localDate(end),
-    };
+    const { start, end } = dateWindow({ pastMonths: 3, futureMonths: 9 });
+    return { start_date: start, end_date: end };
   }, []);
 
   const { data: availabilitySlotsResponse } = useQuery({

@@ -1,4 +1,4 @@
-import { localDate } from '@/lib/date';
+import { dateWindow } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
@@ -66,14 +66,8 @@ function useAmdinClassesWithDetails() {
   const { instructorMap, isLoading: isInstructorsLoading } =
     useInstructorsByIds(uniqueInstructorUuids);
 
-  const scheduleRange = useMemo(() => {
-    const now = new Date();
-    const start = new Date(now);
-    start.setFullYear(start.getFullYear() - 2);
-    const end = new Date(now);
-    end.setFullYear(end.getFullYear() + 2);
-    return { start: localDate(start), end: localDate(end) };
-  }, []);
+  // One request per instructor, so keep each window to the months a calendar shows.
+  const scheduleRange = useMemo(() => dateWindow({ pastMonths: 6, futureMonths: 6 }), []);
 
   const instructorScheduleQueries = useQueries({
     queries: uniqueInstructorUuids.map(instructorUuid => ({

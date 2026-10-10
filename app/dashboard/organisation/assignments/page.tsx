@@ -28,12 +28,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractPage } from '@/lib/api-helpers';
+import { useAssignmentsByClassIds } from '@/hooks/use-batched-lookups';
 import type { Assignment, ClassDefinition } from '@/services/client';
-import {
-  getAllAssignmentsOptions,
-  getClassDefinitionsForOrganisationOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { getClassDefinitionsForOrganisationOptions } from '@/services/client/@tanstack/react-query.gen';
 import { surfaceTheme } from '@/components/data-display';
 
 type Status = 'Draft' | 'Published' | 'Due soon' | 'Closed';
@@ -71,18 +68,16 @@ export default function AssignmentsPage() {
     return map;
   }, [classesQuery.data]);
 
-  const assignmentsQuery = useQuery({
-    ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 200 } } }),
-    enabled: classTitleByUuid.size > 0,
-  });
+  const classUuids = useMemo(() => [...classTitleByUuid.keys()], [classTitleByUuid]);
+  const assignmentsQuery = useAssignmentsByClassIds(classUuids);
 
-  // Org-scoped: only assignments attached to one of this org's class definitions.
+  // Org-scoped: the search is filtered server-side to this org's class definitions.
   const orgAssignments = useMemo(
     () =>
-      extractPage<Assignment>(assignmentsQuery.data).items.filter(
+      assignmentsQuery.items.filter(
         a => a.class_definition_uuid && classTitleByUuid.has(a.class_definition_uuid)
       ),
-    [assignmentsQuery.data, classTitleByUuid]
+    [assignmentsQuery.items, classTitleByUuid]
   );
 
   const [query, setQuery] = useState('');
