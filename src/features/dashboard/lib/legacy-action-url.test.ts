@@ -49,3 +49,14 @@ test('current, external and unscoped urls pass through', () => {
     '/dashboard/organisation/courses?x=1'
   );
 });
+
+test('live role-less dashboard routes are left alone', () => {
+  const preview = '/dashboard/course-management/preview/c1?tab=applications';
+  assert.equal(normalizeLegacyActionUrl(preview, 'instructor'), preview);
+  assert.equal(normalizeLegacyActionUrl(preview, 'organisation'), preview);
+  assert.equal(
+    normalizeLegacyActionUrl('/dashboard/apply-to-train/x', 'admin'),
+    '/dashboard/apply-to-train/x'
+  );
+  assert.equal(normalizeLegacyActionUrl('/dashboard/cart', 'student'), '/dashboard/cart');
+});

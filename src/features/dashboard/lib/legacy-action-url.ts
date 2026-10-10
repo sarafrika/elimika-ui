@@ -14,6 +14,15 @@ const USER_DOMAINS = new Set<string>([
 const isUserDomain = (value: string | null | undefined): value is UserDomain =>
   !!value && USER_DOMAINS.has(value);
 
+// Live dashboard routes that carry no role segment; rewriting them would 404.
+const ROLE_LESS_HEADS = new Set([
+  'course-management',
+  'apply-to-train',
+  'cart',
+  'add-profile',
+  'switch',
+]);
+
 const orgDomain = (domain: UserDomain) =>
   domain === 'organisation' || domain === 'organisation_user';
 
@@ -67,6 +76,7 @@ export function normalizeLegacyActionUrl(
   const [path = ''] = raw.split(/[?#]/);
   const parts = path.split('/').filter(Boolean).slice(1);
   const [head, a, b, c] = parts;
+  if (head && ROLE_LESS_HEADS.has(head)) return raw;
 
   if (head === 'classes' && a === 'schedule' && b) return classInstance(domain, b);
   if (head === 'classes' && a && b === 'assignments' && c) {
