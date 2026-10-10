@@ -1,10 +1,11 @@
 'use client';
 
 import { Calendar, Info } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { JobTimeLegend } from '@/components/instructor/job-time';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { CalendarRangeView } from '@/lib/calendar-range';
 import { DailyAvailabilityGrid } from '../../availability/components/daily-availability-grid';
 import { MonthlyAvailabilityGrid } from '../../availability/components/monthly-availability-grid';
 import type { AvailabilityData } from '../../availability/components/types';
@@ -13,6 +14,8 @@ import { WeeklyAvailabilityGrid } from '../../availability/components/weekly-ava
 interface AvailabilityManagerProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
+  /** Told which date and view are on screen so the page fetches only that window. */
+  onVisibleRangeChange?: (focus: Date, view: CalendarRangeView) => void;
 }
 
 const LEGEND_ITEMS = [
@@ -34,11 +37,24 @@ const LEGEND_ITEMS = [
   },
 ];
 
+const TAB_RANGE_VIEWS: Record<string, CalendarRangeView> = {
+  daily: 'day',
+  weekly: 'week',
+  monthly: 'month',
+  yearly: 'year',
+};
+
 export default function TimetableManager({
   availabilityData,
   onAvailabilityUpdate,
+  onVisibleRangeChange,
 }: AvailabilityManagerProps) {
   const [currentTab, setCurrentTab] = useState('weekly');
+  const [visibleDate, setVisibleDate] = useState(() => new Date());
+
+  useEffect(() => {
+    onVisibleRangeChange?.(visibleDate, TAB_RANGE_VIEWS[currentTab] ?? 'week');
+  }, [currentTab, onVisibleRangeChange, visibleDate]);
   const [isEditing, _setIsEditing] = useState(false);
 
   return (
@@ -88,6 +104,7 @@ export default function TimetableManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
+                onVisibleDateChange={setVisibleDate}
               />
             </TabsContent>
 
@@ -96,6 +113,7 @@ export default function TimetableManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
+                onVisibleDateChange={setVisibleDate}
               />
             </TabsContent>
 
@@ -104,6 +122,7 @@ export default function TimetableManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
+                onVisibleDateChange={setVisibleDate}
               />
             </TabsContent>
           </Tabs>

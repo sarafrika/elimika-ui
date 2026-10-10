@@ -1,19 +1,21 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { Calendar, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { dayjs } from '@/lib/date';
-import { Calendar, ChevronLeft, ChevronRight, TrendingUp } from 'lucide-react';
-import { useMemo, useState } from 'react';
 import type { AvailabilityData, AvailabilitySlot } from './types';
 
 interface YearlyAvailabilityGridProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
   isEditing: boolean;
+  /** Reports the date on screen so the page can fetch just that window. */
+  onVisibleDateChange?: (date: Date) => void;
 }
 
 const statusColorMap = {
@@ -53,8 +55,13 @@ export function YearlyAvailabilityGrid({
   availabilityData,
   onAvailabilityUpdate,
   isEditing,
+  onVisibleDateChange,
 }: YearlyAvailabilityGridProps) {
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
+
+  useEffect(() => {
+    onVisibleDateChange?.(new Date(currentYear, 0, 1));
+  }, [currentYear, onVisibleDateChange]);
 
   const yearData = useMemo(() => {
     const months = [];

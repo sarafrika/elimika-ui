@@ -1,7 +1,7 @@
 'use client';
 
 import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +13,8 @@ interface MonthlyAvailabilityGridProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
   isEditing: boolean;
+  /** Reports the date on screen so the page can fetch just that window. */
+  onVisibleDateChange?: (date: Date) => void;
 }
 
 const eventColorMap: Record<
@@ -55,8 +57,13 @@ export function MonthlyAvailabilityGrid({
   availabilityData,
   onAvailabilityUpdate: _onAvailabilityUpdate,
   isEditing: _isEditing,
+  onVisibleDateChange,
 }: MonthlyAvailabilityGridProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  useEffect(() => {
+    onVisibleDateChange?.(currentMonth);
+  }, [currentMonth, onVisibleDateChange]);
   const [_isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [_selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [_selectedSlot, setSelectedSlot] = useState<{

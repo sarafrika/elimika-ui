@@ -1,8 +1,9 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useUserProfile } from '@/context/profile-context';
+import { useCalendarFetchRange } from '@/lib/calendar-range';
 import { localDate, resolveDisplayZone } from '@/lib/date';
 import { jobTimeKind, jobTimeTitle } from '@/lib/instructor-job-time';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -13,16 +14,11 @@ import { type AvailabilityData, type CalendarEvent, toCalendarInstants } from '.
 const Page = () => {
   const user = useUserProfile();
   const displayZone = useMemo(() => resolveDisplayZone(), []);
-  const calendarRange = useMemo(() => {
-    const start = new Date();
-    start.setFullYear(start.getFullYear() - 2);
-    const end = new Date();
-    end.setFullYear(end.getFullYear() + 2);
-    return {
-      start_date: localDate(start),
-      end_date: localDate(end),
-    };
-  }, []);
+  const [visibleRange, setVisibleRange] = useCalendarFetchRange();
+  const calendarRange = useMemo(
+    () => ({ start_date: localDate(visibleRange.start), end_date: localDate(visibleRange.end) }),
+    [visibleRange.end, visibleRange.start]
+  );
 
   const { data: availabilitySlotsResponse } = useQuery({
     ...getInstructorCalendarOptions({
@@ -30,6 +26,7 @@ const Page = () => {
       query: calendarRange,
     }),
     enabled: !!user?.instructor?.uuid,
+    placeholderData: keepPreviousData,
   });
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>(() => ({
@@ -80,6 +77,7 @@ const Page = () => {
     <AvailabilityManager
       availabilityData={availabilityData}
       onAvailabilityUpdate={setAvailabilityData}
+      onVisibleRangeChange={setVisibleRange}
     />
   );
 };
