@@ -42,6 +42,7 @@ export type ClassScheduleInput = {
   location_name?: string | null;
   location_type?: string | null;
   max_participants?: number | null;
+  enrolled_count?: number | bigint | null;
   status?: string | null;
   organisation_uuid?: string | null;
   organisation_name?: string | null;
@@ -349,6 +350,8 @@ export const mapClassSchedule = (
         status: formatStatus(schedule.status),
         category: inferCategory(courseName || title),
         students: (classDef.uuid ? studentInitialsByClass?.get(classDef.uuid) : undefined) ?? [],
+        enrolledCount:
+          schedule.enrolled_count == null ? undefined : Number(schedule.enrolled_count),
         maxParticipants: schedule.max_participants || classDef.max_participants || undefined,
       } satisfies SchedulerEvent;
     });

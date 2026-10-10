@@ -56,7 +56,7 @@ type Props = {
   profile: SchedulerProfile;
   data: SchedulerCalendarData;
   /** Told which date and view are on screen so the page can fetch only that window. */
-  onVisibleRangeChange?: (focus: Date, view: SchedulerView) => void;
+  onVisibleRangeChange?: (focus: Date, view: SchedulerView, zone?: string) => void;
 };
 
 type FilterSelection =
@@ -80,9 +80,6 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<SchedulerView>('week');
 
-  useEffect(() => {
-    onVisibleRangeChange?.(currentDate, view);
-  }, [currentDate, onVisibleRangeChange, view]);
   const [showAllInstructors, setShowAllInstructors] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterSelection>({ id: 'all', kind: 'all' });
@@ -90,6 +87,9 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
     ...createDefaultPreferences(),
     timezone: activeCalendarTimeZone,
   }));
+  useEffect(() => {
+    onVisibleRangeChange?.(currentDate, view, preferences.timezone);
+  }, [currentDate, onVisibleRangeChange, preferences.timezone, view]);
   const preferencesRestored = useRef(false);
   const timezonePinned = useRef(false);
 

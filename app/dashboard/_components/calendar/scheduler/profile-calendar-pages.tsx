@@ -12,7 +12,7 @@ import {
 } from '@/hooks/use-batched-lookups';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
 import { type CalendarFetchRange, useCalendarFetchRange } from '@/lib/calendar-range';
-import { dayjs, localDate } from '@/lib/date';
+import { dayjs, localDate, resolveDisplayZone } from '@/lib/date';
 import {
   JOB_TIME_LABELS,
   type JobTimeKind,
@@ -77,7 +77,7 @@ function useOrganisationResourceReservations(
       query: { pageable: { page: 0, size: 100 }, active: true },
     }),
     enabled: !!organisationUuid,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.live,
   });
 
   const resources = useMemo(
@@ -92,7 +92,7 @@ function useOrganisationResourceReservations(
         query: range,
       }),
       enabled: !!organisationUuid && !!resource.uuid,
-      staleTime: 5 * 60 * 1000,
+      staleTime: STALE_TIMES.live,
       placeholderData: keepPreviousData,
     })),
   });
@@ -157,7 +157,7 @@ function useInstructorMergedCalendar(
       query: range,
     }),
     enabled: !!instructorUuid,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.live,
     refetchOnWindowFocus: false,
     placeholderData: keepPreviousData,
   });
@@ -188,7 +188,7 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
       enabled: !!uuid,
       // Somebody enrols or withdraws while the roster sits in the persisted cache, so the
       // stale window has to be the throttle rather than a dead refetchOnMount.
-      staleTime: 5 * 60 * 1000,
+      staleTime: STALE_TIMES.live,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
     })),
@@ -656,7 +656,7 @@ function StudentCalendarPage() {
     queries: studentClassDefinitionUuids.map(uuid => ({
       ...getClassDefinitionOptions({ path: { uuid } }),
       enabled: !!uuid,
-      // staleTime: 5 * 60 * 1000,
+      // staleTime: STALE_TIMES.live,
     })),
   });
 
@@ -850,7 +850,7 @@ function OrganizationCalendarPage() {
     [classData]
   );
 
-  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(uniqueCourseUuids);
+  const { courseMap } = useCoursesByIds(uniqueCourseUuids);
 
   const uniqueInstructorUuids = useMemo(
     () =>
@@ -865,8 +865,7 @@ function OrganizationCalendarPage() {
     [classData, timetableQuery.data]
   );
 
-  const { instructorMap, isLoading: instructorsLoading } =
-    useInstructorsByIds(uniqueInstructorUuids);
+  const { instructorMap } = useInstructorsByIds(uniqueInstructorUuids);
   const instructorUserUuids = useMemo(
     () =>
       Object.values(instructorMap)
@@ -875,8 +874,7 @@ function OrganizationCalendarPage() {
         .filter((uuid): uuid is string => Boolean(uuid)),
     [instructorMap]
   );
-  const { userMap: instructorUsers, isLoading: instructorUsersLoading } =
-    useUsersByIds(instructorUserUuids);
+  const { userMap: instructorUsers } = useUsersByIds(instructorUserUuids);
 
   const instructorSummaries = useMemo<InstructorSummary[]>(
     () =>
@@ -908,28 +906,33 @@ function OrganizationCalendarPage() {
         instructor: cls.default_instructor_uuid
           ? (instructorMap[cls.default_instructor_uuid] ?? null)
           : null,
-        schedule: cls.uuid ? (sessionsByClass.get(cls.uuid) ?? []) : [],
+        schedule: cls.uuid
+          ? (sessionsByClass.get(cls.uuid) ?? []).map(entry => ({ ...entry, title: entry.class_title }))
+          : [],
       })),
     [classData, courseMap, instructorMap, sessionsByClass]
   );
 
   const resourceReservations = useOrganisationResourceReservations(organizationUuid, range);
 
-  // Rosters load only for the classes meeting on the focused day, which is all the rail shows.
-  const focusDayClassUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          (timetableQuery.data?.data ?? [])
-            .filter(
-              entry =>
-                entry.start_time && dayjs(entry.start_time).format('YYYY-MM-DD') === range.focus
-            )
-            .map(entry => entry.class_definition_uuid)
-        )
-      ),
-    [range.focus, timetableQuery.data]
-  );
+  // Rosters load for the focused day's classes only (what the rail lists); other cards show
+  // the timetable's enrolled_count. The day is keyed in the grid's zone, as the rail does.
+  const focusDayClassUuids = useMemo(() => {
+    const zone = resolveDisplayZone(range.zone);
+    return Array.from(
+      new Set(
+        (timetableQuery.data?.data ?? [])
+          .filter(
+            entry =>
+              entry.start_time &&
+              dayjs(new Date(entry.start_time as unknown as string))
+                .tz(zone)
+                .format('YYYY-MM-DD') === range.focus
+          )
+          .map(entry => entry.class_definition_uuid)
+      )
+    );
+  }, [range.focus, range.zone, timetableQuery.data]);
 
   const studentData = useClassStudentSummaries(focusDayClassUuids);
 
@@ -964,14 +967,9 @@ function OrganizationCalendarPage() {
     allInstructors: instructorSummaries,
     events,
     instructors: instructorSummaries,
-    isLoading:
-      organizationClassesQuery.isLoading ||
-      timetableQuery.isLoading ||
-      coursesLoading ||
-      instructorsLoading ||
-      instructorUsersLoading ||
-      resourceReservations.isLoading ||
-      studentData.isLoading,
+    // Only the first load of the sessions holds the grid; names, rosters and reservations
+    // fill in as they land so stepping through weeks never blanks it.
+    isLoading: organizationClassesQuery.isLoading || timetableQuery.isLoading,
     students: studentData.students,
   };
 
