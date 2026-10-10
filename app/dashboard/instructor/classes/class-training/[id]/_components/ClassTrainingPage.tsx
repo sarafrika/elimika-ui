@@ -3010,7 +3010,7 @@ export default function ClassTrainingPage({
       path: { courseUuid: course?.uuid as string },
       query: { pageable: {} },
     }),
-    enabled: !!course?.uuid,
+    enabled: !!course?.uuid && !!selectedStudent?.student?.data?.uuid,
   });
   const studentEnrollments = courseEnrollmentResp?.data?.content ?? [];
 

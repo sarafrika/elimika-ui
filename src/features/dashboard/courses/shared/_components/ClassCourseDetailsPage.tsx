@@ -14,6 +14,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { AsyncSection } from '@/components/data/async-section';
+import { LazySection } from '@/components/data/lazy-section';
 import { type EntityFact, EntityHeaderCard } from '@/components/data-display/entity-header-card';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import {
@@ -33,6 +34,7 @@ import {
 import type { CombinedClassDetailsData } from '@/hooks/use-class-details';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { STALE_TIMES } from '@/lib/query-client';
+import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   getAllDifficultyLevelsOptions,
@@ -104,7 +106,7 @@ export default function ClassCourseDetailsPage({
       path: { courseUuid },
       query: { pageable: {} },
     }),
-    enabled: !!courseUuid,
+    enabled: !!courseUuid && tab === 'assessment',
   });
   const assessmentScheme = assessmentsQuery.data?.data?.content ?? [];
 
@@ -164,33 +166,17 @@ export default function ClassCourseDetailsPage({
     [lessonsWithContent]
   );
 
-  const { items: quizzes, isLoading: quizzesLoading } = useQuizzesByLessonIds(lessonUuids);
+  // Quiz and assignment searches wait for a tab that shows them, then stay on once seen.
+  const lessonAssessmentsTab = tab === 'assessment' || tab === 'curriculum';
+  const [lessonAssessmentsWanted, setLessonAssessmentsWanted] = useState(lessonAssessmentsTab);
+  if (lessonAssessmentsTab && !lessonAssessmentsWanted) setLessonAssessmentsWanted(true);
+  const assessmentLessonUuids = lessonAssessmentsWanted ? lessonUuids : NO_LESSONS;
+  const { items: quizzes, isLoading: quizzesLoading } =
+    useQuizzesByLessonIds(assessmentLessonUuids);
   const { items: assignments, isLoading: assignmentLoading } =
-    useAssignmentsByLessonIds(lessonUuids);
+    useAssignmentsByLessonIds(assessmentLessonUuids);
   const filteredAssignments = assignments.filter(item => lessonUuids.includes(item.lesson_uuid));
   const filteredQuizzes = quizzes.filter(item => lessonUuids.includes(item.lesson_uuid));
-
-  // The catalogue search returns rating and review counts inline, so no per-course review calls.
-  const { data: relatedCoursesResponse, isLoading: relatedCoursesLoading } = useQuery({
-    ...searchCoursesAndProgrammesOptions({
-      query: {
-        show: 'courses',
-        creator_uuid: course?.course_creator_uuid,
-        sort: 'newest',
-        size: '4',
-      },
-    }),
-    enabled: Boolean(course?.course_creator_uuid),
-    staleTime: STALE_TIMES.reference,
-    refetchOnWindowFocus: false,
-  });
-  const relatedCourses = useMemo(
-    () =>
-      (relatedCoursesResponse?.data?.content ?? [])
-        .filter(item => item.uuid && item.uuid !== course?.uuid)
-        .slice(0, 3),
-    [course?.uuid, relatedCoursesResponse?.data?.content]
-  );
 
   const [siteOrigin, setSiteOrigin] = useState('');
   useEffect(() => {
@@ -228,7 +214,11 @@ export default function ClassCourseDetailsPage({
     {
       key: 'assessments',
       icon: FileCheck,
-      value: assessmentCountLoading ? factSkeleton : assessmentCount,
+      value: !lessonAssessmentsWanted
+        ? undefined
+        : assessmentCountLoading
+          ? factSkeleton
+          : assessmentCount,
       label: 'assessments',
     },
   ];
@@ -243,7 +233,7 @@ export default function ClassCourseDetailsPage({
 
   const tabCounts: Partial<Record<ClassCourseTab, number>> = {
     curriculum: curriculumLessons.length,
-    assessment: assessmentScheme.length,
+    assessment: assessmentsQuery.data ? assessmentScheme.length : undefined,
     schedule: sessionCount,
     reviews: classReviews.length,
   };
@@ -360,20 +350,15 @@ export default function ClassCourseDetailsPage({
               }}
             />
             <ClassInstructorCard classData={classData} />
-            {relatedCoursesLoading || relatedCourses.length > 0 ? (
-              <section className='bg-card rounded-xl border px-5 py-[18px] shadow-sm'>
-                <AsyncSection
-                  name='class-related-courses'
-                  loading={relatedCoursesLoading}
-                  skeleton={<Skeleton className='h-48 w-full rounded-xl' />}
-                >
-                  <StudentsAlsoBought
-                    courses={relatedCourses}
-                    activeDomain={activeDomain ?? null}
-                    creatorName={creatorName}
-                  />
-                </AsyncSection>
-              </section>
+            {course?.course_creator_uuid ? (
+              <LazySection skeleton={<div className='h-px' />}>
+                <RelatedCreatorCourses
+                  creatorUuid={course.course_creator_uuid}
+                  courseUuid={courseUuid}
+                  creatorName={creatorName}
+                  activeDomain={activeDomain ?? null}
+                />
+              </LazySection>
             ) : null}
           </div>
         </SectionTabPanel>
@@ -445,5 +430,55 @@ export default function ClassCourseDetailsPage({
         shareDescription={`Check out this class: ${classData.class?.title ?? ''}`}
       />
     </main>
+  );
+}
+
+const NO_LESSONS: string[] = [];
+
+/** Other courses by the same creator; mounted by LazySection so it loads near the viewport. */
+function RelatedCreatorCourses({
+  creatorUuid,
+  courseUuid,
+  creatorName,
+  activeDomain,
+}: {
+  creatorUuid: string;
+  courseUuid: string;
+  creatorName: string;
+  activeDomain: UserDomain | null;
+}) {
+  // The catalogue search returns rating and review counts inline, so no per-course review calls.
+  const { data: relatedCoursesResponse, isLoading: relatedCoursesLoading } = useQuery({
+    ...searchCoursesAndProgrammesOptions({
+      query: { show: 'courses', creator_uuid: creatorUuid, sort: 'newest', size: '4' },
+    }),
+    enabled: Boolean(creatorUuid),
+    staleTime: STALE_TIMES.reference,
+    refetchOnWindowFocus: false,
+  });
+  const relatedCourses = useMemo(
+    () =>
+      (relatedCoursesResponse?.data?.content ?? [])
+        .filter(item => item.uuid && item.uuid !== courseUuid)
+        .slice(0, 3),
+    [courseUuid, relatedCoursesResponse?.data?.content]
+  );
+
+  if (!relatedCoursesLoading && relatedCourses.length === 0) return null;
+
+  return (
+    <section className='bg-card rounded-xl border px-5 py-[18px] shadow-sm'>
+      <AsyncSection
+        name='class-related-courses'
+        loading={relatedCoursesLoading}
+        skeleton={<Skeleton className='h-48 w-full rounded-xl' />}
+      >
+        <StudentsAlsoBought
+          courses={relatedCourses}
+          activeDomain={activeDomain}
+          creatorName={creatorName}
+        />
+      </AsyncSection>
+    </section>
   );
 }
