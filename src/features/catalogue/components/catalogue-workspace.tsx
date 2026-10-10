@@ -48,6 +48,7 @@ import type {
   Instructor,
 } from '@/services/client';
 import {
+  getClassDefinitionOptions,
   getClassDefinitionsForInstructorOptions,
   getClassDefinitionsForOrganisationOptions,
   getCourseByUuidOptions,
@@ -74,6 +75,8 @@ type CatalogueRow = {
   classId: string | null | undefined;
   /** From the `/search` course snapshot; absent on class rows and admin's plain listing. */
   courseName: string | null;
+  /** The catalogue item's own class title, when the API sends one. */
+  classTitle: string | null;
   courseCreatorUuid: string | null;
   creatorName: string | null;
   createdAt: string | Date | null | undefined;
@@ -85,11 +88,20 @@ type CatalogueRow = {
 type CatalogueItemWithOrganisation = CommerceCatalogueItem & { organisation_uuid?: string | null };
 type CourseWithOrganisation = Course & { organisation_uuid?: string | null };
 
+/** The class fields the catalogue reads; satisfied by both full definitions and batch summaries. */
+type CatalogueClass = {
+  title?: string;
+  description?: string | null;
+  course_uuid?: string | null;
+  organisation_uuid?: string | null;
+  default_instructor_uuid?: string | null;
+};
+
 type TitleMaps = {
   courseTitleMap: Map<string, string>;
   classTitleMap: Map<string, string>;
   courseMap: Map<string, Course>;
-  classMap: Map<string, ClassDefinition>;
+  classMap: Map<string, CatalogueClass>;
 };
 
 type CatalogueDetailsQueryState = {
@@ -169,6 +181,7 @@ const buildRows = (items: CommerceCatalogueItem[]): CatalogueRow[] =>
       courseId: item.course_uuid ?? null,
       classId: item.class_definition_uuid ?? null,
       courseName: item.course?.name ?? null,
+      classTitle: item.class_definition_title?.trim() || null,
       courseCreatorUuid: item.course?.creator_uuid ?? null,
       creatorName: item.course?.creator_name ?? null,
       createdAt:
@@ -247,28 +260,45 @@ const useScopeMaps = (
   return { courseMap, classMap };
 };
 
-/** Titles for the rows on screen; only classes the scope listing missed are fetched by id. */
-const useTitleMaps = (rows: CatalogueRow[], scopeMaps: ScopeMaps): TitleMaps => {
-  const missingClassIds = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          rows
-            .map(row => row.classId)
-            .filter((id): id is string => !!id && !scopeMaps.classMap.has(id))
-        )
-      ),
-    [rows, scopeMaps.classMap]
-  );
-  const { classDefinitionMap } = useClassesByIds(missingClassIds);
+/**
+ * Titles for the rows on screen. Rows whose catalogue item names its class need no lookup;
+ * the rest (plus the selected row, for its details) are batched, never fetched per row.
+ */
+const useTitleMaps = (
+  rows: CatalogueRow[],
+  scopeMaps: ScopeMaps,
+  selectedClassId: string | null
+): TitleMaps => {
+  const missingClassIds = useMemo(() => {
+    const ids = rows
+      .filter(row => !row.classTitle || row.classId === selectedClassId)
+      .map(row => row.classId)
+      .filter((id): id is string => !!id && !scopeMaps.classMap.has(id));
+    return Array.from(new Set(ids));
+  }, [rows, scopeMaps.classMap, selectedClassId]);
+  const { classMap: batchedClassMap } = useClassesByIds(missingClassIds);
+
+  // The batch summary has no description, so only the selected class is read in full.
+  const selectedNeedsDetail = !!selectedClassId && !scopeMaps.classMap.has(selectedClassId);
+  const selectedClassQuery = useQuery({
+    ...getClassDefinitionOptions({ path: { uuid: selectedClassId ?? '' } }),
+    enabled: selectedNeedsDetail,
+    staleTime: STALE_TIMES.entity,
+  });
+  const selectedClassDetail = selectedNeedsDetail
+    ? selectedClassQuery.data?.data?.class_definition
+    : undefined;
 
   const classMap = useMemo(() => {
-    const map = new Map<string, ClassDefinition>(scopeMaps.classMap);
-    for (const [classId, classDef] of Object.entries(classDefinitionMap)) {
-      map.set(classId, classDef);
+    const map = new Map<string, CatalogueClass>(scopeMaps.classMap);
+    for (const [classId, summary] of Object.entries(batchedClassMap)) {
+      map.set(classId, summary);
+    }
+    if (selectedClassId && selectedClassDetail) {
+      map.set(selectedClassId, { ...map.get(selectedClassId), ...selectedClassDetail });
     }
     return map;
-  }, [classDefinitionMap, scopeMaps.classMap]);
+  }, [batchedClassMap, scopeMaps.classMap, selectedClassId, selectedClassDetail]);
 
   const courseTitleMap = useMemo(() => {
     const map = new Map<string, string>();
@@ -283,8 +313,11 @@ const useTitleMaps = (rows: CatalogueRow[], scopeMaps: ScopeMaps): TitleMaps => 
     classMap.forEach((classDef, classId) => {
       if (classDef?.title) map.set(classId, classDef.title);
     });
+    for (const row of rows) {
+      if (row.classId && row.classTitle) map.set(row.classId, row.classTitle);
+    }
     return map;
-  }, [classMap]);
+  }, [classMap, rows]);
 
   return { courseTitleMap, classTitleMap, courseMap: scopeMaps.courseMap, classMap };
 };
@@ -488,7 +521,7 @@ export function CatalogueWorkspace({
       : rowsOnScreen;
   }, [filteredRows, displayLimit, selectedBaseRow]);
 
-  const titleMaps = useTitleMaps(visibleRows, scopeMaps);
+  const titleMaps = useTitleMaps(visibleRows, scopeMaps, selectedBaseRow?.classId ?? null);
   const titledRows = useMemo(() => attachTitles(visibleRows, titleMaps), [visibleRows, titleMaps]);
   const displayedRows = useMemo(() => titledRows.slice(0, displayLimit), [titledRows, displayLimit]);
   const selectedRow = titledRows.find(row => row.id === selectedId) ?? null;
@@ -1016,7 +1049,7 @@ function CatalogueItemCreatorInfo({
 }: {
   selectedRow: CatalogueRow;
   courseMap: Map<string, Course>;
-  classMap: Map<string, ClassDefinition>;
+  classMap: Map<string, CatalogueClass>;
 }) {
   const course = selectedRow.courseId ? courseMap.get(selectedRow.courseId) : null;
   const classDef = selectedRow.classId ? classMap.get(selectedRow.classId) : null;
