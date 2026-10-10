@@ -400,12 +400,14 @@ export function ClassInstructorCard({
 
   const studentUuid = userProfile?.student?.uuid as string | undefined;
   const courseUuid = classData?.course?.uuid as string;
-  const { courseEnrollmentMap } = useCourseEnrollmentsMap([courseUuid]);
+  const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
+  // The roster is only needed to find the viewer's enrolment once they open the feedback form.
+  const { courseEnrollmentMap } = useCourseEnrollmentsMap(
+    showFeedbackSheet && studentUuid ? [courseUuid] : []
+  );
   const enrollmentUuid = courseEnrollmentMap?.[courseUuid]?.enrollments?.find(
     enrollment => enrollment.student_uuid === studentUuid
   )?.uuid;
-
-  const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
   const [rating, setRating] = useState(0);
   const [clarityRating, setClarityRating] = useState(0);
   const [engagementRating, setEngagementRating] = useState(0);
@@ -415,7 +417,7 @@ export function ClassInstructorCard({
 
   const reviewInstructor = useMutation(submitInstructorReviewMutation());
   const handleSubmitFeedback = () => {
-    if (!classData?.class?.uuid || !instructor?.uuid || !studentUuid) {
+    if (!classData?.class?.uuid || !instructor?.uuid || !studentUuid || !enrollmentUuid) {
       toast.error('Class or student enrollment not found');
       return;
     }
@@ -424,7 +426,7 @@ export function ClassInstructorCard({
     reviewInstructor.mutate(
       {
         body: {
-          enrollment_uuid: enrollmentUuid as string,
+          enrollment_uuid: enrollmentUuid,
           instructor_uuid: instructorUuid,
           student_uuid: studentUuid,
           comments: feedbackComment,
