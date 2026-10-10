@@ -134,7 +134,8 @@ export function useCourseLessonsWithContent({
 
   const { data: contentTypeList, isFetching: contentTypeFetching } = useQuery({
     ...getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
-    enabled: isEnabled,
+    // Content types only label lesson content, so skip them when no content loads.
+    enabled: contentAllowed,
   });
 
   const contentTypeData = useMemo(() => {
