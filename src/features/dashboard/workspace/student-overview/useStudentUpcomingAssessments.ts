@@ -18,8 +18,10 @@ import {
   useOrganisationsByIds,
   useQuizzesByIds,
 } from '../../../../../hooks/use-batched-lookups';
+import { useStudentCourseOverview } from '../../../../../hooks/use-student-course-overview';
 import {
   isActiveClassEnrollment,
+  isActiveOverviewItem,
   resolveClassProvider,
   type StudentOverviewAssessment,
   type StudentOverviewSection,
@@ -72,27 +74,63 @@ const formatAssessmentDueLabel = (value?: Date | string | null) => {
 };
 
 /*
- * Schedules, submissions, attempts and class definitions all start from the enrolment
- * rows at once. The card waits only for what decides which rows exist; class, course
- * and provider labels fill in afterwards.
+ * The course-overview composite says which classes still have released, unsubmitted
+ * work, so schedules are fetched only for those and labels come from the same rows.
+ * When it is unavailable the enrolment lists and entity lookups drive the card.
  */
 export function useStudentUpcomingAssessments(): StudentOverviewSection<
   StudentOverviewAssessment[]
 > {
-  const classEnrollmentsQuery = useStudentClassEnrollments();
+  const overview = useStudentCourseOverview();
+  const legacy = overview.needsFallback;
+  const classEnrollmentsQuery = useStudentClassEnrollments(legacy);
   const courseEnrollmentsQuery = useStudentCourseEnrollments();
   const classEnrollments = classEnrollmentsQuery.enrollments;
   const courseEnrollments = courseEnrollmentsQuery.enrollments;
 
+  const overviewByClass = useMemo(
+    () =>
+      new Map(
+        overview.items
+          .filter(isActiveOverviewItem)
+          .map(item => [item.class_definition_uuid, item] as const)
+      ),
+    [overview.items]
+  );
+
   const classIds = useMemo(
     () =>
-      uniqueIds(
-        classEnrollments
-          .filter(enrollment => isActiveClassEnrollment(enrollment.latest_enrollment_status))
-          .sort((a, b) => lastActivity(b) - lastActivity(a))
-          .map(enrollment => enrollment.class_definition_uuid)
-      ).slice(0, MAX_SCHEDULED_CLASSES),
-    [classEnrollments]
+      legacy
+        ? uniqueIds(
+            classEnrollments
+              .filter(enrollment => isActiveClassEnrollment(enrollment.latest_enrollment_status))
+              .sort((a, b) => lastActivity(b) - lastActivity(a))
+              .map(enrollment => enrollment.class_definition_uuid)
+          ).slice(0, MAX_SCHEDULED_CLASSES)
+        : [],
+    [classEnrollments, legacy]
+  );
+
+  // Overview rows arrive most recently active first, so the slice keeps the busiest classes.
+  const pendingAssignmentClassIds = useMemo(
+    () =>
+      legacy
+        ? classIds
+        : Array.from(overviewByClass.values())
+            .filter(item => (item.pending_assignment_count ?? 0) > 0)
+            .map(item => item.class_definition_uuid)
+            .slice(0, MAX_SCHEDULED_CLASSES),
+    [classIds, legacy, overviewByClass]
+  );
+  const pendingQuizClassIds = useMemo(
+    () =>
+      legacy
+        ? classIds
+        : Array.from(overviewByClass.values())
+            .filter(item => (item.pending_quiz_count ?? 0) > 0)
+            .map(item => item.class_definition_uuid)
+            .slice(0, MAX_SCHEDULED_CLASSES),
+    [classIds, legacy, overviewByClass]
   );
 
   const classTitleById = useMemo(() => {
@@ -104,7 +142,7 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
   }, [classEnrollments]);
 
   const assignmentSchedulesQuery = useQueries({
-    queries: classIds.slice(0, MAX_SCHEDULED_CLASSES).map(classUuid => ({
+    queries: pendingAssignmentClassIds.slice(0, MAX_SCHEDULED_CLASSES).map(classUuid => ({
       ...getAssignmentSchedulesOptions({ path: { classUuid } }),
       staleTime: STALE_TIMES.live,
       refetchOnWindowFocus: false,
@@ -113,7 +151,7 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
   });
 
   const quizSchedulesQuery = useQueries({
-    queries: classIds.slice(0, MAX_SCHEDULED_CLASSES).map(classUuid => ({
+    queries: pendingQuizClassIds.slice(0, MAX_SCHEDULED_CLASSES).map(classUuid => ({
       ...getQuizSchedulesOptions({ path: { classUuid } }),
       staleTime: STALE_TIMES.live,
       refetchOnWindowFocus: false,
@@ -126,15 +164,27 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
 
   const enrollmentIds = useMemo(
     () =>
-      uniqueIds([
-        ...classEnrollments.map(enrollment => enrollment.latest_enrollment_uuid),
-        ...courseEnrollments.map(enrollment => enrollment.enrollment_uuid),
-      ]),
-    [classEnrollments, courseEnrollments]
+      legacy
+        ? uniqueIds([
+            ...classEnrollments.map(enrollment => enrollment.latest_enrollment_uuid),
+            ...courseEnrollments.map(enrollment => enrollment.enrollment_uuid),
+          ])
+        : uniqueIds(
+            overview.items.flatMap(item => [
+              item.latest_enrollment_uuid,
+              item.course_enrollment_uuid,
+            ])
+          ),
+    [classEnrollments, courseEnrollments, legacy, overview.items]
   );
-  // Wait for both enrolment lists so the id set (and query key) is final: one request each.
+  const hasPendingWork = pendingAssignmentClassIds.length + pendingQuizClassIds.length > 0;
+  // Wait for the enrolment rows so the id set (and query key) is final: one request each.
   const enrollmentIdsReady =
-    enrollmentIds.length > 0 && !classEnrollmentsQuery.isLoading && !courseEnrollmentsQuery.isLoading;
+    enrollmentIds.length > 0 &&
+    hasPendingWork &&
+    (legacy
+      ? !classEnrollmentsQuery.isLoading && !courseEnrollmentsQuery.isLoading
+      : overview.isReady);
 
   const submissionsQuery = useQuery({
     ...searchSubmissionsOptions({
@@ -171,6 +221,7 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
   const { assignmentMap, isLoading: isLoadingAssignments } = useAssignmentsByIds(assignmentIds);
   const { quizMap, isLoading: isLoadingQuizzes } = useQuizzesByIds(quizIds);
 
+  // Legacy-only lookups: overview rows already carry class, course and instructor names.
   const { classDefinitionMap } = useClassesByIds(classIds);
   const classCourseIds = useMemo(
     () => uniqueIds(classIds.map(classUuid => classDefinitionMap[classUuid]?.course_uuid)),
@@ -182,8 +233,15 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
     [classIds, classDefinitionMap]
   );
   const organisationIds = useMemo(
-    () => uniqueIds(classIds.map(classUuid => classDefinitionMap[classUuid]?.organisation_uuid)),
-    [classIds, classDefinitionMap]
+    () =>
+      legacy
+        ? uniqueIds(classIds.map(classUuid => classDefinitionMap[classUuid]?.organisation_uuid))
+        : uniqueIds(
+            [...pendingAssignmentClassIds, ...pendingQuizClassIds].map(
+              classUuid => overviewByClass.get(classUuid)?.organisation_uuid
+            )
+          ),
+    [classIds, classDefinitionMap, legacy, overviewByClass, pendingAssignmentClassIds, pendingQuizClassIds]
   );
   const { courseMap } = useCoursesByIds(classCourseIds);
   const { instructorMap } = useInstructorsByIds(instructorIds);
@@ -199,6 +257,19 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
     const rows: Array<StudentOverviewAssessment & { sortValue: number }> = [];
 
     const describeClass = (classUuid: string, fallbackTitle: string) => {
+      const overviewItem = legacy ? undefined : overviewByClass.get(classUuid);
+      if (overviewItem) {
+        const organisationUuid = overviewItem.organisation_uuid;
+        return {
+          provider:
+            (organisationUuid ? organisationMap[organisationUuid]?.name : undefined) ??
+            overviewItem.instructor_name ??
+            (organisationUuid ? 'Organisation' : 'Class provider'),
+          classTitle: overviewItem.class_title ?? fallbackTitle,
+          courseTitle: overviewItem.course_name ?? null,
+        };
+      }
+
       const classDefinition = classUuid ? classDefinitionMap[classUuid] : undefined;
       const courseUuid = classDefinition?.course_uuid;
       return {
@@ -261,7 +332,9 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
     classTitleById,
     courseMap,
     instructorMap,
+    legacy,
     organisationMap,
+    overviewByClass,
     quizMap,
     quizSchedules,
     submissionsQuery.data,
@@ -270,17 +343,19 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
   return {
     data,
     isLoading:
+      overview.isLoading ||
       classEnrollmentsQuery.isLoading ||
-      courseEnrollmentsQuery.isLoading ||
+      (legacy && courseEnrollmentsQuery.isLoading) ||
       assignmentSchedulesQuery.isLoading ||
       quizSchedulesQuery.isLoading ||
       isLoadingAssignments ||
       isLoadingQuizzes ||
       submissionsQuery.isLoading ||
       attemptsQuery.isLoading,
-    error: classEnrollmentsQuery.error,
+    error: legacy ? classEnrollmentsQuery.error : null,
     refetch: () => {
-      classEnrollmentsQuery.refetch();
+      if (legacy) classEnrollmentsQuery.refetch();
+      else overview.refetch();
     },
   };
 }
