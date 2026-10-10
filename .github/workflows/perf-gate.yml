@@ -6,8 +6,6 @@ on:
   pull_request:
     branches:
       - main
-    paths-ignore:
-      - '**/*.md'
   workflow_dispatch:
     inputs:
       update_baseline:
@@ -50,6 +48,11 @@ jobs:
 
   route-gate:
     name: Route gate (staging-backed)
+    # Skipped until the PERF_GATE_ENABLED variable is 'true' (secrets + staging test account exist),
+    # and on fork PRs, which never receive secrets; see docs/perf/route-gate.md#ci.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (vars.PERF_GATE_ENABLED == 'true' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
@@ -145,7 +148,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload refreshed baselines
-        if: inputs.update_baseline
+        if: always() && inputs.update_baseline
         uses: actions/upload-artifact@v4
         with:
           name: route-gate-baselines

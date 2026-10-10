@@ -49,8 +49,8 @@ check runs; time-to-data includes backend latency.
 
 ## CI
 
-`.github/workflows/perf-gate.yml` runs on every pull request to `main` and both jobs are blocking
-(mark them required in the branch protection rule):
+`.github/workflows/perf-gate.yml` runs on every pull request to `main` (docs-only PRs included, so
+required checks never hang at "Expected"). It has two jobs:
 
 1. **Lint guardrails & type ratchet**: `pnpm lint` (see below) and `pnpm typecheck:ratchet`.
 2. **Route gate (staging-backed)**: builds the PR, starts `pnpm start` on `http://localhost:3000`
@@ -71,19 +71,32 @@ values below are placeholders.
 | `PERF_GATE_KEYCLOAK_CLIENT_SECRET` | secret | that client's secret |
 | `PERF_GATE_API_BASE_URL` | secret (optional) | defaults to `https://api.elimika.staging.sarafrika.com` |
 | `PERF_GATE_DOMAINS` | variable (optional) | space-separated roles the test account holds; default `student instructor course_creator organisation admin` |
+| `PERF_GATE_ENABLED` | variable | `true` turns the route gate on for PRs; unset, the job is skipped |
 
 The test account needs every role listed in `PERF_GATE_DOMAINS` and enough staging data (classes,
 enrolments, an organisation) for each route to render real data, or the "0 API requests" rule
-fails. The job fails when the account secrets are missing, so PRs from forks cannot pass it.
+fails. Once enabled, the job fails if the account secrets are missing. Fork PRs never receive
+secrets, so the job is skipped for them.
+
+### Rollout order
+
+1. Mark **Lint guardrails & type ratchet** as required right away. `pnpm typecheck:ratchet` runs
+   `next typegen` first, because a fresh checkout has no `next-env.d.ts` (that alone adds 4 errors).
+2. Create the staging test account, its roles and data, and the secrets above.
+3. Run the workflow manually with `update_baseline: true`, download `route-gate-baselines` and
+   commit it. This is the first P95 baseline (see below).
+4. Set `PERF_GATE_ENABLED=true`, wait for a green PR run, then add **Route gate (staging-backed)**
+   to the branch protection rule.
 
 ### Baselines
 
-`docs/perf/route-gate-baseline-<domain>.json` hold the post-programme P95s. The committed seed comes
-from the final phase-4 gate run (`gate-p4-r3`, 2026-10-10, one cold load per route on a local
-production build against staging); routes it did not measure have no entry and skip the P95 check,
-and `overallP95TimeToDataMs` is `null` until a CI refresh. Because time-to-data depends on the
-machine, refresh from CI once the secrets exist: run the workflow manually with
-`update_baseline: true`, download the `route-gate-baselines` artifact and commit it.
+`docs/perf/route-gate-baseline-<domain>.json` hold the post-programme baselines. The committed seed
+lists the routes and request counts from the final phase-4 gate run (`gate-p4-r3`, 2026-10-10), but
+every `p95TimeToDataMs` is `null`: that run was one cold load on a local machine, and comparing it
+with a 5-run P95 on a GitHub-hosted runner would fail PRs on noise. **The P95 check therefore starts
+only after the first CI refresh is committed** (rollout step 3). The refresh upload runs even when
+some routes fail their budget or placeholder rules, so a red run still yields baselines. Refresh
+again from CI whenever routes get faster, so the gate ratchets down.
 
 ## Lint guardrails that back the gate
 
