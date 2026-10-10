@@ -29,7 +29,10 @@ import { SearchUnavailable } from '@/components/search/search-unavailable';
 import { isSearchUnavailable } from '@/lib/api-errors';
 import type { NearMeState } from '@/src/features/near-me/near-me';
 import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
-import { searchSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
+import {
+  searchSkillsOptions,
+  searchTrainingApplicationsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { DollarSign, Filter, MapPin, Search, SlidersHorizontal, Star, X } from 'lucide-react';
 import type React from 'react';
@@ -223,6 +226,39 @@ export const InstructorDirectory: React.FC<Props> = ({
 
   const visibleInstructors = filteredInstructors.slice(0, visibleInstructorCount);
   const hasMoreInstructors = filteredInstructors.length > visibleInstructorCount;
+
+  // One lookup prices every visible card for this course instead of one search per card.
+  const visibleInstructorUuids = useMemo(
+    () =>
+      visibleInstructors
+        .map(instructor => instructor.uuid)
+        .filter(Boolean)
+        .sort(),
+    [visibleInstructors]
+  );
+  const applicationsQuery = useQuery({
+    ...searchTrainingApplicationsOptions({
+      query: {
+        pageable: { page: 0, size: visibleInstructorUuids.length },
+        searchParams: {
+          course_uuid: courseId,
+          applicant_uuid_in: visibleInstructorUuids.join(','),
+        },
+      },
+    }),
+    enabled: Boolean(courseId) && visibleInstructorUuids.length > 0,
+  });
+  const applicationByInstructor = useMemo(
+    () =>
+      new Map(
+        (applicationsQuery.data?.data?.content ?? [])
+          .filter(application => application.course_uuid === courseId)
+          .map(application => [application.applicant_uuid, application])
+      ),
+    [applicationsQuery.data, courseId]
+  );
+  // Cards wait on the batch rather than racing it; only a failed batch sends them per-card.
+  const applicationsInline = Boolean(courseId) && !applicationsQuery.isError;
 
   const clearFilters = () => {
     setFilters(defaultFilters);
@@ -577,6 +613,8 @@ export const InstructorDirectory: React.FC<Props> = ({
                         instructor={instructor}
                         onViewProfile={() => setSelectedInstructor(instructor)}
                         courseId={courseId}
+                        application={applicationByInstructor.get(instructor.uuid)}
+                        applicationsInline={applicationsInline}
                       />
                     </div>
                   ))}

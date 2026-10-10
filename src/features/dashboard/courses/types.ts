@@ -44,6 +44,9 @@ export type SearchInstructor = Instructor & {
   review_count?: number;
   /** `rating` and `review_count` came with the list, so no card needs to fetch them. */
   ratings_inline?: boolean;
+  /** Profile and skills came from the list's batched lookups, so no card fetches them again. */
+  profile_inline?: boolean;
+  skills_inline?: boolean;
   location?: {
     city?: string;
   } | null;
