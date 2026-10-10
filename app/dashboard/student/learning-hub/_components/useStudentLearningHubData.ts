@@ -1,7 +1,11 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
+import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { useStudentCourseOverview } from '@/hooks/use-student-course-overview';
 import {
   getAssignmentByUuidOptions,
   getAssignmentSchedulesOptions,
@@ -21,8 +25,6 @@ import type {
   StudentCourseEnrollmentSummary,
 } from '@/services/client/types.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 
 export type LearningHubStat = {
   id: string;
@@ -269,9 +271,24 @@ export function useStudentLearningHubData(): LearningHubData {
   const profile = useUserProfile();
   const student = profile?.student;
 
+  // The course-overview composite replaces the per-class/per-course chain below,
+  // which only runs (by receiving the student) when that endpoint is unavailable.
+  const overview = useStudentCourseOverview();
+  const legacy = overview.needsFallback;
   const { classDefinitions, loading: classDefinitionsLoading } = useStudentClassDefinitions(
-    student ?? undefined
+    legacy ? (student ?? undefined) : undefined
   );
+
+  const overviewCourseIds = useMemo(
+    () =>
+      legacy
+        ? []
+        : Array.from(
+            new Set(overview.items.map(item => item.course_uuid).filter(Boolean) as string[])
+          ),
+    [legacy, overview.items]
+  );
+  const { courseMap: overviewCourseMap } = useCoursesByIds(overviewCourseIds);
 
   const classLearningRoutes = useMemo(() => {
     const routes = new Map<
@@ -315,7 +332,7 @@ export function useStudentLearningHubData(): LearningHubData {
       path: { studentUuid: student?.uuid as string },
       query: { pageable: { size: 1000 } },
     }),
-    enabled: Boolean(student?.uuid),
+    enabled: legacy && Boolean(student?.uuid),
   });
 
   const { data: studentCertificatesResponse, isLoading: certificatesLoading } = useQuery({
@@ -439,7 +456,39 @@ export function useStudentLearningHubData(): LearningHubData {
     [scheduledInstanceEnrollments]
   );
 
-  const studentScheduledInstances = useMemo(() => {
+  const overviewScheduledInstances = useMemo(() => {
+    if (legacy) return [];
+
+    return overview.items.flatMap(item => {
+      const session = item.next_session;
+      if (!session?.start_time) return [];
+
+      const startMs = new Date(session.start_time).getTime();
+      const endMs = session.end_time ? new Date(session.end_time).getTime() : Number.NaN;
+
+      return [
+        {
+          uuid: session.scheduled_instance_uuid,
+          title: session.title,
+          start_time: session.start_time,
+          end_time: session.end_time,
+          duration_minutes:
+            Number.isNaN(startMs) || Number.isNaN(endMs)
+              ? 0
+              : Math.max(0, Math.round((endMs - startMs) / 60000)),
+          classDefinitionUuid: item.class_definition_uuid,
+          classTitle: item.class_title ?? item.course_name ?? 'Untitled class',
+          courseName: item.course_name ?? 'Standalone class',
+          instructorUuid: session.instructor_uuid || item.instructor_uuid || '',
+          instructorName: item.instructor_name,
+          locationLabel: session.location_name ?? 'Location pending',
+          href: buildClassLearningHref(item.class_definition_uuid),
+        },
+      ];
+    });
+  }, [legacy, overview.items]);
+
+  const legacyScheduledInstances = useMemo(() => {
     return classDefinitions.flatMap(classInfo => {
       const classDetails = classInfo.classDetails;
       const course = classInfo.course;
@@ -471,6 +520,8 @@ export function useStudentLearningHubData(): LearningHubData {
     });
   }, [classDefinitions, classLearningRoutes, enrolledScheduledInstanceUuids]);
 
+  const studentScheduledInstances = legacy ? legacyScheduledInstances : overviewScheduledInstances;
+
   const activeCourses = useMemo<LearningHubActiveCourse[]>(() => {
     const courseGroups = new Map<
       string,
@@ -483,6 +534,32 @@ export function useStudentLearningHubData(): LearningHubData {
         title: string;
       }
     >();
+
+    if (!legacy) {
+      overview.items.forEach(item => {
+        const courseUuid = item.course_uuid;
+        if (!courseUuid) return;
+
+        const current = courseGroups.get(courseUuid);
+        if (current) {
+          current.classCount += 1;
+          return;
+        }
+
+        const course = overviewCourseMap[courseUuid];
+        const durationMinutes =
+          (course?.duration_hours ?? 0) * 60 + (course?.duration_minutes ?? 0);
+
+        courseGroups.set(courseUuid, {
+          title: item.course_name ?? course?.name ?? 'Untitled course',
+          category: course?.category ?? 'General',
+          level: (course?.duration_hours ?? 0) >= 8 ? 'Intermediate' : 'Beginner',
+          duration: formatHours(durationMinutes),
+          classCount: 1,
+          href: `/dashboard/student/courses/${courseUuid}`,
+        });
+      });
+    }
 
     classDefinitions.forEach(item => {
       const course = item.course;
@@ -520,7 +597,7 @@ export function useStudentLearningHubData(): LearningHubData {
       classCount: course.classCount,
       href: course.href,
     }));
-  }, [classDefinitions]);
+  }, [classDefinitions, legacy, overview.items, overviewCourseMap]);
 
   const courseEnrollments = useMemo<LearningHubCourseEnrollment[]>(
     () =>
@@ -576,16 +653,17 @@ export function useStudentLearningHubData(): LearningHubData {
     [classEnrollmentSummaries, classLearningRoutes]
   );
 
+  // Overview sessions already carry the instructor's name, so only the legacy chain looks them up.
   const instructorUuids = useMemo(
     () =>
       Array.from(
         new Set(
-          studentScheduledInstances
+          legacyScheduledInstances
             .map(instance => instance.instructorUuid)
             .filter((value): value is string => Boolean(value))
         )
       ),
-    [studentScheduledInstances]
+    [legacyScheduledInstances]
   );
 
   const instructorQueries = useQueries({
@@ -625,6 +703,35 @@ export function useStudentLearningHubData(): LearningHubData {
   }, [certificates]);
 
   const continueLearning = useMemo<LearningHubClass[]>(() => {
+    if (!legacy) {
+      return overview.items.map((item, index) => {
+        const progress = Math.min(100, Math.max(0, Math.round(item.progress_percentage ?? 0)));
+        const scheduleCount = item.scheduled_instance_count ?? 0;
+        const isCompleted = progress === 100;
+
+        return {
+          id: item.class_definition_uuid,
+          title: item.class_title ?? '',
+          classId: item.class_definition_uuid,
+          courseName: item.course_name ?? '',
+          statusLabel:
+            progress === 0
+              ? `Not started ${progress}%`
+              : isCompleted
+                ? `Completed ${progress}%`
+                : `In progress ${progress}%`,
+          scheduleLabel:
+            scheduleCount === 1 ? '1 scheduled session' : `${scheduleCount} scheduled sessions`,
+          progress,
+          isCompleted,
+          ctaLabel: isCompleted ? 'Class completed' : progress > 0 ? 'Resume class' : 'Start class',
+          href: buildClassLearningHref(item.class_definition_uuid),
+          bannerUrl: item.class_thumbnail_url ?? '',
+          accent: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
+        };
+      });
+    }
+
     return classDefinitions.map((item, index) => {
       const course = item?.course;
       const classDetails = item?.classDetails;
@@ -671,7 +778,7 @@ export function useStudentLearningHubData(): LearningHubData {
         nextLessonId: route?.nextLessonId,
       };
     });
-  }, [certificateMap, classDefinitions, classLearningRoutes]);
+  }, [certificateMap, classDefinitions, classLearningRoutes, legacy, overview.items]);
 
   const ONE_DAY_MS = 24 * 60 * 60 * 1000;
   const TWO_WEEKS_MS = 30 * ONE_DAY_MS;
@@ -720,7 +827,7 @@ export function useStudentLearningHubData(): LearningHubData {
       timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
       locationLabel: item.locationLabel,
       href: item.href,
-      instructor: instructor?.full_name ?? 'Instructor',
+      instructor: instructor?.full_name ?? item.instructorName ?? 'Instructor',
       startMs: start?.getTime(),
       startTime: item.start_time
     };
@@ -753,7 +860,7 @@ export function useStudentLearningHubData(): LearningHubData {
               year: 'numeric',
             }),
             timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
-            instructor: instructor?.full_name ?? 'Instructor',
+            instructor: instructor?.full_name ?? item.instructorName ?? 'Instructor',
             locationLabel: item.locationLabel,
             href: buildClassLearningHref(item.classDefinitionUuid ?? item.uuid ?? '', route),
             lessonId: route?.lessonId,
@@ -863,7 +970,9 @@ export function useStudentLearningHubData(): LearningHubData {
     .reduce((sum, item) => sum + toMinutes(item.duration_minutes), 0);
 
   const activeClassesCount = activeCourses.length;
-  const assignmentsDueCount = assignments.length;
+  const assignmentsDueCount = legacy
+    ? assignments.length
+    : overview.items.reduce((sum, item) => sum + (item.pending_assignment_count ?? 0), 0);
   const overallProgress =
     continueLearning.length > 0
       ? Math.round(
@@ -918,6 +1027,7 @@ export function useStudentLearningHubData(): LearningHubData {
     assignments,
     invite,
     loading:
+      overview.isLoading ||
       classDefinitionsLoading ||
       scheduledInstanceEnrollmentsLoading ||
       certificatesLoading ||
