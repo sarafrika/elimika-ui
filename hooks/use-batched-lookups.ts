@@ -434,24 +434,35 @@ export function useOrganisationsByIds(ids: string[]) {
 const LESSON_CHUNK_SIZE = 50;
 const LESSON_SEARCH_PAGE_SIZE = 200;
 
-/** One `lesson_uuid_in` search per 50 lessons, instead of one search per lesson. */
-function useSearchByLessonIds<T>(lessonUuids: string[], optionsFactory: SearchOptionsFactory) {
-  const lessonChunks = useMemo(() => {
-    const unique = Array.from(new Set(lessonUuids.filter(Boolean))).sort((a, b) =>
+/** Merges lookup results from several scoped searches, first occurrence wins. */
+export function uniqueByUuid<T extends { uuid?: string }>(items: T[]): T[] {
+  const seen = new Map<string, T>();
+  for (const item of items) if (item.uuid && !seen.has(item.uuid)) seen.set(item.uuid, item);
+  return [...seen.values()];
+}
+
+/** One `<field>_in` search per 50 parent ids, instead of one search per parent. */
+function useSearchByParentIds<T>(
+  field: 'lesson_uuid_in' | 'class_definition_uuid_in',
+  parentUuids: string[],
+  optionsFactory: SearchOptionsFactory
+) {
+  const parentChunks = useMemo(() => {
+    const unique = Array.from(new Set(parentUuids.filter(Boolean))).sort((a, b) =>
       a.localeCompare(b)
     );
     return chunk(unique, LESSON_CHUNK_SIZE);
-  }, [lessonUuids]);
+  }, [parentUuids]);
 
   return useQueries({
-    queries: lessonChunks.map(lessonChunk => ({
+    queries: parentChunks.map(parentChunk => ({
       ...optionsFactory({
         query: {
-          searchParams: { lesson_uuid_in: lessonChunk.join(',') },
+          searchParams: { [field]: parentChunk.join(',') },
           pageable: { page: 0, size: LESSON_SEARCH_PAGE_SIZE },
         },
       }),
-      enabled: lessonChunk.length > 0,
+      enabled: parentChunk.length > 0,
       staleTime: STALE_TIMES.entity,
     })),
     combine: results => ({
@@ -459,8 +470,25 @@ function useSearchByLessonIds<T>(lessonUuids: string[], optionsFactory: SearchOp
         result => ((result.data as SearchResponse | undefined)?.data?.content ?? []) as T[]
       ),
       isLoading: results.some(r => r.isLoading),
+      isError: results.some(r => r.isError),
     }),
   });
+}
+
+function useSearchByLessonIds<T>(lessonUuids: string[], optionsFactory: SearchOptionsFactory) {
+  return useSearchByParentIds<T>('lesson_uuid_in', lessonUuids, optionsFactory);
+}
+
+export function useQuizzesByClassIds(classUuids: string[]) {
+  return useSearchByParentIds<Quiz>('class_definition_uuid_in', classUuids, searchQuizzesOptions);
+}
+
+export function useAssignmentsByClassIds(classUuids: string[]) {
+  return useSearchByParentIds<Assignment>(
+    'class_definition_uuid_in',
+    classUuids,
+    searchAssignmentsOptions
+  );
 }
 
 export function useQuizzesByLessonIds(lessonUuids: string[]) {

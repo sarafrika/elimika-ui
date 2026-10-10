@@ -32,6 +32,13 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
 import { useTimeZone } from '@/context/timezone-context';
+import {
+  useAssignmentsByIds,
+  useAssignmentsByLessonIds,
+  useQuizzesByIds,
+  useQuizzesByLessonIds,
+  uniqueByUuid,
+} from '@/hooks/use-batched-lookups';
 import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import {
@@ -50,8 +57,6 @@ import {
   deleteAssignmentScheduleMutation,
   deleteQuizScheduleMutation,
   endScheduledInstanceMutation,
-  getAllAssignmentsOptions,
-  getAllQuizzesOptions,
   getAssignmentAttachmentsOptions,
   getAssignmentSchedulesOptions,
   getAssignmentSchedulesQueryKey,
@@ -2844,14 +2849,6 @@ export default function ClassTrainingPage({
     }),
     enabled: !!activeLessonCourseUuid,
   });
-  const { data: allAssignments } = useQuery({
-    ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 100 } } }),
-    enabled: !!classId,
-  });
-  const { data: allQuizzes } = useQuery({
-    ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 100 } } }),
-    enabled: !!classId,
-  });
   const { data: assignmentSchedules } = useQuery({
     ...getAssignmentSchedulesOptions({ path: { classUuid: classId } }),
     enabled: !!classId,
@@ -2863,10 +2860,34 @@ export default function ClassTrainingPage({
 
   const rubricAssociations: CourseRubricAssociation[] = courseRubricsData?.data?.content ?? [];
   const courseAssessments: CourseAssessment[] = courseAssessmentsData?.data?.content ?? [];
-  const assignmentOptions: Assignment[] = allAssignments?.data?.content ?? [];
-  const quizOptions: Quiz[] = allQuizzes?.data?.content ?? [];
   const assignmentScheduleItems: AssignmentScheduleItem[] = assignmentSchedules?.data ?? [];
   const quizScheduleItems: QuizScheduleItem[] = quizSchedules?.data ?? [];
+
+  // Scoped lookups: the active lesson's items plus whatever this class has scheduled.
+  const activeLessonUuids = useMemo(
+    () => (activeLesson?.uuid ? [activeLesson.uuid] : []),
+    [activeLesson?.uuid]
+  );
+  const scheduledAssignmentUuids = useMemo(
+    () => (assignmentSchedules?.data ?? []).map(item => item.assignment_uuid).filter(Boolean),
+    [assignmentSchedules]
+  );
+  const scheduledQuizUuids = useMemo(
+    () => (quizSchedules?.data ?? []).map(item => item.quiz_uuid).filter(Boolean),
+    [quizSchedules]
+  );
+  const { items: activeLessonAssignmentItems } = useAssignmentsByLessonIds(activeLessonUuids);
+  const { items: activeLessonQuizItems } = useQuizzesByLessonIds(activeLessonUuids);
+  const { assignmentMap: scheduledAssignmentMap } = useAssignmentsByIds(scheduledAssignmentUuids);
+  const { quizMap: scheduledQuizMap } = useQuizzesByIds(scheduledQuizUuids);
+  const assignmentOptions: Assignment[] = useMemo(
+    () => uniqueByUuid([...activeLessonAssignmentItems, ...Object.values(scheduledAssignmentMap)]),
+    [activeLessonAssignmentItems, scheduledAssignmentMap]
+  );
+  const quizOptions: Quiz[] = useMemo(
+    () => uniqueByUuid([...activeLessonQuizItems, ...Object.values(scheduledQuizMap)]),
+    [activeLessonQuizItems, scheduledQuizMap]
+  );
 
   const rubricUuids = useMemo(
     () =>
