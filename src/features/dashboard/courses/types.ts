@@ -1,6 +1,7 @@
 import type {
   BookingResponse,
   ClassDefinition,
+  ClassRatingSummary,
   CommerceCatalogueItem,
   Course,
   Instructor,
@@ -16,6 +17,10 @@ export type BundledClass = ClassDefinition & {
   schedule: ScheduledInstance[];
   enrollments: StudentSchedule[];
   catalogue: CommerceCatalogueItem | null;
+  classRating?: ClassRatingSummary | null;
+  // From the batch class endpoint; null when the viewer is not a party to the class.
+  enrolledCount?: number | null;
+  isStudentEnrolled?: boolean;
 };
 
 export type ProgramBundledClass = ClassDefinition & {
@@ -25,6 +30,9 @@ export type ProgramBundledClass = ClassDefinition & {
   schedule: ScheduledInstance[];
   enrollments: StudentSchedule[];
   catalogue: CommerceCatalogueItem | null;
+  // From the batch class endpoint; null when the viewer is not a party to the class.
+  enrolledCount?: number | null;
+  isStudentEnrolled?: boolean;
 };
 
 export type SearchInstructor = Instructor & {
