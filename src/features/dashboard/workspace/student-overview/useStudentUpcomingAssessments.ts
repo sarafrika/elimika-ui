@@ -1,11 +1,10 @@
 'use client';
 
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useClassAssessmentSchedules } from '@/hooks/use-class-assessment-schedules';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
-  getAssignmentSchedulesOptions,
-  getQuizSchedulesOptions,
   searchAttemptsOptions,
   searchSubmissionsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -31,7 +30,7 @@ import {
 } from './useStudentOverviewData';
 
 const ASSESSMENT_PAGE_SIZE = 1000;
-/** Schedules are per-class endpoints; the busiest classes keep the page inside its request budget. */
+/** Caps the classes whose schedules load, so the busiest classes stay inside the request budget. */
 const MAX_SCHEDULED_CLASSES = 6;
 
 const timeOf = (value?: Date | string) => (value ? new Date(value).getTime() || 0 : 0);
@@ -40,21 +39,6 @@ const lastActivity = (enrollment: StudentClassEnrollmentSummary) =>
     timeOf(enrollment.latest_scheduled_instance_start_time),
     timeOf(enrollment.latest_activity_date)
   );
-
-type ScheduleQueryResult<T> = {
-  data?: { data?: T[] };
-  isLoading: boolean;
-  error: unknown;
-};
-
-/** Module-level so useQueries can memoise the combined result between renders. */
-function combineSchedules<T>(results: ScheduleQueryResult<T>[]) {
-  return {
-    schedules: results.flatMap(result => result.data?.data ?? []),
-    isLoading: results.some(result => result.isLoading),
-    error: results.find(result => result.error)?.error ?? null,
-  };
-}
 
 const formatAssessmentDueLabel = (value?: Date | string | null) => {
   if (!value) {
@@ -138,26 +122,29 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
     return map;
   }, [classEnrollments]);
 
-  const assignmentSchedulesQuery = useQueries({
-    queries: pendingAssignmentClassIds.slice(0, MAX_SCHEDULED_CLASSES).map(classUuid => ({
-      ...getAssignmentSchedulesOptions({ path: { classUuid } }),
-      staleTime: STALE_TIMES.live,
-      refetchOnWindowFocus: false,
-    })),
-    combine: combineSchedules,
-  });
+  // One batched assessment-schedules call covers both pending sets.
+  const scheduleClassIds = useMemo(
+    () =>
+      uniqueIds([
+        ...pendingAssignmentClassIds.slice(0, MAX_SCHEDULED_CLASSES),
+        ...pendingQuizClassIds.slice(0, MAX_SCHEDULED_CLASSES),
+      ]),
+    [pendingAssignmentClassIds, pendingQuizClassIds]
+  );
+  const schedulesQuery = useClassAssessmentSchedules(scheduleClassIds);
 
-  const quizSchedulesQuery = useQueries({
-    queries: pendingQuizClassIds.slice(0, MAX_SCHEDULED_CLASSES).map(classUuid => ({
-      ...getQuizSchedulesOptions({ path: { classUuid } }),
-      staleTime: STALE_TIMES.live,
-      refetchOnWindowFocus: false,
-    })),
-    combine: combineSchedules,
-  });
-
-  const assignmentSchedules = assignmentSchedulesQuery.schedules;
-  const quizSchedules = quizSchedulesQuery.schedules;
+  const assignmentSchedules = useMemo(() => {
+    const wanted = new Set(pendingAssignmentClassIds.slice(0, MAX_SCHEDULED_CLASSES));
+    return schedulesQuery.assignmentSchedules.filter(schedule =>
+      wanted.has(schedule.class_definition_uuid ?? '')
+    );
+  }, [pendingAssignmentClassIds, schedulesQuery.assignmentSchedules]);
+  const quizSchedules = useMemo(() => {
+    const wanted = new Set(pendingQuizClassIds.slice(0, MAX_SCHEDULED_CLASSES));
+    return schedulesQuery.quizSchedules.filter(schedule =>
+      wanted.has(schedule.class_definition_uuid ?? '')
+    );
+  }, [pendingQuizClassIds, schedulesQuery.quizSchedules]);
 
   const enrollmentIds = useMemo(
     () =>
@@ -350,8 +337,7 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
       overview.isLoading ||
       classEnrollmentsQuery.isLoading ||
       (legacy && courseEnrollmentsQuery.isLoading) ||
-      assignmentSchedulesQuery.isLoading ||
-      quizSchedulesQuery.isLoading ||
+      schedulesQuery.isLoading ||
       isLoadingAssignments ||
       isLoadingQuizzes ||
       submissionsQuery.isLoading ||
