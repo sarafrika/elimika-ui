@@ -420,8 +420,15 @@ function CurrentTimeIndicator({
 
 // Only real enrolled students are shown; an empty roster renders nothing rather
 // than claiming attendees the class does not have.
-function EventStudents({ students }: { students: string[] }) {
-  if (!students.length) return null;
+function EventStudents({ students, enrolledCount }: { students: string[]; enrolledCount?: number }) {
+  if (!students.length) {
+    if (!enrolledCount) return null;
+    return (
+      <p className='mt-1 hidden truncate text-[10px] opacity-75 lg:block'>
+        {enrolledCount} enrolled
+      </p>
+    );
+  }
 
   const shown = students.slice(0, 3);
   const remaining = students.length - shown.length;
@@ -463,7 +470,7 @@ function EventBlock({ event, className, ...trigger }: EventTriggerProps & { even
         {event.location}
       </p>
 
-      <EventStudents students={event.students} />
+      <EventStudents students={event.students} enrolledCount={event.enrolledCount} />
     </button>
   );
 }

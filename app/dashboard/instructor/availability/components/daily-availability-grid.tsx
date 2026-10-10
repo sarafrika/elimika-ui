@@ -2,7 +2,7 @@
 'use client';
 
 import { Calendar, ChevronLeft, ChevronRight, Clock, Lock } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   JOB_TIME_STYLES,
   type JobTimeDetail,
@@ -29,6 +29,8 @@ interface DailyAvailabilityGridProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
   isEditing: boolean;
+  /** Reports the date on screen so the page can fetch just that window. */
+  onVisibleDateChange?: (date: Date) => void;
 }
 
 type AvailabilitySlot = CalendarEvent & {
@@ -57,8 +59,13 @@ const SLOT_COLOR_MAP = {
 export function DailyAvailabilityGrid({
   availabilityData,
   onAvailabilityUpdate,
+  onVisibleDateChange,
 }: DailyAvailabilityGridProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
+
+  useEffect(() => {
+    onVisibleDateChange?.(currentDate);
+  }, [currentDate, onVisibleDateChange]);
   const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
   const [selectedSlot, setSelectedSlot] = useState<{

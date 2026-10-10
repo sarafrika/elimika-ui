@@ -1,10 +1,12 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { useUserProfile } from '@/context/profile-context';
-import { dateWindow, resolveDisplayZone } from '@/lib/date';
+import { useCalendarFetchRange } from '@/lib/calendar-range';
+import { localDate, resolveDisplayZone } from '@/lib/date';
 import { jobTimeKind, jobTimeTitle } from '@/lib/instructor-job-time';
+import { STALE_TIMES } from '@/lib/query-client';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorCalendarEntry } from '@/services/client/types.gen';
 import AvailabilityManager from './components/availability-manager';
@@ -13,10 +15,11 @@ import { type AvailabilityData, type CalendarEvent, toCalendarInstants } from '.
 const Page = () => {
   const user = useUserProfile();
   const displayZone = useMemo(() => resolveDisplayZone(), []);
-  const calendarRange = useMemo(() => {
-    const { start, end } = dateWindow({ pastMonths: 3, futureMonths: 9 });
-    return { start_date: start, end_date: end };
-  }, []);
+  const [visibleRange, setVisibleRange] = useCalendarFetchRange();
+  const calendarRange = useMemo(
+    () => ({ start_date: localDate(visibleRange.start), end_date: localDate(visibleRange.end) }),
+    [visibleRange.end, visibleRange.start]
+  );
 
   const { data: availabilitySlotsResponse } = useQuery({
     ...getInstructorCalendarOptions({
@@ -24,6 +27,8 @@ const Page = () => {
       query: calendarRange,
     }),
     enabled: !!user?.instructor?.uuid,
+    staleTime: STALE_TIMES.live,
+    placeholderData: keepPreviousData,
   });
 
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>(() => ({
@@ -74,6 +79,7 @@ const Page = () => {
     <AvailabilityManager
       availabilityData={availabilityData}
       onAvailabilityUpdate={setAvailabilityData}
+      onVisibleRangeChange={setVisibleRange}
     />
   );
 };

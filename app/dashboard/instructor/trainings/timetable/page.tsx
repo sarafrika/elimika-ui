@@ -1,11 +1,13 @@
 'use client';
 
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
 import type { DashboardClass } from '@/app/dashboard/_components/types';
 import { useInstructor } from '@/context/instructor-context';
-import { dateWindow } from '@/lib/date';
+import { useCalendarFetchRange } from '@/lib/calendar-range';
+import { localDate } from '@/lib/date';
+import { STALE_TIMES } from '@/lib/query-client';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
 import {
   type AvailabilityData,
   type ClassScheduleItem,
@@ -20,10 +22,11 @@ interface TimetablePageProps {
 
 const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePageProps) => {
   const instructor = useInstructor();
-  const scheduleRange = useMemo(() => {
-    const { start, end } = dateWindow({ pastMonths: 3, futureMonths: 9 });
-    return { start_date: start, end_date: end };
-  }, []);
+  const [visibleRange, setVisibleRange] = useCalendarFetchRange();
+  const scheduleRange = useMemo(
+    () => ({ start_date: localDate(visibleRange.start), end_date: localDate(visibleRange.end) }),
+    [visibleRange.end, visibleRange.start]
+  );
 
   const {
     data: timetable,
@@ -35,6 +38,8 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
       query: scheduleRange,
     }),
     enabled: !!instructor?.uuid,
+    staleTime: STALE_TIMES.live,
+    placeholderData: keepPreviousData,
   });
 
   const instructorSchedule = timetable?.data ?? [];
@@ -82,6 +87,7 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
     <TimetableManager
       availabilityData={availabilityData}
       onAvailabilityUpdate={handleAvailabilityUpdate}
+      onVisibleRangeChange={setVisibleRange}
     />
   );
 };
