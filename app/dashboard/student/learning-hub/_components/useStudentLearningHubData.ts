@@ -14,6 +14,7 @@ import {
   getInstructorByUuidOptions,
   getScheduledInstanceEnrollmentsForStudentOptions,
   getStudentCertificatesOptions,
+  getStudentScheduleOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -24,6 +25,8 @@ import type {
   StudentClassEnrollmentSummary,
   StudentCourseEnrollmentSummary,
 } from '@/services/client/types.gen';
+import { dayjs, localDate } from '@/lib/date';
+import { STALE_TIMES } from '@/lib/query-client';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 export type LearningHubStat = {
@@ -72,7 +75,7 @@ export type LearningHubLiveClass = {
   contentId?: string;
   lastLessonId?: string;
   nextLessonId?: string;
-  startTime: string | Date
+  startTime: string | Date;
 };
 
 export type LearningHubNextClass = LearningHubUpcomingClass & {
@@ -92,7 +95,7 @@ export type LearningHubUpcomingClass = {
   contentId?: string;
   lastLessonId?: string;
   nextLessonId?: string;
-  startTime: string | Date
+  startTime: string | Date;
 };
 
 export type LearningHubAssignment = {
@@ -245,7 +248,9 @@ const getClassStatusLabel = (
 };
 
 const getCourseStatusLabel = (status?: string | null, progress?: number | null) => {
-  const normalized = String(status ?? '').trim().toLowerCase();
+  const normalized = String(status ?? '')
+    .trim()
+    .toLowerCase();
 
   if (normalized === 'completed' || normalized === 'completed_course') return 'Completed';
   if (normalized === 'cancelled' || normalized === 'dropped') return 'Cancelled';
@@ -256,8 +261,13 @@ const getCourseStatusLabel = (status?: string | null, progress?: number | null) 
   return 'Not started';
 };
 
-const getClassEnrollmentStatusLabel = (status?: string | null, latestStart?: Date | string | null) => {
-  const normalized = String(status ?? '').trim().toLowerCase();
+const getClassEnrollmentStatusLabel = (
+  status?: string | null,
+  latestStart?: Date | string | null
+) => {
+  const normalized = String(status ?? '')
+    .trim()
+    .toLowerCase();
 
   if (normalized === 'attended' || normalized === 'completed') return 'Completed';
   if (normalized === 'cancelled') return 'Cancelled';
@@ -335,15 +345,26 @@ export function useStudentLearningHubData(): LearningHubData {
     enabled: legacy && Boolean(student?.uuid),
   });
 
+  // On the composite path the 30-day timetable lists every enrolled session in one request.
+  const scheduleWindow = useMemo(() => {
+    const today = dayjs().format('YYYY-MM-DD');
+    return { start: today, end: dayjs(today).add(30, 'day').format('YYYY-MM-DD') };
+  }, []);
+  const { data: studentScheduleResponse, isLoading: studentScheduleLoading } = useQuery({
+    ...getStudentScheduleOptions({
+      path: { studentUuid: student?.uuid as string },
+      query: { start: localDate(scheduleWindow.start), end: localDate(scheduleWindow.end) },
+    }),
+    enabled: !legacy && Boolean(student?.uuid),
+    staleTime: STALE_TIMES.live,
+  });
+
   const { data: studentCertificatesResponse, isLoading: certificatesLoading } = useQuery({
     ...getStudentCertificatesOptions({ path: { studentUuid: student?.uuid as string } }),
     enabled: Boolean(student?.uuid),
   });
 
-  const {
-    data: enrollmentOverviewResponse,
-    isLoading: enrollmentOverviewLoading,
-  } = useQuery({
+  const { data: enrollmentOverviewResponse, isLoading: enrollmentOverviewLoading } = useQuery({
     ...getEnrollmentOverviewForStudentOptions({
       path: { studentUuid: student?.uuid as string },
       query: { pageable: { page: 0, size: 24 } },
@@ -438,13 +459,12 @@ export function useStudentLearningHubData(): LearningHubData {
     enrollmentOverviewResponse?.data?.course_enrollments?.content ?? [];
   const classEnrollmentSummaries =
     enrollmentOverviewResponse?.data?.class_enrollments?.content ?? [];
-  const courseEnrollmentCount =
-    Number(enrollmentOverviewResponse?.data?.course_enrollments?.metadata?.totalElements ?? 0);
-  const classEnrollmentCount =
-    Number(enrollmentOverviewResponse?.data?.class_enrollments?.metadata?.totalElements ?? 0);
-
-
-
+  const courseEnrollmentCount = Number(
+    enrollmentOverviewResponse?.data?.course_enrollments?.metadata?.totalElements ?? 0
+  );
+  const classEnrollmentCount = Number(
+    enrollmentOverviewResponse?.data?.class_enrollments?.metadata?.totalElements ?? 0
+  );
 
   const enrolledScheduledInstanceUuids = useMemo(
     () =>
@@ -459,34 +479,41 @@ export function useStudentLearningHubData(): LearningHubData {
   const overviewScheduledInstances = useMemo(() => {
     if (legacy) return [];
 
-    return overview.items.flatMap(item => {
-      const session = item.next_session;
-      if (!session?.start_time) return [];
+    const itemsByClass = new Map(overview.items.map(item => [item.class_definition_uuid, item]));
+    const rows = studentScheduleResponse?.data ?? [];
 
-      const startMs = new Date(session.start_time).getTime();
-      const endMs = session.end_time ? new Date(session.end_time).getTime() : Number.NaN;
+    return rows.flatMap(row => {
+      if (!row?.start_time || !row.scheduled_instance_uuid) return [];
+      if (row.enrollment_status === 'CANCELLED') return [];
+
+      const classUuid = row.class_definition_uuid ?? '';
+      const item = itemsByClass.get(classUuid);
+      const startMs = new Date(row.start_time).getTime();
+      const endMs = row.end_time ? new Date(row.end_time).getTime() : Number.NaN;
+      const fallbackMinutes =
+        Number.isNaN(startMs) || Number.isNaN(endMs)
+          ? 0
+          : Math.max(0, Math.round((endMs - startMs) / 60000));
 
       return [
         {
-          uuid: session.scheduled_instance_uuid,
-          title: session.title,
-          start_time: session.start_time,
-          end_time: session.end_time,
+          uuid: row.scheduled_instance_uuid,
+          title: row.title,
+          start_time: row.start_time,
+          end_time: row.end_time,
           duration_minutes:
-            Number.isNaN(startMs) || Number.isNaN(endMs)
-              ? 0
-              : Math.max(0, Math.round((endMs - startMs) / 60000)),
-          classDefinitionUuid: item.class_definition_uuid,
-          classTitle: item.class_title ?? item.course_name ?? 'Untitled class',
-          courseName: item.course_name ?? 'Standalone class',
-          instructorUuid: session.instructor_uuid || item.instructor_uuid || '',
-          instructorName: item.instructor_name,
-          locationLabel: session.location_name ?? 'Location pending',
-          href: buildClassLearningHref(item.class_definition_uuid),
+            row.duration_minutes != null ? Number(row.duration_minutes) : fallbackMinutes,
+          classDefinitionUuid: classUuid,
+          classTitle: item?.class_title ?? row.title ?? item?.course_name ?? 'Untitled class',
+          courseName: item?.course_name ?? 'Standalone class',
+          instructorUuid: row.instructor_uuid || item?.instructor_uuid || '',
+          instructorName: item?.instructor_name,
+          locationLabel: row.location_name ?? 'Location pending',
+          href: buildClassLearningHref(classUuid),
         },
       ];
     });
-  }, [legacy, overview.items]);
+  }, [legacy, overview.items, studentScheduleResponse]);
 
   const legacyScheduledInstances = useMemo(() => {
     return classDefinitions.flatMap(classInfo => {
@@ -575,8 +602,7 @@ export function useStudentLearningHubData(): LearningHubData {
         return;
       }
 
-      const durationMinutes =
-        (course?.duration_hours ?? 0) * 60 + (course?.duration_minutes ?? 0);
+      const durationMinutes = (course?.duration_hours ?? 0) * 60 + (course?.duration_minutes ?? 0);
 
       courseGroups.set(courseUuid, {
         title: course?.name ?? 'Untitled course',
@@ -612,11 +638,7 @@ export function useStudentLearningHubData(): LearningHubData {
           updatedLabel: item.updated_date ? formatDate(item.updated_date) : 'Recently updated',
           href: `/dashboard/student/courses/${item.course_uuid}`,
           ctaLabel:
-            progress >= 100
-              ? 'Review course'
-              : progress > 0
-                ? 'Continue learning'
-                : 'Start course',
+            progress >= 100 ? 'Review course' : progress > 0 ? 'Continue learning' : 'Start course',
           tone: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
         };
       }),
@@ -627,7 +649,10 @@ export function useStudentLearningHubData(): LearningHubData {
     () =>
       classEnrollmentSummaries.map((item, index) => {
         const latestStart = item.latest_scheduled_instance_start_time ?? null;
-        const statusLabel = getClassEnrollmentStatusLabel(item.latest_enrollment_status, latestStart);
+        const statusLabel = getClassEnrollmentStatusLabel(
+          item.latest_enrollment_status,
+          latestStart
+        );
         const route = classLearningRoutes.get(item.class_definition_uuid);
 
         return {
@@ -641,7 +666,9 @@ export function useStudentLearningHubData(): LearningHubData {
           latestActivityLabel: item.latest_activity_date
             ? `Updated ${formatDate(item.latest_activity_date)}`
             : 'No recent activity',
-          latestStartLabel: latestStart ? `Starts ${formatDate(latestStart)}` : 'Start time pending',
+          latestStartLabel: latestStart
+            ? `Starts ${formatDate(latestStart)}`
+            : 'Start time pending',
           href: buildClassLearningHref(item.class_definition_uuid, route),
           tone: index % 3 === 0 ? 'blue' : index % 3 === 1 ? 'slate' : 'green',
           lessonId: route?.lessonId,
@@ -829,7 +856,7 @@ export function useStudentLearningHubData(): LearningHubData {
       href: item.href,
       instructor: instructor?.full_name ?? item.instructorName ?? 'Instructor',
       startMs: start?.getTime(),
-      startTime: item.start_time
+      startTime: item.start_time,
     };
   }, [instructorMap, upcomingClasses]);
 
@@ -874,33 +901,32 @@ export function useStudentLearningHubData(): LearningHubData {
 
   const upcomingClassesList = useMemo<LearningHubUpcomingClass[]>(
     () =>
-      upcomingClasses
-        .map(item => {
-          const start = item.start_time ? new Date(item.start_time) : null;
-          const end = item.end_time ? new Date(item.end_time) : null;
-          const startMs = start?.getTime();
-          const route = classLearningRoutes.get(item.classDefinitionUuid ?? item.uuid ?? '');
+      upcomingClasses.map(item => {
+        const start = item.start_time ? new Date(item.start_time) : null;
+        const end = item.end_time ? new Date(item.end_time) : null;
+        const startMs = start?.getTime();
+        const route = classLearningRoutes.get(item.classDefinitionUuid ?? item.uuid ?? '');
 
-          return {
-            id: item.uuid ?? item.classDefinitionUuid,
-            title: item.classTitle ?? '',
-            courseName: item.courseName,
-            dateLabel: formatDate(start, {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            }),
-            timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
-            locationLabel: item.locationLabel,
-            href: buildClassLearningHref(item.classDefinitionUuid ?? item.uuid ?? '', route),
-            startMs: typeof startMs === 'number' && !Number.isNaN(startMs) ? startMs : undefined,
-            lessonId: route?.lessonId,
-            contentId: route?.contentId,
-            lastLessonId: route?.lastLessonId,
-            nextLessonId: route?.nextLessonId,
-            startTime: item.start_time
-          };
-        }),
+        return {
+          id: item.uuid ?? item.classDefinitionUuid,
+          title: item.classTitle ?? '',
+          courseName: item.courseName,
+          dateLabel: formatDate(start, {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+          timeLabel: `${formatTime(start)} - ${formatTime(end)}`,
+          locationLabel: item.locationLabel,
+          href: buildClassLearningHref(item.classDefinitionUuid ?? item.uuid ?? '', route),
+          startMs: typeof startMs === 'number' && !Number.isNaN(startMs) ? startMs : undefined,
+          lessonId: route?.lessonId,
+          contentId: route?.contentId,
+          lastLessonId: route?.lastLessonId,
+          nextLessonId: route?.nextLessonId,
+          startTime: item.start_time,
+        };
+      }),
     [classLearningRoutes, upcomingClasses]
   );
 
@@ -976,8 +1002,8 @@ export function useStudentLearningHubData(): LearningHubData {
   const overallProgress =
     continueLearning.length > 0
       ? Math.round(
-        continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
-      )
+          continueLearning.reduce((sum, item) => sum + item.progress, 0) / continueLearning.length
+        )
       : 0;
 
   const stats: LearningHubStat[] = [
@@ -1009,9 +1035,7 @@ export function useStudentLearningHubData(): LearningHubData {
 
   return {
     studentName:
-      profile?.first_name && profile?.last_name
-        ? `${profile.first_name} ${profile.last_name}`
-        : '',
+      profile?.first_name && profile?.last_name ? `${profile.first_name} ${profile.last_name}` : '',
     firstName: profile?.first_name ?? '',
     stats,
     courseEnrollments,
@@ -1028,6 +1052,7 @@ export function useStudentLearningHubData(): LearningHubData {
     invite,
     loading:
       overview.isLoading ||
+      (!legacy && Boolean(student?.uuid) && studentScheduleLoading) ||
       classDefinitionsLoading ||
       scheduledInstanceEnrollmentsLoading ||
       certificatesLoading ||
