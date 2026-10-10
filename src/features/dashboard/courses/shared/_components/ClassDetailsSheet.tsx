@@ -25,7 +25,7 @@ interface ClassDetailSheetProps {
 
   startsAt?: string | Date | null;
   endsAt?: string | Date | null;
-  uniqueStudentUuids: string[];
+  seatsTaken: number | string;
   courseLessons: Lesson[];
 
   onClose: () => void;
@@ -42,7 +42,7 @@ export function ClassDetailSheet({
   organisation,
   startsAt,
   endsAt,
-  uniqueStudentUuids,
+  seatsTaken,
   courseLessons,
   onClose,
   onEnroll,
@@ -180,7 +180,7 @@ export function ClassDetailSheet({
                   <InfoRow
                     icon={<Users className='h-4 w-4' />}
                     label='Students'
-                    value={`${uniqueStudentUuids.length} / ${detail.max_participants}`}
+                    value={`${seatsTaken} / ${detail.max_participants}`}
                   />
 
                   <InfoRow

@@ -198,7 +198,12 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   const uniqueStudentUuids = [
     ...new Set(enrollments.map(({ student_uuid }: { student_uuid: string }) => student_uuid)),
   ];
-  const isStudentEnrolled = student ? uniqueStudentUuids.includes(student?.uuid) : false;
+  const isStudentEnrolled =
+    cls.isStudentEnrolled === true ||
+    (student ? uniqueStudentUuids.includes(student?.uuid) : false);
+  // The batch count is only sent to parties to the class; otherwise fall back to loaded enrolments.
+  const seatsTaken: number | string =
+    cls.enrolledCount ?? (enrollments.length > 0 ? uniqueStudentUuids.length : '—');
 
   // REGISTRATION PERIOD, CLASS ENDED BLOCK
   useEffect(() => {
@@ -409,7 +414,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
             <div className='inline-flex items-center gap-1.5'>
               <Users className='h-3.5 w-3.5' />
-              {uniqueStudentUuids.length ?? 0} / {cls.max_participants ?? 0} seats
+              {seatsTaken} / {cls.max_participants ?? 0} seats
             </div>
 
             <div className='inline-flex items-center gap-1.5'>
@@ -506,7 +511,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
         organisation={organisation}
         startsAt={startsAt}
         endsAt={endsAt}
-        uniqueStudentUuids={uniqueStudentUuids as string[]}
+        seatsTaken={seatsTaken}
         courseLessons={courseLessons}
         onClose={() => setDetail(null)}
         onEnroll={onEnroll}

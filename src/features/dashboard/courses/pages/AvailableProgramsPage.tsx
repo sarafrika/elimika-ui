@@ -54,19 +54,12 @@ export default function AvailableProgramsPage({
     endDateInput,
     setStartDateInput,
     setEndDateInput,
-    appliedStart,
-    appliedEnd,
     dateError,
     applyDates,
     clearDates,
   } = useDateRangeFilter();
 
-  const { classes = [], loading } = useProgramBundledClassInfo(
-    programId,
-    appliedStart ?? undefined,
-    appliedEnd ?? undefined,
-    student
-  );
+  const { classes = [], loading } = useProgramBundledClassInfo(programId, student);
 
   function toggle(id: string) {
     setSelected(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]));

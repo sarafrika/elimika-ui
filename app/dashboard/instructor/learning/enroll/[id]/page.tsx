@@ -48,11 +48,7 @@ const EnrollmentPage = () => {
 
   const [openEnrollModal, setOpenEnrollModal] = useState(false);
   const [enrollingClass, setEnrollingClass] = useState<BundledClass | null>(null);
-  const { classes, loading, isError } = useCourseClassesWithDetails(
-    courseId,
-    '2025-09-12',
-    '2026-12-12'
-  );
+  const { classes, loading, isError } = useCourseClassesWithDetails(courseId);
 
   const enrollStudent = useMutation(enrollStudentMutation());
   const formatDateTime = (value?: Date | string | null) => {
@@ -140,7 +136,7 @@ const EnrollmentPage = () => {
               key={cls?.uuid}
               cls={cls}
               isFull={false}
-              disableEnroll={cls?.enrollments?.length > 0}
+              disableEnroll={cls.isStudentEnrolled === true}
               handleEnroll={() => {
                 setOpenEnrollModal(true);
                 setEnrollingClass(cls);
