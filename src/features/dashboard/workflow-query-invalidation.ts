@@ -2,6 +2,12 @@ import type { QueryClient, QueryKey } from '@tanstack/react-query';
 
 type GeneratedQueryKeyHead = {
   _id?: string;
+  path?: Record<string, unknown>;
+};
+
+/** Narrows single-entity reads to these ids; lists and searches are always invalidated. */
+export type WorkflowInvalidationScope = {
+  entityUuids?: readonly string[];
 };
 
 type WorkflowNotification = {
@@ -203,19 +209,51 @@ const assessmentQueryIds = workflowQueryIds.assessment;
 const certificateQueryIds = workflowQueryIds.certificate;
 const invitationQueryIds = workflowQueryIds.invitation;
 
+/**
+ * Reads addressed by the event subject's own uuid, which event metadata always names.
+ * Profiles and classes stay family-wide: their events carry user or job ids instead.
+ */
+const DETAIL_QUERY_IDS: ReadonlySet<string> = new Set([
+  'getCourseByUuid',
+  'getTrainingProgramByUuid',
+  'getCourseEditDiff',
+  'getCourseModerationHistory',
+  'getCourseApprovalStatus',
+  'getProgramModerationHistory',
+  'getProgramApprovalStatus',
+  'getTrainingApplication',
+  'getProgramTrainingApplication',
+  'getTrainingApplicationHistory',
+  'getProgramTrainingApplicationHistory',
+  'getJob',
+  'getJobEligibility',
+  'getJobApplication',
+  'listJobApplicationEvents',
+  'getAssignmentByUuid',
+  'getOrder',
+]);
+
 /** A server-side event can change these unwatched, so a restored copy is never fresh. */
 export const VOLATILE_GENERATED_QUERY_IDS: ReadonlySet<string> = Object.freeze(
   new Set<string>(Object.values(workflowQueryIds).flat())
 );
 
-function getGeneratedQueryId(queryKey: QueryKey) {
-  const head = queryKey[0] as GeneratedQueryKeyHead | unknown;
-  if (head && typeof head === 'object' && '_id' in head) {
-    const id = (head as GeneratedQueryKeyHead)._id;
-    return typeof id === 'string' ? id : undefined;
-  }
+function getGeneratedQueryHead(queryKey: QueryKey): GeneratedQueryKeyHead | undefined {
+  const head = queryKey[0];
+  return head && typeof head === 'object' && '_id' in head
+    ? (head as GeneratedQueryKeyHead)
+    : undefined;
+}
 
-  return undefined;
+function getGeneratedQueryId(queryKey: QueryKey) {
+  const id = getGeneratedQueryHead(queryKey)?._id;
+  return typeof id === 'string' ? id : undefined;
+}
+
+function pathMatchesScope(head: GeneratedQueryKeyHead, uuids: ReadonlySet<string>) {
+  return Object.values(head.path ?? {}).some(
+    value => typeof value === 'string' && uuids.has(value.toLowerCase())
+  );
 }
 
 export function isVolatileGeneratedQuery(queryKey: QueryKey) {
@@ -223,12 +261,21 @@ export function isVolatileGeneratedQuery(queryKey: QueryKey) {
   return Boolean(id && VOLATILE_GENERATED_QUERY_IDS.has(id));
 }
 
-export function invalidateGeneratedQueryIds(queryClient: QueryClient, queryIds: readonly string[]) {
+export function invalidateGeneratedQueryIds(
+  queryClient: QueryClient,
+  queryIds: readonly string[],
+  scope?: WorkflowInvalidationScope
+) {
   const idSet = new Set(queryIds);
+  const uuids = scope?.entityUuids?.length
+    ? new Set(scope.entityUuids.map(uuid => uuid.toLowerCase()))
+    : null;
   return queryClient.invalidateQueries({
     predicate: query => {
-      const id = getGeneratedQueryId(query.queryKey);
-      return Boolean(id && idSet.has(id));
+      const head = getGeneratedQueryHead(query.queryKey);
+      const id = typeof head?._id === 'string' ? head._id : undefined;
+      if (!head || !id || !idSet.has(id)) return false;
+      return !uuids || !DETAIL_QUERY_IDS.has(id) || pathMatchesScope(head, uuids);
     },
   });
 }
@@ -237,9 +284,12 @@ function invalidateQueryKeyPrefixes(queryClient: QueryClient, queryKeys: readonl
   return Promise.all(queryKeys.map(queryKey => queryClient.invalidateQueries({ queryKey })));
 }
 
-export async function invalidateContentModerationWorkflowQueries(queryClient: QueryClient) {
+export async function invalidateContentModerationWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, contentModerationQueryIds),
+    invalidateGeneratedQueryIds(queryClient, contentModerationQueryIds, scope),
     invalidateQueryKeyPrefixes(queryClient, [
       notificationQueryKey,
       ['course-creator-dashboard-courses'],
@@ -248,9 +298,12 @@ export async function invalidateContentModerationWorkflowQueries(queryClient: Qu
   ]);
 }
 
-export async function invalidateDomainVerificationWorkflowQueries(queryClient: QueryClient) {
+export async function invalidateDomainVerificationWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, domainVerificationQueryIds),
+    invalidateGeneratedQueryIds(queryClient, domainVerificationQueryIds, scope),
     invalidateQueryKeyPrefixes(queryClient, [
       notificationQueryKey,
       ['profile'],
@@ -261,9 +314,12 @@ export async function invalidateDomainVerificationWorkflowQueries(queryClient: Q
   ]);
 }
 
-export async function invalidateTrainingApplicationWorkflowQueries(queryClient: QueryClient) {
+export async function invalidateTrainingApplicationWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, trainingApplicationQueryIds),
+    invalidateGeneratedQueryIds(queryClient, trainingApplicationQueryIds, scope),
     invalidateQueryKeyPrefixes(queryClient, [
       notificationQueryKey,
       ['class-details-related'],
@@ -282,30 +338,42 @@ const rateUpdateJobQueryIds = [
   'listInstructorApplications',
 ] as const;
 
-export async function invalidateRateUpdateWorkflowQueries(queryClient: QueryClient) {
+export async function invalidateRateUpdateWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
   await Promise.all([
-    invalidateTrainingApplicationWorkflowQueries(queryClient),
-    invalidateGeneratedQueryIds(queryClient, rateUpdateJobQueryIds),
+    invalidateTrainingApplicationWorkflowQueries(queryClient, scope),
+    invalidateGeneratedQueryIds(queryClient, rateUpdateJobQueryIds, scope),
   ]);
 }
 
-export async function invalidateEnrollmentWorkflowQueries(queryClient: QueryClient) {
+export async function invalidateEnrollmentWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, enrollmentQueryIds),
+    invalidateGeneratedQueryIds(queryClient, enrollmentQueryIds, scope),
     invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['class-details-related']]),
   ]);
 }
 
-export async function invalidateJobApplicationWorkflowQueries(queryClient: QueryClient) {
+export async function invalidateJobApplicationWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, jobApplicationQueryIds),
+    invalidateGeneratedQueryIds(queryClient, jobApplicationQueryIds, scope),
     invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['class-details-related']]),
   ]);
 }
 
-export async function invalidateReviewWorkflowQueries(queryClient: QueryClient) {
+export async function invalidateReviewWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, reviewQueryIds),
+    invalidateGeneratedQueryIds(queryClient, reviewQueryIds, scope),
     invalidateQueryKeyPrefixes(queryClient, [
       notificationQueryKey,
       ['class-details-related'],
@@ -314,23 +382,32 @@ export async function invalidateReviewWorkflowQueries(queryClient: QueryClient) 
   ]);
 }
 
-async function invalidateAssessmentWorkflowQueries(queryClient: QueryClient) {
+async function invalidateAssessmentWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, assessmentQueryIds),
+    invalidateGeneratedQueryIds(queryClient, assessmentQueryIds, scope),
     invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['class-details-related']]),
   ]);
 }
 
-async function invalidateCertificateWorkflowQueries(queryClient: QueryClient) {
+async function invalidateCertificateWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, certificateQueryIds),
+    invalidateGeneratedQueryIds(queryClient, certificateQueryIds, scope),
     invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey]),
   ]);
 }
 
-async function invalidateInvitationWorkflowQueries(queryClient: QueryClient) {
+async function invalidateInvitationWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, invitationQueryIds),
+    invalidateGeneratedQueryIds(queryClient, invitationQueryIds, scope),
     invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['organization']]),
   ]);
 }
@@ -344,18 +421,29 @@ const GRADING_NOTIFICATION_TYPES = new Set([
   'ASSESSMENT_COMPLETED',
 ]);
 
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The entity uuids an event names; none means the event cannot be targeted. */
+function notificationScope(notification: WorkflowNotification): WorkflowInvalidationScope {
+  const entityUuids = Object.values(notification.metadata ?? {}).filter(
+    (value): value is string => typeof value === 'string' && UUID_PATTERN.test(value)
+  );
+  return { entityUuids };
+}
+
 export function invalidateWorkflowQueriesForNotification(
   queryClient: QueryClient,
   notification: WorkflowNotification
 ) {
   const type = notification.type ?? '';
+  const scope = notificationScope(notification);
 
   if (type.includes('TRAINING_RATE_UPDATE')) {
-    return invalidateRateUpdateWorkflowQueries(queryClient);
+    return invalidateRateUpdateWorkflowQueries(queryClient, scope);
   }
 
   if (type.includes('TRAINING_APPLICATION')) {
-    return invalidateTrainingApplicationWorkflowQueries(queryClient);
+    return invalidateTrainingApplicationWorkflowQueries(queryClient, scope);
   }
 
   if (
@@ -363,11 +451,11 @@ export function invalidateWorkflowQueriesForNotification(
     type.includes('DOMAIN_APPROVAL') ||
     type === 'PROFILE_DOCUMENT_VERIFIED'
   ) {
-    return invalidateDomainVerificationWorkflowQueries(queryClient);
+    return invalidateDomainVerificationWorkflowQueries(queryClient, scope);
   }
 
   if (type.includes('CONTENT_APPROVED') || type.includes('CONTENT_REJECTED')) {
-    return invalidateContentModerationWorkflowQueries(queryClient);
+    return invalidateContentModerationWorkflowQueries(queryClient, scope);
   }
 
   if (
@@ -376,24 +464,24 @@ export function invalidateWorkflowQueriesForNotification(
     type === 'UPCOMING_CLASS_REMINDER' ||
     type === 'ORDER_PAYMENT_RECEIPT'
   ) {
-    return invalidateEnrollmentWorkflowQueries(queryClient);
+    return invalidateEnrollmentWorkflowQueries(queryClient, scope);
   }
 
   // Includes HIRE_BLOCKED: a refused hire moves nothing, but both sides re-read applicants and holds.
   if (type.includes('CLASS_MARKETPLACE_JOB')) {
-    return invalidateJobApplicationWorkflowQueries(queryClient);
+    return invalidateJobApplicationWorkflowQueries(queryClient, scope);
   }
 
   if (type.includes('REVIEW') || type.includes('RATING')) {
-    return invalidateReviewWorkflowQueries(queryClient);
+    return invalidateReviewWorkflowQueries(queryClient, scope);
   }
 
   if (GRADING_NOTIFICATION_TYPES.has(type)) {
-    return invalidateAssessmentWorkflowQueries(queryClient);
+    return invalidateAssessmentWorkflowQueries(queryClient, scope);
   }
 
   if (type.includes('CERTIFICATE')) {
-    return invalidateCertificateWorkflowQueries(queryClient);
+    return invalidateCertificateWorkflowQueries(queryClient, scope);
   }
 
   if (
@@ -401,7 +489,7 @@ export function invalidateWorkflowQueriesForNotification(
     type.includes('CONSENT') ||
     type === 'GUARDIAN_LINK_ESTABLISHED'
   ) {
-    return invalidateInvitationWorkflowQueries(queryClient);
+    return invalidateInvitationWorkflowQueries(queryClient, scope);
   }
 
   return Promise.resolve();
