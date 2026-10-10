@@ -6464,13 +6464,6 @@ export const CourseSchema = {
       example: true,
       readOnly: true,
     },
-    lifecycle_stage: {
-      type: 'string',
-      description:
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
-      example: 'Published and Active',
-      readOnly: true,
-    },
     total_duration_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of total course duration.',
@@ -6488,6 +6481,13 @@ export const CourseSchema = {
       format: 'int32',
       description: '**[READ-ONLY]** Number of categories this course belongs to.',
       example: 2,
+      readOnly: true,
+    },
+    lifecycle_stage: {
+      type: 'string',
+      description:
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
+      example: 'Published and Active',
       readOnly: true,
     },
   },
@@ -12677,25 +12677,6 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
-    time_range: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable date and time range.',
-      example: '2024-09-15 09:00 - 10:30',
-      readOnly: true,
-    },
-    is_currently_active: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
-      example: false,
-      readOnly: true,
-    },
     can_be_cancelled: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
@@ -12712,6 +12693,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      example: false,
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
+    time_range: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable date and time range.',
+      example: '2024-09-15 09:00 - 10:30',
+      readOnly: true,
+    },
+    is_currently_active: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
       readOnly: true,
     },
@@ -15517,12 +15517,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -15533,6 +15527,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
       readOnly: true,
     },
     can_be_cancelled: {
@@ -21997,6 +21997,53 @@ export const ApiResponseListResourceAvailabilityRuleSchema = {
   },
 } as const;
 
+export const ApiResponseListOrganisationResourceCalendarSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationResourceCalendar',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationResourceCalendarSchema = {
+  type: 'object',
+  description:
+    'One active resource of an organisation with its merged calendar entries for the requested range',
+  properties: {
+    resource_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Resource the entries belong to',
+    },
+    resource_name: {
+      type: 'string',
+      description: 'Resource name',
+      example: 'Physics Lab B',
+    },
+    resource_type: {
+      $ref: '#/components/schemas/ResourceTypeEnum',
+    },
+    entries: {
+      type: 'array',
+      description: 'Merged calendar entries, sorted by start time',
+      items: {
+        $ref: '#/components/schemas/ResourceCalendarEntry',
+      },
+    },
+  },
+} as const;
+
 export const ApiResponseListNotificationDispatchSchema = {
   type: 'object',
   properties: {
@@ -27951,6 +27998,44 @@ export const ClassBatchSummarySchema = {
       format: 'int64',
       description:
         '**[PARTIES ONLY]** Seats left (capacity minus enrolled, never below zero); present only alongside enrolled_count',
+    },
+  },
+} as const;
+
+export const ApiResponseClassAssessmentSchedulesSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassAssessmentSchedules',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassAssessmentSchedulesSchema = {
+  type: 'object',
+  description:
+    'Assignment and quiz schedules for several classes at once; each row carries its class_definition_uuid',
+  properties: {
+    assignment_schedules: {
+      type: 'array',
+      description: 'Assignment schedules of every visible requested class',
+      items: {
+        $ref: '#/components/schemas/ClassAssignmentSchedule',
+      },
+    },
+    quiz_schedules: {
+      type: 'array',
+      description: 'Quiz schedules of every visible requested class',
+      items: {
+        $ref: '#/components/schemas/ClassQuizSchedule',
+      },
     },
   },
 } as const;

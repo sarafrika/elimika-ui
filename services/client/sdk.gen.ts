@@ -1791,6 +1791,9 @@ import type {
   ListBookingsData,
   ListBookingsResponses,
   ListBookingsErrors,
+  GetResourceCalendarsData,
+  GetResourceCalendarsResponses,
+  GetResourceCalendarsErrors,
   ListSentData,
   ListSentResponses,
   ListSentErrors,
@@ -2160,6 +2163,9 @@ import type {
   GetClassesBatchData,
   GetClassesBatchResponses,
   GetClassesBatchErrors,
+  GetAssessmentSchedulesData,
+  GetAssessmentSchedulesResponses,
+  GetAssessmentSchedulesErrors,
   GetAllActiveClassDefinitionsData,
   GetAllActiveClassDefinitionsResponses,
   GetAllActiveClassDefinitionsErrors,
@@ -2811,6 +2817,7 @@ import {
   listRosterResponseTransformer,
   getCalendarResponseTransformer,
   listBookingsResponseTransformer,
+  getResourceCalendarsResponseTransformer,
   listSentResponseTransformer,
   listInstructorStudentsResponseTransformer,
   listObligationsResponseTransformer,
@@ -2908,6 +2915,7 @@ import {
   getClassDefinitionsForInstructorResponseTransformer,
   getClassDefinitionsForCourseResponseTransformer,
   getClassesBatchResponseTransformer,
+  getAssessmentSchedulesResponseTransformer,
   getAllActiveClassDefinitionsResponseTransformer,
   searchCertificateTemplatesResponseTransformer,
   getStudentCertificatesResponseTransformer,
@@ -20504,6 +20512,34 @@ export const listBookings = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Merged calendar view of every active resource of the organisation
+ * The per-resource calendar for all active resources in one request, ordered by resource name. entry_types (comma-separated OPEN_HOURS, BLACKOUT, HOLD, CONFIRMED) optionally filters the entries. Same access rule and date-range cap as the single-resource calendar.
+ */
+export const getResourceCalendars = <ThrowOnError extends boolean = false>(
+  options: Options<GetResourceCalendarsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetResourceCalendarsResponses,
+    GetResourceCalendarsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getResourceCalendarsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/calendar',
+    ...options,
+  });
+};
+
+/**
  * List an organisation's sent notifications
  * The organisation's outgoing broadcasts, newest first.
  */
@@ -24325,6 +24361,34 @@ export const getClassesBatch = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/batch',
+    ...options,
+  });
+};
+
+/**
+ * List assignment and quiz schedules for several classes
+ * class_uuids is comma-separated or repeated, 1 to 100 entries. Classes the caller may not view (same rule as the per-class listings) are omitted. Costs a fixed number of queries per batch.
+ */
+export const getAssessmentSchedules = <ThrowOnError extends boolean = false>(
+  options: Options<GetAssessmentSchedulesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAssessmentSchedulesResponses,
+    GetAssessmentSchedulesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAssessmentSchedulesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/assessment-schedules',
     ...options,
   });
 };

@@ -3901,13 +3901,6 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
-      .readonly()
-      .optional(),
     total_duration_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of total course duration.')
@@ -3922,6 +3915,13 @@ export const zCourse = z
       .number()
       .int()
       .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
       .readonly()
       .optional(),
   })
@@ -7208,6 +7208,21 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -7223,21 +7238,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -8832,11 +8832,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -8845,6 +8840,11 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
     can_be_cancelled: z
@@ -12155,6 +12155,30 @@ export const zApiResponseListResourceAvailabilityRule = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * One active resource of an organisation with its merged calendar entries for the requested range
+ */
+export const zOrganisationResourceCalendar = z
+  .object({
+    resource_uuid: z.string().uuid().describe('Resource the entries belong to').optional(),
+    resource_name: z.string().describe('Resource name').optional(),
+    resource_type: zResourceTypeEnum.optional(),
+    entries: z
+      .array(zResourceCalendarEntry)
+      .describe('Merged calendar entries, sorted by start time')
+      .optional(),
+  })
+  .describe(
+    'One active resource of an organisation with its merged calendar entries for the requested range'
+  );
+
+export const zApiResponseListOrganisationResourceCalendar = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zOrganisationResourceCalendar).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zApiResponseListNotificationDispatch = z.object({
   success: z.boolean().optional(),
   data: z.array(zNotificationDispatch).optional(),
@@ -15160,6 +15184,31 @@ export const zClassBatchSummary = z
 export const zApiResponseListClassBatchSummary = z.object({
   success: z.boolean().optional(),
   data: z.array(zClassBatchSummary).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * Assignment and quiz schedules for several classes at once; each row carries its class_definition_uuid
+ */
+export const zClassAssessmentSchedules = z
+  .object({
+    assignment_schedules: z
+      .array(zClassAssignmentSchedule)
+      .describe('Assignment schedules of every visible requested class')
+      .optional(),
+    quiz_schedules: z
+      .array(zClassQuizSchedule)
+      .describe('Quiz schedules of every visible requested class')
+      .optional(),
+  })
+  .describe(
+    'Assignment and quiz schedules for several classes at once; each row carries its class_definition_uuid'
+  );
+
+export const zApiResponseClassAssessmentSchedules = z.object({
+  success: z.boolean().optional(),
+  data: zClassAssessmentSchedules.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -25354,6 +25403,23 @@ export const zListBookingsData = z.object({
  */
 export const zListBookingsResponse = zApiResponsePagedDtoResourceBooking;
 
+export const zGetResourceCalendarsData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    start_date: z.string().date(),
+    end_date: z.string().date(),
+    entry_types: z.array(z.string()).optional(),
+  }),
+});
+
+/**
+ * OK
+ */
+export const zGetResourceCalendarsResponse = zApiResponseListOrganisationResourceCalendar;
+
 export const zListSentData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -27176,6 +27242,19 @@ export const zGetClassesBatchData = z.object({
  * Classes retrieved successfully
  */
 export const zGetClassesBatchResponse = zApiResponseListClassBatchSummary;
+
+export const zGetAssessmentSchedulesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    class_uuids: z.array(z.string().uuid()).describe('Class definition UUIDs, comma-separated'),
+  }),
+});
+
+/**
+ * Assessment schedules retrieved successfully
+ */
+export const zGetAssessmentSchedulesResponse = zApiResponseClassAssessmentSchedules;
 
 export const zGetAllActiveClassDefinitionsData = z.object({
   body: z.never().optional(),

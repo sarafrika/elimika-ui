@@ -3091,10 +3091,6 @@ export type Course = {
    */
   readonly accepts_new_enrollments?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
-   */
-  readonly lifecycle_stage?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
   readonly total_duration_display?: string;
@@ -3106,6 +3102,10 @@ export type Course = {
    * **[READ-ONLY]** Number of categories this course belongs to.
    */
   readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
 };
 
 /**
@@ -6038,18 +6038,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
-   * **[READ-ONLY]** Human-readable date and time range.
-   */
-  readonly time_range?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
-   */
-  readonly is_currently_active?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
@@ -6061,6 +6049,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
    */
   readonly can_be_ended?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable date and time range.
+   */
+  readonly time_range?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
+   */
+  readonly is_currently_active?: boolean;
 };
 
 /**
@@ -7701,10 +7701,6 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -7712,6 +7708,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
@@ -11006,6 +11006,32 @@ export type ApiResponseListResourceAvailabilityRule = {
   error?: unknown;
 };
 
+export type ApiResponseListOrganisationResourceCalendar = {
+  success?: boolean;
+  data?: Array<OrganisationResourceCalendar>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * One active resource of an organisation with its merged calendar entries for the requested range
+ */
+export type OrganisationResourceCalendar = {
+  /**
+   * Resource the entries belong to
+   */
+  resource_uuid?: string;
+  /**
+   * Resource name
+   */
+  resource_name?: string;
+  resource_type?: ResourceTypeEnum;
+  /**
+   * Merged calendar entries, sorted by start time
+   */
+  entries?: Array<ResourceCalendarEntry>;
+};
+
 export type ApiResponseListNotificationDispatch = {
   success?: boolean;
   data?: Array<NotificationDispatch>;
@@ -14126,6 +14152,27 @@ export type ClassBatchSummary = {
    * **[PARTIES ONLY]** Seats left (capacity minus enrolled, never below zero); present only alongside enrolled_count
    */
   seats_remaining?: bigint | null;
+};
+
+export type ApiResponseClassAssessmentSchedules = {
+  success?: boolean;
+  data?: ClassAssessmentSchedules;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Assignment and quiz schedules for several classes at once; each row carries its class_definition_uuid
+ */
+export type ClassAssessmentSchedules = {
+  /**
+   * Assignment schedules of every visible requested class
+   */
+  assignment_schedules?: Array<ClassAssignmentSchedule>;
+  /**
+   * Quiz schedules of every visible requested class
+   */
+  quiz_schedules?: Array<ClassQuizSchedule>;
 };
 
 export type ApiResponsePagedDtoCertificateTemplate = {
@@ -38862,6 +38909,43 @@ export type ListBookingsResponses = {
 
 export type ListBookingsResponse = ListBookingsResponses[keyof ListBookingsResponses];
 
+export type GetResourceCalendarsData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query: {
+    start_date: Date;
+    end_date: Date;
+    entry_types?: Array<string>;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/resources/calendar';
+};
+
+export type GetResourceCalendarsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetResourceCalendarsError =
+  GetResourceCalendarsErrors[keyof GetResourceCalendarsErrors];
+
+export type GetResourceCalendarsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListOrganisationResourceCalendar;
+};
+
+export type GetResourceCalendarsResponse =
+  GetResourceCalendarsResponses[keyof GetResourceCalendarsResponses];
+
 export type ListSentData = {
   body?: never;
   path: {
@@ -43384,6 +43468,46 @@ export type GetClassesBatchResponses = {
 };
 
 export type GetClassesBatchResponse = GetClassesBatchResponses[keyof GetClassesBatchResponses];
+
+export type GetAssessmentSchedulesData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Class definition UUIDs, comma-separated
+     */
+    class_uuids: Array<string>;
+  };
+  url: '/api/v1/classes/assessment-schedules';
+};
+
+export type GetAssessmentSchedulesErrors = {
+  /**
+   * No class uuids, or more than the maximum, requested
+   */
+  400: ApiResponseClassAssessmentSchedules;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetAssessmentSchedulesError =
+  GetAssessmentSchedulesErrors[keyof GetAssessmentSchedulesErrors];
+
+export type GetAssessmentSchedulesResponses = {
+  /**
+   * Assessment schedules retrieved successfully
+   */
+  200: ApiResponseClassAssessmentSchedules;
+};
+
+export type GetAssessmentSchedulesResponse =
+  GetAssessmentSchedulesResponses[keyof GetAssessmentSchedulesResponses];
 
 export type GetAllActiveClassDefinitionsData = {
   body?: never;
