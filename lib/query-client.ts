@@ -1,6 +1,7 @@
 import {
   type DefaultError,
   type DefaultedQueryObserverOptions,
+  notifyManager,
   QueryClient,
   type QueryKey,
   type QueryObserverOptions,
@@ -91,7 +92,26 @@ class ActingDomainQueryClient extends QueryClient {
   }
 }
 
+let queryNotifySchedulerInstalled = false;
+const pendingQueryNotifications: Array<() => void> = [];
+
+/** MessageChannel tasks are not throttled in hidden tabs; setTimeout(0) is aligned to 1 s there. */
+export function installQueryNotifyScheduler() {
+  if (queryNotifySchedulerInstalled) return;
+  if (typeof window === 'undefined' || typeof MessageChannel === 'undefined') return;
+  queryNotifySchedulerInstalled = true;
+  const channel = new MessageChannel();
+  channel.port1.onmessage = () => {
+    for (const callback of pendingQueryNotifications.splice(0)) callback();
+  };
+  notifyManager.setScheduler(callback => {
+    pendingQueryNotifications.push(callback);
+    if (pendingQueryNotifications.length === 1) channel.port2.postMessage(null);
+  });
+}
+
 export function makeQueryClient() {
+  installQueryNotifyScheduler();
   return new ActingDomainQueryClient({
     defaultOptions: {
       queries: {
