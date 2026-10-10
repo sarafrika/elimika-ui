@@ -134,20 +134,14 @@ type CopyVars = Record<string, string | number | null | undefined>;
  * ────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The class list a learner enrols through, per dashboard, as the legacy course
- * page reached it: `roleScopedDashboardPath(domain, '/dashboard/…/<uuid>')`.
- *
- * The sub-path is not the same on every dashboard — student, course-creator and
- * instructor keep theirs under `courses/`, parent and admin under `all-courses/`
- * — and a role with no such screen at all (organisation) is deliberately absent,
- * because a link to a 404 is not better than no link.
+ * The class list a learner enrols through, per dashboard: every learner catalogue lives under
+ * `courses/`. Roles with no such screen (organisation, admin) are absent rather than a 404 link.
  */
 const CLASSES_LIST_PATH: Partial<Record<RoleSegment, string>> = {
   student: '/dashboard/courses/available-classes',
   'course-creator': '/dashboard/courses/available-classes',
   instructor: '/dashboard/courses/available-classes',
-  parent: '/dashboard/all-courses/available-classes',
-  admin: '/dashboard/all-courses/available-classes',
+  parent: '/dashboard/courses/available-classes',
 };
 
 /** The creator's builder. `?id=` is the course, as every course list links it. */

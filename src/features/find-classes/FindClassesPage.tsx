@@ -73,10 +73,7 @@ type ClassesQuery = GetAllClassDefinitionsData['query'] & {
 
 /** Where a learner enrols in a class of a course, per dashboard. */
 function enrolHref(domain: 'student' | 'parent', courseUuid: string, classUuid: string) {
-  const path =
-    domain === 'parent'
-      ? `all-courses/available-classes/${courseUuid}/enroll`
-      : `courses/available-classes/${courseUuid}/enroll`;
+  const path = `courses/available-classes/${courseUuid}/enroll`;
   return `${dashboardUrl(domain, path)}?id=${encodeURIComponent(classUuid)}`;
 }
 

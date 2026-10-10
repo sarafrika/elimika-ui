@@ -48,7 +48,7 @@ export function GuardianEnrollmentNotice({ notice }: GuardianEnrollmentNoticePro
               className='bg-primary/10 text-primary hover:bg-primary/20'
             >
               <Link
-                href={`/dashboard/parent/all-courses?age=${notice.student_age ?? ''}`}
+                href={`/dashboard/parent/courses?age=${notice.student_age ?? ''}`}
                 prefetch={false}
               >
                 Find age-appropriate courses

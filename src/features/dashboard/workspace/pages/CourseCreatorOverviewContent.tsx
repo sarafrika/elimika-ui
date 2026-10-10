@@ -79,7 +79,7 @@ export default function CourseCreatorOverviewContent({
           {/* <PurchasableCatalogue scope='course_creator' /> */}
           {/* <CourseRecommendationsCard
             description='Courses to learn from, picked for you'
-            courseHref={uuid => `/dashboard/course-creator/all-courses/${uuid}`}
+            courseHref={uuid => `/dashboard/course-creator/courses/${uuid}`}
           /> */}
         </>
       }

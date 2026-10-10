@@ -1,7 +1,7 @@
 'use client';
 
 /**
- * The actions the four `all-courses/[id]` routes own.
+ * The actions the learner-catalogue `courses/[id]` routes own.
  *
  * `CourseRecordPage` is read-only by design: it resolves what the viewer may
  * see from the API's `access` string and renders it. Anything that *changes*

@@ -660,7 +660,7 @@ export default {
       items: [
         {
           title: 'Home - All courses',
-          url: '/dashboard/all-courses',
+          url: '/dashboard/courses',
           icon: School,
         },
         {

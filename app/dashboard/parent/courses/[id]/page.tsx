@@ -8,8 +8,8 @@ import { CourseRecordPage } from '@/src/features/course-record';
 import { CourseRecordRouteActions } from '@/src/features/dashboard/courses/components/CourseRecordRouteActions';
 import { SimilarCoursesRail } from '@/src/features/recommendations/similar-courses-rail';
 
-const ALL_COURSES_HREF = '/dashboard/parent/all-courses';
-const courseHref = (uuid: string) => `${ALL_COURSES_HREF}/${uuid}`;
+const COURSES_HREF = '/dashboard/parent/courses';
+const courseHref = (uuid: string) => `${COURSES_HREF}/${uuid}`;
 
 export default function ParentCourseDetailsRoute() {
   const params = useParams();
@@ -19,11 +19,11 @@ export default function ParentCourseDetailsRoute() {
   useEffect(() => {
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard/parent/overview' },
-      { id: 'all-courses', title: 'Browse Courses', url: ALL_COURSES_HREF },
+      { id: 'courses', title: 'Browse Courses', url: COURSES_HREF },
       {
         id: 'course',
         title: 'Course details',
-        url: `${ALL_COURSES_HREF}/${courseUuid}`,
+        url: `${COURSES_HREF}/${courseUuid}`,
         isLast: true,
       },
     ]);
@@ -33,11 +33,11 @@ export default function ParentCourseDetailsRoute() {
     <>
       <CourseRecordRouteActions
         courseUuid={courseUuid}
-        classesHref={`${ALL_COURSES_HREF}/available-classes/${courseUuid}`}
-        instructorsHref={`${ALL_COURSES_HREF}/instructor?courseId=${courseUuid}`}
+        classesHref={`${COURSES_HREF}/available-classes/${courseUuid}`}
+        instructorsHref={`${COURSES_HREF}/instructor?courseId=${courseUuid}`}
       />
       <CoursePrerequisitesNotice courseUuid={courseUuid} hrefFor={courseHref} className='mb-4' />
-      <CourseRecordPage courseUuid={courseUuid} backHref={ALL_COURSES_HREF} />
+      <CourseRecordPage courseUuid={courseUuid} backHref={COURSES_HREF} />
       <SimilarCoursesRail courseUuid={courseUuid} hrefFor={courseHref} className='mt-8' />
     </>
   );
