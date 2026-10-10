@@ -1,5 +1,5 @@
 import CertificatePage from '../../../_components/certificate/CertificatePage';
-import { CertificateData } from '../../../_components/certificate/CertificatePDF';
+import type { CertificateData } from '../../../_components/certificate/CertificatePDF';
 
 const StudentCertificatePage = () => {
   const certData: CertificateData = {

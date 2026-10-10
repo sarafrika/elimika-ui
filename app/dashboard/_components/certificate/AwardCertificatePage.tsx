@@ -31,7 +31,7 @@ import { toAuthenticatedMediaUrl } from '../../../../src/lib/media-url';
 import { getPreferredScheduleInstance } from '../../instructor/classes/_components/new-class-page.utils';
 import { TrainingSchedule } from '../../instructor/classes/class-training/[id]/_components/ClassTrainingPage';
 import CertificatePage from './CertificatePage';
-import { CertificateData } from './CertificatePDF';
+import type { CertificateData } from './CertificatePDF';
 
 function getStudentAttendanceState(entry: RosterEntry | null | undefined) {
   if (entry?.enrollment?.is_attendance_marked) {

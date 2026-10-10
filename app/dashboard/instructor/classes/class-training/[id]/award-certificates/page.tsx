@@ -33,7 +33,7 @@ import { useUserProfile } from '../../../../../../../context/profile-context';
 import { toAuthenticatedMediaUrl } from '../../../../../../../src/lib/media-url';
 import { buildTemplatePayload } from '../../../../../_components/certificate/AwardCertificatePage';
 import CertificatePage from '../../../../../_components/certificate/CertificatePage';
-import { CertificateData } from '../../../../../_components/certificate/CertificatePDF';
+import type { CertificateData } from '../../../../../_components/certificate/CertificatePDF';
 import { getPreferredScheduleInstance } from '../../../_components/new-class-page.utils';
 import { TrainingSchedule } from '../_components/ClassTrainingPage';
 
