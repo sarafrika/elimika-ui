@@ -1,5 +1,6 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
 import { type ReactNode, useMemo } from 'react';
 import CustomLoader from '@/components/custom-loader';
@@ -10,7 +11,6 @@ import { DashboardProviders } from '@/context/profile-providers';
 import type { UserDomain } from '@/lib/types';
 import { AppSidebar } from '@/src/features/dashboard/components/app-sidebar';
 import DashboardMainContent from '@/src/features/dashboard/components/dashboard-main-content';
-import { DomainSelection } from '@/src/features/dashboard/components/domain-selection';
 import {
   domainToDashboardViewMap,
   type KnownDomain,
@@ -22,6 +22,12 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+
+// Only a domain-less first visit picks a dashboard, so the picker stays out of the shell chunk.
+const DomainSelection = dynamic(
+  () => import('@/src/features/dashboard/components/domain-selection').then(mod => mod.DomainSelection),
+  { loading: () => <CustomLoader /> }
+);
 
 export function DashboardClientLayout({
   children,
