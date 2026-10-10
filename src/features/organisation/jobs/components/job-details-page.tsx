@@ -17,6 +17,15 @@ import { toast } from 'sonner';
 import type { RateBasis } from '@/components/class-form';
 import { AsyncSection } from '@/components/data/async-section';
 import {
+  DetailRow,
+  SectionCard,
+  SectionCardSkeleton,
+  SectionTabPanel,
+  SectionTabs,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
+import {
   JobApplicantsPanel,
   jobApplicationsQueryOptions,
 } from '@/components/profile-job-marketplace/_components/JobApplicantsPanel';
@@ -48,6 +57,8 @@ import {
 } from '@/hooks/use-batched-lookups';
 import { formatDate, formatDateOnly } from '@/lib/date';
 import { getErrorMessage } from '@/lib/error-utils';
+import { jobFromListCache } from '@/lib/list-row-seed';
+import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob } from '@/services/client';
 import { cancelJobMutation, getJobOptions } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
@@ -78,16 +89,6 @@ import {
   useJobResourceRows,
 } from './job-sections';
 import { JobSuggestedInstructors } from './job-suggested-instructors';
-import { cn } from '@/lib/utils';
-import {
-  DetailRow,
-  SectionCard,
-  SectionCardSkeleton,
-  SectionTabPanel,
-  SectionTabs,
-  surfaceTheme,
-  useSectionTab,
-} from '@/components/data-display';
 
 function nextStepCopy(
   stage: JobStage,
@@ -113,12 +114,17 @@ function nextStepCopy(
 
 export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
   const queryClient = useQueryClient();
+  const listSeed = useMemo(() => jobFromListCache(queryClient, jobUuid), [queryClient, jobUuid]);
   const [now] = useState(() => Date.now());
   const [confirmCancel, setConfirmCancel] = useState(false);
 
   const { value: tab, setValue: changeTab, hrefFor } = useSectionTab(JOB_TABS, 'overview');
 
-  const jobQuery = useQuery({ ...getJobOptions({ path: { jobUuid } }), enabled: Boolean(jobUuid) });
+  const jobQuery = useQuery({
+    ...getJobOptions({ path: { jobUuid } }),
+    enabled: Boolean(jobUuid),
+    placeholderData: listSeed,
+  });
   const job = jobQuery.data?.data ?? null;
 
   const applicationsQuery = useQuery({
@@ -188,7 +194,9 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
   const resourcesHold = job ? jobResourcesHoldState(job) : null;
   const sessionsHold = job ? instructorTimeHoldState(job, now) : null;
   const cta = job ? nextStepCta(job, now) : null;
-  const canEdit = stage === 'open' || stage === 'awaiting_class';
+  // A seeded list row may be stale, so stage-dependent actions wait for the real job.
+  const confirmed = !jobQuery.isPlaceholderData;
+  const canEdit = confirmed && (stage === 'open' || stage === 'awaiting_class');
   const applicantCount = Number(job?.application_count ?? applications.length);
   const hiredName = hiredInstructor?.full_name || 'The hired instructor';
   const venue = resourceRows.find(row => row.kind === 'VENUE') ?? null;
@@ -228,7 +236,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
             <Skeleton className='h-4 w-56' />
           </div>
         )}
-        {job && cta ? (
+        {job && cta && confirmed ? (
           <div className='flex flex-wrap items-center gap-2'>
             {canEdit ? (
               <Button asChild variant='outline'>
@@ -391,9 +399,11 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
                     <p className='text-muted-foreground text-sm'>
                       {nextStepCopy(stage, job, applicantCount, hiredName)}
                     </p>
-                    <Button asChild className='w-full'>
-                      <Link href={cta.href}>{cta.label}</Link>
-                    </Button>
+                    {confirmed ? (
+                      <Button asChild className='w-full'>
+                        <Link href={cta.href}>{cta.label}</Link>
+                      </Button>
+                    ) : null}
                     {canEdit ? (
                       <p className='text-muted-foreground flex items-start gap-1.5 text-xs'>
                         <Info className='mt-0.5 h-3.5 w-3.5 shrink-0' />
@@ -404,7 +414,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
                   </div>
                 </SectionCard>
 
-                {stage === 'open' && !hiredUuid ? (
+                {confirmed && stage === 'open' && !hiredUuid ? (
                   <JobSuggestedInstructors jobUuid={jobUuid} />
                 ) : null}
 
@@ -467,7 +477,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
           {tab === 'applicants' ? (
             <JobApplicantsPanel
               jobUuid={jobUuid}
-              job={job}
+              job={confirmed ? job : null}
               applicantHref={application => jobApplicantHref(jobUuid, application.uuid ?? '')}
             />
           ) : null}

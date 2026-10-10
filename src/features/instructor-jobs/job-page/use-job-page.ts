@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { isLiveApplication } from '@/components/profile-job-marketplace/application-status';
@@ -12,6 +12,7 @@ import {
   useOrganisationsByIds,
   useProgramsByIds,
 } from '@/hooks/use-batched-lookups';
+import { jobFromListCache } from '@/lib/list-row-seed';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getJob } from '@/services/client';
 import {
@@ -19,7 +20,7 @@ import {
   getJobQueryKey,
   listJobsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ClassMarketplaceJob } from '@/services/client/types.gen';
+import type { ClassMarketplaceJob, GetJobResponse } from '@/services/client/types.gen';
 
 import { useMyApplicationsByJob, usePendingRates } from '../hooks/use-jobs-readiness';
 import { jobFacts } from '../job-facts';
@@ -27,7 +28,9 @@ import { jobReadiness, rateStandingFor } from '../job-readiness';
 
 /** A missing or malformed job id reads as "not found", never as a failed section. */
 function useJob(jobUuid: string) {
-  return useQuery({
+  const queryClient = useQueryClient();
+  const listSeed = useMemo(() => jobFromListCache(queryClient, jobUuid), [queryClient, jobUuid]);
+  return useQuery<GetJobResponse | null>({
     queryKey: getJobQueryKey({ path: { jobUuid } }),
     queryFn: async ({ signal }) => {
       const { data, error, response } = await getJob({ path: { jobUuid }, signal });
@@ -37,6 +40,7 @@ function useJob(jobUuid: string) {
     },
     enabled: Boolean(jobUuid),
     staleTime: STALE_TIMES.live,
+    placeholderData: listSeed,
   });
 }
 
@@ -58,8 +62,7 @@ export function useJobPage(jobUuid: string, now: number) {
   const applications = useMyApplicationsByJob();
   const listed = applications.byJob.get(jobUuid) ?? null;
   const status = listed?.status ?? eligibility?.application_status;
-  const application =
-    isLiveApplication(status) || isHiredApplication(status) ? listed : null;
+  const application = isLiveApplication(status) || isHiredApplication(status) ? listed : null;
   const applied = isLiveApplication(status) || isHiredApplication(status);
 
   const jobs = useMemo(() => (job ? [job] : []), [job]);
@@ -77,7 +80,9 @@ export function useJobPage(jobUuid: string, now: number) {
   );
   const organisation = job?.organisation_uuid ? organisationMap[job.organisation_uuid] : undefined;
 
-  const { courseMap } = useCoursesByIds(job?.course_uuid && !job.program_uuid ? [job.course_uuid] : []);
+  const { courseMap } = useCoursesByIds(
+    job?.course_uuid && !job.program_uuid ? [job.course_uuid] : []
+  );
   const { programMap } = useProgramsByIds(job?.program_uuid ? [job.program_uuid] : []);
   const course = job?.course_uuid ? courseMap[job.course_uuid] : undefined;
   const program = job?.program_uuid ? programMap[job.program_uuid] : undefined;
@@ -104,10 +109,12 @@ export function useJobPage(jobUuid: string, now: number) {
       ? undefined
       : Math.max(0, Number(organisationOpenTotal) - (job?.status === 'open' ? 1 : 0));
 
+  // A seeded list row may be stale, so the apply CTA keeps checking until the real job lands.
+  const confirmed = !jobQuery.isPlaceholderData;
   const readiness = job
     ? jobReadiness({
         job,
-        eligibility,
+        eligibility: confirmed ? eligibility : undefined,
         application: listed,
         pendingRate: pendingRate.awaiting,
         creatorName,
