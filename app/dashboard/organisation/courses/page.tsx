@@ -54,6 +54,7 @@ import {
   getUsersByOrganisationAndDomainOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { APPROVAL_QUERY_FRESHNESS, STALE_TIMES } from '@/lib/query-client';
 import { offeredMethods, type TrainingMethod } from '@/lib/rate-card';
 import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
@@ -178,9 +179,8 @@ export default function CoursesPage() {
       },
     }),
     enabled: Boolean(organisationUuid),
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    staleTime: STALE_TIMES.live,
+    ...APPROVAL_QUERY_FRESHNESS,
   });
   const applications: CourseTrainingApplication[] = applicationsQuery.data?.data?.content ?? [];
 
