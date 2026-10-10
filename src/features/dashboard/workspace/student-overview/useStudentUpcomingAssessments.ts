@@ -171,19 +171,19 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
   const { assignmentMap, isLoading: isLoadingAssignments } = useAssignmentsByIds(assignmentIds);
   const { quizMap, isLoading: isLoadingQuizzes } = useQuizzesByIds(quizIds);
 
-  const { classDefinitionMap } = useClassesByIds(classIds);
+  const { classMap } = useClassesByIds(classIds);
   const classCourseIds = useMemo(
-    () => uniqueIds(classIds.map(classUuid => classDefinitionMap[classUuid]?.course_uuid)),
-    [classIds, classDefinitionMap]
+    () => uniqueIds(classIds.map(classUuid => classMap[classUuid]?.course_uuid)),
+    [classIds, classMap]
   );
   const instructorIds = useMemo(
     () =>
-      uniqueIds(classIds.map(classUuid => classDefinitionMap[classUuid]?.default_instructor_uuid)),
-    [classIds, classDefinitionMap]
+      uniqueIds(classIds.map(classUuid => classMap[classUuid]?.default_instructor_uuid)),
+    [classIds, classMap]
   );
   const organisationIds = useMemo(
-    () => uniqueIds(classIds.map(classUuid => classDefinitionMap[classUuid]?.organisation_uuid)),
-    [classIds, classDefinitionMap]
+    () => uniqueIds(classIds.map(classUuid => classMap[classUuid]?.organisation_uuid)),
+    [classIds, classMap]
   );
   const { courseMap } = useCoursesByIds(classCourseIds);
   const { instructorMap } = useInstructorsByIds(instructorIds);
@@ -199,7 +199,7 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
     const rows: Array<StudentOverviewAssessment & { sortValue: number }> = [];
 
     const describeClass = (classUuid: string, fallbackTitle: string) => {
-      const classDefinition = classUuid ? classDefinitionMap[classUuid] : undefined;
+      const classDefinition = classUuid ? classMap[classUuid] : undefined;
       const courseUuid = classDefinition?.course_uuid;
       return {
         provider: resolveClassProvider(classDefinition, instructorMap, organisationMap),
@@ -257,7 +257,7 @@ export function useStudentUpcomingAssessments(): StudentOverviewSection<
     assignmentMap,
     assignmentSchedules,
     attemptsQuery.data,
-    classDefinitionMap,
+    classMap,
     classTitleById,
     courseMap,
     instructorMap,

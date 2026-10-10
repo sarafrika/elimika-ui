@@ -5,6 +5,7 @@ import { STALE_TIMES } from '@/lib/query-client';
 import {
   ClassDefinition,
   CourseAssessment,
+  type ClassBatchSummary,
   searchCourses,
   type Assignment,
   type Course,
@@ -23,6 +24,7 @@ import {
   getClassDefinitionOptions,
   getClassDefinitionsForCourseOptions,
   getClassDefinitionsForInstructorOptions,
+  getClassesBatchOptions,
   getCourseAssessmentsOptions,
   getEnrollmentsForClassOptions,
   getInstructorRatingSummaryOptions,
@@ -533,7 +535,51 @@ export function useCourseAssessmentsByCourseUuids(courseUuids: string[]) {
   });
 }
 
+/**
+ * Class summaries (title, course, organisation, instructor, thumbnail) via
+ * `GET /classes/batch`: one request per 100 ids, the backend's cap.
+ */
 export function useClassesByIds(classUuids: string[]) {
+  const uniqueIds = useMemo(
+    () => [...new Set(classUuids.filter(Boolean))].sort(),
+    [classUuids]
+  );
+  const idChunks = useMemo(() => chunk(uniqueIds, CHUNK_SIZE), [uniqueIds]);
+
+  return useQueries({
+    queries: idChunks.map(idChunk => ({
+      ...getClassesBatchOptions({ query: { uuids: idChunk } }),
+      enabled: idChunk.length > 0,
+      staleTime: STALE_TIMES.entity,
+    })),
+    combine: results => {
+      const classMap: Record<string, ClassBatchSummary> = {};
+      const wanted = new Set(uniqueIds);
+      for (const result of results) {
+        if (result.data?.error || result.data?.success === false) continue;
+        for (const summary of result.data?.data ?? []) {
+          if (summary.uuid && wanted.has(summary.uuid)) {
+            classMap[summary.uuid] = summary;
+          }
+        }
+      }
+      return {
+        classMap,
+        items: Object.values(classMap),
+        isLoading: results.some(result => result.isLoading),
+        isError: results.some(
+          result => result.isError || result.data?.error || result.data?.success === false
+        ),
+      };
+    },
+  });
+}
+
+/**
+ * Full class definitions, one request per id. Only for screens that need fields the
+ * batch summary lacks (description, location, progress); prefer {@link useClassesByIds}.
+ */
+export function useClassDefinitionsByIds(classUuids: string[]) {
   const uniqueClassUuids = useMemo(
     () => [...new Set(classUuids.filter(Boolean))].sort(),
     [classUuids]

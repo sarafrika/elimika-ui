@@ -24,7 +24,7 @@ import {
   getQuizSchedulesOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
-import { useClassesByIds, useCoursesByIds } from './use-batched-lookups';
+import { useClassDefinitionsByIds, useCoursesByIds } from './use-batched-lookups';
 
 type StudentLike = {
   uuid?: string;
@@ -75,7 +75,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
    * The enrolled classes, looked up by id. `/classes` is a visibility-scoped listing, not a
    * lookup table, so a page of it may miss classes the student is enrolled in.
    */
-  const classDefinitionsQuery = useClassesByIds(classDefinitionUuids);
+  const classDefinitionsQuery = useClassDefinitionsByIds(classDefinitionUuids);
 
   const classDetailsByUuid = useMemo(
     () => new Map<string, ClassDefinition>(Object.entries(classDefinitionsQuery.classDefinitionMap)),

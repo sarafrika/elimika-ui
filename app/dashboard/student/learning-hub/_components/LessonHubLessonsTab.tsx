@@ -30,7 +30,7 @@ import {
 import type { LessonContent } from '@/services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
-import { useClassesByIds, useCoursesByIds } from '../../../../../hooks/use-batched-lookups';
+import { useClassDefinitionsByIds, useCoursesByIds } from '../../../../../hooks/use-batched-lookups';
 import { cn } from '../../../../../lib/utils';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 import type { LearningHubData } from './useStudentLearningHubData';
@@ -153,7 +153,7 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
     );
 
     const { classDefinitionMap, isLoading: classDefinitionsLoading } =
-        useClassesByIds(classDefinitionUuids);
+        useClassDefinitionsByIds(classDefinitionUuids);
 
     const baseClassRows = useMemo<ClassCardRow[]>(() => {
         return learningHubData.classEnrollments

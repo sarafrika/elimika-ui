@@ -9,7 +9,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Certificate,
-  ClassDefinition,
   Course,
   CourseCreator,
   Instructor,
@@ -114,7 +113,9 @@ export const isActiveClassEnrollment = (
 };
 
 export function resolveClassProvider(
-  classDefinition: ClassDefinition | undefined,
+  classDefinition:
+    | { organisation_uuid?: string | null; default_instructor_uuid?: string | null }
+    | undefined,
   instructorMap: Record<string, Instructor>,
   organisationMap: Record<string, Organisation>
 ) {
