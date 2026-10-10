@@ -19,6 +19,7 @@ import { getErrorMessage } from '@/src/features/dashboard/courses/types';
 import {
   getDueSummary,
   getStudentAssignmentSubmissionState,
+  useAssignmentAttachments,
   useStudentAssignmentData,
 } from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -151,6 +152,11 @@ export default function StudentAssignmentSubmissionPage() {
     refetchOnWindowFocus: false,
   });
 
+  const { attachments: instructorAttachments } = useAssignmentAttachments(
+    selectedAssignment?.assignment?.uuid,
+    Boolean(selectedAssignment)
+  );
+
   // ── Mutations ───────────────────────────────────────────────────────────
   const submitAssignmentMut = useMutation(submitAssignmentQueryMutation());
   const uploadSubmissionAttachmentMut = useMutation(uploadSubmissionAttachmentMutation());
@@ -218,6 +224,7 @@ export default function StudentAssignmentSubmissionPage() {
             path: { assignmentUuid: selectedAssignment.assignment.uuid },
           }),
         }),
+        queryClient.invalidateQueries({ queryKey: [{ _id: 'searchSubmissions' }] }),
         queryClient.invalidateQueries({ queryKey: ['student-assignments'] }),
       ]);
 
@@ -389,7 +396,7 @@ export default function StudentAssignmentSubmissionPage() {
         </CardHeader>
         <CardContent>
           <AttachmentResourceList
-            attachments={toAttachmentResourceItems(selectedAssignment.attachments)}
+            attachments={toAttachmentResourceItems(instructorAttachments)}
             emptyMessage='No supporting files were attached to this assignment.'
             previewLabel='Read file'
           />
