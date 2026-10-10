@@ -261,6 +261,17 @@ function catalogueCounts(item: CatalogueItem): CardCounts {
   };
 }
 
+/** Counts a course list or search row already carries, so the card needs no lookup for them. */
+function courseListCounts(course: Course): CardCounts {
+  const summary = course.rating_summary;
+  return {
+    rating: summary?.average ?? undefined,
+    reviewCount: summary ? (toCount(summary.count) ?? 0) : undefined,
+    lessons: toCount(course.lesson_count ?? undefined),
+    creatorName: course.course_creator_name || undefined,
+  };
+}
+
 /** Instructor count only when the item's class list is already in the cache. */
 function cachedInstructorCount(
   qc: QueryClient,
@@ -807,12 +818,30 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       .slice(0, CATALOG_PAGE_SIZE);
   }, [catalogueCountMap, programCatalogueQuery.isPending, programs, seenIds, showPrograms]);
 
-  const { reviewMap } = useCourseReviewsMap(missingCourseIds);
+  // Enriched list rows carry lessons, rating and creator; only rows without them fan out.
+  const listCountMap = useMemo(() => {
+    const map = new Map<string, CardCounts>();
+    const rows = [...courses, ...classDefinitions.map(definition => definition.course)];
+    for (const course of rows) {
+      if (course?.uuid && !map.has(course.uuid)) map.set(course.uuid, courseListCounts(course));
+    }
+    return map;
+  }, [classDefinitions, courses]);
+  const reviewFallbackIds = useMemo(
+    () => missingCourseIds.filter(uuid => listCountMap.get(uuid)?.reviewCount === undefined),
+    [listCountMap, missingCourseIds]
+  );
+  const lessonFallbackIds = useMemo(
+    () => missingCourseIds.filter(uuid => listCountMap.get(uuid)?.lessons === undefined),
+    [listCountMap, missingCourseIds]
+  );
+
+  const { reviewMap } = useCourseReviewsMap(reviewFallbackIds);
   const { courseEnrollmentMap } = useCourseEnrollmentsMap(missingCourseIds, { countOnly: true });
   const { courseClassesMap } = useCourseClasses(missingCourseIds);
   // Students get 403 on the lessons endpoint, so their fallback leaves lessons unset.
   const fallbackLessonQueries = useQueries({
-    queries: missingCourseIds.slice(0, CATALOG_PAGE_SIZE).map(courseUuid => ({
+    queries: lessonFallbackIds.slice(0, CATALOG_PAGE_SIZE).map(courseUuid => ({
       ...getCourseLessonsOptions({
         path: { courseUuid },
         query: { pageable: { page: 0, size: 1 } },
@@ -844,15 +873,31 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const countsById = useMemo(() => {
     const map = new Map(catalogueCountMap);
-    missingCourseIds.forEach((uuid, index) => {
+    for (const [uuid, counts] of catalogueCountMap) {
+      const listed = listCountMap.get(uuid);
+      if (!counts.creatorName && listed?.creatorName) {
+        map.set(uuid, { ...counts, creatorName: listed.creatorName });
+      }
+    }
+    const lessonTotals = new Map(
+      lessonFallbackIds.map((uuid, index) => [
+        uuid,
+        fallbackLessonQueries[index]?.data?.data?.metadata?.totalElements,
+      ])
+    );
+    missingCourseIds.forEach(uuid => {
+      const listed = listCountMap.get(uuid);
       const reviews = reviewMap[uuid];
-      const lessonTotal = fallbackLessonQueries[index]?.data?.data?.metadata?.totalElements;
       map.set(uuid, {
-        rating: averageRating(reviews?.reviews as CourseReview[]),
-        reviewCount: reviews?.count,
+        rating:
+          listed?.reviewCount !== undefined
+            ? listed.rating
+            : averageRating(reviews?.reviews as CourseReview[]),
+        reviewCount: listed?.reviewCount ?? reviews?.count,
         learners: courseEnrollmentMap[uuid]?.count,
-        lessons: toCount(lessonTotal),
+        lessons: listed?.lessons ?? toCount(lessonTotals.get(uuid)),
         classes: courseClassesMap[uuid]?.length,
+        creatorName: listed?.creatorName,
       });
     });
     missingProgramIds.forEach((uuid, index) => {
@@ -869,6 +914,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     fallbackLessonQueries,
     fallbackProgramClassQueries,
     fallbackProgramEnrollmentQueries,
+    lessonFallbackIds,
+    listCountMap,
     missingCourseIds,
     missingProgramIds,
     reviewMap,
@@ -948,7 +995,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           categoryLabels: course.category_names ?? [],
           categoryUuids: course.category_uuids,
           creatorUuid: course.course_creator_uuid,
-          creatorName: '',
+          creatorName: course.course_creator_name ?? '',
           levelLabel: difficultyMap.get(course.difficulty_uuid ?? ''),
           price: course.minimum_training_fee ?? course.price ?? undefined,
           minimumRate: course.minimum_training_fee ?? course.price ?? undefined,
@@ -1068,7 +1115,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           categoryLabels: course.category_names ?? [],
           categoryUuids: course.category_uuids,
           creatorUuid: course.course_creator_uuid,
-          creatorName: existing?.creatorName ?? '',
+          creatorName: course.course_creator_name ?? existing?.creatorName ?? '',
           levelLabel: difficultyMap.get(course.difficulty_uuid ?? ''),
           price: course.minimum_training_fee ?? course.price ?? undefined,
           minimumRate: course.minimum_training_fee ?? course.price ?? undefined,
@@ -1383,7 +1430,9 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     () => [
       ...new Set(
         paginatedItems
-          .filter(item => item.creatorUuid && !countsById.get(item.id)?.creatorName)
+          .filter(
+            item => item.creatorUuid && !item.creatorName && !countsById.get(item.id)?.creatorName
+          )
           .map(item => item.creatorUuid)
       ),
     ],
