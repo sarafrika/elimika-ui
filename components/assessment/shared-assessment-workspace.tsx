@@ -1,39 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Skeleton } from '@/components/ui/skeleton';
-import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
-import { cn } from '@/lib/utils';
-import {
-  getAssignmentByUuidOptions,
-  getAssignmentSchedulesOptions,
-  getAssignmentSubmissionsOptions,
-  getCourseLessonsOptions,
-  getEnrollmentsForClassOptions,
-} from '@/services/client/@tanstack/react-query.gen';
-import type {
-  Assignment,
-  AssignmentSubmission,
-  ClassAssignmentSchedule,
-} from '@/services/client/types.gen';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import {
-  getStudentAssignmentSubmissionState,
-  useStudentAssignmentData,
-} from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
-import { useQueries } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import {
   ArrowUpRight,
   BookOpen,
@@ -52,7 +20,44 @@ import {
   UploadCloud,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  hasApiError,
+  nextWorkbookPage,
+  WORKBOOK_PAGE_SIZE,
+} from '@/components/lesson/workbook-data';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useAssignmentsByIds } from '@/hooks/use-batched-lookups';
+import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
+import { STALE_TIMES } from '@/lib/query-client';
+import { cn } from '@/lib/utils';
+import {
+  getAssignmentSchedulesOptions,
+  getEnrollmentsForClassOptions,
+  searchSubmissionsInfiniteOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import type {
+  Assignment,
+  AssignmentSubmission,
+  ClassAssignmentSchedule,
+} from '@/services/client/types.gen';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import {
+  getStudentAssignmentSubmissionState,
+  useStudentAssignmentData,
+} from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
 import { useUserProfile } from '../../context/profile-context';
 
 type AssessmentWorkspaceRole = 'student' | 'instructor';
@@ -1150,15 +1155,21 @@ function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
 }
 
 export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceRole }) {
+  // Both roles render the learner list today; the grading workspace mounts only where wired.
+  return <StudentAssessmentList role={role} />;
+}
+
+export function InstructorAssessmentWorkspace() {
+  const role: AssessmentWorkspaceRole = 'instructor';
   const userProfile = useUserProfile();
   const instructor = userProfile?.instructor;
-  const student = userProfile?.student;
 
   const [activeTab, setActiveTab] = useState<AssessmentTab>('active');
   const [search, setSearch] = useState('');
   const [skill, setSkill] = useState('all');
   const [sort, setSort] = useState<AssessmentSort>('newest');
   const [statusFilter, setStatusFilter] = useState<AssessmentStatusFilter>('all');
+  const [selectedClassUuid, setSelectedClassUuid] = useState<string>();
   const { classes: rawClasses, loading: classesLoading } = useInstructorClassesWithDetails(
     instructor?.uuid
   );
@@ -1173,55 +1184,31 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
     });
   }, [rawClasses]);
 
-  const classEnrollmentQueries = useQueries({
-    queries: classes.map(classItem => ({
-      ...getEnrollmentsForClassOptions({ path: { uuid: classItem.uuid as string } }),
-      enabled: Boolean(classItem.uuid),
-      staleTime: 60 * 1000,
-    })),
+  // Only the selected class loads its schedules, enrollments and submissions.
+  const activeClass = classes.find(classItem => classItem.uuid === selectedClassUuid) ?? classes[0];
+  const activeClassUuid = activeClass?.uuid;
+
+  const enrollmentQuery = useQuery({
+    ...getEnrollmentsForClassOptions({ path: { uuid: activeClassUuid as string } }),
+    enabled: Boolean(activeClassUuid),
+    staleTime: STALE_TIMES.live,
   });
 
-  const uniqueCourseUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(classes.map(c => c.course_uuid).filter((id): id is string => Boolean(id)))
-      ),
-    [classes]
-  );
-
-  const lessonQueries = useQueries({
-    queries: uniqueCourseUuids.map(courseUuid => ({
-      ...getCourseLessonsOptions({
-        path: { courseUuid },
-        query: { pageable: { page: 0, size: 100 } },
-      }),
-      enabled: Boolean(courseUuid),
-      staleTime: 5 * 60 * 1000,
-    })),
+  const scheduleQuery = useQuery({
+    ...getAssignmentSchedulesOptions({ path: { classUuid: activeClassUuid as string } }),
+    enabled: Boolean(activeClassUuid),
+    staleTime: STALE_TIMES.live,
   });
 
-  const assignmentScheduleQueries = useQueries({
-    queries: classes.map(classItem => ({
-      ...getAssignmentSchedulesOptions({ path: { classUuid: classItem.uuid as string } }),
-      enabled: Boolean(classItem.uuid),
-      staleTime: 60 * 1000,
-    })),
-  });
-
-  const assignmentSchedules = useMemo<AssignmentScheduleWithClass[]>(
-    () =>
-      classes.flatMap((classItem, index) =>
-        ((assignmentScheduleQueries[index]?.data?.data ?? []) as ClassAssignmentSchedule[]).map(
-          schedule => ({
-            ...schedule,
-            classTitle: classItem.title || 'Class',
-            classUuid: classItem.uuid as string,
-            courseTitle: classItem.course?.name || 'Course',
-          })
-        )
-      ),
-    [assignmentScheduleQueries, classes]
-  );
+  const assignmentSchedules = useMemo<AssignmentScheduleWithClass[]>(() => {
+    if (!activeClass?.uuid) return [];
+    return ((scheduleQuery.data?.data ?? []) as ClassAssignmentSchedule[]).map(schedule => ({
+      ...schedule,
+      classTitle: activeClass.title || 'Class',
+      classUuid: activeClass.uuid as string,
+      courseTitle: activeClass.course?.name || 'Course',
+    }));
+  }, [activeClass, scheduleQuery.data]);
 
   const uniqueAssignmentUuids = useMemo(
     () =>
@@ -1235,68 +1222,53 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
     [assignmentSchedules]
   );
 
-  const assignmentQueries = useQueries({
-    queries: uniqueAssignmentUuids.map(uuid => ({
-      ...getAssignmentByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 5 * 60 * 1000,
-    })),
-  });
+  const { assignmentMap, isLoading: assignmentsLoading } =
+    useAssignmentsByIds(uniqueAssignmentUuids);
 
-  const assignmentSubmissionQueries = useQueries({
-    queries: uniqueAssignmentUuids.map(uuid => ({
-      ...getAssignmentSubmissionsOptions({ path: { assignmentUuid: uuid } }),
-      enabled: Boolean(uuid),
-      staleTime: 60 * 1000,
-    })),
+  // One paged search covers every assignment of the selected class.
+  const assignmentIdFilter = useMemo(
+    () => [...uniqueAssignmentUuids].sort().join(','),
+    [uniqueAssignmentUuids]
+  );
+  const submissionsQuery = useInfiniteQuery({
+    ...searchSubmissionsInfiniteOptions({
+      query: {
+        searchParams: { assignmentUuid_in: assignmentIdFilter },
+        pageable: { size: WORKBOOK_PAGE_SIZE },
+      },
+    }),
+    initialPageParam: 0,
+    getNextPageParam: nextWorkbookPage,
+    enabled: Boolean(assignmentIdFilter),
+    staleTime: STALE_TIMES.live,
   });
+  const {
+    fetchNextPage: fetchMoreSubmissions,
+    hasNextPage: moreSubmissions,
+    isFetching: fetchingSubmissions,
+  } = submissionsQuery;
+  const submissionError =
+    submissionsQuery.isError || Boolean(submissionsQuery.data?.pages.some(hasApiError));
 
-  const assignmentMap = useMemo(() => {
-    const map = new Map<string, Assignment>();
-    uniqueAssignmentUuids.forEach((uuid, index) => {
-      const assignment = assignmentQueries[index]?.data?.data;
-      if (uuid && assignment) map.set(uuid, assignment);
-    });
-    return map;
-  }, [assignmentQueries, uniqueAssignmentUuids]);
+  useEffect(() => {
+    if (moreSubmissions && !fetchingSubmissions && !submissionError) void fetchMoreSubmissions();
+  }, [fetchMoreSubmissions, fetchingSubmissions, moreSubmissions, submissionError]);
 
   const assignmentSubmissionMap = useMemo(() => {
     const map = new Map<string, AssignmentSubmission[]>();
-    uniqueAssignmentUuids.forEach((uuid, index) => {
-      if (uuid) map.set(uuid, assignmentSubmissionQueries[index]?.data?.data ?? []);
-    });
+    const pages = submissionsQuery.data?.pages ?? [];
+    for (const page of pages) {
+      if (hasApiError(page)) continue;
+      for (const submission of (page.data?.content ?? []) as AssignmentSubmission[]) {
+        const assignmentUuid = submission.assignment_uuid;
+        if (!assignmentUuid) continue;
+        map.set(assignmentUuid, [...(map.get(assignmentUuid) ?? []), submission]);
+      }
+    }
     return map;
-  }, [assignmentSubmissionQueries, uniqueAssignmentUuids]);
+  }, [submissionsQuery.data]);
 
-  const lessonMap = useMemo(() => {
-    const map = new Map<string, { courseTitle: string; lessonTitle: string }>();
-    const courseTitleByUuid = new Map<string, string>();
-    classes.forEach(c => {
-      if (c.course_uuid) courseTitleByUuid.set(c.course_uuid, c.course?.name || 'Course');
-    });
-
-    uniqueCourseUuids.forEach((courseUuid, index) => {
-      const lessons = lessonQueries[index]?.data?.data?.content ?? [];
-      lessons.forEach(lesson => {
-        if (lesson.uuid) {
-          map.set(lesson.uuid, {
-            courseTitle: courseTitleByUuid.get(courseUuid) || 'Course',
-            lessonTitle: lesson.title || 'Lesson',
-          });
-        }
-      });
-    });
-
-    return map;
-  }, [classes, lessonQueries, uniqueCourseUuids]);
-
-  const enrollmentCountMap = useMemo(() => {
-    const map = new Map<string, number>();
-    classes.forEach((classItem, index) => {
-      map.set(classItem.uuid as string, classEnrollmentQueries[index]?.data?.data?.length ?? 0);
-    });
-    return map;
-  }, [classEnrollmentQueries, classes]);
+  const totalLearners = enrollmentQuery.data?.data?.length ?? 0;
 
   const instructorAssessments = useMemo(
     () =>
@@ -1306,20 +1278,15 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
           const assignment = assignmentUuid ? assignmentMap.get(assignmentUuid) : null;
           if (!assignment?.uuid) return null;
 
-          const lessonInfo = schedule.lesson_uuid ? lessonMap.get(schedule.lesson_uuid) : null;
-
           return mapAssignmentToAssessment({
             assignment,
-            schedule: {
-              ...schedule,
-              courseTitle: lessonInfo?.courseTitle || schedule.courseTitle,
-            },
+            schedule,
             submissions: assignmentSubmissionMap.get(assignment.uuid) ?? [],
-            totalLearners: enrollmentCountMap.get(schedule.classUuid) ?? 0,
+            totalLearners,
           });
         })
         .filter((assessment): assessment is AssessmentListItem => assessment !== null),
-    [assignmentMap, assignmentSchedules, assignmentSubmissionMap, enrollmentCountMap, lessonMap]
+    [assignmentMap, assignmentSchedules, assignmentSubmissionMap, totalLearners]
   );
   const filteredAssessments = useMemo(
     () =>
@@ -1358,13 +1325,10 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
 
   const isLoading =
     classesLoading ||
-    assignmentScheduleQueries.some(query => query.isLoading || query.isFetching) ||
-    assignmentQueries.some(query => query.isLoading || query.isFetching) ||
-    assignmentSubmissionQueries.some(query => query.isLoading || query.isFetching);
-
-  if (role) {
-    return <StudentAssessmentList role={role} />;
-  }
+    (scheduleQuery.isLoading && !scheduleQuery.data) ||
+    assignmentsLoading ||
+    submissionsQuery.isLoading ||
+    Boolean(moreSubmissions && !submissionError);
 
   return (
     <main className='bg-muted/30 min-h-screen overflow-hidden'>
@@ -1390,6 +1354,20 @@ export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceR
         </div>
 
         <div className='space-y-5'>
+          {classes.length > 1 ? (
+            <Select value={activeClassUuid} onValueChange={setSelectedClassUuid}>
+              <SelectTrigger className='bg-background h-10 w-full rounded-md sm:w-80'>
+                <SelectValue placeholder='Select a class' />
+              </SelectTrigger>
+              <SelectContent>
+                {classes.map(classItem => (
+                  <SelectItem key={classItem.uuid} value={classItem.uuid as string}>
+                    {classItem.title || 'Class'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : null}
           <SearchAndFilters
             onSearchChange={setSearch}
             onSkillChange={setSkill}
