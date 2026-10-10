@@ -43,6 +43,18 @@ const remotePatterns = Array.from(
   ).values()
 );
 
+const removedDashboardRoutes: Array<[string, string]> = [
+  ['/dashboard/student/contacts/:path*', '/dashboard/student/overview'],
+  ['/dashboard/student/communities', '/dashboard/student/overview'],
+  ['/dashboard/student/library', '/dashboard/student/overview'],
+  ['/dashboard/student/assessment/exams', '/dashboard/student/assessment'],
+  ['/dashboard/student/assessment/quizzes', '/dashboard/student/assessment'],
+  ['/dashboard/instructor/library', '/dashboard/instructor/overview'],
+  ['/dashboard/instructor/communities', '/dashboard/instructor/overview'],
+  ['/dashboard/course-creator/library', '/dashboard/course-creator/overview'],
+  ['/dashboard/instructor/portfolio/:projectId', '/dashboard/instructor/portfolio'],
+];
+
 const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
@@ -72,6 +84,14 @@ const nextConfig: NextConfig = {
     return ['/logos/:path*', '/assets/:path*'].map(source => ({
       source,
       headers: publicAssetCache,
+    }));
+  },
+  // Placeholder and legacy dashboard pages were deleted; old bookmarks land somewhere real.
+  async redirects() {
+    return removedDashboardRoutes.map(([source, destination]) => ({
+      source,
+      destination,
+      permanent: false,
     }));
   },
 };

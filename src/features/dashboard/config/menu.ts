@@ -252,21 +252,6 @@ export default {
         //   icon: School,
         // },
         // {
-        //   title: 'Contacts',
-        //   url: '/dashboard/contacts',
-        //   icon: Users,
-        // },
-        // {
-        //   title: 'Communities',
-        //   url: '/dashboard/communities',
-        //   icon: Users,
-        // },
-        // {
-        //   title: 'Library',
-        //   url: '/dashboard/library',
-        //   icon: LucideBookUser,
-        // },
-        // {
         //   title: 'Assignment',
         //   url: '/dashboard/assignment',
         //   icon: FileText,
@@ -486,11 +471,6 @@ export default {
         //   title: 'Students',
         //   url: '/dashboard/enrollments',
         //   icon: BookOpen,
-        // },
-        // {
-        //   title: 'Library',
-        //   url: '/dashboard/library',
-        //   icon: Library,
         // },
         // {
         //   title: 'Credentials Vault',
