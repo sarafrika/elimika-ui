@@ -131,6 +131,10 @@ export function useCourseRecord({
 }: UseCourseRecordOptions): CourseRecord {
   const on = enabled && Boolean(courseUuid);
   const queryClient = useQueryClient();
+  const listSeed = useMemo(
+    () => courseFromListCache(queryClient, courseUuid),
+    [queryClient, courseUuid]
+  );
 
   /* ── blocking ───────────────────────────────────────────────────────── */
 
@@ -138,7 +142,7 @@ export function useCourseRecord({
     ...getCourseByUuidOptions({ path: { uuid: courseUuid ?? '' } }),
     enabled: on,
     staleTime: STALE_TIMES.entity,
-    placeholderData: () => courseFromListCache(queryClient, courseUuid),
+    placeholderData: listSeed,
   });
   const course = courseQuery.data?.data;
 

@@ -114,6 +114,7 @@ function nextStepCopy(
 
 export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
   const queryClient = useQueryClient();
+  const listSeed = useMemo(() => jobFromListCache(queryClient, jobUuid), [queryClient, jobUuid]);
   const [now] = useState(() => Date.now());
   const [confirmCancel, setConfirmCancel] = useState(false);
 
@@ -122,7 +123,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
   const jobQuery = useQuery({
     ...getJobOptions({ path: { jobUuid } }),
     enabled: Boolean(jobUuid),
-    placeholderData: () => jobFromListCache(queryClient, jobUuid),
+    placeholderData: listSeed,
   });
   const job = jobQuery.data?.data ?? null;
 
@@ -193,7 +194,9 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
   const resourcesHold = job ? jobResourcesHoldState(job) : null;
   const sessionsHold = job ? instructorTimeHoldState(job, now) : null;
   const cta = job ? nextStepCta(job, now) : null;
-  const canEdit = stage === 'open' || stage === 'awaiting_class';
+  // A seeded list row may be stale, so stage-dependent actions wait for the real job.
+  const confirmed = !jobQuery.isPlaceholderData;
+  const canEdit = confirmed && (stage === 'open' || stage === 'awaiting_class');
   const applicantCount = Number(job?.application_count ?? applications.length);
   const hiredName = hiredInstructor?.full_name || 'The hired instructor';
   const venue = resourceRows.find(row => row.kind === 'VENUE') ?? null;
@@ -233,7 +236,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
             <Skeleton className='h-4 w-56' />
           </div>
         )}
-        {job && cta ? (
+        {job && cta && confirmed ? (
           <div className='flex flex-wrap items-center gap-2'>
             {canEdit ? (
               <Button asChild variant='outline'>
@@ -396,9 +399,11 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
                     <p className='text-muted-foreground text-sm'>
                       {nextStepCopy(stage, job, applicantCount, hiredName)}
                     </p>
-                    <Button asChild className='w-full'>
-                      <Link href={cta.href}>{cta.label}</Link>
-                    </Button>
+                    {confirmed ? (
+                      <Button asChild className='w-full'>
+                        <Link href={cta.href}>{cta.label}</Link>
+                      </Button>
+                    ) : null}
                     {canEdit ? (
                       <p className='text-muted-foreground flex items-start gap-1.5 text-xs'>
                         <Info className='mt-0.5 h-3.5 w-3.5 shrink-0' />
@@ -409,7 +414,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
                   </div>
                 </SectionCard>
 
-                {stage === 'open' && !hiredUuid ? (
+                {confirmed && stage === 'open' && !hiredUuid ? (
                   <JobSuggestedInstructors jobUuid={jobUuid} />
                 ) : null}
 
@@ -472,7 +477,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
           {tab === 'applicants' ? (
             <JobApplicantsPanel
               jobUuid={jobUuid}
-              job={job}
+              job={confirmed ? job : null}
               applicantHref={application => jobApplicantHref(jobUuid, application.uuid ?? '')}
             />
           ) : null}

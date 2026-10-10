@@ -61,11 +61,15 @@ export function useAllClasses(page: number, q?: string) {
 /** One class, opened in the drawer. */
 export function useClassDefinition(uuid: string | null) {
   const queryClient = useQueryClient();
+  const listSeed = useMemo(
+    () => classFromListCache(queryClient, uuid ?? undefined),
+    [queryClient, uuid]
+  );
   const query = useQuery({
     ...getClassDefinitionOptions({ path: { uuid: uuid ?? '' } }),
     ...listQuery,
     enabled: Boolean(uuid),
-    placeholderData: () => classFromListCache(queryClient, uuid ?? undefined),
+    placeholderData: listSeed,
   });
 
   const definition = useMemo(() => {
@@ -142,7 +146,14 @@ export function useCancelSession() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ instanceUuid, reason }: { instanceUuid: string; reason: string; title: string }) => {
+    mutationFn: async ({
+      instanceUuid,
+      reason,
+    }: {
+      instanceUuid: string;
+      reason: string;
+      title: string;
+    }) => {
       const { data } = await cancelScheduledClass({
         path: { instanceUuid },
         query: { reason },
@@ -216,9 +227,7 @@ export function useMarkAttendance() {
     },
     onSuccess: async (_data, variables) => {
       await invalidateGeneratedQueryIds(queryClient, ['getEnrollmentsForInstance']);
-      toast.success(
-        `${variables.learnerName} marked ${variables.attended ? 'present' : 'absent'}`
-      );
+      toast.success(`${variables.learnerName} marked ${variables.attended ? 'present' : 'absent'}`);
     },
     onError: (error, variables) => {
       if (statusOf(error) === 400) {
