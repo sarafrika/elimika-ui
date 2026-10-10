@@ -1,6 +1,9 @@
 'use client';
 
+import { useQueries } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { useStudentCourseOverview } from '@/hooks/use-student-course-overview';
 import {
   getAssignmentAttachmentsOptions,
   getAssignmentByUuidOptions,
@@ -13,8 +16,6 @@ import type {
   AssignmentSubmission,
   ClassAssignmentSchedule,
 } from '@/services/client/types.gen';
-import { useQueries } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import { useUserProfile } from '../../profile/context/profile-context';
 
 type StudentClassDefinitionRow = ReturnType<
@@ -180,8 +181,12 @@ export function useStudentAssignmentData() {
   const profile = useUserProfile();
   const student = profile?.student;
 
+  // Class, course and enrolment ids come from the course-overview composite; the
+  // per-class/per-course chain runs only when that endpoint is unavailable.
+  const overview = useStudentCourseOverview();
+  const legacy = overview.needsFallback;
   const { classDefinitions, loading: classDefinitionsLoading } = useStudentClassDefinitions(
-    student ?? undefined
+    legacy ? (student ?? undefined) : undefined
   );
 
   /**
@@ -189,39 +194,56 @@ export function useStudentAssignmentData() {
    */
   const classItems = useMemo(
     () =>
-      (classDefinitions ?? [])
-        .map((classDefinition: StudentClassDefinitionRow): StudentAssignmentClassItem | null => {
-          const classDetails = classDefinition.classDetails as ResolvedClassDetails | undefined;
+      !legacy
+        ? overview.items.map(
+            (item): StudentAssignmentClassItem => ({
+              classTitle: item.class_title || 'Untitled class',
+              classUuid: item.class_definition_uuid,
+              courseTitle: item.course_name ?? '',
+              studentUuid: student?.uuid,
+              courseUuid: item.course_uuid ?? '',
+              enrollmentUuid: item.course_enrollment_uuid ?? undefined,
+              courseEnrollmentUuid: item.course_enrollment_uuid ?? undefined,
+            })
+          )
+        : (classDefinitions ?? [])
+            .map(
+              (classDefinition: StudentClassDefinitionRow): StudentAssignmentClassItem | null => {
+                const classDetails = classDefinition.classDetails as
+                  | ResolvedClassDetails
+                  | undefined;
 
-          const classUuid =
-            classDefinition.uuid || classDetails?.uuid || classDetails?.class_definition?.uuid;
+                const classUuid =
+                  classDefinition.uuid ||
+                  classDetails?.uuid ||
+                  classDetails?.class_definition?.uuid;
 
-          if (!classUuid) return null;
-          const studentUuid = student?.uuid;
+                if (!classUuid) return null;
+                const studentUuid = student?.uuid;
 
-          const enrollmentUuid = classDefinition.courseEnrollments.find(
-            enrollment =>
-              enrollment.student_uuid === student?.uuid // && enrollment.status !== 'ACTIVE'
-          )?.uuid;
+                const enrollmentUuid = classDefinition.courseEnrollments.find(
+                  enrollment => enrollment.student_uuid === student?.uuid // && enrollment.status !== 'ACTIVE'
+                )?.uuid;
 
-          const courseEnrollmentUuid = classDefinition.courseEnrollments.find(
-            enrollment =>
-              enrollment.student_uuid === student?.uuid // && enrollment.status === 'ACTIVE'
-          )?.uuid;
+                const courseEnrollmentUuid = classDefinition.courseEnrollments.find(
+                  enrollment => enrollment.student_uuid === student?.uuid // && enrollment.status === 'ACTIVE'
+                )?.uuid;
 
-          return {
-            classTitle: getClassTitle(classDetails),
-            classUuid,
-            courseTitle:
-              (classDefinition.course?.name as string) || (classDetails?.course_name as string),
-            studentUuid,
-            courseUuid: classDefinition?.course?.uuid as string,
-            enrollmentUuid,
-            courseEnrollmentUuid,
-          };
-        })
-        .filter((x): x is StudentAssignmentClassItem => Boolean(x)),
-    [classDefinitions]
+                return {
+                  classTitle: getClassTitle(classDetails),
+                  classUuid,
+                  courseTitle:
+                    (classDefinition.course?.name as string) ||
+                    (classDetails?.course_name as string),
+                  studentUuid,
+                  courseUuid: classDefinition?.course?.uuid as string,
+                  enrollmentUuid,
+                  courseEnrollmentUuid,
+                };
+              }
+            )
+            .filter((x): x is StudentAssignmentClassItem => Boolean(x)),
+    [classDefinitions, legacy, overview.items, student?.uuid]
   );
 
   /**
@@ -401,6 +423,7 @@ export function useStudentAssignmentData() {
    * Loading state
    */
   const isLoading =
+    overview.isLoading ||
     classDefinitionsLoading ||
     assignmentScheduleQueries.some(q => q.isLoading) ||
     assignmentDetailQueries.some(q => q.isLoading) ||
