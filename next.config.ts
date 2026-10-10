@@ -56,6 +56,7 @@ const removedDashboardRoutes: Array<[string, string]> = [
   ['/dashboard/instructor/credentials/certificate', '/dashboard/instructor/credentials'],
   ['/dashboard/course-creator/credentials/certificate', '/dashboard/course-creator/credentials'],
   ['/dashboard/student/credentials/certificate', '/dashboard/student/skills-wallet?tab=credentials'],
+  ['/dashboard/organisation/account/admin', '/dashboard/organisation/account'],
 ];
 
 const nextConfig: NextConfig = {

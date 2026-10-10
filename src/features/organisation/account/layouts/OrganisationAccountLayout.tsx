@@ -9,7 +9,6 @@ const sections = [
   { label: 'Overview', href: '/dashboard/account', exact: true },
   { label: 'Training centre', href: '/dashboard/account/training-center', exact: true },
   { label: 'Fees & scheduling', href: '/dashboard/account/fees-scheduling' },
-  { label: 'Admin', href: '/dashboard/account/admin' },
 ];
 
 export default function ProfileLayout({ children }: { children: ReactNode }) {
