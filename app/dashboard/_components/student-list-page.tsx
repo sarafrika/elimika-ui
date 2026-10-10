@@ -1,7 +1,9 @@
 'use client';
 
-import { localDate } from '@/lib/date';
-import { useQueries } from '@tanstack/react-query';
+import { useUsersByIds, useUsersWithContactByIds } from '@/hooks/use-batched-lookups';
+import { dateWindow } from '@/lib/date';
+import { STALE_TIMES } from '@/lib/query-client';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Building2,
@@ -23,7 +25,7 @@ import { toast } from 'sonner';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import type { Student, } from '@/services/client';
+import type { Student } from '@/services/client';
 import {
   getStudentScheduleOptions,
   getUserByUuidOptions,
@@ -61,6 +63,7 @@ const filterOptions: Array<{
 ];
 
 const categoryOptions: Category[] = ['All'];
+const NO_IDS: string[] = [];
 
 type StudentsPageData = {
   data?: {
@@ -84,73 +87,8 @@ export default function StudentsListPage({
   page: number;
   onPageChange: (page: number) => void;
 }) {
-
   const students = studentsData?.data?.content ?? [];
   const totalPages = studentsData?.data?.metadata?.totalPages ?? 0;
-
-  const studentDetailQueries = useQueries({
-    queries: students.map(student => ({
-      ...getUserByUuidOptions({ path: { uuid: student.user_uuid as string } }),
-      enabled: !!student.user_uuid,
-    })),
-  });
-  const detailedStudents = studentDetailQueries.map(q => q.data?.data);
-
-  const studentEnrollmentQueries = useQueries({
-    queries: students.map(student => ({
-      ...getStudentScheduleOptions({
-        path: { studentUuid: student.uuid as string },
-        query: { start: localDate('2025-10-01'), end: localDate('2030-12-31') },
-      }),
-      enabled: !!student.uuid,
-    })),
-  });
-  const isLoading =
-    studentDetailQueries.some(q => q.isLoading) || studentEnrollmentQueries.some(q => q.isLoading);
-
-  const detailedEnrollments = studentEnrollmentQueries.map(q => q.data?.data ?? []);
-
-  const uniqueEnrollments = detailedEnrollments.map(enrollments => {
-    if (!enrollments) return [];
-
-    const seen = new Set();
-
-    return enrollments.filter((enrollment: EnrolledScheduleItem) => {
-      if (seen.has(enrollment.class_definition_uuid)) {
-        return false;
-      }
-      seen.add(enrollment.class_definition_uuid);
-      return true;
-    });
-  });
-
-  const enrollmentMap = useMemo(
-    () =>
-      new Map(
-        students.map((student, index) => [
-          student.user_uuid as string,
-          uniqueEnrollments[index] ?? [],
-        ])
-      ),
-    [students, uniqueEnrollments]
-  );
-
-  const resolvedStudents = useMemo<DashboardResolvedStudent[]>(
-    () =>
-      students
-        .map((student, index) => {
-          const user = detailedStudents[index];
-          if (!user) return null;
-
-          return {
-            ...user,
-            studentProfile: student,
-            enrollmentCount: (uniqueEnrollments[index] ?? []).length,
-          };
-        })
-        .filter((student): student is DashboardResolvedStudent => student !== null),
-    [students, detailedStudents, uniqueEnrollments]
-  );
 
   // State management
   const [searchQuery, setSearchQuery] = useState('');
@@ -158,6 +96,72 @@ export default function StudentsListPage({
   const [selectedCategory, setSelectedCategory] = useState<Category>('All');
   const [selectedStudentUuid, setSelectedStudentUuid] = useState<string | null>(null);
   const [starredStudents, setStarredStudents] = useState<Set<string>>(new Set());
+
+  // Rows need only name and avatar: one directory request for the whole page.
+  const userUuids = useMemo(
+    () => students.map(student => student.user_uuid).filter(Boolean) as string[],
+    [students]
+  );
+  const { userMap: directoryMap, isLoading: isDirectoryLoading } = useUsersByIds(userUuids);
+
+  // Full records (email, active flag) load only when a filter or email search needs them.
+  const needsContact = selectedFilter !== 'all' || searchQuery.includes('@');
+  const { userMap: contactMap } = useUsersWithContactByIds(needsContact ? userUuids : NO_IDS);
+
+  const selectedProfile = students.find(student => student.user_uuid === selectedStudentUuid);
+  const { data: selectedUserData } = useQuery({
+    ...getUserByUuidOptions({ path: { uuid: selectedStudentUuid as string } }),
+    enabled: !!selectedStudentUuid,
+    staleTime: STALE_TIMES.entity,
+  });
+  const scheduleWindow = useMemo(() => dateWindow({ pastMonths: 12, futureMonths: 12 }), []);
+  const { data: selectedScheduleData } = useQuery({
+    ...getStudentScheduleOptions({
+      path: { studentUuid: selectedProfile?.uuid as string },
+      query: { start: scheduleWindow.start, end: scheduleWindow.end },
+    }),
+    enabled: !!selectedProfile?.uuid,
+  });
+
+  const selectedEnrollments = useMemo(() => {
+    const seen = new Set<string | undefined>();
+    return ((selectedScheduleData?.data ?? []) as EnrolledScheduleItem[]).filter(enrollment => {
+      if (seen.has(enrollment.class_definition_uuid)) return false;
+      seen.add(enrollment.class_definition_uuid);
+      return true;
+    });
+  }, [selectedScheduleData]);
+
+  const isLoading = isDirectoryLoading;
+
+  const resolvedStudents = useMemo<DashboardResolvedStudent[]>(
+    () =>
+      students
+        .map(student => {
+          const userUuid = student.user_uuid;
+          const user = contactMap[userUuid] ?? directoryMap[userUuid];
+          if (!user) return null;
+          const isSelected = userUuid === selectedStudentUuid;
+
+          return {
+            ...user,
+            ...(isSelected ? selectedUserData?.data : undefined),
+            studentProfile: student,
+            enrollmentCount:
+              isSelected && selectedScheduleData ? selectedEnrollments.length : undefined,
+          } as DashboardResolvedStudent;
+        })
+        .filter((student): student is DashboardResolvedStudent => student !== null),
+    [
+      students,
+      contactMap,
+      directoryMap,
+      selectedStudentUuid,
+      selectedUserData,
+      selectedScheduleData,
+      selectedEnrollments,
+    ]
+  );
 
   // Mobile states
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -251,9 +255,8 @@ export default function StudentsListPage({
     setIsMobileDetailsOpen(false);
   };
 
-  const getEnrollmentForStudent = (studentUuid: string): EnrolledScheduleItem[] => {
-    return enrollmentMap.get(studentUuid) ?? [];
-  };
+  const getEnrollmentForStudent = (studentUuid: string): EnrolledScheduleItem[] =>
+    studentUuid === selectedStudentUuid ? selectedEnrollments : [];
 
   return (
     <Card className='p-2'>
@@ -429,7 +432,9 @@ export default function StudentsListPage({
                       <div className='flex-1 overflow-hidden'>
                         <p className='truncate text-sm font-medium'>{student?.display_name}</p>
                         <p className='text-muted-foreground truncate text-xs'>
-                          {student?.enrollmentCount || 0} classes enrolled
+                          {student?.enrollmentCount !== undefined
+                            ? `${student.enrollmentCount} classes enrolled`
+                            : student?.email || student?.user_no || 'Student'}
                         </p>
                       </div>
 

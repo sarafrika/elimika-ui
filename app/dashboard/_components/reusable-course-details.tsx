@@ -7,13 +7,12 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { useAssignmentsByLessonIds, useQuizzesByLessonIds } from '@/hooks/use-batched-lookups';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { resolveLessonContentSource } from '@/lib/lesson-content-preview';
-import type { Assignment, CourseReview, DifficultyLevel, Lesson, Quiz } from '@/services/client';
+import type { CourseReview, DifficultyLevel, Lesson } from '@/services/client';
 import {
-  getAllAssignmentsOptions,
   getAllDifficultyLevelsOptions,
-  getAllQuizzesOptions,
   getCourseByUuidOptions,
   getCourseCreatorByUuidOptions,
   getCourseLessonsOptions,
@@ -38,7 +37,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ReviewCard } from '../instructor/reviews/review-card';
 import { VideoPlayer } from '../student/schedule/classes/[id]/VideoPlayer';
@@ -136,24 +135,17 @@ export default function ReusableCourseDetailsPage({
     }),
     enabled: !!courseId,
   });
-  const lessons: Lesson[] = courseLessons?.data?.content ?? [];
-  const lessonUuids = lessons
-    .map(lesson => lesson.uuid)
-    .filter((uuid): uuid is string => typeof uuid === 'string');
-
-  const { data: cAssignments, isLoading: assignmentLoading } = useQuery({
-    ...getAllAssignmentsOptions({ query: { pageable: {} } }),
-  });
-  const assignments: Assignment[] = cAssignments?.data?.content ?? [];
-  const filteredAssignments = assignments.filter(assignment =>
-    lessonUuids.includes(assignment.lesson_uuid)
+  const lessonUuids = useMemo(
+    () =>
+      ((courseLessons?.data?.content ?? []) as Lesson[])
+        .map(lesson => lesson.uuid)
+        .filter((uuid): uuid is string => typeof uuid === 'string'),
+    [courseLessons]
   );
 
-  const { data: cQuizzes, isLoading: quizzesLoading } = useQuery({
-    ...getAllQuizzesOptions({ query: { pageable: {} } }),
-  });
-  const quizzes: Quiz[] = cQuizzes?.data?.content ?? [];
-  const filteredQuizzes = quizzes.filter(quiz => lessonUuids.includes(quiz.lesson_uuid));
+  const { items: filteredAssignments, isLoading: assignmentLoading } =
+    useAssignmentsByLessonIds(lessonUuids);
+  const { items: filteredQuizzes, isLoading: quizzesLoading } = useQuizzesByLessonIds(lessonUuids);
 
   const { data: difficulty } = useQuery(getAllDifficultyLevelsOptions());
   const difficultyLevels: DifficultyLevel[] = difficulty?.data ?? [];

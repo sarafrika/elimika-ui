@@ -2,7 +2,7 @@
 
 import type { DashboardClass } from '@/app/dashboard/_components/types';
 import { useInstructor } from '@/context/instructor-context';
-import { localDate } from '@/lib/date';
+import { dateWindow } from '@/lib/date';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
@@ -21,14 +21,8 @@ interface TimetablePageProps {
 const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePageProps) => {
   const instructor = useInstructor();
   const scheduleRange = useMemo(() => {
-    const start = new Date();
-    start.setFullYear(start.getFullYear() - 2);
-    const end = new Date();
-    end.setFullYear(end.getFullYear() + 2);
-    return {
-      start_date: localDate(start),
-      end_date: localDate(end),
-    };
+    const { start, end } = dateWindow({ pastMonths: 3, futureMonths: 9 });
+    return { start_date: start, end_date: end };
   }, []);
 
   const {

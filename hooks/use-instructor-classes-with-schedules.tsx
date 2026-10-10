@@ -1,4 +1,4 @@
-import { localDate } from '@/lib/date';
+import { dateWindow } from '@/lib/date';
 import {
   getClassDefinitionsForInstructorOptions,
   getEnrollmentsForClassOptions,
@@ -144,16 +144,8 @@ export function useInstructorClassesWithSchedules(instructorUuid?: string) {
 
   // One timetable request for the whole instructor instead of one schedule
   // request per class. Instances carry class_definition_uuid, so they are
-  // grouped client-side. The ±2-year window bounds payload size.
-  const scheduleRange = useMemo(() => {
-    const now = new Date();
-    const start = new Date(now);
-    start.setFullYear(start.getFullYear() - 2);
-    const end = new Date(now);
-    end.setFullYear(end.getFullYear() + 2);
-    // LocalDate params must go over the wire as YYYY-MM-DD
-    return { start: localDate(start), end: localDate(end) };
-  }, []);
+  // grouped client-side. The ±12-month window bounds payload size.
+  const scheduleRange = useMemo(() => dateWindow({ pastMonths: 12, futureMonths: 12 }), []);
 
   const instructorScheduleQuery = useQuery({
     ...getInstructorScheduleOptions({

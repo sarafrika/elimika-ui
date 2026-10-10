@@ -30,7 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
-import { localDate } from '@/lib/date';
+import { dateWindow } from '@/lib/date';
 import { AttachmentResourceList } from '../../../../components/assessment/AttachmentResourceList';
 import RichTextRenderer from '../../../../components/editors/richTextRenders';
 import {
@@ -314,13 +314,11 @@ export default function StudentAnalyticsDashboard() {
     enabled: !!studentUuid,
   });
 
+  const scheduleWindow = useMemo(() => dateWindow({ pastMonths: 24, futureMonths: 12 }), []);
   const scheduleQuery = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: studentUuid ?? '' },
-      query: {
-        start: localDate('2024-01-01'),
-        end: localDate('2030-12-31'),
-      },
+      query: { start: scheduleWindow.start, end: scheduleWindow.end },
     }),
     enabled: !!studentUuid,
   });
