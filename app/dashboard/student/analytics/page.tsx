@@ -30,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
+import { useStudentCourseOverview } from '@/hooks/use-student-course-overview';
 import { dateWindow } from '@/lib/date';
 import { AttachmentResourceList } from '../../../../components/assessment/AttachmentResourceList';
 import RichTextRenderer from '../../../../components/editors/richTextRenders';
@@ -71,6 +72,8 @@ type StudentAnalyticsTab = 'Overview' | 'Enrollments' | 'Assessments';
 const TABS: StudentAnalyticsTab[] = ['Overview', 'Enrollments', 'Assessments'];
 
 const PAGEABLE = { page: 0, size: 100 };
+
+type ClassLabels = Pick<ClassDefinition, 'course_uuid' | 'program_uuid'> & { title?: string };
 
 function formatDateTime(value?: Date | string | null) {
   if (!value) {
@@ -323,9 +326,12 @@ export default function StudentAnalyticsDashboard() {
     enabled: !!studentUuid,
   });
 
+  // The enrolled classes come from the course-overview composite; the platform-wide
+  // active-class listing is only the fallback when that endpoint is unavailable.
+  const courseOverview = useStudentCourseOverview(studentUuid);
   const activeClassDefinitionsQuery = useQuery({
     ...getAllActiveClassDefinitionsOptions({}),
-    enabled: !!studentUuid,
+    enabled: !!studentUuid && courseOverview.needsFallback,
   });
 
   const scheduleRows = scheduleQuery.data?.data ?? [];
@@ -340,7 +346,15 @@ export default function StudentAnalyticsDashboard() {
   );
 
   const classDefinitionMap = useMemo(() => {
-    const map = new Map<string, ClassDefinition>();
+    const map = new Map<string, ClassLabels>();
+    for (const item of courseOverview.items) {
+      map.set(item.class_definition_uuid, {
+        course_uuid: item.course_uuid,
+        program_uuid: item.program_uuid,
+        title: item.class_title,
+      });
+    }
+
     const entries = activeClassDefinitionsQuery.data?.data ?? [];
 
     for (const entry of entries) {
@@ -351,7 +365,7 @@ export default function StudentAnalyticsDashboard() {
     }
 
     return map;
-  }, [activeClassDefinitionsQuery.data]);
+  }, [activeClassDefinitionsQuery.data, courseOverview.items]);
 
   const courseIdsFromClasses = useMemo(
     () =>

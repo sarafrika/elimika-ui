@@ -15,6 +15,7 @@ import type {
   Organisation,
   StudentClassEnrollmentSummary,
   StudentCourseEnrollmentSummary,
+  StudentCourseOverviewItem,
   TrainingProgram,
 } from '@/services/client/types.gen';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
@@ -93,7 +94,9 @@ export const formatDateLabel = (value?: Date | string) => {
   }).format(date);
 };
 
-export const isActiveCourseEnrollment = (course?: StudentCourseEnrollmentSummary) => {
+export const isActiveCourseEnrollment = (
+  course?: Pick<StudentCourseEnrollmentSummary, 'enrollment_status'>
+) => {
   if (!course?.enrollment_status) {
     return true;
   }
@@ -111,6 +114,11 @@ export const isActiveClassEnrollment = (
 
   return status !== 'CANCELLED';
 };
+
+/** A course-overview row the learner is still taking, by class and course enrolment status. */
+export const isActiveOverviewItem = (item: StudentCourseOverviewItem) =>
+  isActiveClassEnrollment(item.latest_enrollment_status) &&
+  isActiveCourseEnrollment({ enrollment_status: item.course_enrollment_status ?? undefined });
 
 export function resolveClassProvider(
   classDefinition:
@@ -159,37 +167,37 @@ export function useStudentIdentity() {
  * Root queries shared by the overview sections. Identical query keys mean React
  * Query sends each request once, and every section starts it in parallel.
  */
-export function useStudentCourseEnrollments() {
+export function useStudentCourseEnrollments(enabled = true) {
   const { studentUuid, isResolving } = useStudentIdentity();
   const query = useQuery({
     ...getCourseEnrollmentsForStudentOptions({
       path: { studentUuid: studentUuid as string },
       query: { pageable: { page: 0, size: DEFAULT_PAGE_SIZE } },
     }),
-    enabled: Boolean(studentUuid),
+    enabled: enabled && Boolean(studentUuid),
     staleTime: STALE_TIMES.live,
   });
   return {
     enrollments: query.data?.data?.content ?? NO_COURSE_ENROLLMENTS,
-    isLoading: isResolving || (query.isLoading && !query.data),
+    isLoading: enabled && (isResolving || (query.isLoading && !query.data)),
     error: query.error,
     refetch: query.refetch,
   };
 }
 
-export function useStudentClassEnrollments() {
+export function useStudentClassEnrollments(enabled = true) {
   const { studentUuid, isResolving } = useStudentIdentity();
   const query = useQuery({
     ...getClassEnrollmentsForStudentOptions({
       path: { studentUuid: studentUuid as string },
       query: { pageable: { page: 0, size: DEFAULT_PAGE_SIZE } },
     }),
-    enabled: Boolean(studentUuid),
+    enabled: enabled && Boolean(studentUuid),
     staleTime: STALE_TIMES.live,
   });
   return {
     enrollments: query.data?.data?.content ?? NO_CLASS_ENROLLMENTS,
-    isLoading: isResolving || (query.isLoading && !query.data),
+    isLoading: enabled && (isResolving || (query.isLoading && !query.data)),
     error: query.error,
     refetch: query.refetch,
   };
