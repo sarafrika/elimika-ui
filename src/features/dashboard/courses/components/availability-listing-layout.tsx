@@ -24,8 +24,9 @@ import {
   Users,
   Wallet
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
 import { useOrganisationsByIds } from '../../../../../hooks/use-batched-lookups';
+import { useClassSchedule } from '../../../../../hooks/use-class-schedule';
 import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
 import { ClassSessionTemplate } from '../../../../../services/client';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
@@ -160,7 +161,8 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   const [isClassEnded, setIsClassEnded] = useState(false);
   const [canEnrollClass, setCanEnrollClass] = useState(false);
 
-  // ORGANISATION DETAILS
+  // Listings carry no ratings; the block is hidden rather than showing a false zero.
+  const hasRating = cls.classRating != null;
   const rating = Math.round(cls?.classRating?.average_rating ?? 0);
 
   const { organisationMap } = useOrganisationsByIds([cls?.organisation_uuid!]);
@@ -179,8 +181,18 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
   const promotionalVideoUrl = toAuthenticatedMediaUrl(cls.promotional_video_url);
 
-  // CLASS SCHEDULES
-  const schedules = cls.schedule ?? [];
+  // CLASS SCHEDULES: listings send none, so the card loads its own when Class Info opens, or on
+  // sight when no academic end date exists to tell whether the class has ended.
+  const cardRef = useRef<HTMLDivElement>(null);
+  const needsEndDate = !cls.scheduleLoaded && !cls.academic_period_end_date;
+  const inView = useInView(cardRef, needsEndDate);
+  const ownSchedule = useClassSchedule(
+    cls.uuid,
+    !cls.scheduleLoaded && (detail !== null || (needsEndDate && inView))
+  );
+  const scheduleKnown = cls.scheduleLoaded || ownSchedule.isLoaded;
+  const schedules = cls.scheduleLoaded ? cls.schedule : ownSchedule.schedule;
+  const sessionCount = cls.scheduleLoaded ? cls.sessionCount : ownSchedule.sessionCount;
   const sortedSchedules = [...schedules].sort(
     (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
   );
@@ -188,8 +200,12 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   const firstSchedule = sortedSchedules[0];
   const lastSchedule = sortedSchedules[sortedSchedules.length - 1];
 
-  const startsAt = firstSchedule?.start_time;
-  const endsAt = lastSchedule?.end_time;
+  const startsAt: Date | string | undefined =
+    firstSchedule?.start_time ?? cls.academic_period_start_date ?? undefined;
+  const endsAt: Date | string | undefined =
+    lastSchedule?.end_time ?? cls.academic_period_end_date ?? undefined;
+  // Unknown until a date or a loaded schedule says otherwise; never assume "not ended".
+  const endStateKnown = !!endsAt || scheduleKnown || ownSchedule.isError;
   const registrationStart = cls?.registration_period_start_date;
   const registrationEnd = cls?.registration_period_end_date
 
@@ -240,6 +256,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
     setIsClassEnded(classEnded);
 
     setCanEnrollClass(
+      endStateKnown &&
       !classEnded &&
       (registrationOngoing || noRegistrationPeriod)
     );
@@ -247,6 +264,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
     registrationStart,
     registrationEnd,
     endsAt,
+    endStateKnown,
   ]);
 
   useEffect(() => {
@@ -269,7 +287,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
 
   return (
-    <div>
+    <div ref={cardRef}>
       <Card className='hover:border-primary/50 cursor-pointer transition hover:shadow-md'>
         <CardHeader className='flex flex-col gap-3 pb-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='flex items-start gap-3'>
@@ -308,7 +326,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
                 {organisation && <span>{organisation.name}</span>}
                 <span>{cls.instructor?.data?.full_name ?? ''}</span>
                 <span>{cls.level_of_study ?? 'Certificate'}</span>
-                <div className="flex flex-row items-center gap-1.5">
+                {hasRating ? <div className="flex flex-row items-center gap-1.5">
                   <span className="flex items-center text-warning">
                     {rating > 0 ? (
                       Array.from({ length: rating }).map((_, index) => (
@@ -323,7 +341,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
                   </span>
 
                   <span className="h-3.5">{rating}</span>
-                </div>
+                </div> : null}
               </div>
 
             </div>
@@ -370,7 +388,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
           <div className='mb-2 flex flex-wrap gap-2'>
             <Badge variant='outline' className='bg-primary/5 text-primary gap-1'>
               <Calendar className='h-3 w-3' />
-              {cls.schedule.length} sessions
+              {scheduleKnown ? `${sessionCount ?? schedules.length} sessions` : 'Schedule in Class Info'}
             </Badge>
 
             <Badge variant='outline' className='bg-primary/5 text-primary gap-1'>
@@ -392,18 +410,10 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
           <div className='text-muted-foreground grid gap-2 text-xs md:grid-cols-3'>
             <div className="inline-flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
-              {cls.academic_period_start_date && cls.academic_period_end_date
-                ? `${format(
-                  new Date(cls.academic_period_start_date),
-                  'MMM d, yyyy'
-                )} - ${format(
-                  new Date(cls.academic_period_end_date),
-                  'MMM d, yyyy'
-                )}`
-                : `${format(startsAt, 'MMM d, yyyy')} - ${format(
-                  endsAt,
-                  'MMM d, yyyy'
-                )}`}
+              {formatPeriod(
+                cls.academic_period_start_date ?? startsAt,
+                cls.academic_period_end_date ?? endsAt
+              )}
             </div>
 
 
@@ -419,12 +429,12 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
             <div className='inline-flex items-center gap-1.5'>
               <Calendar className='h-3.5 w-3.5' />
-              Starts {startsAt ? formatScheduleDate(startsAt) : 'Not available'}
+              Starts {startsAt ? formatScheduleDate(startsAt) : scheduleKnown ? 'Not available' : 'See Class Info'}
             </div>
 
             <div className='inline-flex items-center gap-1.5'>
               <Calendar className='h-3.5 w-3.5' />
-              Ends {endsAt ? formatScheduleDate(endsAt) : 'Not available'}
+              Ends {endsAt ? formatScheduleDate(endsAt) : scheduleKnown ? 'Not available' : 'See Class Info'}
             </div>
 
             <div className='inline-flex items-center gap-1.5'>
@@ -512,6 +522,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
         startsAt={startsAt}
         endsAt={endsAt}
         seatsTaken={seatsTaken}
+        sessionCount={scheduleKnown ? (sessionCount ?? schedules.length) : 'Loading…'}
         courseLessons={courseLessons}
         onClose={() => setDetail(null)}
         onEnroll={onEnroll}
@@ -521,6 +532,40 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
       />
     </div>
   );
+}
+
+function formatPeriod(start?: Date | string | null, end?: Date | string | null) {
+  const from = start ? new Date(start) : null;
+  const to = end ? new Date(end) : null;
+  const valid = (d: Date | null): d is Date => d !== null && !Number.isNaN(d.getTime());
+  if (!valid(from) && !valid(to)) return 'Dates in Class Info';
+  const label = (d: Date | null) => (valid(d) ? format(d, 'MMM d, yyyy') : 'TBC');
+  return `${label(from)} - ${label(to)}`;
+}
+
+// True once the element nears the viewport; only observes while `watch` is set.
+function useInView(ref: RefObject<HTMLElement | null>, watch: boolean) {
+  const [seen, setSeen] = useState(false);
+  useEffect(() => {
+    if (!watch || seen) return;
+    const node = ref.current;
+    if (!node || typeof IntersectionObserver === 'undefined') {
+      setSeen(true);
+      return;
+    }
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries.some(entry => entry.isIntersecting)) {
+          setSeen(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px' }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [ref, watch, seen]);
+  return seen;
 }
 
 function formatTimeInZone(date: string, arg1: { fallback: string; }) {

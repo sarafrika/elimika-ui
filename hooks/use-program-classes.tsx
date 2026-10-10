@@ -1,16 +1,15 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getClassDefinitionsForProgramOptions,
-  getClassScheduleOptions,
   getProgramCoursesOptions,
   getTrainingProgramByUuidOptions,
 } from '../services/client/@tanstack/react-query.gen';
 import type { ClassDefinition } from '../services/client/types.gen';
 import type { ProgramBundledClass } from '../src/features/dashboard/courses/types';
-import { useInstructorsByIds } from './use-batched-lookups';
-import { toCount, useClassListingSummaries } from './use-class-listing-summaries';
+import { toCardInstructor, toCount, useClassListingSummaries } from './use-class-listing-summaries';
+import { useClassSchedule } from './use-class-schedule';
 
 type StudentLike =
   | {
@@ -19,12 +18,8 @@ type StudentLike =
   | null
   | undefined;
 
-const SCHEDULE_PAGE_SIZE = 200;
-// Keeps the page inside its request budget when a listing has unusually many classes.
-const MAX_SCHEDULED_CLASSES = 12;
-
 // Seat counts, the learner's own enrolments, instructors and catalogue rows come from batched
-// lookups; `onlyClassUuid` (the enrolment page) narrows schedules to that one class.
+// lookups. Listings load no schedules; `onlyClassUuid` (the enrolment page) loads that class's.
 function useProgramBundledClassInfo(
   programUuid?: string,
   student?: StudentLike,
@@ -43,15 +38,6 @@ function useProgramBundledClassInfo(
         .filter((item): item is ClassDefinition => item !== undefined) ?? [],
     [data]
   );
-  const scheduleClasses = useMemo(
-    () =>
-      classes.filter(
-        (cls): cls is ClassDefinition & { uuid: string } =>
-          !!cls.uuid &&
-          (onlyClassUuid === undefined ? cls.is_active !== false : cls.uuid === onlyClassUuid)
-      ),
-    [classes, onlyClassUuid]
-  );
   const classUuids = useMemo(
     () => classes.map(cls => cls.uuid).filter((uuid): uuid is string => !!uuid),
     [classes]
@@ -60,35 +46,16 @@ function useProgramBundledClassInfo(
   const { data: pCourses } = useQuery({
     ...getProgramCoursesOptions({ path: { programUuid: programUuid ?? '' } }),
     enabled: !!programUuid,
+    staleTime: STALE_TIMES.entity,
   });
 
   const { data: program } = useQuery({
     ...getTrainingProgramByUuidOptions({ path: { uuid: programUuid ?? '' } }),
     enabled: !!programUuid,
+    staleTime: STALE_TIMES.entity,
   });
 
-  const scheduleState = useQueries({
-    queries: scheduleClasses.slice(0, MAX_SCHEDULED_CLASSES).map(cls => ({
-      ...getClassScheduleOptions({
-        path: { uuid: cls.uuid },
-        query: { pageable: { size: SCHEDULE_PAGE_SIZE } },
-      }),
-      staleTime: STALE_TIMES.live,
-    })),
-    combine: results => ({
-      schedules: results.map(q => q.data?.data?.content ?? []),
-      isLoading: results.some(q => q.isLoading || q.isFetching),
-    }),
-  });
-
-  const instructorIds = useMemo(
-    () =>
-      scheduleClasses
-        .map(cls => cls.default_instructor_uuid)
-        .filter((uuid): uuid is string => !!uuid),
-    [scheduleClasses]
-  );
-  const { instructorMap, isLoading: isInstructorsLoading } = useInstructorsByIds(instructorIds);
+  const detailSchedule = useClassSchedule(onlyClassUuid, !!onlyClassUuid);
 
   const {
     summaryMap,
@@ -101,53 +68,43 @@ function useProgramBundledClassInfo(
     studentUuid
   );
 
-  const scheduleIndex = useMemo(
-    () => new Map(scheduleClasses.map((cls, index) => [cls.uuid, index])),
-    [scheduleClasses]
-  );
-  const { schedules } = scheduleState;
   const programCourses = pCourses?.data ?? null;
   const programData = program?.data ?? null;
 
   const bundledClassInfo: ProgramBundledClass[] = useMemo(
     () =>
       classes.map(cls => {
-        const i = cls.uuid ? scheduleIndex.get(cls.uuid) : undefined;
-        const found = cls.default_instructor_uuid
-          ? instructorMap[cls.default_instructor_uuid]
-          : undefined;
+        const isDetail = !!cls.uuid && cls.uuid === onlyClassUuid;
+        const summary = cls.uuid ? summaryMap[cls.uuid] : undefined;
         return {
           ...cls,
           course: cls.program_uuid ? programCourses : null,
           program: programData,
-          // Card consumers still read the old `{ data }` response envelope.
-          instructor: found ? { ...found, data: found } : null,
-          schedule: i === undefined ? [] : (schedules[i] ?? []),
+          instructor: toCardInstructor(summary, cls.default_instructor_uuid),
+          schedule: isDetail ? detailSchedule.schedule : [],
+          scheduleLoaded: isDetail && detailSchedule.isLoaded,
+          sessionCount: isDetail && detailSchedule.isLoaded ? detailSchedule.sessionCount : null,
           enrollments: [],
           catalogue: cls.uuid ? (catalogueMap[cls.uuid] ?? null) : null,
-          enrolledCount: cls.uuid ? toCount(summaryMap[cls.uuid]?.enrolled_count) : null,
+          enrolledCount: toCount(summary?.enrolled_count),
           isStudentEnrolled: cls.uuid ? enrolledClassUuids.has(cls.uuid) : false,
         };
       }),
     [
       catalogueMap,
       classes,
+      detailSchedule.isLoaded,
+      detailSchedule.schedule,
+      detailSchedule.sessionCount,
       enrolledClassUuids,
-      instructorMap,
+      onlyClassUuid,
       programCourses,
       programData,
-      scheduleIndex,
-      schedules,
       summaryMap,
     ]
   );
 
-  const loading =
-    isLoading ||
-    isFetching ||
-    isInstructorsLoading ||
-    scheduleState.isLoading ||
-    isSummariesLoading;
+  const loading = isLoading || isFetching || detailSchedule.isLoading || isSummariesLoading;
 
   return {
     classes: bundledClassInfo,

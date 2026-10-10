@@ -11,29 +11,44 @@ import type {
   TrainingProgram,
   User,
 } from '@/services/client/types.gen';
-export type BundledClass = ClassDefinition & {
-  course: Course | null;
-  instructor: Instructor | null;
-  schedule: ScheduledInstance[];
-  enrollments: StudentSchedule[];
-  catalogue: CommerceCatalogueItem | null;
-  classRating?: ClassRatingSummary | null;
-  // From the batch class endpoint; null when the viewer is not a party to the class.
-  enrolledCount?: number | null;
-  isStudentEnrolled?: boolean;
+// Cards only read the name and id; listings fill it from the batch class summary.
+export type CardInstructor = {
+  uuid?: string;
+  full_name?: string | null;
+  name?: string | null;
+  data?: { full_name?: string | null };
 };
 
-export type ProgramBundledClass = ClassDefinition & {
-  course: Course[] | null;
-  program: TrainingProgram | null;
-  instructor: Instructor | null;
+type ScheduleFields = {
   schedule: ScheduledInstance[];
-  enrollments: StudentSchedule[];
-  catalogue: CommerceCatalogueItem | null;
-  // From the batch class endpoint; null when the viewer is not a party to the class.
-  enrolledCount?: number | null;
-  isStudentEnrolled?: boolean;
+  // False on listings: the card loads the schedule itself when it needs dates.
+  scheduleLoaded: boolean;
+  sessionCount?: number | null;
 };
+
+export type BundledClass = ClassDefinition &
+  ScheduleFields & {
+    course: Course | null;
+    instructor: CardInstructor | null;
+    enrollments: StudentSchedule[];
+    catalogue: CommerceCatalogueItem | null;
+    classRating?: ClassRatingSummary | null;
+    // From the batch class endpoint; null when the viewer is not a party to the class.
+    enrolledCount?: number | null;
+    isStudentEnrolled?: boolean;
+  };
+
+export type ProgramBundledClass = ClassDefinition &
+  ScheduleFields & {
+    course: Course[] | null;
+    program: TrainingProgram | null;
+    instructor: CardInstructor | null;
+    enrollments: StudentSchedule[];
+    catalogue: CommerceCatalogueItem | null;
+    // From the batch class endpoint; null when the viewer is not a party to the class.
+    enrolledCount?: number | null;
+    isStudentEnrolled?: boolean;
+  };
 
 export type SearchInstructor = Instructor & {
   gender?: User['gender'] | null;

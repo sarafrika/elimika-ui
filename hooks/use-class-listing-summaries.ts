@@ -1,11 +1,13 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { logger } from '@/lib/logger';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getClassesBatchOptions,
   getStudentCourseOverviewOptions,
   resolveByCourseOrClassOptions,
 } from '../services/client/@tanstack/react-query.gen';
+import type { CardInstructor } from '../src/features/dashboard/courses/types';
 import type {
   ClassBatchSummary,
   CommerceCatalogueItem,
@@ -33,6 +35,15 @@ export function useClassListingSummaries(
     return out;
   }, [classUuids]);
 
+  useEffect(() => {
+    if (chunks.length > MAX_CLASS_BATCHES) {
+      logger.warn('Class summaries capped at the batch ceiling', {
+        classCount: classUuids.length,
+        loaded: MAX_CLASS_BATCHES * CLASS_BATCH_SIZE,
+      });
+    }
+  }, [chunks.length, classUuids.length]);
+
   const batch = useQueries({
     queries: chunks.slice(0, MAX_CLASS_BATCHES).map(uuids => ({
       ...getClassesBatchOptions({ query: { uuids } }),
@@ -57,6 +68,16 @@ export function useClassListingSummaries(
     enabled: !!studentUuid,
     staleTime: STALE_TIMES.live,
   });
+  const overviewTotal = overviewQuery.data?.data?.enrollments?.metadata?.totalElements;
+  useEffect(() => {
+    if (overviewTotal !== undefined && Number(overviewTotal) > STUDENT_OVERVIEW_PAGE_SIZE) {
+      logger.warn('Enrolled-class check covers only the first page of enrolments', {
+        total: Number(overviewTotal),
+        pageSize: STUDENT_OVERVIEW_PAGE_SIZE,
+      });
+    }
+  }, [overviewTotal]);
+
   const enrolledClassUuids = useMemo(
     () =>
       new Set(
@@ -91,4 +112,15 @@ export function useClassListingSummaries(
 
 export function toCount(value: bigint | number | null | undefined): number | null {
   return value === null || value === undefined ? null : Number(value);
+}
+
+// Card-ready instructor from the batch summary, so listings need no separate instructor lookup.
+export function toCardInstructor(
+  summary: ClassBatchSummary | undefined,
+  fallbackUuid?: string | null
+): CardInstructor | null {
+  const uuid = summary?.instructor?.uuid ?? fallbackUuid ?? undefined;
+  if (!uuid) return null;
+  const fullName = summary?.instructor?.display_name ?? null;
+  return { uuid, full_name: fullName, name: fullName, data: { full_name: fullName } };
 }

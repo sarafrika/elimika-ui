@@ -48,7 +48,8 @@ const EnrollmentPage = () => {
 
   const [openEnrollModal, setOpenEnrollModal] = useState(false);
   const [enrollingClass, setEnrollingClass] = useState<BundledClass | null>(null);
-  const { classes, loading, isError } = useCourseClassesWithDetails(courseId);
+  // The page enrols the instructor's uuid as the student, so check enrolments against it too.
+  const { classes, loading, isError } = useCourseClassesWithDetails(courseId, instructor);
 
   const enrollStudent = useMutation(enrollStudentMutation());
   const formatDateTime = (value?: Date | string | null) => {

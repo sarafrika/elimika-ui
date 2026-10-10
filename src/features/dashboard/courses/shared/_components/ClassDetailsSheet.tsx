@@ -26,6 +26,8 @@ interface ClassDetailSheetProps {
   startsAt?: string | Date | null;
   endsAt?: string | Date | null;
   seatsTaken: number | string;
+  // Shown instead of `detail.schedule.length` while the card loads the schedule on demand.
+  sessionCount?: number | string;
   courseLessons: Lesson[];
 
   onClose: () => void;
@@ -43,6 +45,7 @@ export function ClassDetailSheet({
   startsAt,
   endsAt,
   seatsTaken,
+  sessionCount,
   courseLessons,
   onClose,
   onEnroll,
@@ -76,7 +79,7 @@ export function ClassDetailSheet({
                   </Badge>
                 )}
 
-                <Badge variant="outline" className="gap-1">
+                {detail.classRating != null ? <Badge variant="outline" className="gap-1">
                   <span className="flex items-center text-warning">
                     {rating > 0 ? (
                       Array.from({ length: rating }).map((_, index) => (
@@ -91,7 +94,7 @@ export function ClassDetailSheet({
                   </span>
 
                   <span>{rating}</span>
-                </Badge>
+                </Badge> : null}
 
               </div>
 
@@ -167,7 +170,7 @@ export function ClassDetailSheet({
                   <InfoRow
                     icon={<Calendar className='h-4 w-4' />}
                     label='Sessions'
-                    value={`${detail.schedule?.length ?? 0}`}
+                    value={`${sessionCount ?? detail.schedule?.length ?? 0}`}
                   />
                 </div>
               </section>
@@ -217,7 +220,7 @@ export function ClassDetailSheet({
                   <InfoRow
                     icon={<Sparkles className='h-4 w-4' />}
                     label='Rating'
-                    value={detail.classRating?.average_rating ?? '0'}
+                    value={detail.classRating?.average_rating ?? 'Not rated yet'}
                   />
                 </div>
               </section>
