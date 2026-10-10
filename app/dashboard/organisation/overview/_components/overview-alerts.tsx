@@ -21,6 +21,7 @@ import {
   listSentOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { normalizeLegacyActionUrl } from '@/src/features/dashboard/lib/legacy-action-url';
 
 type TrainingApplicationLike = { status?: string | null };
 
@@ -126,14 +127,15 @@ export function OverviewAlerts() {
   }
 
   for (const n of extractPage<NotificationDto>(notificationsQuery.data).items) {
+    const actionUrl = normalizeLegacyActionUrl(n.action_url, 'organisation');
     alerts.push({
       id: n.uuid ?? n.notification_id ?? `${n.title}-${n.created_at}`,
       severity: severityFor(n),
       title: n.title ?? 'Notification',
       description: n.body ?? '',
       icon: iconFor(n),
-      actionLabel: n.action_url ? 'View' : undefined,
-      href: n.action_url ?? undefined,
+      actionLabel: actionUrl ? 'View' : undefined,
+      href: actionUrl || undefined,
     });
   }
 
