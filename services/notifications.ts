@@ -267,14 +267,10 @@ async function markPopupsSeenInBulk(uuids: string[], domain?: string, drainAll =
   return notificationActionResponseSchema.parse(response.data ?? {});
 }
 
-// One bulk request; backends without bulk popup_seen reject it, so fall back to per-item calls.
+// One bulk request: the backend's bulk popup_seen action is deployed, so no per-item fallback.
 async function markPopupsSeen({ uuids, domain, drainAll }: MarkPopupsSeenInput) {
   if (uuids.length === 0 && !drainAll) return;
-  try {
-    await markPopupsSeenInBulk(uuids, domain, drainAll);
-  } catch {
-    await Promise.all(uuids.map(uuid => applyNotificationAction(uuid, 'popup_seen')));
-  }
+  await markPopupsSeenInBulk(uuids, domain, drainAll);
 }
 
 interface MarkPopupsSeenInput {
