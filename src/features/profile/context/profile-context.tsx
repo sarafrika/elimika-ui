@@ -13,6 +13,7 @@ import type { SessionIdentity } from 'next-auth';
 import { useSession } from 'next-auth/react';
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo } from 'react';
 import { logger } from '@/lib/logger';
+import { STALE_TIMES } from '@/lib/query-client';
 import type { UserProfileType } from '@/lib/types';
 import { fetchCurrentUser } from '@/services/user/current-user';
 import { fetchSessionBootstrap } from '@/services/user/session-bootstrap';
@@ -162,7 +163,7 @@ function createQueryOptions(
       }
       return await fetchUserProfile(qc, identity);
     },
-    staleTime: 1000 * 60 * 2,
+    staleTime: STALE_TIMES.entity,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     refetchInterval: query => {
