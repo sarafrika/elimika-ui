@@ -96,7 +96,11 @@ function useSearchTrainingInstructors({
     () => instructors.map(instructor => instructor.user_uuid).filter(Boolean) as string[],
     [instructors]
   );
-  const { userMap, isLoading: isProfilesLoading } = useUsersByIds(userUuids);
+  const {
+    userMap,
+    isLoading: isProfilesLoading,
+    isError: isProfilesError,
+  } = useUsersByIds(userUuids);
 
   const { data: experienceData, isLoading: isExperiencesLoading } = useQuery({
     ...searchExperienceOptions({
@@ -109,7 +113,11 @@ function useSearchTrainingInstructors({
     staleTime: STALE_TIMES.entity,
   });
 
-  const { data: skillsData, isLoading: isSkillsLoading } = useQuery({
+  const {
+    data: skillsData,
+    isLoading: isSkillsLoading,
+    isError: isSkillsError,
+  } = useQuery({
     ...searchSkillsOptions({
       query: {
         searchParams: { instructor_uuid_in: instructorUuids.join(',') },
@@ -206,6 +214,9 @@ function useSearchTrainingInstructors({
       rating: averageRating ?? (instructor as Instructor & { rating?: number }).rating ?? 0,
       review_count: reviewCount,
       ratings_inline: inline !== null,
+      // Cards wait on the batches; only a failed batch sends them to per-card lookups.
+      profile_inline: !isProfilesError,
+      skills_inline: !isSkillsError,
     };
   });
 
