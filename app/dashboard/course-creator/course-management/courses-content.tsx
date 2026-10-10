@@ -111,8 +111,7 @@ function titleOf(offering: Offering) {
 }
 
 function previewHref(offering: Offering) {
-  const segment = offering.type === 'courses' ? 'preview' : 'programs';
-  return `/dashboard/course-creator/course-management/${segment}/${offering.item.uuid}`;
+  return `/dashboard/course-creator/${offering.type}/${offering.item.uuid}`;
 }
 
 function editHref(offering: Offering) {

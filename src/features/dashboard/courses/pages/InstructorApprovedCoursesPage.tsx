@@ -238,7 +238,7 @@ export default function InstructorApprovedCoursesPage() {
   const loading = applicationsQuery.isLoading || courseQueries.some(query => query.isLoading);
 
   const goToCourse = (courseUuid: string) => {
-    router.push(`/dashboard/instructor/my-courses/${courseUuid}`);
+    router.push(`/dashboard/instructor/courses/${courseUuid}`);
   };
 
   const createClass = (courseUuid: string) => {
