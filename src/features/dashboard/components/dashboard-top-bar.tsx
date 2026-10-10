@@ -23,7 +23,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { buildWalletAccounts } from '@/app/dashboard/student/wallet/page';
 import { AsyncSection } from '@/components/data/async-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -62,11 +61,10 @@ import {
 } from '@/src/features/dashboard/lib/active-domain-storage';
 import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import {
-  GlobalSearchSheet,
-  useGlobalSearchShortcut,
-} from '@/src/features/search/components/global-search-sheet';
+import { LazyGlobalSearchSheet } from '@/src/features/search/components/global-search-sheet-lazy';
 import { GlobalSearchTrigger } from '@/src/features/search/components/global-search-trigger';
+import { useGlobalSearchShortcut } from '@/src/features/search/hooks/use-global-search-shortcut';
+import { buildWalletAccounts } from '@/src/features/wallet/wallet-accounts';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { DashboardNotifications } from './dashboard-notifications';
 
@@ -278,7 +276,7 @@ export default function DashboardTopBar() {
         </div>
       </div>
 
-      <GlobalSearchSheet open={paletteOpen} onOpenChange={setPaletteOpen} domain={activeDomain} />
+      <LazyGlobalSearchSheet open={paletteOpen} onOpenChange={setPaletteOpen} domain={activeDomain} />
 
       <DepositMethodSheet
         open={isDepositSheetOpen}

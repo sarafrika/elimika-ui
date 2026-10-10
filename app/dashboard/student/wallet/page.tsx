@@ -1,14 +1,5 @@
 'use client'
 
-import {
-    createContext,
-    useContext,
-    useMemo,
-    useState,
-    type ReactNode
-} from "react";
-
-import { Badge } from "@/components/ui/badge";
 
 
 import { useQuery } from "@tanstack/react-query";
@@ -27,6 +18,15 @@ import {
     Wallet as WalletIcon,
     X
 } from "lucide-react";
+import {
+    createContext,
+    type ReactNode,
+    useContext,
+    useMemo,
+    useState
+} from "react";
+import { Badge } from "@/components/ui/badge";
+import { type Bucket, buildWalletAccounts, type WalletAccount } from "@/src/features/wallet/wallet-accounts";
 import { useUserProfile } from "../../../../context/profile-context";
 import { Wallet, WalletTransaction } from "../../../../services/client";
 import { getWalletOptions, listTransactions1Options } from "../../../../services/client/@tanstack/react-query.gen";
@@ -45,20 +45,11 @@ import { TransactionsTab } from "./_components/TransactionsTab";
    Types
    ========================================================================= */
 
-export type Bucket = "personal" | "skills_fund" | "rewards" | "marketplace_credits" | "refunds";
+export type { Bucket, WalletAccount } from "@/src/features/wallet/wallet-accounts";
+export { buildWalletAccounts, daysFromNow } from "@/src/features/wallet/wallet-accounts";
+
 export type PaymentMethod = "personal_wallet" | "skills_fund" | "rewards" | "mobile_money" | "card" | "bank";
 export type TxnStatus = "pending" | "completed" | "failed" | "reversed" | "refunded";
-
-export interface WalletAccount {
-    id: string;
-    bucket: Bucket;
-    label: string;
-    balance_kes: number;
-    currency_code?: string;
-    funder?: string;
-    expires_at?: string | null;
-    permitted_purpose?: string;
-}
 
 export interface WalletPayment {
     uuid: string;
@@ -167,60 +158,6 @@ export function fmtDateTime(iso?: string | Date | null) {
         minute: "2-digit",
     });
 }
-export function daysFromNow(days: number) {
-    const d = new Date();
-    d.setDate(d.getDate() + days);
-    return d.toISOString();
-}
-
-export function buildWalletAccounts(wallet?: Wallet | null): WalletAccount[] {
-    return [
-        {
-            id: wallet?.uuid ?? "acc-personal",
-            bucket: "personal",
-            label: "Personal Wallet",
-            balance_kes: wallet?.balance_amount ?? 0,
-            currency_code: wallet?.currency_code ?? "KES",
-        },
-        {
-            id: "acc-skillsfund-1",
-            bucket: "skills_fund",
-            label: "County Skills Fund — 2026 Cohort",
-            balance_kes: 0,
-            funder: "Nairobi County Government",
-            expires_at: daysFromNow(120),
-            permitted_purpose: "Courses, assessments & certifications only",
-        },
-        {
-            id: "acc-skillsfund-2",
-            bucket: "skills_fund",
-            label: "Elimika Bootcamp Grant",
-            balance_kes: 0,
-            funder: "Mastercard Foundation",
-            expires_at: daysFromNow(-10),
-            permitted_purpose: "Courses, assessments & certifications only",
-        },
-        {
-            id: "acc-marketplace",
-            bucket: "marketplace_credits",
-            label: "Marketplace Credits",
-            balance_kes: 0,
-        },
-        {
-            id: "acc-rewards",
-            bucket: "rewards",
-            label: "Rewards Balance",
-            balance_kes: 0,
-        },
-        {
-            id: "acc-refunds",
-            bucket: "refunds",
-            label: "Refund Balance",
-            balance_kes: 0,
-        },
-    ];
-}
-
 function uid(prefix: string) {
     return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
 }
