@@ -5,7 +5,7 @@ type GeneratedQueryKeyHead = {
   path?: Record<string, unknown>;
 };
 
-/** Narrows single-entity reads to these ids; lists and searches are always invalidated. */
+/** Narrows a workflow's own detail reads to these ids; lists and searches are always invalidated. */
 export type WorkflowInvalidationScope = {
   entityUuids?: readonly string[];
 };
@@ -209,11 +209,8 @@ const assessmentQueryIds = workflowQueryIds.assessment;
 const certificateQueryIds = workflowQueryIds.certificate;
 const invitationQueryIds = workflowQueryIds.invitation;
 
-/**
- * Reads addressed by the event subject's own uuid, which event metadata always names.
- * Profiles and classes stay family-wide: their events carry user or job ids instead.
- */
-const DETAIL_QUERY_IDS: ReadonlySet<string> = new Set([
+/** Course and program reads keyed by the uuid that moderation and application events name. */
+const COURSE_DETAIL_QUERY_IDS: ReadonlySet<string> = new Set([
   'getCourseByUuid',
   'getTrainingProgramByUuid',
   'getCourseEditDiff',
@@ -221,17 +218,26 @@ const DETAIL_QUERY_IDS: ReadonlySet<string> = new Set([
   'getCourseApprovalStatus',
   'getProgramModerationHistory',
   'getProgramApprovalStatus',
+]);
+
+/** Application reads keyed by the application uuid that training-application events carry. */
+const APPLICATION_DETAIL_QUERY_IDS: ReadonlySet<string> = new Set([
+  ...COURSE_DETAIL_QUERY_IDS,
   'getTrainingApplication',
   'getProgramTrainingApplication',
   'getTrainingApplicationHistory',
   'getProgramTrainingApplicationHistory',
+]);
+
+/** Job reads keyed by the job uuid; only marketplace job events carry one. */
+const JOB_DETAIL_QUERY_IDS: ReadonlySet<string> = new Set([
   'getJob',
   'getJobEligibility',
   'getJobApplication',
   'listJobApplicationEvents',
-  'getAssignmentByUuid',
-  'getOrder',
 ]);
+
+const NO_DETAIL_QUERY_IDS: ReadonlySet<string> = new Set();
 
 /** A server-side event can change these unwatched, so a restored copy is never fresh. */
 export const VOLATILE_GENERATED_QUERY_IDS: ReadonlySet<string> = Object.freeze(
@@ -261,10 +267,12 @@ export function isVolatileGeneratedQuery(queryKey: QueryKey) {
   return Boolean(id && VOLATILE_GENERATED_QUERY_IDS.has(id));
 }
 
+/** Only ids in `scopedIds` are narrowed to the scope; every other id is invalidated family-wide. */
 export function invalidateGeneratedQueryIds(
   queryClient: QueryClient,
   queryIds: readonly string[],
-  scope?: WorkflowInvalidationScope
+  scope?: WorkflowInvalidationScope,
+  scopedIds: ReadonlySet<string> = NO_DETAIL_QUERY_IDS
 ) {
   const idSet = new Set(queryIds);
   const uuids = scope?.entityUuids?.length
@@ -275,7 +283,7 @@ export function invalidateGeneratedQueryIds(
       const head = getGeneratedQueryHead(query.queryKey);
       const id = typeof head?._id === 'string' ? head._id : undefined;
       if (!head || !id || !idSet.has(id)) return false;
-      return !uuids || !DETAIL_QUERY_IDS.has(id) || pathMatchesScope(head, uuids);
+      return !uuids || !scopedIds.has(id) || pathMatchesScope(head, uuids);
     },
   });
 }
@@ -289,7 +297,12 @@ export async function invalidateContentModerationWorkflowQueries(
   scope?: WorkflowInvalidationScope
 ) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, contentModerationQueryIds, scope),
+    invalidateGeneratedQueryIds(
+      queryClient,
+      contentModerationQueryIds,
+      scope,
+      COURSE_DETAIL_QUERY_IDS
+    ),
     invalidateQueryKeyPrefixes(queryClient, [
       notificationQueryKey,
       ['course-creator-dashboard-courses'],
@@ -319,7 +332,12 @@ export async function invalidateTrainingApplicationWorkflowQueries(
   scope?: WorkflowInvalidationScope
 ) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, trainingApplicationQueryIds, scope),
+    invalidateGeneratedQueryIds(
+      queryClient,
+      trainingApplicationQueryIds,
+      scope,
+      APPLICATION_DETAIL_QUERY_IDS
+    ),
     invalidateQueryKeyPrefixes(queryClient, [
       notificationQueryKey,
       ['class-details-related'],
@@ -328,7 +346,7 @@ export async function invalidateTrainingApplicationWorkflowQueries(
   ]);
 }
 
-/** Job reads that quote an applicant's approved rate, so a rate update moves them too. */
+/** Job reads that quote an approved rate; rate events never name a job, so these stay family-wide. */
 const rateUpdateJobQueryIds = [
   'getJob',
   'getJobEligibility',
@@ -344,7 +362,7 @@ export async function invalidateRateUpdateWorkflowQueries(
 ) {
   await Promise.all([
     invalidateTrainingApplicationWorkflowQueries(queryClient, scope),
-    invalidateGeneratedQueryIds(queryClient, rateUpdateJobQueryIds, scope),
+    invalidateGeneratedQueryIds(queryClient, rateUpdateJobQueryIds),
   ]);
 }
 
@@ -363,17 +381,15 @@ export async function invalidateJobApplicationWorkflowQueries(
   scope?: WorkflowInvalidationScope
 ) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, jobApplicationQueryIds, scope),
+    invalidateGeneratedQueryIds(queryClient, jobApplicationQueryIds, scope, JOB_DETAIL_QUERY_IDS),
     invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey, ['class-details-related']]),
   ]);
 }
 
-export async function invalidateReviewWorkflowQueries(
-  queryClient: QueryClient,
-  scope?: WorkflowInvalidationScope
-) {
+/** Review events name the reviewed class or program, not every read they move, so nothing is scoped. */
+export async function invalidateReviewWorkflowQueries(queryClient: QueryClient) {
   await Promise.all([
-    invalidateGeneratedQueryIds(queryClient, reviewQueryIds, scope),
+    invalidateGeneratedQueryIds(queryClient, reviewQueryIds),
     invalidateQueryKeyPrefixes(queryClient, [
       notificationQueryKey,
       ['class-details-related'],
@@ -473,7 +489,7 @@ export function invalidateWorkflowQueriesForNotification(
   }
 
   if (type.includes('REVIEW') || type.includes('RATING')) {
-    return invalidateReviewWorkflowQueries(queryClient, scope);
+    return invalidateReviewWorkflowQueries(queryClient);
   }
 
   if (GRADING_NOTIFICATION_TYPES.has(type)) {
