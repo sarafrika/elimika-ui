@@ -39,6 +39,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { CAREER_COLORS, EVENT_GRADIENTS } from '@/lib/color-themes';
+import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import {
   addInstructorEducationMutation,
@@ -379,7 +380,7 @@ function InstructorCertificateUploadSheet({
 
   const documentTypesQuery = useQuery({
     ...listDocumentTypesOptions(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.reference,
   });
   const documentTypes = (documentTypesQuery.data?.data ?? []) as DocumentTypeOption[];
   const orderedDocumentTypes = useMemo(() => {
@@ -928,7 +929,7 @@ function instructorcertificatestab({ sharedProfile, isPublic }: DomainTabProps) 
 
   const documentTypesQuery = useQuery({
     ...listDocumentTypesOptions(),
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.reference,
   });
   const documentTypes = (documentTypesQuery.data?.data ?? []) as DocumentTypeOption[];
   const orderedDocumentTypes = useMemo(() => {
