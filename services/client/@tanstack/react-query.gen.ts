@@ -528,6 +528,7 @@ import {
   getStudentSchedule,
   cancelScheduledClass,
   getScheduledInstance,
+  getOrganisationTimetable,
   getInstructorTimeHolds,
   getInstructorSchedule,
   getGuardians,
@@ -633,6 +634,7 @@ import {
   getScheduledInstanceEnrollmentsForStudent,
   getEnrollmentOverviewForStudent,
   getCourseEnrollmentsForStudent,
+  getStudentCourseOverview,
   getClassEnrollmentsForStudent,
   searchEnrollments,
   getWeeklyGrowth,
@@ -718,6 +720,7 @@ import {
   listInstructorApplications,
   getClassDefinitionsForInstructor,
   getClassDefinitionsForCourse,
+  getClassesBatch,
   getAllActiveClassDefinitions,
   verifyCertificate,
   searchCertificateTemplates,
@@ -2134,6 +2137,9 @@ import type {
   CancelScheduledClassError,
   CancelScheduledClassResponse,
   GetScheduledInstanceData,
+  GetOrganisationTimetableData,
+  GetOrganisationTimetableError,
+  GetOrganisationTimetableResponse,
   GetInstructorTimeHoldsData,
   GetInstructorTimeHoldsError,
   GetInstructorTimeHoldsResponse,
@@ -2340,6 +2346,9 @@ import type {
   GetCourseEnrollmentsForStudentData,
   GetCourseEnrollmentsForStudentError,
   GetCourseEnrollmentsForStudentResponse,
+  GetStudentCourseOverviewData,
+  GetStudentCourseOverviewError,
+  GetStudentCourseOverviewResponse,
   GetClassEnrollmentsForStudentData,
   GetClassEnrollmentsForStudentError,
   GetClassEnrollmentsForStudentResponse,
@@ -2489,6 +2498,7 @@ import type {
   ListInstructorApplicationsResponse,
   GetClassDefinitionsForInstructorData,
   GetClassDefinitionsForCourseData,
+  GetClassesBatchData,
   GetAllActiveClassDefinitionsData,
   VerifyCertificateData,
   SearchCertificateTemplatesData,
@@ -23644,6 +23654,78 @@ export const getScheduledInstanceOptions = (options: Options<GetScheduledInstanc
   });
 };
 
+export const getOrganisationTimetableQueryKey = (options: Options<GetOrganisationTimetableData>) =>
+  createQueryKey('getOrganisationTimetable', options);
+
+/**
+ * Get the timetable of every class an organisation owns within a date range
+ * Non-cancelled sessions overlapping the inclusive date range, ordered by start time, each with its class title, instructor name and enrolled count, so an organisation calendar needs one request instead of one per class. The range may span at most 366 days.
+ */
+export const getOrganisationTimetableOptions = (options: Options<GetOrganisationTimetableData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganisationTimetable({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrganisationTimetableQueryKey(options),
+  });
+};
+
+export const getOrganisationTimetableInfiniteQueryKey = (
+  options: Options<GetOrganisationTimetableData>
+): QueryKey<Options<GetOrganisationTimetableData>> =>
+  createQueryKey('getOrganisationTimetable', options, true);
+
+/**
+ * Get the timetable of every class an organisation owns within a date range
+ * Non-cancelled sessions overlapping the inclusive date range, ordered by start time, each with its class title, instructor name and enrolled count, so an organisation calendar needs one request instead of one per class. The range may span at most 366 days.
+ */
+export const getOrganisationTimetableInfiniteOptions = (
+  options: Options<GetOrganisationTimetableData>
+) => {
+  return infiniteQueryOptions<
+    GetOrganisationTimetableResponse,
+    GetOrganisationTimetableError,
+    InfiniteData<GetOrganisationTimetableResponse>,
+    QueryKey<Options<GetOrganisationTimetableData>>,
+    | Date
+    | Pick<
+        QueryKey<Options<GetOrganisationTimetableData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetOrganisationTimetableData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getOrganisationTimetable({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getOrganisationTimetableInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getInstructorTimeHoldsQueryKey = (options: Options<GetInstructorTimeHoldsData>) =>
   createQueryKey('getInstructorTimeHolds', options);
 
@@ -28820,6 +28902,78 @@ export const getCourseEnrollmentsForStudentInfiniteOptions = (
   );
 };
 
+export const getStudentCourseOverviewQueryKey = (options: Options<GetStudentCourseOverviewData>) =>
+  createQueryKey('getStudentCourseOverview', options);
+
+/**
+ * Get a student's course overview
+ * Enrolled classes with their course, instructor, current or next session, course progress and counts of released assignments and quizzes not yet submitted, in one response. Readable by the student, a guardian whose share covers academics, and platform administrators. Page size is capped at 50.
+ */
+export const getStudentCourseOverviewOptions = (options: Options<GetStudentCourseOverviewData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentCourseOverview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentCourseOverviewQueryKey(options),
+  });
+};
+
+export const getStudentCourseOverviewInfiniteQueryKey = (
+  options: Options<GetStudentCourseOverviewData>
+): QueryKey<Options<GetStudentCourseOverviewData>> =>
+  createQueryKey('getStudentCourseOverview', options, true);
+
+/**
+ * Get a student's course overview
+ * Enrolled classes with their course, instructor, current or next session, course progress and counts of released assignments and quizzes not yet submitted, in one response. Readable by the student, a guardian whose share covers academics, and platform administrators. Page size is capped at 50.
+ */
+export const getStudentCourseOverviewInfiniteOptions = (
+  options: Options<GetStudentCourseOverviewData>
+) => {
+  return infiniteQueryOptions<
+    GetStudentCourseOverviewResponse,
+    GetStudentCourseOverviewError,
+    InfiniteData<GetStudentCourseOverviewResponse>,
+    QueryKey<Options<GetStudentCourseOverviewData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetStudentCourseOverviewData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetStudentCourseOverviewData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getStudentCourseOverview({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getStudentCourseOverviewInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getClassEnrollmentsForStudentQueryKey = (
   options: Options<GetClassEnrollmentsForStudentData>
 ) => createQueryKey('getClassEnrollmentsForStudent', options);
@@ -32569,6 +32723,28 @@ export const getClassDefinitionsForCourseOptions = (
       return data;
     },
     queryKey: getClassDefinitionsForCourseQueryKey(options),
+  });
+};
+
+export const getClassesBatchQueryKey = (options: Options<GetClassesBatchData>) =>
+  createQueryKey('getClassesBatch', options);
+
+/**
+ * Look up several classes by UUID in one request
+ * Returns the visible classes among uuids (comma-separated or repeated, at most 100), in request order, each with its course or program title, an instructor summary and its seat capacity (max_participants). Visibility is the class listing's; unknown or hidden ids are omitted. enrolled_count and seats_remaining are present only for the class's instructor, managers of its organisation and platform admins. Costs a fixed number of queries regardless of batch size.
+ */
+export const getClassesBatchOptions = (options: Options<GetClassesBatchData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassesBatch({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassesBatchQueryKey(options),
   });
 };
 

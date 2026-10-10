@@ -396,6 +396,7 @@ import type {
   GetTrainingBranchesByOrganisation1Response,
   GetStudentScheduleResponse,
   GetScheduledInstanceResponse,
+  GetOrganisationTimetableResponse,
   GetInstructorTimeHoldsResponse,
   GetInstructorScheduleResponse,
   GetGuardiansResponse,
@@ -478,6 +479,7 @@ import type {
   GetScheduledInstanceEnrollmentsForStudentResponse,
   GetEnrollmentOverviewForStudentResponse,
   GetCourseEnrollmentsForStudentResponse,
+  GetStudentCourseOverviewResponse,
   GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsResponse,
   GetWeeklyGrowthResponse,
@@ -545,6 +547,7 @@ import type {
   ListInstructorApplicationsResponse,
   GetClassDefinitionsForInstructorResponse,
   GetClassDefinitionsForCourseResponse,
+  GetClassesBatchResponse,
   GetAllActiveClassDefinitionsResponse,
   SearchCertificateTemplatesResponse,
   GetStudentCertificatesResponse,
@@ -1795,6 +1798,13 @@ const courseTrainingRequirementSchemaResponseTransformer = (data: any) => {
   return data;
 };
 
+const courseRatingSummarySchemaResponseTransformer = (data: any) => {
+  if (data.count) {
+    data.count = BigInt(data.count.toString());
+  }
+  return data;
+};
+
 const courseSchemaResponseTransformer = (data: any) => {
   if (data.training_requirements) {
     data.training_requirements = data.training_requirements.map((item: any) => {
@@ -1806,6 +1816,12 @@ const courseSchemaResponseTransformer = (data: any) => {
   }
   if (data.updated_date) {
     data.updated_date = new Date(data.updated_date);
+  }
+  if (data.lesson_count) {
+    data.lesson_count = BigInt(data.lesson_count.toString());
+  }
+  if (data.rating_summary) {
+    data.rating_summary = courseRatingSummarySchemaResponseTransformer(data.rating_summary);
   }
   return data;
 };
@@ -6797,6 +6813,35 @@ export const getScheduledInstanceResponseTransformer = async (
   return data;
 };
 
+const organisationTimetableEntrySchemaResponseTransformer = (data: any) => {
+  if (data.start_time) {
+    data.start_time = new Date(data.start_time);
+  }
+  if (data.end_time) {
+    data.end_time = new Date(data.end_time);
+  }
+  if (data.enrolled_count) {
+    data.enrolled_count = BigInt(data.enrolled_count.toString());
+  }
+  return data;
+};
+
+const apiResponseListOrganisationTimetableEntrySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return organisationTimetableEntrySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getOrganisationTimetableResponseTransformer = async (
+  data: any
+): Promise<GetOrganisationTimetableResponse> => {
+  data = apiResponseListOrganisationTimetableEntrySchemaResponseTransformer(data);
+  return data;
+};
+
 const instructorTimeHoldSchemaResponseTransformer = (data: any) => {
   if (data.start_time) {
     data.start_time = new Date(data.start_time);
@@ -8229,6 +8274,59 @@ export const getCourseEnrollmentsForStudentResponseTransformer = async (
   return data;
 };
 
+const studentCourseOverviewSessionSchemaResponseTransformer = (data: any) => {
+  if (data.start_time) {
+    data.start_time = new Date(data.start_time);
+  }
+  if (data.end_time) {
+    data.end_time = new Date(data.end_time);
+  }
+  return data;
+};
+
+const studentCourseOverviewItemSchemaResponseTransformer = (data: any) => {
+  if (data.next_session) {
+    data.next_session = studentCourseOverviewSessionSchemaResponseTransformer(data.next_session);
+  }
+  if (data.latest_activity_date) {
+    data.latest_activity_date = new Date(data.latest_activity_date);
+  }
+  return data;
+};
+
+const pagedDtoStudentCourseOverviewItemSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return studentCourseOverviewItemSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const studentCourseOverviewSchemaResponseTransformer = (data: any) => {
+  if (data.enrollments) {
+    data.enrollments = pagedDtoStudentCourseOverviewItemSchemaResponseTransformer(data.enrollments);
+  }
+  return data;
+};
+
+const apiResponseStudentCourseOverviewSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = studentCourseOverviewSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getStudentCourseOverviewResponseTransformer = async (
+  data: any
+): Promise<GetStudentCourseOverviewResponse> => {
+  data = apiResponseStudentCourseOverviewSchemaResponseTransformer(data);
+  return data;
+};
+
 const apiResponsePagedDtoStudentClassEnrollmentSummarySchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = pagedDtoStudentClassEnrollmentSummarySchemaResponseTransformer(data.data);
@@ -9401,6 +9499,38 @@ export const getClassDefinitionsForCourseResponseTransformer = async (
   data: any
 ): Promise<GetClassDefinitionsForCourseResponse> => {
   data = apiResponseListClassDefinitionResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const classBatchSummarySchemaResponseTransformer = (data: any) => {
+  if (data.default_start_time) {
+    data.default_start_time = new Date(data.default_start_time);
+  }
+  if (data.default_end_time) {
+    data.default_end_time = new Date(data.default_end_time);
+  }
+  if (data.enrolled_count) {
+    data.enrolled_count = BigInt(data.enrolled_count.toString());
+  }
+  if (data.seats_remaining) {
+    data.seats_remaining = BigInt(data.seats_remaining.toString());
+  }
+  return data;
+};
+
+const apiResponseListClassBatchSummarySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return classBatchSummarySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getClassesBatchResponseTransformer = async (
+  data: any
+): Promise<GetClassesBatchResponse> => {
+  data = apiResponseListClassBatchSummarySchemaResponseTransformer(data);
   return data;
 };
 

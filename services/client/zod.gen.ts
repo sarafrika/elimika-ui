@@ -663,6 +663,11 @@ export const zAssessmentRubric = z
       )
       .readonly()
       .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
+      .readonly()
+      .optional(),
     rubric_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
@@ -678,11 +683,6 @@ export const zAssessmentRubric = z
     usage_status: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive status indicating usage and accessibility.')
-      .readonly()
-      .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
       .readonly()
       .optional(),
   })
@@ -970,17 +970,17 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -3071,6 +3071,10 @@ export const zInstructorProfessionalMembership = z
       .readonly()
       .optional(),
     formatted_duration: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    membership_duration_months: z
+      .union([z.number().int().readonly(), z.null()])
+      .readonly()
+      .optional(),
     membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_long_standing_member: z
@@ -3088,10 +3092,6 @@ export const zInstructorProfessionalMembership = z
     is_recent_membership: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
-      .readonly()
-      .optional(),
-    membership_duration_months: z
-      .union([z.number().int().readonly(), z.null()])
       .readonly()
       .optional(),
   })
@@ -3485,6 +3485,11 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+      .readonly()
+      .optional(),
     file_url: z
       .string()
       .describe(
@@ -3493,11 +3498,6 @@ export const zInstructorDocument = z
       .readonly()
       .optional(),
     verification_status: zVerificationStatusEnum2.optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-      .readonly()
-      .optional(),
     file_size_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -3721,6 +3721,16 @@ export const zCourseTrainingRequirement = z
   );
 
 /**
+ * Aggregate review metrics for a course, as shown on a course list item.
+ */
+export const zCourseRatingSummary = z
+  .object({
+    average: z.union([z.number(), z.null()]).optional(),
+    count: z.coerce.bigint().describe('Number of reviews for the course.').optional(),
+  })
+  .describe('Aggregate review metrics for a course, as shown on a course list item.');
+
+/**
  * Complete course with metadata, content organization, and publication status supporting multiple categories
  */
 export const zCourse = z
@@ -3861,6 +3871,9 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
+    lesson_count: z.union([z.coerce.bigint().readonly(), z.null()]).readonly().optional(),
+    rating_summary: zCourseRatingSummary.optional(),
+    course_creator_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
@@ -3888,6 +3901,13 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
+      .readonly()
+      .optional(),
     total_duration_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of total course duration.')
@@ -3902,13 +3922,6 @@ export const zCourse = z
       .number()
       .int()
       .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
       .readonly()
       .optional(),
   })
@@ -5191,6 +5204,11 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+    .readonly()
+    .optional(),
   file_url: z
     .string()
     .describe(
@@ -5199,11 +5217,6 @@ export const zCourseCreatorDocumentDto = z.object({
     .readonly()
     .optional(),
   verification_status: zVerificationStatusEnum2.optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-    .readonly()
-    .optional(),
   file_size_formatted: z
     .string()
     .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -5743,6 +5756,14 @@ export const zCommerceCatalogueItem = z
       .string()
       .uuid()
       .describe('Associated class definition UUID if mapping is class specific')
+      .optional(),
+    class_definition_title: z
+      .string()
+      .describe('Title of the class definition, on class-backed entries')
+      .optional(),
+    course_title: z
+      .string()
+      .describe('Title of the course this entry sells, or of the course its class delivers')
       .optional(),
     program_uuid: z
       .string()
@@ -7187,21 +7208,6 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
-      .readonly()
-      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -7217,6 +7223,21 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -8811,9 +8832,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
-    can_be_cancelled: z
+    did_attend: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
     is_attendance_marked: z
@@ -8826,9 +8847,9 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
-    did_attend: z
+    can_be_cancelled: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -10896,6 +10917,50 @@ export const zApiResponseListStudentSchedule = z.object({
 });
 
 /**
+ * One session of an organisation's class, carrying what a timetable cell shows without further lookups
+ */
+export const zOrganisationTimetableEntry = z
+  .object({
+    uuid: z.string().uuid().describe('The scheduled instance').readonly().optional(),
+    timezone: z.string().describe('Timezone of the session').readonly().optional(),
+    status: zStatusEnum9.optional(),
+    class_definition_uuid: z
+      .string()
+      .uuid()
+      .describe('The class this session belongs to')
+      .readonly()
+      .optional(),
+    class_title: z.string().describe('Current title of the class').readonly().optional(),
+    instructor_uuid: z
+      .string()
+      .uuid()
+      .describe('Instructor delivering the session')
+      .readonly()
+      .optional(),
+    instructor_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    start_time: z.string().datetime().describe('Session start').readonly().optional(),
+    end_time: z.string().datetime().describe('Session end').readonly().optional(),
+    location_type: z.string().describe('Location type').readonly().optional(),
+    location_name: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    max_participants: z.union([z.number().int().readonly(), z.null()]).readonly().optional(),
+    enrolled_count: z.coerce
+      .bigint()
+      .describe('Enrolments on the session, excluding cancelled and waitlisted ones')
+      .readonly()
+      .optional(),
+  })
+  .describe(
+    "One session of an organisation's class, carrying what a timetable cell shows without further lookups"
+  );
+
+export const zApiResponseListOrganisationTimetableEntry = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zOrganisationTimetableEntry).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
 export const zStatusEnum21 = z
@@ -12846,6 +12911,106 @@ export const zApiResponseStudentEnrollmentOverview = z.object({
 export const zApiResponsePagedDtoStudentCourseEnrollmentSummary = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoStudentCourseEnrollmentSummary.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * The learner's current or next sitting of a class.
+ */
+export const zStudentCourseOverviewSession = z
+  .object({
+    scheduled_instance_uuid: z.string().uuid().describe('Scheduled instance identifier').optional(),
+    title: z.string().describe('Session title').optional(),
+    start_time: z.string().datetime().describe('Session start (UTC)').optional(),
+    end_time: z.string().datetime().describe('Session end (UTC)').optional(),
+    timezone: z.string().describe('Timezone the session was scheduled in').optional(),
+    location_type: z.string().describe('Location type, e.g. ONLINE or IN_PERSON').optional(),
+    location_name: z.string().describe('Location name').optional(),
+    instructor_uuid: z.string().uuid().describe('Instructor teaching this sitting').optional(),
+  })
+  .describe("The learner's current or next sitting of a class.");
+
+/**
+ * One class the learner is enrolled in, with its course, instructor, next session, course progress and outstanding assessments.
+ */
+export const zStudentCourseOverviewItem = z
+  .object({
+    class_definition_uuid: z.string().uuid().describe('Class definition identifier'),
+    class_title: z.string().describe('Class title').optional(),
+    class_thumbnail_url: z.string().describe('Class thumbnail URL').optional(),
+    organisation_uuid: z
+      .string()
+      .uuid()
+      .describe('Organisation running the class, if any')
+      .optional(),
+    latest_enrollment_uuid: z
+      .string()
+      .uuid()
+      .describe('Most recent scheduled-instance enrolment for this class')
+      .optional(),
+    latest_enrollment_status: zEnrollmentStatusEnum2.optional(),
+    scheduled_instance_count: z
+      .number()
+      .int()
+      .describe('Number of scheduled-instance enrolments under this class')
+      .optional(),
+    course_uuid: z.string().uuid().describe('Course the class teaches').optional(),
+    course_name: z.string().describe('Course name').optional(),
+    program_uuid: z
+      .string()
+      .uuid()
+      .describe('Training programme the class teaches, if any')
+      .optional(),
+    instructor_uuid: z
+      .string()
+      .uuid()
+      .describe("Instructor of the class (default instructor, else the next session's)")
+      .optional(),
+    instructor_name: z.string().describe('Instructor display name').optional(),
+    next_session: zStudentCourseOverviewSession.optional(),
+    course_enrollment_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    course_enrollment_status: z.union([z.string(), z.null()]).optional(),
+    progress_percentage: z.union([z.number(), z.null()]).optional(),
+    pending_assignment_count: z
+      .number()
+      .int()
+      .describe('Released class assignments the learner has not handed in')
+      .optional(),
+    pending_quiz_count: z
+      .number()
+      .int()
+      .describe('Released class quizzes the learner has not submitted')
+      .optional(),
+    latest_activity_date: z
+      .string()
+      .datetime()
+      .describe('Most recent class enrolment activity')
+      .optional(),
+  })
+  .describe(
+    'One class the learner is enrolled in, with its course, instructor, next session, course progress and outstanding assessments.'
+  );
+
+export const zPagedDtoStudentCourseOverviewItem = z.object({
+  content: z.array(zStudentCourseOverviewItem).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+/**
+ * Everything a learner's course list needs in one response.
+ */
+export const zStudentCourseOverview = z
+  .object({
+    student_uuid: z.string().uuid().describe('Student identifier'),
+    enrollments: zPagedDtoStudentCourseOverviewItem.optional(),
+  })
+  .describe("Everything a learner's course list needs in one response.");
+
+export const zApiResponseStudentCourseOverview = z.object({
+  success: z.boolean().optional(),
+  data: zStudentCourseOverview.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -14942,6 +15107,63 @@ export const zApiResponseListClassMarketplaceJobEligibility = z.object({
   error: z.unknown().optional(),
 });
 
+/**
+ * Directory summary of a class's instructor
+ */
+export const zClassBatchInstructorSummary = z
+  .object({
+    uuid: z.string().uuid().describe('Instructor UUID').optional(),
+    display_name: z.string().describe('Instructor display name').optional(),
+    admin_verified: z
+      .boolean()
+      .describe('Whether an administrator has verified the instructor')
+      .optional(),
+  })
+  .describe("Directory summary of a class's instructor");
+
+/**
+ * Class visibility
+ */
+export const zClassVisibilityEnum2 = z.enum(['PUBLIC', 'PRIVATE']).describe('Class visibility');
+
+/**
+ * A class definition with its course title, instructor summary, enrolment count and seat capacity, as returned by the batch class lookup
+ */
+export const zClassBatchSummary = z
+  .object({
+    uuid: z.string().uuid().describe('Class definition UUID').optional(),
+    title: z.string().describe('Class title').optional(),
+    thumbnail_url: z.union([z.string(), z.null()]).optional(),
+    course_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    course_title: z.union([z.string(), z.null()]).optional(),
+    program_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    program_title: z.union([z.string(), z.null()]).optional(),
+    organisation_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    default_instructor_uuid: z.union([z.string().uuid(), z.null()]).optional(),
+    instructor: zClassBatchInstructorSummary.optional(),
+    is_active: z.boolean().describe('Whether the class is active').optional(),
+    class_visibility: zClassVisibilityEnum2.optional(),
+    location_type: zLocationTypeEnum2.optional(),
+    session_format: zSessionFormatEnum2.optional(),
+    default_start_time: z.union([z.string().datetime(), z.null()]).optional(),
+    default_end_time: z.union([z.string().datetime(), z.null()]).optional(),
+    sale_price: z.union([z.number(), z.null()]).optional(),
+    max_participants: z.union([z.number().int(), z.null()]).optional(),
+    allow_waitlist: z.union([z.boolean(), z.null()]).optional(),
+    enrolled_count: z.union([z.coerce.bigint(), z.null()]).optional(),
+    seats_remaining: z.union([z.coerce.bigint(), z.null()]).optional(),
+  })
+  .describe(
+    'A class definition with its course title, instructor summary, enrolment count and seat capacity, as returned by the batch class lookup'
+  );
+
+export const zApiResponseListClassBatchSummary = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zClassBatchSummary).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zPagedDtoCertificateTemplate = z.object({
   content: z.array(zCertificateTemplate).optional(),
   metadata: zPageMetadata.optional(),
@@ -16847,6 +17069,13 @@ export const zAvailabilityEnumWritable = z
 export const zResultStatusEnumWritable = z
   .enum(['IN_PROGRESS', 'PASSED', 'FAILED'])
   .describe('IN_PROGRESS until every required item is graded, then PASSED or FAILED');
+
+/**
+ * Class visibility
+ */
+export const zClassVisibilityEnum2Writable = z
+  .enum(['PUBLIC', 'PRIVATE'])
+  .describe('Class visibility');
 
 /**
  * Result type.
@@ -24044,6 +24273,22 @@ export const zGetScheduledInstanceData = z.object({
  */
 export const zGetScheduledInstanceResponse = zApiResponseScheduledInstance;
 
+export const zGetOrganisationTimetableData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    organisationUuid: z.string().uuid(),
+  }),
+  query: z.object({
+    start: z.string().date().describe('Start date of the range (YYYY-MM-DD)'),
+    end: z.string().date().describe('End date of the range, inclusive (YYYY-MM-DD)'),
+  }),
+});
+
+/**
+ * Organisation timetable retrieved successfully
+ */
+export const zGetOrganisationTimetableResponse = zApiResponseListOrganisationTimetableEntry;
+
 export const zGetInstructorTimeHoldsData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -25642,6 +25887,21 @@ export const zGetCourseEnrollmentsForStudentData = z.object({
 export const zGetCourseEnrollmentsForStudentResponse =
   zApiResponsePagedDtoStudentCourseEnrollmentSummary;
 
+export const zGetStudentCourseOverviewData = z.object({
+  body: z.never().optional(),
+  path: z.object({
+    studentUuid: z.string().uuid().describe('UUID of the student'),
+  }),
+  query: z.object({
+    pageable: zPageable,
+  }),
+});
+
+/**
+ * Course overview retrieved successfully
+ */
+export const zGetStudentCourseOverviewResponse = zApiResponseStudentCourseOverview;
+
 export const zGetClassEnrollmentsForStudentData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -26903,6 +27163,19 @@ export const zGetClassDefinitionsForCourseData = z.object({
  * Class definitions retrieved successfully
  */
 export const zGetClassDefinitionsForCourseResponse = zApiResponseListClassDefinitionResponse;
+
+export const zGetClassesBatchData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    uuids: z.array(z.string().uuid()).describe('Class definition UUIDs, comma-separated'),
+  }),
+});
+
+/**
+ * Classes retrieved successfully
+ */
+export const zGetClassesBatchResponse = zApiResponseListClassBatchSummary;
 
 export const zGetAllActiveClassDefinitionsData = z.object({
   body: z.never().optional(),

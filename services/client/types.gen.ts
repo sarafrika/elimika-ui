@@ -529,6 +529,10 @@ export type AssessmentRubric = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
+   */
+  readonly is_published?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the rubric based on its type.
    */
   readonly rubric_category?: string;
@@ -540,10 +544,6 @@ export type AssessmentRubric = {
    * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
   readonly usage_status?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
-   */
-  readonly is_published?: boolean;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -778,13 +778,13 @@ export type RubricMatrix = {
    */
   matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -2465,6 +2465,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -2487,10 +2491,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2790,14 +2790,14 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
+  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
   verification_status?: VerificationStatusEnum2;
-  /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -3059,6 +3059,18 @@ export type Course = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Number of lessons in the course. Populated on list and search responses.
+   */
+  readonly lesson_count?: bigint | null;
+  /**
+   * **[READ-ONLY]** Review average and count. Populated on list and search responses.
+   */
+  rating_summary?: CourseRatingSummary;
+  /**
+   * **[READ-ONLY]** Display name of the course creator. Populated on list and search responses.
+   */
+  readonly course_creator_name?: string | null;
+  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
@@ -3079,6 +3091,10 @@ export type Course = {
    */
   readonly accepts_new_enrollments?: boolean;
   /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
+  /**
    * **[READ-ONLY]** Human-readable format of total course duration.
    */
   readonly total_duration_display?: string;
@@ -3090,10 +3106,20 @@ export type Course = {
    * **[READ-ONLY]** Number of categories this course belongs to.
    */
   readonly category_count?: number;
+};
+
+/**
+ * Aggregate review metrics for a course, as shown on a course list item.
+ */
+export type CourseRatingSummary = {
   /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   * Average review rating (1-5), rounded to one decimal. Null when there are no reviews.
    */
-  readonly lifecycle_stage?: string;
+  average?: number | null;
+  /**
+   * Number of reviews for the course.
+   */
+  count?: bigint;
 };
 
 /**
@@ -4179,14 +4205,14 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
+  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
   verification_status?: VerificationStatusEnum2;
-  /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -4598,6 +4624,14 @@ export type CommerceCatalogueItem = {
    * Associated class definition UUID if mapping is class specific
    */
   class_definition_uuid?: string;
+  /**
+   * Title of the class definition, on class-backed entries
+   */
+  class_definition_title?: string;
+  /**
+   * Title of the course this entry sells, or of the course its class delivers
+   */
+  course_title?: string;
   /**
    * Associated training program UUID when mapping is program scoped
    */
@@ -6004,18 +6038,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
-   */
-  readonly can_be_started?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
-   */
-  readonly can_be_ended?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -6027,6 +6049,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
 };
 
 /**
@@ -7667,9 +7701,9 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   * **[READ-ONLY]** Indicates if the student attended the class.
    */
-  readonly can_be_cancelled?: boolean;
+  readonly did_attend?: boolean;
   /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
@@ -7679,9 +7713,9 @@ export type Enrollment = {
    */
   readonly status_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
-  readonly did_attend?: boolean;
+  readonly can_be_cancelled?: boolean;
 };
 
 /**
@@ -9682,6 +9716,68 @@ export type StudentSchedule = {
    * **[READ-ONLY]** Indicates if this class is upcoming.
    */
   readonly is_upcoming?: boolean;
+};
+
+export type ApiResponseListOrganisationTimetableEntry = {
+  success?: boolean;
+  data?: Array<OrganisationTimetableEntry>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * One session of an organisation's class, carrying what a timetable cell shows without further lookups
+ */
+export type OrganisationTimetableEntry = {
+  /**
+   * The scheduled instance
+   */
+  readonly uuid?: string;
+  /**
+   * Timezone of the session
+   */
+  readonly timezone?: string;
+  status?: StatusEnum9;
+  /**
+   * The class this session belongs to
+   */
+  readonly class_definition_uuid?: string;
+  /**
+   * Current title of the class
+   */
+  readonly class_title?: string;
+  /**
+   * Instructor delivering the session
+   */
+  readonly instructor_uuid?: string;
+  /**
+   * Display name of the instructor, null when the instructor no longer resolves
+   */
+  readonly instructor_name?: string | null;
+  /**
+   * Session start
+   */
+  readonly start_time?: Date;
+  /**
+   * Session end
+   */
+  readonly end_time?: Date;
+  /**
+   * Location type
+   */
+  readonly location_type?: string;
+  /**
+   * Location name
+   */
+  readonly location_name?: string | null;
+  /**
+   * Seat capacity of the session
+   */
+  readonly max_participants?: number | null;
+  /**
+   * Enrolments on the session, excluding cancelled and waitlisted ones
+   */
+  readonly enrolled_count?: bigint;
 };
 
 export type ApiResponseListInstructorTimeHold = {
@@ -11755,6 +11851,150 @@ export type ApiResponsePagedDtoStudentCourseEnrollmentSummary = {
   error?: unknown;
 };
 
+export type ApiResponseStudentCourseOverview = {
+  success?: boolean;
+  data?: StudentCourseOverview;
+  message?: string;
+  error?: unknown;
+};
+
+export type PagedDtoStudentCourseOverviewItem = {
+  content?: Array<StudentCourseOverviewItem>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+/**
+ * Everything a learner's course list needs in one response.
+ */
+export type StudentCourseOverview = {
+  /**
+   * Student identifier
+   */
+  student_uuid: string;
+  /**
+   * Enrolled classes, most recently active first
+   */
+  enrollments?: PagedDtoStudentCourseOverviewItem;
+};
+
+/**
+ * One class the learner is enrolled in, with its course, instructor, next session, course progress and outstanding assessments.
+ */
+export type StudentCourseOverviewItem = {
+  /**
+   * Class definition identifier
+   */
+  class_definition_uuid: string;
+  /**
+   * Class title
+   */
+  class_title?: string;
+  /**
+   * Class thumbnail URL
+   */
+  class_thumbnail_url?: string;
+  /**
+   * Organisation running the class, if any
+   */
+  organisation_uuid?: string;
+  /**
+   * Most recent scheduled-instance enrolment for this class
+   */
+  latest_enrollment_uuid?: string;
+  latest_enrollment_status?: EnrollmentStatusEnum2;
+  /**
+   * Number of scheduled-instance enrolments under this class
+   */
+  scheduled_instance_count?: number;
+  /**
+   * Course the class teaches
+   */
+  course_uuid?: string;
+  /**
+   * Course name
+   */
+  course_name?: string;
+  /**
+   * Training programme the class teaches, if any
+   */
+  program_uuid?: string;
+  /**
+   * Instructor of the class (default instructor, else the next session's)
+   */
+  instructor_uuid?: string;
+  /**
+   * Instructor display name
+   */
+  instructor_name?: string;
+  /**
+   * Current or next session; null when nothing is left to attend
+   */
+  next_session?: StudentCourseOverviewSession;
+  /**
+   * Learner's course enrolment identifier
+   */
+  course_enrollment_uuid?: string | null;
+  /**
+   * Learner's course enrolment status
+   */
+  course_enrollment_status?: string | null;
+  /**
+   * Course progress percentage
+   */
+  progress_percentage?: number | null;
+  /**
+   * Released class assignments the learner has not handed in
+   */
+  pending_assignment_count?: number;
+  /**
+   * Released class quizzes the learner has not submitted
+   */
+  pending_quiz_count?: number;
+  /**
+   * Most recent class enrolment activity
+   */
+  latest_activity_date?: Date;
+};
+
+/**
+ * The learner's current or next sitting of a class.
+ */
+export type StudentCourseOverviewSession = {
+  /**
+   * Scheduled instance identifier
+   */
+  scheduled_instance_uuid?: string;
+  /**
+   * Session title
+   */
+  title?: string;
+  /**
+   * Session start (UTC)
+   */
+  start_time?: Date;
+  /**
+   * Session end (UTC)
+   */
+  end_time?: Date;
+  /**
+   * Timezone the session was scheduled in
+   */
+  timezone?: string;
+  /**
+   * Location type, e.g. ONLINE or IN_PERSON
+   */
+  location_type?: string;
+  /**
+   * Location name
+   */
+  location_name?: string;
+  /**
+   * Instructor teaching this sitting
+   */
+  instructor_uuid?: string;
+};
+
 export type ApiResponsePagedDtoStudentClassEnrollmentSummary = {
   success?: boolean;
   data?: PagedDtoStudentClassEnrollmentSummary;
@@ -13780,6 +14020,112 @@ export type ApiResponseListClassMarketplaceJobEligibility = {
   data?: Array<ClassMarketplaceJobEligibility>;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponseListClassBatchSummary = {
+  success?: boolean;
+  data?: Array<ClassBatchSummary>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Directory summary of a class's instructor
+ */
+export type ClassBatchInstructorSummary = {
+  /**
+   * Instructor UUID
+   */
+  uuid?: string;
+  /**
+   * Instructor display name
+   */
+  display_name?: string;
+  /**
+   * Whether an administrator has verified the instructor
+   */
+  admin_verified?: boolean;
+};
+
+/**
+ * A class definition with its course title, instructor summary, enrolment count and seat capacity, as returned by the batch class lookup
+ */
+export type ClassBatchSummary = {
+  /**
+   * Class definition UUID
+   */
+  uuid?: string;
+  /**
+   * Class title
+   */
+  title?: string;
+  /**
+   * Public thumbnail URL
+   */
+  thumbnail_url?: string | null;
+  /**
+   * Course the class delivers
+   */
+  course_uuid?: string | null;
+  /**
+   * Title of the course the class delivers
+   */
+  course_title?: string | null;
+  /**
+   * Training program the class delivers
+   */
+  program_uuid?: string | null;
+  /**
+   * Title of the training program the class delivers
+   */
+  program_title?: string | null;
+  /**
+   * Organisation that owns the class
+   */
+  organisation_uuid?: string | null;
+  /**
+   * Default instructor
+   */
+  default_instructor_uuid?: string | null;
+  /**
+   * Directory summary of the default instructor
+   */
+  instructor?: ClassBatchInstructorSummary;
+  /**
+   * Whether the class is active
+   */
+  is_active?: boolean;
+  class_visibility?: ClassVisibilityEnum2;
+  location_type?: LocationTypeEnum2;
+  session_format?: SessionFormatEnum2;
+  /**
+   * Default session start
+   */
+  default_start_time?: Date | null;
+  /**
+   * Default session end
+   */
+  default_end_time?: Date | null;
+  /**
+   * Public sale price per seat
+   */
+  sale_price?: number | null;
+  /**
+   * Seat capacity of the class
+   */
+  max_participants?: number | null;
+  /**
+   * Whether a full class accepts a waitlist
+   */
+  allow_waitlist?: boolean | null;
+  /**
+   * **[PARTIES ONLY]** Distinct actively-enrolled students; present only for the class's instructor, managers of its organisation and platform admins
+   */
+  enrolled_count?: bigint | null;
+  /**
+   * **[PARTIES ONLY]** Seats left (capacity minus enrolled, never below zero); present only alongside enrolled_count
+   */
+  seats_remaining?: bigint | null;
 };
 
 export type ApiResponsePagedDtoCertificateTemplate = {
@@ -16532,6 +16878,19 @@ export const EventTypeEnum3 = {
 export type EventTypeEnum3 = (typeof EventTypeEnum3)[keyof typeof EventTypeEnum3];
 
 /**
+ * Class visibility
+ */
+export const ClassVisibilityEnum2 = {
+  PUBLIC: 'PUBLIC',
+  PRIVATE: 'PRIVATE',
+} as const;
+
+/**
+ * Class visibility
+ */
+export type ClassVisibilityEnum2 = (typeof ClassVisibilityEnum2)[keyof typeof ClassVisibilityEnum2];
+
+/**
  * Result type.
  */
 export const TypeEnum2 = {
@@ -17966,6 +18325,20 @@ export const ResultStatusEnumWritable = {
  */
 export type ResultStatusEnumWritable =
   (typeof ResultStatusEnumWritable)[keyof typeof ResultStatusEnumWritable];
+
+/**
+ * Class visibility
+ */
+export const ClassVisibilityEnum2Writable = {
+  PUBLIC: 'PUBLIC',
+  PRIVATE: 'PRIVATE',
+} as const;
+
+/**
+ * Class visibility
+ */
+export type ClassVisibilityEnum2Writable =
+  (typeof ClassVisibilityEnum2Writable)[keyof typeof ClassVisibilityEnum2Writable];
 
 /**
  * Result type.
@@ -35947,6 +36320,56 @@ export type GetScheduledInstanceResponses = {
 export type GetScheduledInstanceResponse =
   GetScheduledInstanceResponses[keyof GetScheduledInstanceResponses];
 
+export type GetOrganisationTimetableData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query: {
+    /**
+     * Start date of the range (YYYY-MM-DD)
+     */
+    start: Date;
+    /**
+     * End date of the range, inclusive (YYYY-MM-DD)
+     */
+    end: Date;
+  };
+  url: '/api/v1/timetable/organisations/{organisationUuid}';
+};
+
+export type GetOrganisationTimetableErrors = {
+  /**
+   * Invalid or over-wide date range
+   */
+  400: ApiResponseListOrganisationTimetableEntry;
+  /**
+   * Caller does not manage this organisation
+   */
+  403: ApiResponseListOrganisationTimetableEntry;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetOrganisationTimetableError =
+  GetOrganisationTimetableErrors[keyof GetOrganisationTimetableErrors];
+
+export type GetOrganisationTimetableResponses = {
+  /**
+   * Organisation timetable retrieved successfully
+   */
+  200: ApiResponseListOrganisationTimetableEntry;
+};
+
+export type GetOrganisationTimetableResponse =
+  GetOrganisationTimetableResponses[keyof GetOrganisationTimetableResponses];
+
 export type GetInstructorTimeHoldsData = {
   body?: never;
   path: {
@@ -39790,6 +40213,48 @@ export type GetCourseEnrollmentsForStudentResponses = {
 export type GetCourseEnrollmentsForStudentResponse =
   GetCourseEnrollmentsForStudentResponses[keyof GetCourseEnrollmentsForStudentResponses];
 
+export type GetStudentCourseOverviewData = {
+  body?: never;
+  path: {
+    /**
+     * UUID of the student
+     */
+    studentUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/enrollment/student/{studentUuid}/course-overview';
+};
+
+export type GetStudentCourseOverviewErrors = {
+  /**
+   * Caller is not the student, an academic guardian or a platform administrator
+   */
+  403: ApiResponseStudentCourseOverview;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetStudentCourseOverviewError =
+  GetStudentCourseOverviewErrors[keyof GetStudentCourseOverviewErrors];
+
+export type GetStudentCourseOverviewResponses = {
+  /**
+   * Course overview retrieved successfully
+   */
+  200: ApiResponseStudentCourseOverview;
+};
+
+export type GetStudentCourseOverviewResponse =
+  GetStudentCourseOverviewResponses[keyof GetStudentCourseOverviewResponses];
+
 export type GetClassEnrollmentsForStudentData = {
   body?: never;
   path: {
@@ -42881,6 +43346,44 @@ export type GetClassDefinitionsForCourseResponses = {
 
 export type GetClassDefinitionsForCourseResponse =
   GetClassDefinitionsForCourseResponses[keyof GetClassDefinitionsForCourseResponses];
+
+export type GetClassesBatchData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Class definition UUIDs, comma-separated
+     */
+    uuids: Array<string>;
+  };
+  url: '/api/v1/classes/batch';
+};
+
+export type GetClassesBatchErrors = {
+  /**
+   * More than the maximum number of uuids requested
+   */
+  400: ApiResponseListClassBatchSummary;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetClassesBatchError = GetClassesBatchErrors[keyof GetClassesBatchErrors];
+
+export type GetClassesBatchResponses = {
+  /**
+   * Classes retrieved successfully
+   */
+  200: ApiResponseListClassBatchSummary;
+};
+
+export type GetClassesBatchResponse = GetClassesBatchResponses[keyof GetClassesBatchResponses];
 
 export type GetAllActiveClassDefinitionsData = {
   body?: never;

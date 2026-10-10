@@ -1582,6 +1582,9 @@ import type {
   GetScheduledInstanceData,
   GetScheduledInstanceResponses,
   GetScheduledInstanceErrors,
+  GetOrganisationTimetableData,
+  GetOrganisationTimetableResponses,
+  GetOrganisationTimetableErrors,
   GetInstructorTimeHoldsData,
   GetInstructorTimeHoldsResponses,
   GetInstructorTimeHoldsErrors,
@@ -1896,6 +1899,9 @@ import type {
   GetCourseEnrollmentsForStudentData,
   GetCourseEnrollmentsForStudentResponses,
   GetCourseEnrollmentsForStudentErrors,
+  GetStudentCourseOverviewData,
+  GetStudentCourseOverviewResponses,
+  GetStudentCourseOverviewErrors,
   GetClassEnrollmentsForStudentData,
   GetClassEnrollmentsForStudentResponses,
   GetClassEnrollmentsForStudentErrors,
@@ -2151,6 +2157,9 @@ import type {
   GetClassDefinitionsForCourseData,
   GetClassDefinitionsForCourseResponses,
   GetClassDefinitionsForCourseErrors,
+  GetClassesBatchData,
+  GetClassesBatchResponses,
+  GetClassesBatchErrors,
   GetAllActiveClassDefinitionsData,
   GetAllActiveClassDefinitionsResponses,
   GetAllActiveClassDefinitionsErrors,
@@ -2747,6 +2756,7 @@ import {
   getTrainingBranchesByOrganisation1ResponseTransformer,
   getStudentScheduleResponseTransformer,
   getScheduledInstanceResponseTransformer,
+  getOrganisationTimetableResponseTransformer,
   getInstructorTimeHoldsResponseTransformer,
   getInstructorScheduleResponseTransformer,
   getGuardiansResponseTransformer,
@@ -2829,6 +2839,7 @@ import {
   getScheduledInstanceEnrollmentsForStudentResponseTransformer,
   getEnrollmentOverviewForStudentResponseTransformer,
   getCourseEnrollmentsForStudentResponseTransformer,
+  getStudentCourseOverviewResponseTransformer,
   getClassEnrollmentsForStudentResponseTransformer,
   searchEnrollmentsResponseTransformer,
   getWeeklyGrowthResponseTransformer,
@@ -2896,6 +2907,7 @@ import {
   listInstructorApplicationsResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
   getClassDefinitionsForCourseResponseTransformer,
+  getClassesBatchResponseTransformer,
   getAllActiveClassDefinitionsResponseTransformer,
   searchCertificateTemplatesResponseTransformer,
   getStudentCertificatesResponseTransformer,
@@ -18468,6 +18480,34 @@ export const getScheduledInstance = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get the timetable of every class an organisation owns within a date range
+ * Non-cancelled sessions overlapping the inclusive date range, ordered by start time, each with its class title, instructor name and enrolled count, so an organisation calendar needs one request instead of one per class. The range may span at most 366 days.
+ */
+export const getOrganisationTimetable = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrganisationTimetableData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetOrganisationTimetableResponses,
+    GetOrganisationTimetableErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getOrganisationTimetableResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/organisations/{organisationUuid}',
+    ...options,
+  });
+};
+
+/**
  * Get marketplace time holds for a specific instructor within a date range
  * Tentative and firm claims raised by the instructor's marketplace job applications. Read separately from the schedule because a hold is not a session: it carries no enrolment, attendance or pay, and only a FIRM hold counts as a scheduling clash.
  */
@@ -21621,6 +21661,34 @@ export const getCourseEnrollmentsForStudent = <ThrowOnError extends boolean = fa
 };
 
 /**
+ * Get a student's course overview
+ * Enrolled classes with their course, instructor, current or next session, course progress and counts of released assignments and quizzes not yet submitted, in one response. Readable by the student, a guardian whose share covers academics, and platform administrators. Page size is capped at 50.
+ */
+export const getStudentCourseOverview = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentCourseOverviewData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStudentCourseOverviewResponses,
+    GetStudentCourseOverviewErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getStudentCourseOverviewResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/student/{studentUuid}/course-overview',
+    ...options,
+  });
+};
+
+/**
  * Get class enrollments for a specific student
  */
 export const getClassEnrollmentsForStudent = <ThrowOnError extends boolean = false>(
@@ -24229,6 +24297,34 @@ export const getClassDefinitionsForCourse = <ThrowOnError extends boolean = fals
       },
     ],
     url: '/api/v1/classes/course/{courseUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Look up several classes by UUID in one request
+ * Returns the visible classes among uuids (comma-separated or repeated, at most 100), in request order, each with its course or program title, an instructor summary and its seat capacity (max_participants). Visibility is the class listing's; unknown or hidden ids are omitted. enrolled_count and seats_remaining are present only for the class's instructor, managers of its organisation and platform admins. Costs a fixed number of queries regardless of batch size.
+ */
+export const getClassesBatch = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassesBatchData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassesBatchResponses,
+    GetClassesBatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassesBatchResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/batch',
     ...options,
   });
 };
