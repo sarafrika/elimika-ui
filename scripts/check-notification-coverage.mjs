@@ -136,12 +136,17 @@ function buildDispatcher(source, path) {
     `const ${name} = (...args) => { __hit(${JSON.stringify(name)}); return Promise.resolve(); };`
   );
 
+  // Module helpers the body calls (e.g. scope builders) only shape arguments: stub them inert.
+  const helpers = Array.from(source.matchAll(/^function\s+([A-Za-z_$][\w$]*)\s*\(/gm), m => m[1])
+    .filter(name => !invalidators.has(name) && new RegExp(`\\b${name}\\s*\\(`).test(body.text))
+    .map(name => `const ${name} = () => ({});`);
+
   const hits = [];
   let dispatch;
   try {
     dispatch = new Function(
       '__hit',
-      `${stubs.join('\n')}\n${prelude.join('\n')}\n` +
+      `${stubs.join('\n')}\n${helpers.join('\n')}\n${prelude.join('\n')}\n` +
         `return function (${params.join(', ')}) ${body.text};`
     )(name => hits.push(name));
   } catch (error) {
