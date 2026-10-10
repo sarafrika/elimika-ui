@@ -6,6 +6,7 @@ import { useUserProfile } from '@/context/profile-context';
 import { useCalendarFetchRange } from '@/lib/calendar-range';
 import { localDate, resolveDisplayZone } from '@/lib/date';
 import { jobTimeKind, jobTimeTitle } from '@/lib/instructor-job-time';
+import { STALE_TIMES } from '@/lib/query-client';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorCalendarEntry } from '@/services/client/types.gen';
 import AvailabilityManager from './components/availability-manager';
@@ -26,6 +27,7 @@ const Page = () => {
       query: calendarRange,
     }),
     enabled: !!user?.instructor?.uuid,
+    staleTime: STALE_TIMES.live,
     placeholderData: keepPreviousData,
   });
 

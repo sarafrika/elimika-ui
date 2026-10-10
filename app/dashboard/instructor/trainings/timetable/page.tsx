@@ -6,6 +6,7 @@ import type { DashboardClass } from '@/app/dashboard/_components/types';
 import { useInstructor } from '@/context/instructor-context';
 import { useCalendarFetchRange } from '@/lib/calendar-range';
 import { localDate } from '@/lib/date';
+import { STALE_TIMES } from '@/lib/query-client';
 import { getInstructorCalendarOptions } from '@/services/client/@tanstack/react-query.gen';
 import {
   type AvailabilityData,
@@ -37,6 +38,7 @@ const TimeTablePage = ({ classesWithCourseAndInstructor, loading }: TimetablePag
       query: scheduleRange,
     }),
     enabled: !!instructor?.uuid,
+    staleTime: STALE_TIMES.live,
     placeholderData: keepPreviousData,
   });
 
