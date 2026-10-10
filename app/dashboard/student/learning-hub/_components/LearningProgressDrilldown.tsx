@@ -71,13 +71,16 @@ function CourseLessonsRunner({
     return null;
 }
 
+// Lessons load for the selected course only; courses visited earlier keep their lessons.
 function AggregatedCourseLessons({
     courseUuids,
+    selectedCourseUuid,
     children,
 }: {
     courseUuids: string[];
+    selectedCourseUuid: string | null;
     children: (result: {
-        lessonsByCourse: Record<string, CourseLessonWithContent[]>;
+        lessonsByCourse: Record<string, CourseLessonWithContent[] | undefined>;
         isLoading: boolean;
         isFetching: boolean;
     }) => ReactNode;
@@ -101,28 +104,27 @@ function AggregatedCourseLessons({
     }, []);
 
     const lessonsByCourse = useMemo(() => {
-        const map: Record<string, CourseLessonWithContent[]> = {};
+        const map: Record<string, CourseLessonWithContent[] | undefined> = {};
         courseUuids.forEach((uuid) => {
-            map[uuid] = stateByUuid[uuid]?.lessons ?? [];
+            const state = stateByUuid[uuid];
+            map[uuid] = state && !state.isLoading ? state.lessons : undefined;
         });
         return map;
     }, [courseUuids, stateByUuid]);
 
-    const isLoading =
-        courseUuids.length > 0 && courseUuids.some((uuid) => stateByUuid[uuid]?.isLoading ?? true);
-
-    const isFetching =
-        courseUuids.length > 0 && courseUuids.some((uuid) => stateByUuid[uuid]?.isFetching ?? true);
+    const selectedState = selectedCourseUuid ? stateByUuid[selectedCourseUuid] : undefined;
+    const isLoading = Boolean(selectedCourseUuid) && (selectedState?.isLoading ?? true);
+    const isFetching = Boolean(selectedCourseUuid) && (selectedState?.isFetching ?? true);
 
     return (
         <>
-            {courseUuids.map((uuid) => (
+            {selectedCourseUuid ? (
                 <CourseLessonsRunner
-                    key={uuid}
-                    courseUuid={uuid}
+                    key={selectedCourseUuid}
+                    courseUuid={selectedCourseUuid}
                     onChange={handleChange}
                 />
-            ))}
+            ) : null}
             {children({ lessonsByCourse, isLoading, isFetching })}
         </>
     );
@@ -139,6 +141,8 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
         [active]
     );
     const [selectedId, setSelectedId] = useState<string | null>(activeCourseUuids[0] ?? null);
+    const selectedCourseUuid =
+        selectedId && activeCourseUuids.includes(selectedId) ? selectedId : (activeCourseUuids[0] ?? null);
 
     useEffect(() => {
         if (!selectedId || !activeCourseUuids.includes(selectedId)) {
@@ -161,12 +165,12 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
     }
 
     return (
-        <AggregatedCourseLessons courseUuids={activeCourseUuids}>
+        <AggregatedCourseLessons courseUuids={activeCourseUuids} selectedCourseUuid={selectedCourseUuid}>
             {({ lessonsByCourse, isLoading, isFetching }) => {
                 const selectedEnrollment =
                     active.find((enrollment) => enrollment.course?.id === selectedId) ?? active[0];
                 const selectedCourseId = selectedEnrollment.course?.id ?? null;
-                const selectedLessons = selectedCourseId ? lessonsByCourse[selectedCourseId] ?? [] : [];
+                const selectedLessons = (selectedCourseId ? lessonsByCourse[selectedCourseId] : undefined) ?? [];
                 const selectedCompletedLessons = 0;
                 const totalCompletedLessons = 0;
                 const totalLessons = active.reduce(
@@ -231,8 +235,8 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                             <div className="space-y-1 md:border-r md:pr-3">
                                 {active.map((enrollment) => {
                                     const courseId = enrollment.course?.id;
-                                    const courseLessons = courseId ? lessonsByCourse[courseId] ?? [] : [];
-                                    const lessonCount = courseLessons.length;
+                                    const courseLessons = courseId ? lessonsByCourse[courseId] : undefined;
+                                    const lessonCount = courseLessons?.length ?? 0;
                                     const completedLessons = 0;
                                     const progressValue = lessonCount > 0 ? Math.round((completedLessons / lessonCount) * 100) : 0;
                                     const isSelected = courseId === selectedCourseId;
@@ -255,9 +259,11 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
                                                     </div>
                                                     <div className="flex flex-row items-center gap-2 mt-1 space-y-1">
                                                         <Progress value={progressValue} className="h-1" />
-                                                        <span className="text-muted-foreground text-[10px] mb-1 tabular-nums">
-                                                            {completedLessons}/{lessonCount}
-                                                        </span>
+                                                        {courseLessons ? (
+                                                            <span className="text-muted-foreground text-[10px] mb-1 tabular-nums">
+                                                                {completedLessons}/{lessonCount}
+                                                            </span>
+                                                        ) : null}
 
                                                     </div>
                                                 </div>

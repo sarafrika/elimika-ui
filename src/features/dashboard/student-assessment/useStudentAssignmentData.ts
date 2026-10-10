@@ -1,14 +1,15 @@
 'use client';
 
-import { useQueries } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { useAssignmentsByIds } from '@/hooks/use-batched-lookups';
+import { useClassAssessmentSchedules } from '@/hooks/use-class-assessment-schedules';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { useStudentCourseOverview } from '@/hooks/use-student-course-overview';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAssignmentAttachmentsOptions,
-  getAssignmentByUuidOptions,
-  getAssignmentSchedulesOptions,
-  getAssignmentSubmissionsOptions,
+  searchSubmissionsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
@@ -40,6 +41,7 @@ export type StudentAssignmentClassMeta = {
   studentUuid?: string;
   enrollmentUuid?: string;
   courseEnrollmentUuid?: string;
+  classEnrollmentUuid?: string;
 };
 
 export type StudentAssignmentRow = {
@@ -59,6 +61,7 @@ type StudentAssignmentClassItem = {
   studentUuid?: string;
   enrollmentUuid?: string;
   courseEnrollmentUuid?: string;
+  classEnrollmentUuid?: string;
 };
 
 function getClassTitle(classDetails?: ResolvedClassDetails) {
@@ -177,6 +180,66 @@ export function getStudentAssignmentSubmissionState(row: StudentAssignmentRow) {
   };
 }
 
+const SUBMISSIONS_PAGE_SIZE = 200;
+// Attachments load on demand in the detail view (useAssignmentAttachments).
+const NO_ATTACHMENTS: AssignmentAttachment[] = [];
+
+function submissionTime(submission: AssignmentSubmission) {
+  return new Date(
+    submission.submitted_at ?? submission.updated_date ?? submission.created_date ?? 0
+  ).getTime();
+}
+
+/** The student's own submissions in one search, grouped by assignment and newest first. */
+export function useStudentSubmissionsByEnrollments(enrollmentUuids: string[]) {
+  const ids = useMemo(
+    () => Array.from(new Set(enrollmentUuids.filter(Boolean))).sort(),
+    [enrollmentUuids]
+  );
+
+  const query = useQuery({
+    ...searchSubmissionsOptions({
+      query: {
+        searchParams: { enrollment_uuid_in: ids.join(',') },
+        pageable: { page: 0, size: SUBMISSIONS_PAGE_SIZE },
+      },
+    }),
+    enabled: ids.length > 0,
+    staleTime: STALE_TIMES.live,
+    refetchOnWindowFocus: false,
+  });
+
+  const submissionMap = useMemo(() => {
+    const wanted = new Set(ids);
+    const map = new Map<string, AssignmentSubmission[]>();
+    for (const submission of query.data?.data?.content ?? []) {
+      if (!submission.assignment_uuid || !wanted.has(submission.enrollment_uuid)) continue;
+      const list = map.get(submission.assignment_uuid) ?? [];
+      list.push(submission);
+      map.set(submission.assignment_uuid, list);
+    }
+    for (const list of map.values()) list.sort((a, b) => submissionTime(b) - submissionTime(a));
+    return map;
+  }, [ids, query.data]);
+
+  return { submissionMap, isLoading: query.isLoading };
+}
+
+/** One assignment's instructor attachments, fetched only while its detail view is open. */
+export function useAssignmentAttachments(assignmentUuid: string | undefined, isOpen: boolean) {
+  const query = useQuery({
+    ...getAssignmentAttachmentsOptions({ path: { assignmentUuid: assignmentUuid ?? '' } }),
+    enabled: Boolean(assignmentUuid) && isOpen,
+    staleTime: STALE_TIMES.entity,
+    refetchOnWindowFocus: false,
+  });
+
+  return {
+    attachments: (query.data?.data ?? []) as AssignmentAttachment[],
+    isLoading: query.isLoading,
+  };
+}
+
 export function useStudentAssignmentData() {
   const profile = useUserProfile();
   const student = profile?.student;
@@ -204,6 +267,7 @@ export function useStudentAssignmentData() {
               courseUuid: item.course_uuid ?? '',
               enrollmentUuid: item.course_enrollment_uuid ?? undefined,
               courseEnrollmentUuid: item.course_enrollment_uuid ?? undefined,
+              classEnrollmentUuid: item.latest_enrollment_uuid ?? undefined,
             })
           )
         : (classDefinitions ?? [])
@@ -246,39 +310,17 @@ export function useStudentAssignmentData() {
     [classDefinitions, legacy, overview.items, student?.uuid]
   );
 
-  /**
-   * Assignment schedules per class
-   */
-  const assignmentScheduleQueries = useQueries({
-    queries: classItems.map(classItem => ({
-      ...getAssignmentSchedulesOptions({
-        path: { classUuid: classItem.classUuid },
-      }),
-      enabled: Boolean(student?.uuid && classItem.classUuid),
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
-  });
+  const classUuids = useMemo(() => classItems.map(item => item.classUuid), [classItems]);
+  const schedulesQuery = useClassAssessmentSchedules(classUuids);
 
-  /**
-   * Flatten schedules
-   */
-  const scheduleRows = useMemo(
-    () =>
-      classItems.flatMap((classItem, index) => {
-        const schedules = assignmentScheduleQueries[index]?.data?.data ?? [];
+  const scheduleRows = useMemo(() => {
+    const classByUuid = new Map(classItems.map(item => [item.classUuid, item]));
+    return schedulesQuery.assignmentSchedules.flatMap(schedule => {
+      const classMeta = classByUuid.get(schedule.class_definition_uuid ?? '');
+      return classMeta ? [{ classMeta, schedule }] : [];
+    });
+  }, [classItems, schedulesQuery.assignmentSchedules]);
 
-        return schedules.map((schedule: ClassAssignmentSchedule) => ({
-          classMeta: classItem,
-          schedule,
-        }));
-      }),
-    [assignmentScheduleQueries, classItems]
-  );
-
-  /**
-   * Unique assignment IDs
-   */
   const assignmentUuids = useMemo(
     () =>
       Array.from(
@@ -291,98 +333,19 @@ export function useStudentAssignmentData() {
     [scheduleRows]
   );
 
-  /**
-   * Assignment details
-   */
-  const assignmentDetailQueries = useQueries({
-    queries: assignmentUuids.map(uuid => ({
-      ...getAssignmentByUuidOptions({
-        path: { uuid },
-      }),
-      enabled: Boolean(student?.uuid && uuid),
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
-  });
+  const { assignmentMap, isLoading: assignmentsLoading } = useAssignmentsByIds(assignmentUuids);
 
-  /**
-   * Assignment attachments
-   */
-  const assignmentAttachmentQueries = useQueries({
-    queries: assignmentUuids.map(uuid => ({
-      ...getAssignmentAttachmentsOptions({
-        path: { assignmentUuid: uuid },
-      }),
-      enabled: Boolean(student?.uuid && uuid),
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
-  });
-
-  /**
-   * Submissions
-   */
-  const assignmentSubmissionQueries = useQueries({
-    queries: assignmentUuids.map(uuid => ({
-      ...getAssignmentSubmissionsOptions({
-        path: { assignmentUuid: uuid },
-      }),
-      // enabled: Boolean(student?.uuid && uuid),
-      staleTime: 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
-  });
-
-  /**
-   * Maps
-   */
-  const assignmentMap = useMemo(() => {
-    const map = new Map<string, Assignment>();
-
-    assignmentUuids.forEach((uuid, i) => {
-      const assignment = assignmentDetailQueries[i]?.data?.data;
-
-      if (assignment) {
-        map.set(uuid, assignment);
-      }
-    });
-
-    return map;
-  }, [assignmentDetailQueries, assignmentUuids]);
-
-  const attachmentsMap = useMemo(() => {
-    const map = new Map<string, AssignmentAttachment[]>();
-
-    assignmentUuids.forEach((uuid, i) => {
-      map.set(uuid, assignmentAttachmentQueries[i]?.data?.data ?? []);
-    });
-
-    return map;
-  }, [assignmentAttachmentQueries, assignmentUuids]);
-
-  const studentEnrollmentUuids = new Set(
-    classItems.map(item => item.courseEnrollmentUuid ?? item.enrollmentUuid).filter(Boolean)
+  const enrollmentUuids = useMemo(
+    () =>
+      classItems.flatMap(item =>
+        [item.courseEnrollmentUuid, item.enrollmentUuid, item.classEnrollmentUuid].filter(
+          (x): x is string => Boolean(x)
+        )
+      ),
+    [classItems]
   );
-
-  const submissionMap = useMemo(() => {
-    const map = new Map<string, AssignmentSubmission[]>();
-
-    assignmentUuids.forEach((uuid, i) => {
-      const submissions = assignmentSubmissionQueries[i]?.data?.data ?? [];
-
-      const filtered = submissions
-        .filter(sub => studentEnrollmentUuids.has(sub.enrollment_uuid))
-        .sort((a, b) => {
-          const at = new Date(a.submitted_at ?? a.updated_date ?? a.created_date ?? 0).getTime();
-          const bt = new Date(b.submitted_at ?? b.updated_date ?? b.created_date ?? 0).getTime();
-          return bt - at;
-        });
-
-      map.set(uuid, filtered);
-    });
-
-    return map;
-  }, [assignmentSubmissionQueries, assignmentUuids, studentEnrollmentUuids]);
+  const { submissionMap, isLoading: submissionsLoading } =
+    useStudentSubmissionsByEnrollments(enrollmentUuids);
 
   /**
    * Final rows
@@ -395,7 +358,7 @@ export function useStudentAssignmentData() {
 
           if (!assignmentUuid) return null;
 
-          const assignment = assignmentMap.get(assignmentUuid);
+          const assignment = assignmentMap[assignmentUuid];
 
           if (!assignment) return null;
 
@@ -408,7 +371,7 @@ export function useStudentAssignmentData() {
 
           return {
             assignment,
-            attachments: attachmentsMap.get(assignmentUuid) ?? [],
+            attachments: NO_ATTACHMENTS,
             classMeta,
             schedule,
             submissions,
@@ -416,7 +379,7 @@ export function useStudentAssignmentData() {
           };
         })
         .filter((x): x is StudentAssignmentRow => Boolean(x)),
-    [scheduleRows, assignmentMap, attachmentsMap, submissionMap]
+    [scheduleRows, assignmentMap, submissionMap]
   );
 
   /**
@@ -425,10 +388,9 @@ export function useStudentAssignmentData() {
   const isLoading =
     overview.isLoading ||
     classDefinitionsLoading ||
-    assignmentScheduleQueries.some(q => q.isLoading) ||
-    assignmentDetailQueries.some(q => q.isLoading) ||
-    assignmentAttachmentQueries.some(q => q.isLoading) ||
-    assignmentSubmissionQueries.some(q => q.isLoading);
+    schedulesQuery.isLoading ||
+    assignmentsLoading ||
+    submissionsLoading;
 
   return {
     assignmentRows,
