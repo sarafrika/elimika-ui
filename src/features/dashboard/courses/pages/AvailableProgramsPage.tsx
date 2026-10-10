@@ -5,14 +5,10 @@ import { useStudent } from '@/context/student-context';
 import useProgramBundledClassInfo from '@/hooks/use-program-classes';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import AvailabilityClassCard from '@/src/features/dashboard/courses/components/availability-listing-layout';
-import { useDateRangeFilter } from '@/src/features/dashboard/courses/hooks/use-date-range-filter';
-import { format } from 'date-fns';
-import { ArrowLeft, BookOpen, CalendarRange } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { DateRange } from 'react-day-picker';
 import { Button } from '../../../../../components/ui/button';
-import { Popover, PopoverTrigger } from '../../../../../components/ui/popover';
 import {
   Sheet,
   SheetContent,
@@ -44,20 +40,7 @@ export default function AvailableProgramsPage({
   const [courseDetailsOpen, setCourseDetailsOpen] = useState(false);
   const [classDetailsOpen, setClassDetailsOpen] = useState(false);
 
-  const [range, setRange] = useState<DateRange | undefined>({
-    from: new Date(new Date().setMonth(new Date().getMonth() - 3)),
-    to: new Date(new Date().setMonth(new Date().getMonth() + 12)),
-  });
 
-  const {
-    startDateInput,
-    endDateInput,
-    setStartDateInput,
-    setEndDateInput,
-    dateError,
-    applyDates,
-    clearDates,
-  } = useDateRangeFilter();
 
   const { classes = [], loading } = useProgramBundledClassInfo(programId, student);
 
@@ -114,38 +97,6 @@ export default function AvailableProgramsPage({
             </SheetContent>
           </Sheet>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant='outline' size='sm' className='gap-2'>
-                <CalendarRange className='h-4 w-4' />
-
-                {range?.from && range?.to
-                  ? `${format(range.from, 'dd MMM')} - ${format(range.to, 'dd MMM')}`
-                  : 'Select dates'}
-              </Button>
-            </PopoverTrigger>
-
-            {/* <PopoverContent className='w-auto p-0' align='end'>
-              <Calendar
-                mode='range'
-                numberOfMonths={12}
-                selected={range}
-                defaultMonth={range?.from}
-                onSelect={value => {
-                  setRange(value);
-
-                  if (value?.from) {
-                    setStartDateInput(format(value.from, 'yyyy-MM-dd'));
-                  }
-
-                  if (value?.to) {
-                    setEndDateInput(format(value.to, 'yyyy-MM-dd'));
-                    applyDates();
-                  }
-                }}
-              />
-            </PopoverContent> */}
-          </Popover>
         </div>
       </div>
 
