@@ -2,8 +2,8 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Clock, Search, SearchX } from 'lucide-react';
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Highlight } from '@/components/search/highlight';
@@ -76,33 +76,7 @@ const initialsOf = (value?: string) =>
     .map(part => part[0]?.toUpperCase())
     .join('') || '?';
 
-/**
- * ⌘K / Ctrl K from anywhere, and `/` when the cursor is not in a text field, opens the
- * palette. Esc closes it (the Sheet handles that).
- */
-export function useGlobalSearchShortcut(onOpen: () => void) {
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
-        event.preventDefault();
-        onOpen();
-        return;
-      }
-      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
-      const target = event.target;
-      if (
-        target instanceof HTMLElement &&
-        (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
-      ) {
-        return;
-      }
-      event.preventDefault();
-      onOpen();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onOpen]);
-}
+export { useGlobalSearchShortcut } from '../hooks/use-global-search-shortcut';
 
 /**
  * The global search palette: `<Command shouldFilter={false}>` in a right-side Sheet (never
