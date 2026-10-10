@@ -1,15 +1,15 @@
 {
   "generatedAt": "2026-10-10T16:13:23.477Z",
   "runs": 1,
-  "source": "post-programme gate run gate-p4-r3 (2026-10-10, local production build against staging); refresh from CI with the workflow_dispatch update_baseline run",
+  "source": "post-programme gate run gate-p4-r3 (2026-10-10, local build against staging): request counts only; P95s stay null until the first CI update_baseline run",
   "overallP95TimeToDataMs": null,
   "routes": {
     "/dashboard/instructor/overview": {
-      "p95TimeToDataMs": 1395,
+      "p95TimeToDataMs": null,
       "requests": 8
     },
     "/dashboard/instructor/classes": {
-      "p95TimeToDataMs": 184,
+      "p95TimeToDataMs": null,
       "requests": 1
     }
   }
