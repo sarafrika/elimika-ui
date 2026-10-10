@@ -28,6 +28,8 @@ export type SchedulerEvent = {
   category: SchedulerCategory;
   /** Initials of the students actually enrolled in the class; empty when none or unknown. */
   students: string[];
+  /** Enrolment count from the schedule feed, shown when no roster is loaded for the card. */
+  enrolledCount?: number;
   maxParticipants?: number;
   classCode: string;
 };

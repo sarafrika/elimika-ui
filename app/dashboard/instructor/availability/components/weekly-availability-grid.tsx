@@ -2,7 +2,7 @@
 'use client';
 
 import { ChevronLeft, ChevronRight, Clock, Edit2, Lock, Plus } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   JOB_TIME_STYLES,
   type JobTimeDetail,
@@ -28,6 +28,8 @@ interface WeeklyAvailabilityGridProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
   isEditing: boolean;
+  /** Reports the date on screen so the page can fetch just that window. */
+  onVisibleDateChange?: (date: Date) => void;
 }
 
 type AvailabilitySlot = CalendarEvent & {
@@ -69,8 +71,13 @@ export function WeeklyAvailabilityGrid({
   availabilityData,
   onAvailabilityUpdate,
   isEditing,
+  onVisibleDateChange,
 }: WeeklyAvailabilityGridProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
+
+  useEffect(() => {
+    onVisibleDateChange?.(currentWeek);
+  }, [currentWeek, onVisibleDateChange]);
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState<{ day: string; time: string } | null>(null);
