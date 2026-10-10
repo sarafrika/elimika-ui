@@ -133,3 +133,9 @@ export function scopeQueryOptionsToActingDomain<T extends ScopableOptions>(optio
         : queryFn,
   };
 }
+
+/** Whether a cached query was answered for the dashboard now rendered (or for none). */
+export function isQueryHashInRenderedDomain(queryHash: string): boolean {
+  const stored = HASH_SUFFIX_PATTERN.exec(queryHash)?.[1];
+  return !stored || stored === (readRenderedActingDomain() ?? ACTING_DOMAIN_NONE);
+}

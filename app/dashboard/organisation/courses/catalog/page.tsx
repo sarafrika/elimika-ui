@@ -39,7 +39,7 @@ import { useSearchErrors } from '@/hooks/use-search-query';
 import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
 import { extractList, extractPage } from '@/lib/api-helpers';
-import { STALE_TIMES } from '@/lib/query-client';
+import { APPROVAL_QUERY_FRESHNESS, STALE_TIMES } from '@/lib/query-client';
 import { catalogItemPrefetchQuery } from '@/lib/route-prefetch';
 import { classifySearchError } from '@/lib/search/query';
 import { enumParam, stringParam } from '@/lib/search-state';
@@ -253,9 +253,8 @@ export default function CatalogPage() {
       },
     }),
     enabled: Boolean(organisationUuid),
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    staleTime: STALE_TIMES.live,
+    ...APPROVAL_QUERY_FRESHNESS,
   });
   const programApplicationsQuery = useQuery({
     ...searchProgramTrainingApplicationsOptions({
@@ -265,9 +264,8 @@ export default function CatalogPage() {
       },
     }),
     enabled: Boolean(organisationUuid),
-    staleTime: 0,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
+    staleTime: STALE_TIMES.live,
+    ...APPROVAL_QUERY_FRESHNESS,
   });
   const approvedCourseUuids = useMemo(() => {
     const set = new Set<string>();

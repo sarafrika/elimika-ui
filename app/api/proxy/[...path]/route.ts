@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { Session } from 'next-auth';
 import {
   buildPrivateBffCacheKey,
-  clearPrivateBffCacheForUser,
   deletePrivateBffCacheEntry,
   getPrivateBffCacheEntry,
   getPrivateBffCacheTtlMs,
+  invalidatePrivateBffCacheForWrite,
   isPrivateBffCacheBypassed,
   PRIVATE_BFF_CACHE_MAX_BODY_BYTES,
   type PrivateBffCacheEntry,
@@ -419,7 +419,7 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
     }
 
     if (isMutatingRequest && cacheUserId) {
-      clearPrivateBffCacheForUser(cacheUserId);
+      invalidatePrivateBffCacheForWrite(cacheUserId, upstreamUrl);
     }
 
     return new NextResponse(upstreamResponse.body, {
