@@ -1,12 +1,20 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Bell, BellRing, ClipboardCheck, Info, Send, ShieldAlert } from 'lucide-react';
+import {
+  AlertTriangle,
+  Bell,
+  BellRing,
+  ClipboardCheck,
+  Info,
+  Send,
+  ShieldAlert,
+} from 'lucide-react';
 import { type AlertItem, AlertPanel, type AlertSeverity } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractPage } from '@/lib/api-helpers';
+import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import type { NotificationDto } from '@/services/client';
 import {
   listNotificationsOptions,
@@ -50,8 +58,9 @@ export function OverviewAlerts() {
         searchParams: {
           applicant_uuid_eq: organisationUuid,
           applicant_type_eq: 'organisation',
+          status_eq: 'pending',
         },
-        pageable: { page: 0, size: 100 },
+        pageable: { page: 0, size: 1 },
       },
     }),
     enabled: Boolean(organisationUuid),
@@ -67,10 +76,11 @@ export function OverviewAlerts() {
     enabled: Boolean(organisationUuid),
   });
 
-  const applications = (applicationsQuery.data?.data?.content ?? []) as TrainingApplicationLike[];
-  const pendingApplications = applications.filter(application =>
-    isPending(application.status)
-  ).length;
+  // The search filters to pending server-side; the page total is the count.
+  const applicationsPage = extractPage<TrainingApplicationLike>(applicationsQuery.data);
+  const pendingApplications =
+    getTotalFromMetadata(applicationsPage.metadata) ||
+    applicationsPage.items.filter(application => isPending(application.status)).length;
 
   const alerts: AlertItem[] = [];
 
