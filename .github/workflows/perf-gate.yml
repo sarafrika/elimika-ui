@@ -1,0 +1,152 @@
+name: 'Performance Gate'
+
+# Blocking PR checks from the October 2026 speed programme (docs/perf/route-gate.md):
+# lint guardrails + tsc ratchet, then route-gate against a production build backed by staging.
+on:
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - '**/*.md'
+  workflow_dispatch:
+    inputs:
+      update_baseline:
+        description: 'Measure fresh P95 baselines and upload them as an artifact instead of gating'
+        type: boolean
+        default: false
+
+concurrency:
+  group: perf-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  guardrails:
+    name: Lint guardrails & type ratchet
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10.18.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint (Biome guardrails are errors beyond the legacy allowlist)
+        run: pnpm lint
+
+      - name: TypeScript error ratchet
+        run: pnpm typecheck:ratchet
+
+  route-gate:
+    name: Route gate (staging-backed)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      GATE_BASE_URL: http://localhost:3000
+      PERF_USER: ${{ secrets.PERF_GATE_USER }}
+      PERF_PASS: ${{ secrets.PERF_GATE_PASS }}
+      GATE_DOMAINS: ${{ vars.PERF_GATE_DOMAINS || 'student instructor course_creator organisation admin' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Require the CI test account
+        run: |
+          if [ -z "$PERF_USER" ] || [ -z "$PERF_PASS" ]; then
+            echo "::error::PERF_GATE_USER / PERF_GATE_PASS secrets are not set. See docs/perf/route-gate.md#ci."
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10.18.1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium for Playwright
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Create .env.local pointing at staging
+        env:
+          API_BASE_URL: ${{ secrets.PERF_GATE_API_BASE_URL || 'https://api.elimika.staging.sarafrika.com' }}
+          KEYCLOAK_ISSUER: ${{ secrets.PERF_GATE_KEYCLOAK_ISSUER }}
+          KEYCLOAK_CLIENT_ID: ${{ secrets.PERF_GATE_KEYCLOAK_CLIENT_ID }}
+          KEYCLOAK_CLIENT_SECRET: ${{ secrets.PERF_GATE_KEYCLOAK_CLIENT_SECRET }}
+          KEYCLOAK_REALM: ${{ secrets.PERF_GATE_KEYCLOAK_REALM }}
+          NEXT_PUBLIC_MAPBOX_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_TOKEN }}
+        run: |
+          {
+            echo "API_BASE_URL=$API_BASE_URL"
+            echo "AUTH_URL=$GATE_BASE_URL"
+            echo "AUTH_SECRET=$(openssl rand -base64 32)"
+            echo "KEYCLOAK_ISSUER=$KEYCLOAK_ISSUER"
+            echo "KEYCLOAK_CLIENT_ID=$KEYCLOAK_CLIENT_ID"
+            echo "KEYCLOAK_CLIENT_SECRET=$KEYCLOAK_CLIENT_SECRET"
+            echo "KEYCLOAK_REALM=$KEYCLOAK_REALM"
+            echo "NEXT_PUBLIC_SITE_URL=$GATE_BASE_URL"
+            echo "NEXT_PUBLIC_MAPBOX_TOKEN=$NEXT_PUBLIC_MAPBOX_TOKEN"
+            echo "NEXT_PUBLIC_GEOCODER_URL=https://photon.komoot.io/api/"
+          } > .env.local
+
+      - name: Build
+        run: pnpm build
+
+      - name: Start production server
+        run: |
+          nohup pnpm start > .perf-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -sf -o /dev/null "$GATE_BASE_URL" && exit 0
+            sleep 2
+          done
+          cat .perf-server.log
+          exit 1
+
+      - name: Sign in the CI test account
+        run: node scripts/perf/login.mjs "$GATE_BASE_URL"
+
+      - name: Run route gate per domain
+        run: |
+          mkdir -p .perf/gate
+          extra=""
+          if [ "${{ inputs.update_baseline }}" = "true" ]; then extra="--update-baseline"; fi
+          status=0
+          for domain in $GATE_DOMAINS; do
+            echo "::group::route-gate $domain"
+            node scripts/perf/route-gate.mjs "$GATE_BASE_URL" --domain "$domain" \
+              --json ".perf/gate/$domain.json" $extra || status=1
+            echo "::endgroup::"
+          done
+          exit $status
+
+      - name: Upload gate reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: route-gate-reports
+          path: |
+            .perf/gate/
+            .perf-server.log
+          if-no-files-found: ignore
+
+      - name: Upload refreshed baselines
+        if: inputs.update_baseline
+        uses: actions/upload-artifact@v4
+        with:
+          name: route-gate-baselines
+          path: docs/perf/route-gate-baseline-*.json

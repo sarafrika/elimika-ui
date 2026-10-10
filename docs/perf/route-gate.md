@@ -47,12 +47,54 @@ pnpm perf:gate -- http://localhost:3000 --domain instructor
 Use one baseline per domain, and the same machine class and API environment for baseline and
 check runs; time-to-data includes backend latency.
 
+## CI
+
+`.github/workflows/perf-gate.yml` runs on every pull request to `main` and both jobs are blocking
+(mark them required in the branch protection rule):
+
+1. **Lint guardrails & type ratchet**: `pnpm lint` (see below) and `pnpm typecheck:ratchet`.
+2. **Route gate (staging-backed)**: builds the PR, starts `pnpm start` on `http://localhost:3000`
+   with the API pointed at staging, signs in the CI test account with `login.mjs`, then runs
+   `route-gate.mjs --domain <role>` for every domain in `PERF_GATE_DOMAINS`. Reports are uploaded as
+   the `route-gate-reports` artifact.
+
+Configure these in *Settings → Secrets and variables → Actions*. Nothing here is committed; the
+values below are placeholders.
+
+| Name | Kind | Value |
+| --- | --- | --- |
+| `PERF_GATE_USER` | secret | email of a dedicated staging test account (never a real user) |
+| `PERF_GATE_PASS` | secret | its password |
+| `PERF_GATE_KEYCLOAK_ISSUER` | secret | staging realm issuer, e.g. `https://<keycloak-host>/realms/<realm>` |
+| `PERF_GATE_KEYCLOAK_REALM` | secret | staging realm name |
+| `PERF_GATE_KEYCLOAK_CLIENT_ID` | secret | a staging client whose valid redirect URIs include `http://localhost:3000/*` |
+| `PERF_GATE_KEYCLOAK_CLIENT_SECRET` | secret | that client's secret |
+| `PERF_GATE_API_BASE_URL` | secret (optional) | defaults to `https://api.elimika.staging.sarafrika.com` |
+| `PERF_GATE_DOMAINS` | variable (optional) | space-separated roles the test account holds; default `student instructor course_creator organisation admin` |
+
+The test account needs every role listed in `PERF_GATE_DOMAINS` and enough staging data (classes,
+enrolments, an organisation) for each route to render real data, or the "0 API requests" rule
+fails. The job fails when the account secrets are missing, so PRs from forks cannot pass it.
+
+### Baselines
+
+`docs/perf/route-gate-baseline-<domain>.json` hold the post-programme P95s. The committed seed comes
+from the final phase-4 gate run (`gate-p4-r3`, 2026-10-10, one cold load per route on a local
+production build against staging); routes it did not measure have no entry and skip the P95 check,
+and `overallP95TimeToDataMs` is `null` until a CI refresh. Because time-to-data depends on the
+machine, refresh from CI once the secrets exist: run the workflow manually with
+`update_baseline: true`, download the `route-gate-baselines` artifact and commit it.
+
 ## Lint guardrails that back the gate
 
-The Biome GritQL plugins in `.biome-plugins/` catch the same defects statically (all `warn` while
-existing debt is paid down; promote to `error` once a rule reaches zero). Counts on 2026-10-08:
-143 unbounded `useQueries`, 16 ungated path options, 11 oversized page sizes, 14 `unoptimized`
-images (190 Biome warnings in total, no errors):
+The Biome GritQL plugins in `.biome-plugins/` catch the same defects statically and all report at
+`error` severity. `pnpm lint` runs Biome through `scripts/perf/lint-guardrails.mjs`, which fails on
+any Biome error except legacy guardrail hits recorded per file in
+`scripts/perf/lint-guardrail-allowlist.json`. A new file gets no allowance and an old file may not
+gain one, so every new violation blocks the PR. After fixing debt, run
+`node scripts/perf/lint-guardrails.mjs --update` to shrink the allowlist (it never grows).
+Legacy counts on 2026-10-11: 109 unbounded `useQueries`, 11 ungated path options, 8 oversized
+page sizes, 4 `unoptimized` images, 4 `form.watch()` calls:
 
 - `no-unbounded-use-queries.grit`: `useQueries({ queries: list.map(...) })` without `.slice(...)`.
   Batch via `hooks/use-batched-lookups.ts` instead.
@@ -60,3 +102,5 @@ images (190 Biome warnings in total, no errors):
   top-level `enabled`.
 - `no-oversized-page-size.grit`: `size:` literals of 500 or more inside a `pageable` or `query` object.
 - `no-unoptimized-image.grit`: the `unoptimized` prop on images.
+- `no-form-watch-in-render.grit`: `form.watch(...)`; use `useWatch` in a subscriber component.
+- `no-enabled-in-query-params.grit`: `enabled` nested inside the API `query: {}` object.
