@@ -20,6 +20,7 @@
               "moment": "moment was removed for bundle size \u2014 use dayjs via '@/lib/date'.",
               "pdfjs-dist": "Load lazily via loadPdfjs() from '@/lib/pdfjs' \u2014 a static import adds ~2.5MB to the route bundle.",
               "@react-pdf/renderer": "Render certificates through CertificatePage (next/dynamic) \u2014 a static import adds ~1.3MB to the route bundle.",
+              "recharts": "Import charts from '@/components/dashboard/charts-lazy' \u2014 a static recharts import adds ~190KB to the route bundle.",
               "pdfmake": "pdfmake was removed as unused \u2014 if needed again, dynamic-import it inside the click handler.",
               "@tanstack/react-query-devtools": "Only context/root-providers.tsx mounts devtools (dev-only, lazy).",
               "@/components/tiptap-templates/simple/simple-editor": "Import '@/components/tiptap-templates/simple/simple-editor-lazy' so the tiptap editor stays code-split."
@@ -40,7 +41,8 @@
         "lib/pdfjs.ts",
         "context/root-providers.tsx",
         "app/dashboard/_components/certificate/CertificatePDF.tsx",
-        "app/dashboard/_components/certificate/CertificateViewer.tsx"
+        "app/dashboard/_components/certificate/CertificateViewer.tsx",
+        "components/dashboard/charts.tsx"
       ],
       "linter": {
         "rules": {

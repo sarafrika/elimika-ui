@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { EnrollmentTrendsChart } from '@/components/dashboard';
+import { EnrollmentTrendsChart } from '@/components/dashboard/charts-lazy';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
