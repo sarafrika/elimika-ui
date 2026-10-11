@@ -12,7 +12,7 @@ import {
   refreshPrivateBffCacheEntry,
   storePrivateBffCacheEntry,
 } from '@/lib/api/private-bff-cache';
-import { getApiReadDispatcher } from '@/lib/server/api-dispatcher';
+import { getApiHedgeDispatcher, getApiReadDispatcher } from '@/lib/server/api-dispatcher';
 import { hedgedRead } from '@/lib/server/hedged-read';
 import {
   etagMatches,
@@ -79,9 +79,15 @@ async function fetchUpstream(
     ? { ...init, dispatcher }
     : { ...init };
 
+  // Hedges and retries go over a separate h1 pool, so one stalled h2 session cannot hold both.
+  const alternateInit: RequestInit & { dispatcher: ReturnType<typeof getApiHedgeDispatcher> } = {
+    ...init,
+    dispatcher: getApiHedgeDispatcher(),
+  };
+
   try {
     // The wall budget and client abort cover the hedge and the retry as well.
-    return await hedgedRead(url, readInit, { signal });
+    return await hedgedRead(url, readInit, { signal, alternateInit });
   } catch (error) {
     throw controller.signal.aborted ? controller.signal.reason : error;
   } finally {
