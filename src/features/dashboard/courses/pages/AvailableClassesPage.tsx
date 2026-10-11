@@ -1,5 +1,6 @@
 'use client';
 
+import { useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import { SearchUnavailable } from '@/components/search/search-unavailable';
 import { isSearchUnavailable } from '@/lib/api-errors';
@@ -85,6 +86,18 @@ export default function AvailableClassesPage({
         )
     : filteredClasses;
   const listLoading = loading || (nearMe.active && nearQuery.isLoading);
+
+  // One organisation lookup for every card on screen instead of one per card.
+  const organisationKey = [
+    ...new Set(listedClasses.map(cls => cls.organisation_uuid).filter((id): id is string => !!id)),
+  ]
+    .sort()
+    .join(',');
+  const organisationIds = useMemo(
+    () => (organisationKey ? organisationKey.split(',') : []),
+    [organisationKey]
+  );
+  const { organisationMap } = useOrganisationsByIds(organisationIds);
 
   const instructorFilteredClasses = filteredClasses.filter(
     cls => cls.default_instructor_uuid === instructor?.uuid
@@ -185,6 +198,9 @@ export default function AvailableClassesPage({
               ) : null}
               <AvailabilityClassCard
                 cls={item}
+                organisation={
+                  item.organisation_uuid ? (organisationMap[item.organisation_uuid] ?? null) : null
+                }
                 onViewCourse={() => setCourseDetailsOpen(true)}
                 onViewClass={() => setClassDetailsOpen(true)}
                 onEnroll={selectedClass => {

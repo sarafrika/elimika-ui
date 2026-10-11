@@ -9,6 +9,7 @@ import {
 } from '../services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, Course } from '../services/client/types.gen';
 import type { BundledClass } from '../src/features/dashboard/courses/types';
+import { ACTIVE_ENROLLMENT_STATUSES } from '../src/features/dashboard/instructor-overview/overview-enrollments';
 import { toCardInstructor, toCount, useClassListingSummaries } from './use-class-listing-summaries';
 import { useClassSchedule } from './use-class-schedule';
 
@@ -36,9 +37,13 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
         .filter((item): item is ClassDefinition => item !== undefined) ?? [],
     [data]
   );
+  // The enrolment page summarises only its own class; listings summarise every class.
   const classUuids = useMemo(
-    () => classes.map(cls => cls.uuid).filter((uuid): uuid is string => !!uuid),
-    [classes]
+    () =>
+      onlyClassUuid
+        ? [onlyClassUuid]
+        : classes.map(cls => cls.uuid).filter((uuid): uuid is string => !!uuid),
+    [classes, onlyClassUuid]
   );
 
   const courseQuery = useQuery({
@@ -69,11 +74,22 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
   } = useClassListingSummaries(
     classUuids,
     courseUuid ? { course_uuid: courseUuid } : undefined,
-    studentUuid
+    onlyClassUuid ? undefined : studentUuid
   );
 
   const classRating = ratingQuery.data?.data ?? null;
   const classEnrollments = enrolmentQuery.data?.data;
+  // On the enrolment page the class's own enrolment list (shared with the page) answers this.
+  const enrolledInDetail = useMemo(
+    () =>
+      !!studentUuid &&
+      (classEnrollments ?? []).some(
+        item =>
+          item.student_uuid === studentUuid &&
+          ACTIVE_ENROLLMENT_STATUSES.has(String(item.status ?? 'ENROLLED').toUpperCase())
+      ),
+    [classEnrollments, studentUuid]
+  );
 
   const bundledClassInfo: BundledClass[] = useMemo(
     () =>
@@ -91,7 +107,11 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
           catalogue: cls.uuid ? (catalogueMap[cls.uuid] ?? null) : null,
           classRating: isDetail ? classRating : null,
           enrolledCount: toCount(summary?.enrolled_count),
-          isStudentEnrolled: cls.uuid ? enrolledClassUuids.has(cls.uuid) : false,
+          isStudentEnrolled: isDetail
+            ? enrolledInDetail
+            : cls.uuid
+              ? enrolledClassUuids.has(cls.uuid)
+              : false,
         };
       }),
     [
@@ -105,6 +125,7 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
       detailSchedule.schedule,
       detailSchedule.sessionCount,
       enrolledClassUuids,
+      enrolledInDetail,
       onlyClassUuid,
       summaryMap,
     ]
