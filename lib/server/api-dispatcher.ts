@@ -1,4 +1,4 @@
-import { Agent, setGlobalDispatcher } from 'undici';
+import { Agent, type Dispatcher, setGlobalDispatcher } from 'undici';
 
 const KEEP_ALIVE_TIMEOUT_MS = 60_000;
 const KEEP_ALIVE_MAX_TIMEOUT_MS = 10 * 60_000;
@@ -33,4 +33,29 @@ export function installApiDispatcher() {
     })
   );
   installed = true;
+}
+
+// Body-less reads multiplex over a few warm h2 sessions instead of opening a
+// TCP+TLS socket per parallel request; API_HTTP2_READS=false falls back to h1.
+const READ_PIPELINING = 100;
+const READ_CONNECTIONS = 4;
+const readsOverH2 = process.env.API_HTTP2_READS !== 'false';
+
+let readDispatcher: Dispatcher | undefined;
+
+/** Dispatcher for body-less upstream reads, or undefined when the kill switch is set. */
+export function getApiReadDispatcher(): Dispatcher | undefined {
+  if (!readsOverH2) {
+    return undefined;
+  }
+  readDispatcher ??= new Agent({
+    allowH2: true,
+    bodyTimeout: BODY_TIMEOUT_MS,
+    connections: READ_CONNECTIONS,
+    headersTimeout: HEADERS_TIMEOUT_MS,
+    keepAliveMaxTimeout: KEEP_ALIVE_MAX_TIMEOUT_MS,
+    keepAliveTimeout: KEEP_ALIVE_TIMEOUT_MS,
+    pipelining: READ_PIPELINING,
+  });
+  return readDispatcher;
 }
