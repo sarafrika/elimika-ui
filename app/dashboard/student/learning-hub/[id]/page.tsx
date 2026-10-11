@@ -78,7 +78,7 @@ export default function StudentClassCoursePage({ params }: Props) {
     isScheduleLoading,
     isEnrollmentsLoading,
     isError,
-  } = useClassDetails(classId);
+  } = useClassDetails(classId, { prefetchCourseCreator: true });
 
   if (isClassLoading) {
     return <ClassDetailsSkeleton />;

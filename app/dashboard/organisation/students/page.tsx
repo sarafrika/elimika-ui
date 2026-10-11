@@ -1,11 +1,11 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Eye, Mail, MapPin, MoreHorizontal, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { KeyboardEvent } from 'react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AvatarWithSkeleton } from '@/components/avatar-with-skeleton';
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
@@ -32,7 +32,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
-import { useStudentsByIds, useStudentsByUserIds, useUsersByIds } from '@/hooks/use-batched-lookups';
+import {
+  LOOKUP_CHUNK_SIZE,
+  prefetchUsersByIds,
+  useStudentsByIds,
+  useStudentsByUserIds,
+  useUsersByIds,
+} from '@/hooks/use-batched-lookups';
 import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatCount, toNumber } from '@/lib/metrics';
@@ -179,23 +185,42 @@ export default function StudentsPage() {
       ).sort((a, b) => a.localeCompare(b)),
     [summaries]
   );
-  const summaryStudentProfilesQuery = useStudentsByIds(summaryStudentUuids);
+  // Roster entries are keyed by user uuid, so their names load straight off the roster.
+  const rosterUserUuidSet = useMemo(() => new Set(rosterUserUuids), [rosterUserUuids]);
+  const rosterUsers = useUsersByIds(rosterUserUuids);
+
+  // Summary-only students need their profile first; its user lookup starts as profiles land.
+  const queryClient = useQueryClient();
+  const settledRosterRef = useRef<Set<string> | null>(null);
+  const rosterSettled = rosterQuery.isSuccess || rosterQuery.isError;
+  useEffect(() => {
+    settledRosterRef.current = rosterSettled ? rosterUserUuidSet : null;
+  }, [rosterSettled, rosterUserUuidSet]);
+  const summaryStudentProfilesQuery = useStudentsByIds(summaryStudentUuids, profiles => {
+    const rosterSet = settledRosterRef.current;
+    if (!rosterSet || summaryStudentUuids.length > LOOKUP_CHUNK_SIZE) return;
+    prefetchUsersByIds(
+      queryClient,
+      profiles.map(profile => profile.user_uuid).filter(uuid => !!uuid && !rosterSet.has(uuid))
+    );
+  });
   const studentProfileByUuid = useMemo(
     () => new Map<string, Student>(Object.entries(summaryStudentProfilesQuery.studentMap)),
     [summaryStudentProfilesQuery.studentMap]
   );
-  const profileUserUuids = useMemo(
+  const summaryUserUuids = useMemo(
     () =>
-      Array.from(
-        new Set(
-          [...studentProfileByUserUuid.values(), ...studentProfileByUuid.values()]
-            .map(profile => profile.user_uuid)
-            .filter((uuid): uuid is string => !!uuid)
-        )
-      ).sort((a, b) => a.localeCompare(b)),
-    [studentProfileByUserUuid, studentProfileByUuid]
+      [...studentProfileByUuid.values()]
+        .map(profile => profile.user_uuid)
+        .filter((uuid): uuid is string => !!uuid && !rosterUserUuidSet.has(uuid)),
+    [studentProfileByUuid, rosterUserUuidSet]
   );
-  const { userMap, isLoading: usersLoading } = useUsersByIds(profileUserUuids);
+  const summaryUsers = useUsersByIds(summaryUserUuids);
+  const userMap = useMemo(
+    () => ({ ...summaryUsers.userMap, ...rosterUsers.userMap }),
+    [summaryUsers.userMap, rosterUsers.userMap]
+  );
+  const usersLoading = rosterUsers.isLoading || summaryUsers.isLoading;
 
   const students = useMemo(() => {
     const rows: StudentRow[] = [];
