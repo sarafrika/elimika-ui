@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Sparkles } from 'lucide-react';
 import { IntentLink } from '@/components/data/intent-link';
 import { LazySection } from '@/components/data/lazy-section';
@@ -9,12 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { STALE_TIMES } from '@/lib/query-client';
 import { coursePrefetchQuery } from '@/lib/route-prefetch';
 import { cn } from '@/lib/utils';
-import { getSimilarCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { RecommendedCourse } from '@/services/client/types.gen';
 import { sendDiscoveryEvent } from '@/src/features/discovery/discovery-events';
+import { useSimilarCourses } from '@/src/features/recommendations/use-similar-courses';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 const SIMILAR_LIMIT = 6;
@@ -49,14 +47,7 @@ function SimilarCoursesRailContent({
   className,
   title = 'Similar courses',
 }: SimilarCoursesRailProps) {
-  const query = useQuery({
-    ...getSimilarCoursesOptions({
-      path: { uuid: courseUuid ?? '' },
-      query: { limit: SIMILAR_LIMIT },
-    }),
-    enabled: Boolean(courseUuid),
-    staleTime: STALE_TIMES.entity,
-  });
+  const query = useSimilarCourses(courseUuid, SIMILAR_LIMIT);
 
   const courses = (query.data?.data ?? []).filter(
     (course): course is RecommendedCourse & { course_uuid: string } => Boolean(course.course_uuid)

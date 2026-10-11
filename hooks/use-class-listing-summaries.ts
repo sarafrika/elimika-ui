@@ -5,14 +5,16 @@ import { STALE_TIMES } from '@/lib/query-client';
 import {
   getClassesBatchOptions,
   getStudentCourseOverviewOptions,
-  resolveByCourseOrClassOptions,
+  resolveByCourseOrClassQueryKey,
 } from '../services/client/@tanstack/react-query.gen';
-import type { CardInstructor } from '../src/features/dashboard/courses/types';
+import { resolveByCourseOrClass } from '../services/client/sdk.gen';
 import type {
   ClassBatchSummary,
   CommerceCatalogueItem,
   ResolveByCourseOrClassData,
+  ResolveByCourseOrClassResponse,
 } from '../services/client/types.gen';
+import type { CardInstructor } from '../src/features/dashboard/courses/types';
 
 // Matches ClassBatchLookupService.MAX_BATCH_SIZE on the backend.
 const CLASS_BATCH_SIZE = 100;
@@ -88,11 +90,21 @@ export function useClassListingSummaries(
     [overviewQuery.data]
   );
 
-  // The resolve endpoint answers 404 when nothing is mapped, which simply means no catalogue rows.
+  // A 404 means nothing is sold here: cache it as empty so remounts reuse it instead of refetching.
   const catalogueQuery = useQuery({
-    ...resolveByCourseOrClassOptions({ query: catalogueScope }),
+    queryKey: resolveByCourseOrClassQueryKey({ query: catalogueScope }),
+    queryFn: async ({ signal }): Promise<ResolveByCourseOrClassResponse> => {
+      const { data, error, response } = await resolveByCourseOrClass({
+        query: catalogueScope,
+        signal,
+      });
+      if (response?.status === 404) return { data: [] };
+      if (error) throw error;
+      return data ?? { data: [] };
+    },
     enabled: !!(catalogueScope?.course_uuid || catalogueScope?.program_uuid),
-    staleTime: STALE_TIMES.entity,
+    retry: false,
+    staleTime: STALE_TIMES.reference,
   });
   const catalogueMap = useMemo(() => {
     const map: Record<string, CommerceCatalogueItem> = {};
