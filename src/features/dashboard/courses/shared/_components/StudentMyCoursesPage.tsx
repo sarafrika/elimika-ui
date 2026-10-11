@@ -25,6 +25,7 @@ import { useCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { coursePrefetchQuery } from '@/lib/route-prefetch';
 import { cn } from '@/lib/utils';
+import type { StudentClassEnrollmentSummary } from '@/services/client';
 import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
 import {
   type CoursesCatalogCardData,
@@ -42,8 +43,13 @@ type EnrolledCourseCard = CoursesCatalogCardData & {
 
 type FilterTab = 'all' | 'in_progress' | 'completed';
 
-// Cards read class, course and the class roster; schedules, quizzes and lessons stay unloaded.
-const MY_COURSES_SECTIONS = ['classEnrollments'] as const;
+// Cards need only the class, the course and the student's own enrolment summaries.
+const MY_COURSES_SECTIONS = [] as const;
+
+const isLiveClassSummary = (
+  row: StudentClassEnrollmentSummary | null | undefined
+): row is StudentClassEnrollmentSummary =>
+  row != null && row.latest_enrollment_status !== 'CANCELLED';
 
 function FilterPill({
   label,
@@ -216,12 +222,12 @@ export function StudentMyCoursesPage() {
       const course = item.course;
       const classDetails = item.classDetails;
       const classId = item.uuid;
-      // The roster holds every learner; only this student's rows decide the card.
-      const enrolledClasses = (item.classEnrollments ?? []).filter(
-        s => s.student_uuid === student?.uuid
-      );
-      const activeEnrollment = enrolledClasses.find(
-        enrollment => enrollment.status !== 'CANCELLED'
+      // One summary row per class: ENROLLED while any session enrolment is live.
+      const enrolledClasses = item.studentEnrollments ?? [];
+      const activeEnrollment = enrolledClasses.find(isLiveClassSummary);
+      const sessionCount = enrolledClasses.reduce(
+        (total, row) => total + (row.scheduled_instance_count ?? 0),
+        0
       );
 
       if (!course?.uuid || !activeEnrollment) return;
@@ -230,10 +236,7 @@ export function StudentMyCoursesPage() {
       if (cards.has(course.uuid)) return;
 
       const scheduleCount =
-        item.studentEnrollments?.[0]?.scheduled_instance_count ?? enrolledClasses.length;
-
-      // Derive status from enrollment data
-      const enrollmentStatus = activeEnrollment?.status ?? '';
+        item.studentEnrollments?.[0]?.scheduled_instance_count ?? sessionCount;
 
       const rawProgress = item?.classDetails?.class_progress_percentage ?? 0;
 
@@ -274,7 +277,7 @@ export function StudentMyCoursesPage() {
         sortTitle: course.name,
         status,
         enrolledClasses,
-        enrollmentCount: enrolledClasses?.length,
+        enrollmentCount: sessionCount,
 
         // temporary defaults
         rating: 0,
