@@ -15,9 +15,11 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { logger } from '@/lib/logger';
 import { STALE_TIMES } from '@/lib/query-client';
 import type { UserProfileType } from '@/lib/types';
+import type { BootstrapRoleProfiles, User } from '@/services/client';
 import { fetchCurrentUser } from '@/services/user/current-user';
 import { fetchSessionBootstrap } from '@/services/user/session-bootstrap';
 import {
+  type DomainRows,
   fetchDomainRows,
   mergeDomainProfiles,
   userDomains,
@@ -98,21 +100,66 @@ export default function UserProfileProvider({
 }
 
 // /me/bootstrap seeds the wallet and unread-count caches in the same hop; /users/me is the fallback.
-async function fetchUser(qc: QueryClient) {
+async function fetchUser(
+  qc: QueryClient
+): Promise<{ user?: User | null; profiles?: BootstrapRoleProfiles }> {
   const bootstrap = await fetchSessionBootstrap();
-  if (!bootstrap?.user) return fetchCurrentUser();
+  if (!bootstrap?.user) return { user: await fetchCurrentUser(), profiles: undefined };
   seedSessionBootstrap(qc, bootstrap);
-  return bootstrap.user;
+  return { user: bootstrap.user, profiles: bootstrap.profiles };
+}
+
+const DOMAIN_ROW_KEYS = [
+  ['student', 'student', 'student_uuid'],
+  ['instructor', 'instructor', 'instructor_uuid'],
+  ['course_creator', 'courseCreator', 'course_creator_uuid'],
+] as const;
+
+// Background refetch: keep cached role rows whose ids still match the bootstrap, so only the
+// bootstrap hop runs. Rows pending verification are re-read so the 30 s poll sees the decision.
+async function refreshWithCachedRows(
+  user: User,
+  profiles: BootstrapRoleProfiles,
+  previous: UserProfileType
+): Promise<UserProfileType> {
+  const domains = userDomains(user);
+  const rows: DomainRows = {};
+  const missingDomains: string[] = [];
+  for (const [domain, rowKey, idKey] of DOMAIN_ROW_KEYS) {
+    if (!domains.includes(domain)) continue;
+    const cached = previous[rowKey];
+    if (cached?.uuid && cached.uuid === profiles[idKey] && cached.admin_verified !== false) {
+      rows[rowKey] = cached;
+    } else {
+      missingDomains.push(domain);
+    }
+  }
+  if (missingDomains.length > 0 && user.uuid) {
+    Object.assign(rows, await fetchDomainRows(user.uuid, missingDomains));
+  }
+  logger.info('profile refetch: reused cached role rows', { domains, missingDomains });
+  return mergeDomainProfiles(user, rows);
 }
 
 async function fetchUserProfile(
   qc: QueryClient,
-  identity?: SessionIdentity
+  identity?: SessionIdentity,
+  previous?: UserProfileType,
+  invalidated = false
 ): Promise<UserProfileType> {
+  if (previous && !invalidated) {
+    const { user, profiles } = await fetchUser(qc);
+    if (!user) throw new Error('User not found');
+    if (profiles) return refreshWithCachedRows(user, profiles, previous);
+    return user.uuid
+      ? mergeDomainProfiles(user, await fetchDomainRows(user.uuid, userDomains(user)))
+      : mergeDomainProfiles(user, {});
+  }
+
   // Identity comes from the access token, not from a query parameter: the old
   // `?email_eq=` bootstrap exposed the whole user table to every caller.
   const knownDomains = identity?.uuid && identity.domains?.length ? identity.domains : null;
-  const [userContent, stampedRows] = await Promise.all([
+  const [{ user: userContent }, stampedRows] = await Promise.all([
     fetchUser(qc),
     knownDomains ? fetchDomainRows(identity.uuid, knownDomains) : null,
   ]);
@@ -161,7 +208,9 @@ function createQueryOptions(
       if (!email) {
         throw new Error('Email is required to fetch profile');
       }
-      return await fetchUserProfile(qc, identity);
+      const previous = qc.getQueryData<UserProfileType>(['profile', email]);
+      const invalidated = qc.getQueryState(['profile', email])?.isInvalidated === true;
+      return await fetchUserProfile(qc, identity, previous, invalidated);
     },
     staleTime: STALE_TIMES.entity,
     refetchOnWindowFocus: true,
