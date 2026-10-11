@@ -20,6 +20,7 @@ import type {
 import {
   getClassDefinitionOptions,
   getClassScheduleOptions,
+  getCourseCreatorByUuidOptions,
   getCourseLessonsOptions,
   getEnrollmentsForClassOptions,
   getInstructorByUuidOptions,
@@ -66,13 +67,32 @@ async function fetchClassRelated(
     courseUuid?: string;
     programUuid?: string;
     instructorUuid?: string;
+    prefetchCourseCreator?: boolean;
   },
   queryClient: QueryClient
 ) {
-  const { courseUuid, programUuid, instructorUuid } = params;
+  const { courseUuid, programUuid, instructorUuid, prefetchCourseCreator } = params;
+
+  const coursePromise = courseUuid ? getCourseByUuid({ path: { uuid: courseUuid } }) : null;
+  // The class hub names the course's creator; start that read as soon as the course lands.
+  void coursePromise?.then(
+    response => {
+      const course = response?.data?.data;
+      if (
+        prefetchCourseCreator &&
+        course?.course_creator_uuid &&
+        !course.course_creator_name?.trim()
+      ) {
+        void queryClient.prefetchQuery(
+          getCourseCreatorByUuidOptions({ path: { uuid: course.course_creator_uuid } })
+        );
+      }
+    },
+    () => undefined
+  );
 
   const [course, lessons, pCourses, program, instructorWithProfile] = await Promise.all([
-    courseUuid ? getCourseByUuid({ path: { uuid: courseUuid } }) : null,
+    coursePromise,
     // Shares the lessons hook's key and staleTime, so concurrent reads dedupe to one request.
     courseUuid
       ? queryClient
@@ -105,7 +125,11 @@ async function fetchClassRelated(
   };
 }
 
-export const useClassDetails = (classId?: string) => {
+/** `prefetchCourseCreator`: the caller renders the class hub, which names the course's creator. */
+export const useClassDetails = (
+  classId?: string,
+  options: { prefetchCourseCreator?: boolean } = {}
+) => {
   const queryClient = useQueryClient();
   const {
     data: classDefinitionData,
@@ -143,7 +167,16 @@ export const useClassDetails = (classId?: string) => {
 
   const { data: related, isLoading: isLoadingRelated } = useQuery({
     queryKey: ['class-details-related', { courseUuid, programUuid, instructorUuid }],
-    queryFn: () => fetchClassRelated({ courseUuid, programUuid, instructorUuid }, queryClient),
+    queryFn: () =>
+      fetchClassRelated(
+        {
+          courseUuid,
+          programUuid,
+          instructorUuid,
+          prefetchCourseCreator: options.prefetchCourseCreator,
+        },
+        queryClient
+      ),
     enabled: Boolean(courseUuid || programUuid || instructorUuid),
     staleTime: 5 * 60 * 1000,
   });

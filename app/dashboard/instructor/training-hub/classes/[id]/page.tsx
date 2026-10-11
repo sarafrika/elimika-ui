@@ -58,7 +58,7 @@ export default function TrainingHubClassCoursePage({ params }: Props) {
     isScheduleLoading,
     isEnrollmentsLoading,
     isError,
-  } = useClassDetails(classId);
+  } = useClassDetails(classId, { prefetchCourseCreator: true });
 
   if (isClassLoading) {
     return (
