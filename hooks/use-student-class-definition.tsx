@@ -148,16 +148,20 @@ function useStudentClassDefinitions(
   /**
    * Course UUIDs
    */
+  // Held empty until every class lands, so courses/search goes out once with the full id set.
+  const classesSettled = !classDefinitionsQuery.isLoading;
   const courseUuids = useMemo(
     () =>
-      Array.from(
-        new Set(
-          classDefinitionUuids
-            .map(uuid => classDetailsByUuid.get(uuid)?.course_uuid)
-            .filter(isDefined)
-        )
-      ),
-    [classDefinitionUuids, classDetailsByUuid]
+      classesSettled
+        ? Array.from(
+            new Set(
+              classDefinitionUuids
+                .map(uuid => classDetailsByUuid.get(uuid)?.course_uuid)
+                .filter(isDefined)
+            )
+          )
+        : NO_IDS,
+    [classesSettled, classDefinitionUuids, classDetailsByUuid]
   );
 
   /**
