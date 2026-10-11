@@ -453,33 +453,34 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
     staleTime: STALE_TIMES.entity,
     retry: false,
   });
+  // Tab-only lists load when their tab opens so the first burst stays within 6 connections.
   const educationQuery = useQuery({
     ...getInstructorEducationOptions(pathOptions),
-    enabled: hasInstructor,
+    enabled: hasInstructor && tab === 'credentials',
     staleTime: STALE_TIMES.entity,
     retry: false,
   });
   const membershipsQuery = useQuery({
     ...getInstructorMembershipsOptions({ ...pathOptions, query: PAGEABLE }),
-    enabled: hasInstructor,
+    enabled: hasInstructor && tab === 'credentials',
     staleTime: STALE_TIMES.entity,
     retry: false,
   });
   const experienceQuery = useQuery({
     ...getInstructorExperienceOptions({ ...pathOptions, query: PAGEABLE }),
-    enabled: hasInstructor,
+    enabled: hasInstructor && tab === 'history',
     staleTime: STALE_TIMES.entity,
     retry: false,
   });
   const documentsQuery = useQuery({
     ...getInstructorDocumentsOptions(pathOptions),
-    enabled: hasInstructor,
+    enabled: hasInstructor && tab === 'documents',
     staleTime: STALE_TIMES.entity,
     retry: false,
   });
   const reviewsQuery = useQuery({
     ...getInstructorReviewsOptions(pathOptions),
-    enabled: hasInstructor,
+    enabled: hasInstructor && tab === 'reviews',
     staleTime: STALE_TIMES.entity,
     retry: false,
   });
@@ -521,6 +522,7 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
   const documents = extractList<InstructorDocument>(withoutError(documentsQuery.data));
   const reviews = extractList<InstructorReview>(withoutError(reviewsQuery.data));
   const rating = withoutError(ratingQuery.data)?.data;
+  const credentialsLoaded = educationQuery.isSuccess && membershipsQuery.isSuccess;
 
   const enrolmentCounts = extractList<ClassEnrolmentCountDto>(enrolmentCountsQuery.data);
   const enrolledByClass = useMemo(() => {
@@ -633,8 +635,8 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
 
   const tabCounts: Partial<Record<InstructorTab, number | null>> = {
     classes: classesQuery.isLoading ? null : assignedClasses.length,
-    reviews: reviewsQuery.isLoading ? null : reviews.length,
-    documents: documentsQuery.isLoading ? null : documents.length,
+    reviews: reviewsQuery.isSuccess ? reviews.length : (rating?.review_count ?? null),
+    documents: documentsQuery.isSuccess ? documents.length : null,
   };
   const tabs: SectionTab<InstructorTab>[] = config.tabs.map(id => ({
     id,
@@ -746,8 +748,16 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
         />
         <MetricTile
           label='Credentials'
-          value={formatCount(education.length + memberships.length + documents.length, '0')}
-          hint={`${formatCount(documents.length, '0')} documents`}
+          value={
+            credentialsLoaded
+              ? formatCount(education.length + memberships.length + documents.length, '0')
+              : '-'
+          }
+          hint={
+            documentsQuery.isSuccess
+              ? `${formatCount(documents.length, '0')} documents`
+              : 'education and memberships'
+          }
           icon={FileCheck}
           tone='success'
         />
