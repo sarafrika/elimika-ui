@@ -4,6 +4,6 @@ pair(key = `size`, value = $size) where {
   register_diagnostic(
     span = $size,
     message = "Page size >= 500 fetches an unbounded page to read a few rows. Scope the request to the ids on screen (uuid_in) or paginate.",
-    severity = "warn"
+    severity = "error"
   )
 }
