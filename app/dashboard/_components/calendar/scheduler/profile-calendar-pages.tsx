@@ -38,7 +38,7 @@ import type {
   User,
 } from '@/services/client/types.gen';
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type {
   ClassWithScheduleInput,
   InstructorSummary,
@@ -226,10 +226,19 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
     return entries;
   }, [enrollmentQueries, normalizedClassUuids]);
 
-  const uniqueStudentUuids = useMemo(
-    () => Array.from(new Set(uniqueStudentEntries.map(entry => entry.studentUuid).filter(Boolean))),
-    [uniqueStudentEntries]
+  // Wait for every roster before searching (a growing id set re-fires the lookups); a failing
+  // roster counts as settled after its first failure, and the last settled set bridges the gap.
+  const rostersSettled = enrollmentQueries.every(
+    query => !query.isPending || query.failureCount > 0
   );
+  const lastSettledUuidsRef = useRef<string[]>([]);
+  const uniqueStudentUuids = useMemo(() => {
+    if (!rostersSettled) return lastSettledUuidsRef.current;
+    return Array.from(new Set(uniqueStudentEntries.map(entry => entry.studentUuid).filter(Boolean)));
+  }, [rostersSettled, uniqueStudentEntries]);
+  useEffect(() => {
+    if (rostersSettled) lastSettledUuidsRef.current = uniqueStudentUuids;
+  }, [rostersSettled, uniqueStudentUuids]);
 
   const { studentMap: batchedStudents, isLoading: studentsLoading } =
     useStudentsByIds(uniqueStudentUuids);
@@ -701,7 +710,25 @@ function StudentCalendarPage() {
   // STUDENTS
   // -----------------------------
 
-  const studentData = useClassStudentSummaries(studentClassData.map(cd => cd.uuid ?? undefined));
+  // The rail lists the focused day's classmates only, so rosters load for that day's classes.
+  const focusDayClassUuids = useMemo(() => {
+    const zone = resolveDisplayZone(range.zone);
+    return Array.from(
+      new Set(
+        (studentScheduleQuery.data?.data ?? [])
+          .filter(
+            item =>
+              item.start_time &&
+              dayjs(new Date(item.start_time as unknown as string))
+                .tz(zone)
+                .format('YYYY-MM-DD') === range.focus
+          )
+          .map(item => item.class_definition_uuid)
+      )
+    );
+  }, [range.focus, range.zone, studentScheduleQuery.data]);
+
+  const studentData = useClassStudentSummaries(focusDayClassUuids);
 
   // -----------------------------
   // INSTRUCTORS (FIXED)
@@ -790,8 +817,7 @@ function StudentCalendarPage() {
       studentScheduleQuery.isLoading ||
       studentClassDefinitionQueries.some(q => q.isLoading) ||
       studentCoursesLoading ||
-      studentInstructorsLoading ||
-      studentData.isLoading,
+      studentInstructorsLoading,
   };
 
   return (

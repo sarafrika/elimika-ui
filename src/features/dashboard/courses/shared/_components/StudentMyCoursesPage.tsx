@@ -1,7 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useQueries } from '@tanstack/react-query';
 import {
   ArrowRight,
   Award,
@@ -22,10 +21,10 @@ import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
+import { useCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
 import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
 import { coursePrefetchQuery } from '@/lib/route-prefetch';
 import { cn } from '@/lib/utils';
-import { getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
 import {
   type CoursesCatalogCardData,
@@ -42,6 +41,9 @@ type EnrolledCourseCard = CoursesCatalogCardData & {
 };
 
 type FilterTab = 'all' | 'in_progress' | 'completed';
+
+// Cards read class, course and the class roster; schedules, quizzes and lessons stay unloaded.
+const MY_COURSES_SECTIONS = ['classEnrollments'] as const;
 
 function FilterPill({
   label,
@@ -177,7 +179,9 @@ function MilestoneItem({
 export function StudentMyCoursesPage() {
   const user = useUserProfile();
   const student = user?.student;
-  const { classDefinitions, loading } = useStudentClassDefinitions(student ?? undefined);
+  const { classDefinitions, loading } = useStudentClassDefinitions(student ?? undefined, {
+    include: MY_COURSES_SECTIONS,
+  });
 
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -195,23 +199,15 @@ export function StudentMyCoursesPage() {
     [classDefinitions]
   );
 
-  const creatorQueries = useQueries({
-    queries: creatorIds.map(uuid => ({
-      ...getCourseCreatorByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      refetchOnWindowFocus: false,
-    })),
-  });
+  const { courseCreatorMap, isLoading: creatorsLoading } = useCourseCreatorsByIds(creatorIds);
 
   const creatorMap = useMemo(() => {
     const map = new Map<string, string>();
-    creatorQueries.forEach((query, index) => {
-      const uuid = creatorIds[index];
-      const name = query.data?.data?.full_name;
-      if (uuid && name) map.set(uuid, name);
-    });
+    for (const [uuid, creator] of Object.entries(courseCreatorMap)) {
+      if (creator?.full_name) map.set(uuid, creator.full_name);
+    }
     return map;
-  }, [creatorIds, creatorQueries]);
+  }, [courseCreatorMap]);
 
   const enrolledCourseCards = useMemo<EnrolledCourseCard[]>(() => {
     const cards = new Map<string, EnrolledCourseCard>();
@@ -220,7 +216,11 @@ export function StudentMyCoursesPage() {
       const course = item.course;
       const classDetails = item.classDetails;
       const classId = item.uuid;
-      const activeEnrollment = item?.classEnrollments?.find(
+      // The roster holds every learner; only this student's rows decide the card.
+      const enrolledClasses = (item.classEnrollments ?? []).filter(
+        s => s.student_uuid === student?.uuid
+      );
+      const activeEnrollment = enrolledClasses.find(
         enrollment => enrollment.status !== 'CANCELLED'
       );
 
@@ -229,8 +229,8 @@ export function StudentMyCoursesPage() {
       const presentation = getCardPresentation(index);
       if (cards.has(course.uuid)) return;
 
-      const scheduleCount = item.schedules?.length ?? item?.classEnrollments.length;
-      const enrolledClasses = item.classEnrollments.filter(s => s.student_uuid === student?.uuid);
+      const scheduleCount =
+        item.studentEnrollments?.[0]?.scheduled_instance_count ?? enrolledClasses.length;
 
       // Derive status from enrollment data
       const enrollmentStatus = activeEnrollment?.status ?? '';
@@ -255,7 +255,7 @@ export function StudentMyCoursesPage() {
         secondaryMeta:
           classDetails?.title ??
           course.category_names?.[0] ??
-          (scheduleCount === 1 ? '1 enrolled class' : `${scheduleCount} enrolled classes`),
+          (scheduleCount === 1 ? '1 session' : `${scheduleCount} sessions`),
         ctaLabel: isCompleted ? 'View Certificate' : 'Continue',
         ctaKind: 'link',
         showInstructorCta: false,
@@ -313,7 +313,7 @@ export function StudentMyCoursesPage() {
     return cards;
   }, [activeTab, enrolledCourseCards, inProgressCards, completedCards, searchQuery]);
 
-  const isLoading = loading || creatorQueries.some(query => query.isLoading || query.isFetching);
+  const isLoading = loading || creatorsLoading;
 
   const studentName = student?.full_name ?? 'Student';
 
