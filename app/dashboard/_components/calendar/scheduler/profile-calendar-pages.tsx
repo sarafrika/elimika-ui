@@ -226,9 +226,15 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
     return entries;
   }, [enrollmentQueries, normalizedClassUuids]);
 
+  // Rosters land one class at a time; resolving ids per arrival re-fires the student and
+  // user searches with a growing id set, so wait for every roster first.
+  const rostersSettled = enrollmentQueries.every(query => !query.isLoading);
   const uniqueStudentUuids = useMemo(
-    () => Array.from(new Set(uniqueStudentEntries.map(entry => entry.studentUuid).filter(Boolean))),
-    [uniqueStudentEntries]
+    () =>
+      rostersSettled
+        ? Array.from(new Set(uniqueStudentEntries.map(entry => entry.studentUuid).filter(Boolean)))
+        : [],
+    [rostersSettled, uniqueStudentEntries]
   );
 
   const { studentMap: batchedStudents, isLoading: studentsLoading } =
@@ -701,7 +707,25 @@ function StudentCalendarPage() {
   // STUDENTS
   // -----------------------------
 
-  const studentData = useClassStudentSummaries(studentClassData.map(cd => cd.uuid ?? undefined));
+  // The rail lists the focused day's classmates only, so rosters load for that day's classes.
+  const focusDayClassUuids = useMemo(() => {
+    const zone = resolveDisplayZone(range.zone);
+    return Array.from(
+      new Set(
+        (studentScheduleQuery.data?.data ?? [])
+          .filter(
+            item =>
+              item.start_time &&
+              dayjs(new Date(item.start_time as unknown as string))
+                .tz(zone)
+                .format('YYYY-MM-DD') === range.focus
+          )
+          .map(item => item.class_definition_uuid)
+      )
+    );
+  }, [range.focus, range.zone, studentScheduleQuery.data]);
+
+  const studentData = useClassStudentSummaries(focusDayClassUuids);
 
   // -----------------------------
   // INSTRUCTORS (FIXED)
