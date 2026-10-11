@@ -105,8 +105,11 @@ export function CourseDetailsSheet({
   });
   const courseReviews: CourseReview[] = courseReviewsResp?.data ?? [];
 
+  // The sheet stays mounted while closed, so nothing loads until it opens.
   const { isLoading: lessonsLoading, lessons: lessonsWithContent } = useCourseLessonsWithContent({
     courseUuid: isCourse ? resolvedId : '',
+    enabled: open && isCourse,
+    contentEnabled: open,
   });
 
   const courseLessons = useMemo(
