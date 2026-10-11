@@ -40,8 +40,9 @@ import {
   searchStudentsOptions,
   searchTrainingProgramsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQueries } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { type QueryClient, useQueries } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef } from 'react';
+import { withOnData } from '@/lib/query-on-data';
 
 /**
  * Batched entity lookups: one search request per ~100 ids (`uuid_in=` filter)
@@ -52,6 +53,7 @@ import { useMemo } from 'react';
  */
 
 const CHUNK_SIZE = 100;
+export const LOOKUP_CHUNK_SIZE = CHUNK_SIZE;
 
 /**
  * Must not exceed the backend's own cap on `GET /api/v1/users/directory`
@@ -76,28 +78,60 @@ type SearchOptionsFactory = (params: {
   // biome-ignore lint/suspicious/noExplicitAny: generated option factories have distinct option types; we only need the queryKey/queryFn shape
 }) => any;
 
+function uniqueSortedIds(ids: (string | null | undefined)[]): string[] {
+  return Array.from(new Set(ids.filter((id): id is string => Boolean(id)))).sort((a, b) =>
+    a.localeCompare(b)
+  );
+}
+
+/** The `uuid_in` queries for a sorted, de-duplicated id list; shared by hooks and prefetches. */
+function searchByIdsQueries(
+  uniqueIds: string[],
+  optionsFactory: SearchOptionsFactory,
+  staleTime: number
+) {
+  return chunk(uniqueIds, CHUNK_SIZE).map(idChunk => ({
+    ...optionsFactory({
+      query: {
+        searchParams: { uuid_in: idChunk.join(',') },
+        pageable: { page: 0, size: idChunk.length },
+      },
+    }),
+    staleTime,
+  }));
+}
+
+// biome-ignore lint/suspicious/noExplicitAny: the query objects come from distinct generated factories
+function prefetchAll(queryClient: QueryClient, queries: any[]) {
+  for (const query of queries) void queryClient.prefetchQuery(query);
+}
+
 function useSearchByIds<T extends { uuid?: string }>(
   ids: string[],
   optionsFactory: SearchOptionsFactory,
-  staleTime: number = STALE_TIMES.entity
+  staleTime: number = STALE_TIMES.entity,
+  onData?: (items: T[]) => void
 ) {
-  const uniqueIds = useMemo(
-    () => Array.from(new Set(ids.filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-    [ids]
-  );
+  const uniqueIds = useMemo(() => uniqueSortedIds(ids), [ids]);
+  const onDataRef = useRef(onData);
+  useEffect(() => {
+    onDataRef.current = onData;
+  }, [onData]);
 
-  const idChunks = useMemo(() => chunk(uniqueIds, CHUNK_SIZE), [uniqueIds]);
+  const queries = useMemo(() => {
+    const base = searchByIdsQueries(uniqueIds, optionsFactory, staleTime);
+    const wanted = new Set(uniqueIds);
+    // Hands each chunk's rows to `onData` on arrival, so callers can chain the next lookup.
+    return base.map(query =>
+      withOnData(query, data => {
+        const content = ((data as SearchResponse | undefined)?.data?.content ?? []) as T[];
+        onDataRef.current?.(content.filter(item => item.uuid && wanted.has(item.uuid)));
+      })
+    );
+  }, [uniqueIds, optionsFactory, staleTime]);
 
   return useQueries({
-    queries: idChunks.map(idChunk => ({
-      ...optionsFactory({
-        query: {
-          searchParams: { uuid_in: idChunk.join(',') },
-          pageable: { page: 0, size: idChunk.length },
-        },
-      }),
-      staleTime,
-    })),
+    queries,
     combine: results => {
       const map: Record<string, T> = {};
       const wanted = new Set(uniqueIds);
@@ -162,10 +196,13 @@ function useSearchByField<T>(
   });
 }
 
-export function useStudentsByIds(ids: string[]) {
+/** `onData` receives each chunk of profiles as it lands, before render. */
+export function useStudentsByIds(ids: string[], onData?: (students: Student[]) => void) {
   const { map, isLoading, isError, error, refetch } = useSearchByIds<Student>(
     ids,
-    searchStudentsOptions
+    searchStudentsOptions,
+    STALE_TIMES.entity,
+    onData
   );
   return { studentMap: map, isLoading, isError, error, refetch };
 }
@@ -240,20 +277,21 @@ export function useEnrollmentsByIds(ids: string[]) {
  * anything longer rather than truncating, so the chunk size here is not a
  * tuning knob: it must stay at or below that cap.
  */
-export function useUsersByIds(ids: string[]) {
-  const uniqueIds = useMemo(
-    () => Array.from(new Set(ids.filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-    [ids]
-  );
+function userDirectoryQueries(uniqueIds: string[]) {
+  return chunk(uniqueIds, DIRECTORY_CHUNK_SIZE).map(idChunk => ({
+    ...getUserDirectoryOptions({ query: { uuid_in: idChunk } }),
+    enabled: idChunk.length > 0,
+    staleTime: STALE_TIMES.entity,
+  }));
+}
 
-  const idChunks = useMemo(() => chunk(uniqueIds, DIRECTORY_CHUNK_SIZE), [uniqueIds]);
+export function useUsersByIds(ids: string[]) {
+  const uniqueIds = useMemo(() => uniqueSortedIds(ids), [ids]);
+
+  const queries = useMemo(() => userDirectoryQueries(uniqueIds), [uniqueIds]);
 
   const { map, isLoading, isError, refetch } = useQueries({
-    queries: idChunks.map(idChunk => ({
-      ...getUserDirectoryOptions({ query: { uuid_in: idChunk } }),
-      enabled: idChunk.length > 0,
-      staleTime: STALE_TIMES.entity,
-    })),
+    queries,
     combine: results => {
       const userMap: Record<string, User> = {};
       // Filtered against the requested set so an over-broad response can never
@@ -326,40 +364,41 @@ export function useUsersWithContactByIds(ids: string[]) {
   return { userMap: map, isLoading };
 }
 
-export function useCoursesByIds(ids: string[]) {
-  const uniqueIds = useMemo(
-    () => Array.from(new Set(ids.filter(Boolean))).sort((a, b) => a.localeCompare(b)),
-    [ids]
-  );
+function courseLookupQueries(uniqueIds: string[]) {
+  return chunk(uniqueIds, CHUNK_SIZE).map(idChunk => {
+    const query = {
+      searchParams: { uuid_in: idChunk.join(',') },
+      pageable: { page: 0, size: idChunk.length },
+    };
 
-  const idChunks = useMemo(() => chunk(uniqueIds, CHUNK_SIZE), [uniqueIds]);
+    return {
+      queryKey: searchCoursesQueryKey({ query }),
+      enabled: typeof window !== 'undefined',
+      queryFn: async () => {
+        const { data, error, response } = await searchCourses({ query });
 
-  const { map, isLoading, isError, refetch } = useQueries({
-    queries: idChunks.map(idChunk => {
-      const query = {
-        searchParams: { uuid_in: idChunk.join(',') },
-        pageable: { page: 0, size: idChunk.length },
-      };
-
-      return {
-        queryKey: searchCoursesQueryKey({ query }),
-        enabled: typeof window !== 'undefined',
-        queryFn: async () => {
-          const { data, error, response } = await searchCourses({ query });
-
-          if (error) {
-            if (response.status === 400 || response.status === 404) {
-              return { data: { content: [] } };
-            }
-
-            throw error;
+        if (error) {
+          if (response.status === 400 || response.status === 404) {
+            return { data: { content: [] } };
           }
 
-          return data;
-        },
-        staleTime: STALE_TIMES.reference,
-      };
-    }),
+          throw error;
+        }
+
+        return data;
+      },
+      staleTime: STALE_TIMES.reference,
+    };
+  });
+}
+
+export function useCoursesByIds(ids: string[]) {
+  const uniqueIds = useMemo(() => uniqueSortedIds(ids), [ids]);
+
+  const queries = useMemo(() => courseLookupQueries(uniqueIds), [uniqueIds]);
+
+  const { map, isLoading, isError, refetch } = useQueries({
+    queries,
     combine: results => {
       const map: Record<string, Course> = {};
       const wanted = new Set(uniqueIds);
@@ -431,6 +470,46 @@ export function useOrganisationsByIds(ids: string[]) {
     STALE_TIMES.reference
   );
   return { organisationMap: map, isLoading };
+}
+
+// Prefetches issue the exact requests the matching hook would, so a parent queryFn can start
+// them when its rows land; the hook then joins the in-flight request instead of waiting.
+export function prefetchCoursesByIds(queryClient: QueryClient, ids: (string | null | undefined)[]) {
+  prefetchAll(queryClient, courseLookupQueries(uniqueSortedIds(ids)));
+}
+
+export function prefetchUsersByIds(queryClient: QueryClient, ids: (string | null | undefined)[]) {
+  prefetchAll(queryClient, userDirectoryQueries(uniqueSortedIds(ids)));
+}
+
+export function prefetchCourseCreatorsByIds(
+  queryClient: QueryClient,
+  ids: (string | null | undefined)[]
+) {
+  prefetchAll(
+    queryClient,
+    searchByIdsQueries(uniqueSortedIds(ids), searchCourseCreatorsOptions, STALE_TIMES.reference)
+  );
+}
+
+export function prefetchOrganisationsByIds(
+  queryClient: QueryClient,
+  ids: (string | null | undefined)[]
+) {
+  prefetchAll(
+    queryClient,
+    searchByIdsQueries(uniqueSortedIds(ids), search2Options, STALE_TIMES.reference)
+  );
+}
+
+export function prefetchProgramsByIds(
+  queryClient: QueryClient,
+  ids: (string | null | undefined)[]
+) {
+  prefetchAll(
+    queryClient,
+    searchByIdsQueries(uniqueSortedIds(ids), searchTrainingProgramsOptions, STALE_TIMES.reference)
+  );
 }
 
 const LESSON_CHUNK_SIZE = 50;
