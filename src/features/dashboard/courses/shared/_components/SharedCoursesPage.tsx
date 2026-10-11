@@ -285,6 +285,49 @@ function cachedInstructorCount(
   return instructors.size;
 }
 
+/** A card item straight from a catalogue row; the server order is kept as createdAt. */
+function mapCatalogueCourse(
+  item: CatalogueItem,
+  index: number,
+  domain: UserDomain
+): UnifiedContentItem {
+  const uuid = item.uuid ?? '';
+  const counts = catalogueCounts(item);
+  const rate = item.price_from ?? item.price ?? undefined;
+  const categoryNames = item.category_names ?? [];
+  return {
+    id: uuid,
+    kind: 'course',
+    title: item.title ?? '',
+    is_published: true,
+    description: stripHtml(item.description),
+    createdAt: Number.MAX_SAFE_INTEGER - index,
+    durationMinutes: 0,
+    durationLabel: '',
+    categoryLabels: categoryNames,
+    categoryUuids: item.category_uuids,
+    creatorUuid: item.creator_uuid ?? '',
+    creatorName: item.creator_name ?? '',
+    levelLabel: item.level ?? undefined,
+    price: rate,
+    minimumRate: rate,
+    imageUrl: item.thumbnail_url ?? undefined,
+    href: getContentHref(domain, 'course', uuid),
+    enrolledClasses: 1,
+    secondaryMeta:
+      item.level ?? categoryNames[0] ?? ((rate ?? 0) > 0 ? 'Paid Course' : 'Free Course'),
+    reviewCount: counts.reviewCount ?? 0,
+    rating: counts.rating ?? 0,
+    enrollmentCount: counts.learners,
+    category: '',
+    subject: '',
+    programType: '',
+    minAge: undefined,
+    maxAge: undefined,
+    categoryNames,
+  };
+}
+
 const createCatalogCards = (
   items: UnifiedContentItem[],
   domain: UserDomain,
@@ -531,8 +574,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     () => typeSearch.hits.flatMap(hit => (hit.uuid ? [hit.uuid] : [])),
     [typeSearch.hits]
   );
-  // One batched lookup turns the page of hits into full courses for the cards.
-  const hitLookup = useCoursesByIds(facetMode ? hitIds : []);
   // Programmes join only the first server page of courses, and never the courses-only view.
   const showCourses = filters.contentType !== 'programs';
   const showPrograms =
@@ -550,9 +591,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     refetchOnWindowFocus: false,
     enabled: !facetMode && serverCatalogue,
   });
-  const coursesLoading = facetMode
-    ? (typeSearch.isLoading && !typeSearch.data) || hitLookup.isLoading
-    : publishedLoading;
 
   const programsQuery = useQuery({
     ...getAllTrainingProgramsOptions({
@@ -592,13 +630,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     refetchOnWindowFocus: false,
   });
 
-  const courses = useMemo<Course[]>(
-    () =>
-      facetMode
-        ? hitIds.flatMap(id => (hitLookup.courseMap[id] ? [hitLookup.courseMap[id]] : []))
-        : (publishedResponse?.data?.content ?? []),
-    [facetMode, hitIds, hitLookup.courseMap, publishedResponse]
-  );
   const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
   const categories = useMemo(() => categoriesResponse?.data?.content ?? [], [categoriesResponse]);
 
@@ -728,6 +759,38 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     refetchOnWindowFocus: false,
   });
 
+  // Catalogue rows build the course cards; duration, price sort and a level the
+  // catalogue cannot filter still need full courses for the page of hits.
+  const needsFullCourses =
+    localFilters.duration !== defaultFilterValues.duration ||
+    sortValue === 'price' ||
+    (filters.level !== 'all' && !catalogueLevel);
+  const fromCatalogue = facetMode && !needsFullCourses;
+  const hitLookup = useCoursesByIds(facetMode && needsFullCourses ? hitIds : []);
+  const coursesLoading = fromCatalogue
+    ? courseCatalogueQuery.isPending
+    : facetMode
+      ? (typeSearch.isLoading && !typeSearch.data) || hitLookup.isLoading
+      : publishedLoading;
+  const courses = useMemo<Course[]>(
+    () =>
+      fromCatalogue
+        ? []
+        : facetMode
+          ? hitIds.flatMap(id => (hitLookup.courseMap[id] ? [hitLookup.courseMap[id]] : []))
+          : (publishedResponse?.data?.content ?? []),
+    [facetMode, fromCatalogue, hitIds, hitLookup.courseMap, publishedResponse]
+  );
+  const catalogueCourses = useMemo(
+    () =>
+      fromCatalogue
+        ? (courseCatalogueQuery.data?.data?.content ?? []).filter(
+            item => item.uuid && (!item.type || item.type === 'course')
+          )
+        : [],
+    [courseCatalogueQuery.data, fromCatalogue]
+  );
+
   const catalogueCountMap = useMemo(() => {
     const map = new Map<string, CardCounts>();
     for (const response of [courseCatalogueQuery.data, programCatalogueQuery.data]) {
@@ -814,7 +877,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     [categoryMap, countsById, domain, programs]
   );
 
-  const mappedCourses = useMemo<UnifiedContentItem[]>(
+  const mappedFullCourses = useMemo<UnifiedContentItem[]>(
     () =>
       courses.map(course => {
         const counts = countsById.get(course.uuid ?? '');
@@ -861,6 +924,13 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         };
       }),
     [countsById, courses, difficultyMap, domain]
+  );
+  const mappedCourses = useMemo<UnifiedContentItem[]>(
+    () =>
+      fromCatalogue
+        ? catalogueCourses.map((item, index) => mapCatalogueCourse(item, index, domain))
+        : mappedFullCourses,
+    [catalogueCourses, domain, fromCatalogue, mappedFullCourses]
   );
 
   const approvedInstructorCourseIds = useMemo(() => {
@@ -1265,18 +1335,26 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
       ? organisationCourseApplicationsFetching || organisationProgramApplicationsFetching
       : false;
 
-  // The catalogue names most creators; one batched lookup covers the rest on this page.
+  // The catalogue names most creators; one batched lookup covers the rest on this page,
+  // once both catalogue calls have settled so the key does not change mid-flight.
+  const catalogueSettled =
+    (!courseCatalogueQuery.isPending || courseCatalogueQuery.fetchStatus === 'idle') &&
+    (!programCatalogueQuery.isPending || programCatalogueQuery.fetchStatus === 'idle');
   const creatorIds = useMemo(
-    () => [
-      ...new Set(
-        paginatedItems
-          .filter(
-            item => item.creatorUuid && !item.creatorName && !countsById.get(item.id)?.creatorName
-          )
-          .map(item => item.creatorUuid)
-      ),
-    ],
-    [countsById, paginatedItems]
+    () =>
+      catalogueSettled
+        ? [
+            ...new Set(
+              paginatedItems
+                .filter(
+                  item =>
+                    item.creatorUuid && !item.creatorName && !countsById.get(item.id)?.creatorName
+                )
+                .map(item => item.creatorUuid)
+            ),
+          ]
+        : [],
+    [catalogueSettled, countsById, paginatedItems]
   );
   const { courseCreatorMap } = useCourseCreatorsByIds(creatorIds);
   const creatorMap = useMemo(
