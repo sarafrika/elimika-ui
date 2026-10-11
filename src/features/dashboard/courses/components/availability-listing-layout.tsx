@@ -24,7 +24,7 @@ import {
   Users,
   Wallet
 } from 'lucide-react';
-import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useClassSchedule } from '../../../../../hooks/use-class-schedule';
 import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
 import type { ClassSessionTemplate, Organisation } from '../../../../../services/client';
@@ -191,16 +191,9 @@ export default function AvailabilityClassCard({
 
   const promotionalVideoUrl = toAuthenticatedMediaUrl(cls.promotional_video_url);
 
-  // CLASS SCHEDULES: listings send none, so the card loads its own when Class Info opens. Students
-  // also load it on sight when no end date exists, since end state gates enrolment for them.
-  const cardRef = useRef<HTMLDivElement>(null);
-  const needsEndDate =
-    isStudentDomain && !cls.scheduleLoaded && !cls.academic_period_end_date;
-  const inView = useInView(cardRef, needsEndDate);
-  const ownSchedule = useClassSchedule(
-    cls.uuid,
-    !cls.scheduleLoaded && (detail !== null || (needsEndDate && inView))
-  );
+  // CLASS SCHEDULES: learner listings batch undated classes' schedules; any other card loads its
+  // own only when Class Info opens.
+  const ownSchedule = useClassSchedule(cls.uuid, !cls.scheduleLoaded && detail !== null);
   // Staff read session progress from the class DTO instead of fetching the schedule.
   const dtoSessionCount =
     !isStudentDomain && cls.scheduled_session_count != null
@@ -315,7 +308,7 @@ export default function AvailabilityClassCard({
 
 
   return (
-    <div ref={cardRef}>
+    <div>
       <Card className='hover:border-primary/50 cursor-pointer transition hover:shadow-md'>
         <CardHeader className='flex flex-col gap-3 pb-3 sm:flex-row sm:items-start sm:justify-between'>
           <div className='flex items-start gap-3'>
@@ -571,31 +564,6 @@ function formatPeriod(start?: Date | string | null, end?: Date | string | null) 
   if (!valid(from) && !valid(to)) return 'Dates in Class Info';
   const label = (d: Date | null) => (valid(d) ? format(d, 'MMM d, yyyy') : 'TBC');
   return `${label(from)} - ${label(to)}`;
-}
-
-// True once the element nears the viewport; only observes while `watch` is set.
-function useInView(ref: RefObject<HTMLElement | null>, watch: boolean) {
-  const [seen, setSeen] = useState(false);
-  useEffect(() => {
-    if (!watch || seen) return;
-    const node = ref.current;
-    if (!node || typeof IntersectionObserver === 'undefined') {
-      setSeen(true);
-      return;
-    }
-    const observer = new IntersectionObserver(
-      entries => {
-        if (entries.some(entry => entry.isIntersecting)) {
-          setSeen(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin: '200px' }
-    );
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [ref, watch, seen]);
-  return seen;
 }
 
 function formatTimeInZone(date: string, arg1: { fallback: string; }) {
