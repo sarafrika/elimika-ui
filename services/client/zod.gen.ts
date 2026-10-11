@@ -1192,6 +1192,11 @@ export const zQuiz = z
       .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
       .readonly()
       .optional(),
+    time_limit_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of quiz time limit.')
+      .readonly()
+      .optional(),
     is_timed: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the quiz has a time limit.')
@@ -1200,11 +1205,6 @@ export const zQuiz = z
     has_multiple_attempts: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if students can take the quiz multiple times.')
-      .readonly()
-      .optional(),
-    time_limit_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of quiz time limit.')
       .readonly()
       .optional(),
   })
@@ -1300,14 +1300,14 @@ export const zQuizQuestion = z
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
     points_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -6198,6 +6198,8 @@ export const zClassDefinitionResponse = z
   .object({
     class_definition: zClassDefinition.optional(),
     distance_band: zDistanceBandEnum.optional(),
+    course_title: z.union([z.string().readonly(), z.null()]).readonly().optional(),
+    program_title: z.union([z.string().readonly(), z.null()]).readonly().optional(),
   })
   .describe('Response payload for class definition operations');
 
@@ -8832,6 +8834,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
+      .readonly()
+      .optional(),
     did_attend: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the student attended the class.')
@@ -8845,11 +8852,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
   })
@@ -14429,6 +14431,13 @@ export const zApiResponsePagedDtoCourseAssessment = z.object({
 export const zApiResponseListCourseAssessmentLineItem = z.object({
   success: z.boolean().optional(),
   data: z.array(zCourseAssessmentLineItem).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListLesson = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zLesson).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -26612,6 +26621,19 @@ export const zGetCourseMediaData = z.object({
  */
 export const zGetCourseMediaResponse = z.string().describe('Media file retrieved successfully');
 
+export const zGetLessonsForCoursesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    course_uuids: z.array(z.string().uuid()).describe('Course UUIDs, comma-separated'),
+  }),
+});
+
+/**
+ * Course lessons retrieved successfully
+ */
+export const zGetLessonsForCoursesResponse = zApiResponseListLesson;
+
 export const zGetCoursesByInstructorData = z.object({
   body: z.never().optional(),
   path: z.object({
@@ -27032,6 +27054,19 @@ export const zGetEnrollmentsForClassData = z.object({
  * Enrollments retrieved successfully
  */
 export const zGetEnrollmentsForClassResponse = zApiResponseListEnrollment;
+
+export const zGetClassSchedulesData = z.object({
+  body: z.never().optional(),
+  path: z.never().optional(),
+  query: z.object({
+    class_uuids: z.array(z.string().uuid()).describe('Class definition UUIDs, comma-separated'),
+  }),
+});
+
+/**
+ * Class schedules retrieved successfully
+ */
+export const zGetClassSchedulesResponse = zApiResponseListScheduledInstance;
 
 export const zGetClassDefinitionsForOrganisationData = z.object({
   body: z.never().optional(),

@@ -1865,6 +1865,12 @@ export const QuizSchema = {
       example: true,
       readOnly: true,
     },
+    time_limit_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of quiz time limit.',
+      example: '30 minutes',
+      readOnly: true,
+    },
     is_timed: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the quiz has a time limit.',
@@ -1875,12 +1881,6 @@ export const QuizSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if students can take the quiz multiple times.',
       example: true,
-      readOnly: true,
-    },
-    time_limit_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of quiz time limit.',
-      example: '30 minutes',
       readOnly: true,
     },
   },
@@ -2006,16 +2006,16 @@ export const QuizQuestionSchema = {
       example: 'Multiple Choice Question',
       readOnly: true,
     },
-    question_number: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
-      example: 'Question 1',
-      readOnly: true,
-    },
     points_display: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable format of the points value.',
       example: '2.0 points',
+      readOnly: true,
+    },
+    question_number: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted question number for display in quiz interface.',
+      example: 'Question 1',
       readOnly: true,
     },
   },
@@ -10683,6 +10683,20 @@ export const ClassDefinitionResponseSchema = {
     distance_band: {
       $ref: '#/components/schemas/DistanceBandEnum',
     },
+    course_title: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** On class listings: the title of the course this class delivers.',
+      example: 'Introduction to Data Science',
+      readOnly: true,
+    },
+    program_title: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** On class listings: the title of the training program this class delivers.',
+      example: 'Full-Stack Developer Pathway',
+      readOnly: true,
+    },
   },
 } as const;
 
@@ -15517,6 +15531,12 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -15533,12 +15553,6 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
       readOnly: true,
     },
   },
@@ -26267,6 +26281,25 @@ export const ApiResponseListCourseAssessmentLineItemSchema = {
       type: 'array',
       items: {
         $ref: '#/components/schemas/CourseAssessmentLineItem',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListLessonSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Lesson',
       },
     },
     message: {

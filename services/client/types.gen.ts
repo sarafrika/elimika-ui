@@ -930,6 +930,10 @@ export type Quiz = {
    */
   readonly is_published?: boolean;
   /**
+   * **[READ-ONLY]** Human-readable format of quiz time limit.
+   */
+  readonly time_limit_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if the quiz has a time limit.
    */
   readonly is_timed?: boolean;
@@ -937,10 +941,6 @@ export type Quiz = {
    * **[READ-ONLY]** Indicates if students can take the quiz multiple times.
    */
   readonly has_multiple_attempts?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable format of quiz time limit.
-   */
-  readonly time_limit_display?: string;
 };
 
 export type ApiResponseQuiz = {
@@ -1000,13 +1000,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of the points value.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -5010,6 +5010,14 @@ export type ClassDefinitionResponse = {
    */
   class_definition?: ClassDefinition;
   distance_band?: DistanceBandEnum;
+  /**
+   * **[READ-ONLY]** On class listings: the title of the course this class delivers.
+   */
+  readonly course_title?: string | null;
+  /**
+   * **[READ-ONLY]** On class listings: the title of the training program this class delivers.
+   */
+  readonly program_title?: string | null;
 };
 
 /**
@@ -7701,6 +7709,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
@@ -7712,10 +7724,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 /**
@@ -13367,6 +13375,13 @@ export type PagedDtoCourseAssessment = {
 export type ApiResponseListCourseAssessmentLineItem = {
   success?: boolean;
   data?: Array<CourseAssessmentLineItem>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListLesson = {
+  success?: boolean;
+  data?: Array<Lesson>;
   message?: string;
   error?: unknown;
 };
@@ -41449,7 +41464,7 @@ export type GetCourseOpenClassesData = {
 
 export type GetCourseOpenClassesErrors = {
   /**
-   * Course not found or not publicly visible
+   * Course not found
    */
   404: unknown;
   /**
@@ -41928,6 +41943,46 @@ export type GetCourseMediaResponses = {
 };
 
 export type GetCourseMediaResponse = GetCourseMediaResponses[keyof GetCourseMediaResponses];
+
+export type GetLessonsForCoursesData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Course UUIDs, comma-separated
+     */
+    course_uuids: Array<string>;
+  };
+  url: '/api/v1/courses/lessons';
+};
+
+export type GetLessonsForCoursesErrors = {
+  /**
+   * No course uuids, or more than the maximum, requested
+   */
+  400: ApiResponseListLesson;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetLessonsForCoursesError =
+  GetLessonsForCoursesErrors[keyof GetLessonsForCoursesErrors];
+
+export type GetLessonsForCoursesResponses = {
+  /**
+   * Course lessons retrieved successfully
+   */
+  200: ApiResponseListLesson;
+};
+
+export type GetLessonsForCoursesResponse =
+  GetLessonsForCoursesResponses[keyof GetLessonsForCoursesResponses];
 
 export type GetCoursesByInstructorData = {
   body?: never;
@@ -42993,6 +43048,45 @@ export type GetEnrollmentsForClassResponses = {
 
 export type GetEnrollmentsForClassResponse =
   GetEnrollmentsForClassResponses[keyof GetEnrollmentsForClassResponses];
+
+export type GetClassSchedulesData = {
+  body?: never;
+  path?: never;
+  query: {
+    /**
+     * Class definition UUIDs, comma-separated
+     */
+    class_uuids: Array<string>;
+  };
+  url: '/api/v1/classes/schedules';
+};
+
+export type GetClassSchedulesErrors = {
+  /**
+   * No class uuids, or more than the maximum, requested
+   */
+  400: ApiResponseListScheduledInstance;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetClassSchedulesError = GetClassSchedulesErrors[keyof GetClassSchedulesErrors];
+
+export type GetClassSchedulesResponses = {
+  /**
+   * Class schedules retrieved successfully
+   */
+  200: ApiResponseListScheduledInstance;
+};
+
+export type GetClassSchedulesResponse =
+  GetClassSchedulesResponses[keyof GetClassSchedulesResponses];
 
 export type GetClassDefinitionsForOrganisationData = {
   body?: never;
