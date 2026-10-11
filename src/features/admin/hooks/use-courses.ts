@@ -177,7 +177,7 @@ export function useCourseCreator(uuid?: string) {
  * so it is reported as empty rather than as a failure.
  */
 export function useCourseEditDiff(uuid: string, enabled = true) {
-  // The 404 is cached as an empty answer so tab switches and remounts reuse it.
+  // The 404 is cached as empty; staleTime spares tab switches, invalidation still refetches.
   const query = useQuery({
     queryKey: getCourseEditDiffQueryKey({ path: { uuid } }),
     queryFn: async ({ signal }): Promise<GetCourseEditDiffResponse | null> => {
@@ -188,7 +188,6 @@ export function useCourseEditDiff(uuid: string, enabled = true) {
     },
     enabled: Boolean(uuid) && enabled,
     staleTime: STALE_TIMES.entity,
-    refetchOnMount: false,
     retry: false,
   });
 
