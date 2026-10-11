@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { hedgedRead } from './hedged-read';
+import { DEFAULT_HEDGE_AFTER_MS, getHedgeAfterMs, hedgedRead } from './hedged-read';
 
 const URL_UNDER_TEST = new URL('https://api.example.test/api/v1/classes/abc?x=1');
 
@@ -8,11 +8,12 @@ type Step = { delayMs: number; status?: number; error?: Error };
 
 // Each call to the fake consumes the next scripted step and honours its abort signal.
 function scriptedFetch(steps: Step[]) {
-  const calls: { method?: string; aborted: () => boolean }[] = [];
+  const calls: { method?: string; tag?: string; aborted: () => boolean }[] = [];
   const fetchImpl = (_url: URL, init: RequestInit) => {
     const step = steps[calls.length] ?? steps[steps.length - 1] ?? { delayMs: 0 };
     const signal = init.signal;
-    calls.push({ method: init.method, aborted: () => Boolean(signal?.aborted) });
+    const tag = (init as RequestInit & { tag?: string }).tag;
+    calls.push({ method: init.method, tag, aborted: () => Boolean(signal?.aborted) });
     return new Promise<Response>((resolve, reject) => {
       const timer = setTimeout(() => {
         if (step.error) reject(step.error);
@@ -124,4 +125,57 @@ test('the hedge waits for the other attempt when one returns 5xx', async () => {
   );
   assert.equal(response.status, 200);
   assert.equal(calls.length, 2);
+});
+
+test('the hedge uses the alternate init while the primary keeps its own', async () => {
+  const { calls, fetchImpl } = scriptedFetch([
+    { delayMs: 500, status: 200 },
+    { delayMs: 10, status: 200 },
+  ]);
+  const primaryInit = { method: 'GET', tag: 'h2' } as RequestInit;
+  const alternateInit = { method: 'GET', tag: 'h1' } as RequestInit;
+  const response = await hedgedRead(URL_UNDER_TEST, primaryInit, {
+    fetchImpl,
+    hedgeAfterMs: 30,
+    alternateInit,
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    calls.map(call => call.tag),
+    ['h2', 'h1']
+  );
+});
+
+test('a retry uses the alternate init', async () => {
+  const { calls, fetchImpl } = scriptedFetch([
+    { delayMs: 60, status: 500 },
+    { delayMs: 5, status: 200 },
+  ]);
+  const response = await hedgedRead(URL_UNDER_TEST, { method: 'GET', tag: 'h2' } as RequestInit, {
+    fetchImpl,
+    hedgeAfterMs: 0,
+    slowFailureMs: 50,
+    alternateInit: { method: 'GET', tag: 'h1' } as RequestInit,
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(
+    calls.map(call => call.tag),
+    ['h2', 'h1']
+  );
+});
+
+test('the default hedge delay is 1200 ms unless API_READ_HEDGE_MS overrides it', () => {
+  const previous = process.env.API_READ_HEDGE_MS;
+  try {
+    delete process.env.API_READ_HEDGE_MS;
+    assert.equal(DEFAULT_HEDGE_AFTER_MS, 1200);
+    assert.equal(getHedgeAfterMs(), 1200);
+    process.env.API_READ_HEDGE_MS = '0';
+    assert.equal(getHedgeAfterMs(), 0);
+    process.env.API_READ_HEDGE_MS = '800';
+    assert.equal(getHedgeAfterMs(), 800);
+  } finally {
+    if (previous === undefined) delete process.env.API_READ_HEDGE_MS;
+    else process.env.API_READ_HEDGE_MS = previous;
+  }
 });
