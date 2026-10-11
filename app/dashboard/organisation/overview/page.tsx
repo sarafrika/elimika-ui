@@ -11,7 +11,8 @@ import { OverviewKpis } from './_components/overview-kpis';
 import { OverviewWeeklyGrowth } from './_components/overview-weekly-growth';
 import { OverviewWelcome } from './_components/overview-welcome';
 
-// Below-the-fold rows mount (and fetch) only when scrolled near.
+// The alerts/activity row mounts (and fetches) only when scrolled near.
+// The trend charts fetch with the first wave: deferring them only added an IO round trip.
 const LOWER_ROW_MARGIN = '0px 0px 120px 0px';
 
 export default function OrganizationOverviewPage() {
@@ -39,27 +40,25 @@ export default function OrganizationOverviewPage() {
           </div>
         </div>
 
-        <LazySection rootMargin={LOWER_ROW_MARGIN} minHeight={280}>
-          <div className='grid gap-4 lg:grid-cols-3'>
-            <Card className='lg:col-span-1'>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-base font-semibold'>Enrolment Trends</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <OverviewEnrolmentTrends />
-              </CardContent>
-            </Card>
+        <div className='grid gap-4 lg:grid-cols-3'>
+          <Card className='lg:col-span-1'>
+            <CardHeader className='pb-2'>
+              <CardTitle className='text-base font-semibold'>Enrolment Trends</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <OverviewEnrolmentTrends />
+            </CardContent>
+          </Card>
 
-            <Card className='lg:col-span-2'>
-              <CardHeader className='pb-2'>
-                <CardTitle className='text-base font-semibold'>Weekly Growth</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <OverviewWeeklyGrowth />
-              </CardContent>
-            </Card>
-          </div>
-        </LazySection>
+          <Card className='lg:col-span-2'>
+            <CardHeader className='pb-2'>
+              <CardTitle className='text-base font-semibold'>Weekly Growth</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <OverviewWeeklyGrowth />
+            </CardContent>
+          </Card>
+        </div>
 
         <LazySection rootMargin={LOWER_ROW_MARGIN} minHeight={280}>
           <div className='grid gap-4 lg:grid-cols-2'>
