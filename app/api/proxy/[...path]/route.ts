@@ -12,6 +12,7 @@ import {
   refreshPrivateBffCacheEntry,
   storePrivateBffCacheEntry,
 } from '@/lib/api/private-bff-cache';
+import { getApiReadDispatcher } from '@/lib/server/api-dispatcher';
 import { getServerApiBaseUrl } from '@/services/api/base-url';
 import { auth } from '@/services/auth';
 import { ACTING_DOMAIN_HEADER } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -25,7 +26,14 @@ type CacheState = 'BYPASS' | 'HIT' | 'MISS' | 'STALE';
 // Wall-clock budget for body-less requests only: with a streamed body it would
 // also cover the upload, so those rely on the dispatcher's per-phase timeouts.
 const UPSTREAM_TIMEOUT_MS = 20_000;
-const UNDICI_TIMEOUT_CODES = new Set(['UND_ERR_HEADERS_TIMEOUT', 'UND_ERR_BODY_TIMEOUT']);
+// Socket, GOAWAY and stream-reset codes cover an h2 session torn down mid-read.
+const UNDICI_TIMEOUT_CODES = new Set([
+  'UND_ERR_HEADERS_TIMEOUT',
+  'UND_ERR_BODY_TIMEOUT',
+  'UND_ERR_SOCKET',
+  'UND_ERR_INFO',
+  'ERR_HTTP2_STREAM_ERROR',
+]);
 
 class UpstreamTimeoutError extends Error {}
 
@@ -56,8 +64,14 @@ async function fetchUpstream(
     ? AbortSignal.any([controller.signal, clientSignal])
     : controller.signal;
 
+  // Reads ride the multiplexed h2 dispatcher; Node's fetch accepts an undici dispatcher.
+  const dispatcher = getApiReadDispatcher();
+  const readInit: RequestInit & { dispatcher?: ReturnType<typeof getApiReadDispatcher> } = dispatcher
+    ? { ...init, dispatcher, signal }
+    : { ...init, signal };
+
   try {
-    return await fetch(url, { ...init, signal });
+    return await fetch(url, readInit);
   } catch (error) {
     throw controller.signal.aborted ? controller.signal.reason : error;
   } finally {
