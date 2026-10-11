@@ -259,27 +259,38 @@ export function StudentMyCoursesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('Auto-Suggested');
 
+  // courses/search already carries course_creator_name; only nameless courses need a lookup.
+  const inlineCreatorNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of classDefinitions) {
+      const uuid = item.course?.course_creator_uuid;
+      const name = item.course?.course_creator_name?.trim();
+      if (uuid && name && !map.has(uuid)) map.set(uuid, name);
+    }
+    return map;
+  }, [classDefinitions]);
+
   const creatorIds = useMemo(
     () =>
       Array.from(
         new Set(
           classDefinitions
             .map(item => item.course?.course_creator_uuid)
-            .filter((value): value is string => Boolean(value))
+            .filter((value): value is string => Boolean(value) && !inlineCreatorNames.has(value))
         )
       ),
-    [classDefinitions]
+    [classDefinitions, inlineCreatorNames]
   );
 
   const { courseCreatorMap, isLoading: creatorsLoading } = useCourseCreatorsByIds(creatorIds);
 
   const creatorMap = useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map(inlineCreatorNames);
     for (const [uuid, creator] of Object.entries(courseCreatorMap)) {
-      if (creator?.full_name) map.set(uuid, creator.full_name);
+      if (creator?.full_name && !map.has(uuid)) map.set(uuid, creator.full_name);
     }
     return map;
-  }, [courseCreatorMap]);
+  }, [inlineCreatorNames, courseCreatorMap]);
 
   const enrolledCourseCards = useMemo<EnrolledCourseCard[]>(() => {
     const cards = new Map<string, EnrolledCourseCard>();
