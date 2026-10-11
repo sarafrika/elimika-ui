@@ -191,13 +191,14 @@ export default function AvailableClassesPage({
             </div>
           ))
         ) : listedClasses.length > 0 ? (
-          listedClasses.map(item => (
+          listedClasses.map((item, index) => (
             <div key={item.uuid} className='space-y-2'>
               {nearMe.active ? (
                 <DistanceBandBadge band={nearBands.get(item.uuid as string)?.band} />
               ) : null}
               <AvailabilityClassCard
                 cls={item}
+                priority={index < 4}
                 organisation={
                   item.organisation_uuid ? (organisationMap[item.organisation_uuid] ?? null) : null
                 }
