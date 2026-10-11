@@ -2836,27 +2836,32 @@ export default function ClassTrainingPage({
     );
   };
 
+  // Grading data renders only in the Class work sheet and the evaluation tab; tasks add the
+  // Assessment tab. Neither is on screen at first paint, so both wait until opened.
+  const isGradingOpen = isClassWorkSheetOpen || activeLefTab === 'evaluation';
+  const isAssessmentOpen = isGradingOpen || activeTab === 'assessment';
+
   const { data: courseRubricsData } = useQuery({
     ...getCourseRubricsOptions({
       path: { courseUuid: activeLessonCourseUuid as string },
       query: { pageable: { page: 0, size: 50 } },
     }),
-    enabled: !!activeLessonCourseUuid,
+    enabled: !!activeLessonCourseUuid && isGradingOpen,
   });
   const { data: courseAssessmentsData } = useQuery({
     ...getCourseAssessmentsOptions({
       path: { courseUuid: activeLessonCourseUuid as string },
       query: { pageable: { page: 0, size: 50 } },
     }),
-    enabled: !!activeLessonCourseUuid,
+    enabled: !!activeLessonCourseUuid && isGradingOpen,
   });
   const { data: assignmentSchedules } = useQuery({
     ...getAssignmentSchedulesOptions({ path: { classUuid: classId } }),
-    enabled: !!classId,
+    enabled: !!classId && isAssessmentOpen,
   });
   const { data: quizSchedules } = useQuery({
     ...getQuizSchedulesOptions({ path: { classUuid: classId } }),
-    enabled: !!classId,
+    enabled: !!classId && isAssessmentOpen,
   });
 
   const rubricAssociations: CourseRubricAssociation[] = courseRubricsData?.data?.content ?? [];
@@ -2866,8 +2871,8 @@ export default function ClassTrainingPage({
 
   // Scoped lookups: the active lesson's items plus whatever this class has scheduled.
   const activeLessonUuids = useMemo(
-    () => (activeLesson?.uuid ? [activeLesson.uuid] : []),
-    [activeLesson?.uuid]
+    () => (isAssessmentOpen && activeLesson?.uuid ? [activeLesson.uuid] : []),
+    [activeLesson?.uuid, isAssessmentOpen]
   );
   const scheduledAssignmentUuids = useMemo(
     () => (assignmentSchedules?.data ?? []).map(item => item.assignment_uuid).filter(Boolean),
@@ -2906,8 +2911,7 @@ export default function ClassTrainingPage({
   const rubricMatrixQueries = useQueries({
     queries: rubricUuids.map(rubricUuid => ({
       ...getRubricMatrixOptions({ path: { rubricUuid } }),
-      // Matrices render only in the Class work sheet and the evaluation tab.
-      enabled: !!rubricUuid && (isClassWorkSheetOpen || activeLefTab === 'evaluation'),
+      enabled: !!rubricUuid && isGradingOpen,
     })),
   });
   const notSharedRubricUuids = useMemo(
