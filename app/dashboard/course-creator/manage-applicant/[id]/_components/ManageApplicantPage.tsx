@@ -1,11 +1,36 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
+import {
+  ArrowLeft,
+  Award,
+  Building2,
+  Calendar,
+  ClipboardList,
+  FileText,
+  GraduationCap,
+  LinkIcon,
+  MapPin,
+  Star,
+  Users,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useMemo } from 'react';
+import { toast } from 'sonner';
+import { DetailGrid, SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
+import {
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  useSectionTab,
+} from '@/components/data-display/section-tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
+import { extractEntity } from '@/lib/api-helpers';
 import { dayjs } from '@/lib/date';
 import type {
   Instructor,
@@ -30,31 +55,7 @@ import {
   useTrainingApplicationList,
 } from '@/src/features/rate-card/hooks';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useQuery } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  Award,
-  Building2,
-  Calendar,
-  ClipboardList,
-  FileText,
-  GraduationCap,
-  LinkIcon,
-  MapPin,
-  Star,
-  Users,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useMemo } from 'react';
-import { toast } from 'sonner';
 import { stripHtml } from '../../../../../../src/features/dashboard/courses/shared/_components/courses-data';
-import { DetailGrid, SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
-import {
-  type SectionTab,
-  SectionTabPanel,
-  SectionTabs,
-  useSectionTab,
-} from '@/components/data-display/section-tabs';
 
 const DOSSIER_TABS = ['profile', 'background', 'documents', 'course', 'program'] as const;
 type DossierTab = (typeof DOSSIER_TABS)[number];
@@ -360,25 +361,34 @@ function ApplicationsSection({
   );
 }
 
-export default function ManageApplicantPage({ uuid }: { uuid: string }) {
+export default function ManageApplicantPage({
+  uuid,
+  typeHint,
+}: {
+  uuid: string;
+  typeHint?: ApplicantType;
+}) {
   const { profile: courseCreator } = useCourseCreator();
   const creatorUuid = courseCreator?.uuid ?? '';
   const { value: requestedTab, setValue: setTab, hrefFor } = useSectionTab(DOSSIER_TABS, 'profile');
 
-  const { data: instructorData, isLoading: isInstructorLoading } = useQuery({
+  // The id is an instructor or an organisation; unhinted, the organisation is asked only on a miss.
+  const instructorQuery = useQuery({
     ...getInstructorByUuidOptions({ path: { uuid } }),
-    enabled: !!uuid,
+    enabled: !!uuid && typeHint !== 'organisation',
     retry: false,
     staleTime: 30_000,
   });
+  const isInstructorLoading = instructorQuery.isLoading;
+  const instructor = extractEntity<Instructor>(instructorQuery.data) ?? undefined;
+  const instructorMissed = typeHint === 'organisation' || (instructorQuery.isFetched && !instructor);
   const { data: organisationData, isLoading: isOrganisationLoading } = useQuery({
     ...getOrganisationByUuidOptions({ path: { uuid } }),
-    enabled: !!uuid,
+    enabled: !!uuid && typeHint !== 'instructor' && instructorMissed,
     retry: false,
     staleTime: 30_000,
   });
 
-  const instructor = instructorData?.data as Instructor | undefined;
   const organisation = organisationData?.data as Organisation | undefined;
   const applicantType: ApplicantType | null = instructor
     ? 'instructor'
