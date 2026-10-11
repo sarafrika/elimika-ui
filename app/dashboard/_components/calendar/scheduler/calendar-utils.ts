@@ -427,6 +427,13 @@ export const mapClassDefinitionDetails = (classDef: ClassDefinition, course?: Co
 });
 
 /** A `/classes/batch` summary as calendar class details; the course comes embedded. */
+// meeting_link is returned to enrolled students and parties; read it via a guard until the client regenerates.
+const readMeetingLink = (summary: ClassBatchSummary): string | null => {
+  if (!('meeting_link' in summary)) return null;
+  const value: unknown = summary.meeting_link;
+  return typeof value === 'string' && value.length > 0 ? value : null;
+};
+
 export const mapClassBatchSummary = (summary: ClassBatchSummary): ClassWithScheduleInput => ({
   uuid: summary.uuid ?? null,
   title: summary.title ?? null,
@@ -444,5 +451,6 @@ export const mapClassBatchSummary = (summary: ClassBatchSummary): ClassWithSched
     : null,
   default_instructor_uuid: summary.default_instructor_uuid ?? null,
   max_participants: summary.max_participants ?? null,
+  meeting_link: readMeetingLink(summary),
   schedule: [],
 });
