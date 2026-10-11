@@ -128,7 +128,7 @@ function RecommendedItem({
   );
 }
 
-/** Mocked milestone item */
+/** Milestone item */
 function MilestoneItem({
   title,
   subtitle,

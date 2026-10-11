@@ -157,14 +157,6 @@ export type LearningHubClassEnrollment = StudentClassEnrollmentSummary & {
   nextLessonId?: string;
 };
 
-const MOCK_INVITE: LearningHubInvite = {
-  id: 'mock-vocal-training-level-2',
-  title: 'Vocal Training Level 2',
-  subtitle: 'Vocal Performance Practice',
-  timeLabel: '10:00 AM - 11:00 AM',
-  href: '/dashboard/student/schedule',
-};
-
 function buildClassLearningHref(
   classUuid: string,
   route?: {
@@ -945,12 +937,12 @@ export function useStudentLearningHubData(): LearningHubData {
 
   const invite = useMemo<LearningHubInvite | null>(() => {
     const item = upcomingClassesList[1] ?? upcomingClassesList[0];
-    if (!item) return MOCK_INVITE;
+    if (!item) return null;
 
     return {
       id: item.id ?? 'invite-session',
-      title: item.title ?? 'Vocal Training Level 2',
-      subtitle: item.locationLabel ?? 'Vocal Performance Practice',
+      title: item.title ?? 'Upcoming class',
+      subtitle: item.locationLabel ?? '',
       timeLabel: `${item.dateLabel} · ${item.timeLabel}`,
       href: item.href ?? '/dashboard/student/schedule',
     };

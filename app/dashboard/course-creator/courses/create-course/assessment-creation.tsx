@@ -37,18 +37,6 @@ import {
 import { AssignmentCreationForm } from '../../_components/assignment-creation-form';
 import { QuizCreationForm, QuizPayload } from '../../_components/quiz-creation-form';
 
-const sampleQuestions = [
-    'Sample question 1?',
-    'Sample question 2?',
-    'Sample question 3?',
-    'Sample question 4?',
-    'Sample question 5?',
-];
-
-const sampleOptions = ['Option A', 'Option B', 'Option C', 'Option D'];
-
-const randomItem = <T,>(arr: T[]) => arr[Math.floor(Math.random() * arr.length)]!;
-
 type QuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'ESSAY' | 'MATCHING' | 'SHORT_ANSWER';
 
 type Option = {
@@ -1014,7 +1002,7 @@ const AssessmentCreation = ({
 
             const base: Question = {
                 uuid: '',
-                text: randomItem(sampleQuestions),
+                text: '',
                 points: type === 'MULTIPLE_CHOICE' || type === 'TRUE_FALSE' ? 1 : 5,
                 type,
             };
@@ -1058,8 +1046,8 @@ const AssessmentCreation = ({
                         return {
                             ...base,
                             pairs: Array.from({ length: 2 }, () => ({
-                                left: randomItem(sampleOptions),
-                                right: randomItem(sampleOptions),
+                                left: '',
+                                right: '',
                             })),
                         };
                 }
