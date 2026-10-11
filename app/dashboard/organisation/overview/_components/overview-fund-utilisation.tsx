@@ -3,7 +3,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { FundUtilizationChart, type FundUtilizationPoint } from '@/components/dashboard';
+import type { FundUtilizationPoint } from '@/components/dashboard/charts';
+import { FundUtilizationChart } from '@/components/dashboard/charts-lazy';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
