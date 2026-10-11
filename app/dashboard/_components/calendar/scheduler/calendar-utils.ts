@@ -1,5 +1,10 @@
 import { dayjs, normalizeTimeZone, resolveDisplayZone, UTC_ZONE } from '@/lib/date';
-import type { ClassDefinition, Course, StudentSchedule } from '@/services/client/types.gen';
+import type {
+  ClassBatchSummary,
+  ClassDefinition,
+  Course,
+  StudentSchedule,
+} from '@/services/client/types.gen';
 import type { SchedulerCategory, SchedulerEvent } from './types';
 
 /** Only settings the calendar actually honours live here - the panel offers nothing else. */
@@ -418,5 +423,26 @@ export const disambiguateSharedTitles = (events: SchedulerEvent[], zone: string)
 export const mapClassDefinitionDetails = (classDef: ClassDefinition, course?: Course | null) => ({
   ...classDef,
   course: course ? { uuid: course.uuid ?? null, name: course.name } : null,
+  schedule: [],
+});
+
+/** A `/classes/batch` summary as calendar class details; the course comes embedded. */
+export const mapClassBatchSummary = (summary: ClassBatchSummary): ClassWithScheduleInput => ({
+  uuid: summary.uuid ?? null,
+  title: summary.title ?? null,
+  course_uuid: summary.course_uuid ?? null,
+  organisation_uuid: summary.organisation_uuid ?? null,
+  course:
+    summary.course_title || summary.program_title
+      ? {
+          uuid: summary.course_uuid ?? summary.program_uuid ?? null,
+          name: summary.course_title || summary.program_title || null,
+        }
+      : null,
+  instructor: summary.instructor?.uuid
+    ? { uuid: summary.instructor.uuid, full_name: summary.instructor.display_name ?? null }
+    : null,
+  default_instructor_uuid: summary.default_instructor_uuid ?? null,
+  max_participants: summary.max_participants ?? null,
   schedule: [],
 });
