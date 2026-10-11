@@ -15,6 +15,7 @@ import {
   UserPlus,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,7 @@ import {
   useNotificationCounts,
   useNotifications,
 } from '@/services/notifications';
+import { normalizeLegacyActionUrl } from '@/src/features/dashboard/lib/legacy-action-url';
 import { invalidateWorkflowQueriesForNotification } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
@@ -126,7 +128,8 @@ export const getNotificationUrlPath = (
   notification: UserNotification,
   activeDomain: string
 ): string => {
-  const { type, metadata, action_url } = notification;
+  const { type, metadata } = notification;
+  const action_url = normalizeLegacyActionUrl(notification.action_url, activeDomain);
 
   const STUDENT_PATH = `/dashboard/student`;
   const INSTRUCTOR_PATH = `/dashboard/instructor`;
@@ -141,9 +144,9 @@ export const getNotificationUrlPath = (
           : '';
       }
 
-      return metadata.quiz_uuid && metadata.class_definition_uuid
-        ? `${STUDENT_PATH}/assignment/quiz_${metadata.quiz_uuid}?classId=${metadata.class_definition_uuid}`
-        : '';
+      return activeDomain === 'instructor' && metadata.quiz_uuid && metadata.class_definition_uuid
+        ? `${INSTRUCTOR_PATH}/assignment/quiz_${metadata.quiz_uuid}?classId=${metadata.class_definition_uuid}`
+        : action_url;
 
     case 'ASSIGNMENT_DUE_REMINDER':
     case 'ASSIGNMENT_DEADLINE_REMINDER':
@@ -156,9 +159,11 @@ export const getNotificationUrlPath = (
           : '';
       }
 
-      return metadata.assignment_uuid && metadata.class_definition_uuid
-        ? `${STUDENT_PATH}/assignment/assignment_${metadata.assignment_uuid}?classId=${metadata.class_definition_uuid}`
-        : '';
+      return activeDomain === 'instructor' &&
+        metadata.assignment_uuid &&
+        metadata.class_definition_uuid
+        ? `${INSTRUCTOR_PATH}/assignment/assignment_${metadata.assignment_uuid}?classId=${metadata.class_definition_uuid}`
+        : action_url;
 
     case 'ASSESSMENT_COMPLETED':
       return `${STUDENT_PATH}/learning-hub`;
@@ -166,8 +171,8 @@ export const getNotificationUrlPath = (
     case 'CLASS_ENROLLMENT_CONFIRMED':
       if (activeDomain === 'student') {
         return metadata.class_definition_uuid
-          ? `${STUDENT_PATH}/learning-hub/classes/${metadata.class_definition_uuid}`
-          : '';
+          ? `${STUDENT_PATH}/schedule/classes/${metadata.class_definition_uuid}`
+          : action_url;
       }
 
       return action_url || '';
@@ -188,13 +193,15 @@ export const getNotificationUrlPath = (
     case 'UPCOMING_CLASS_REMINDER':
       if (activeDomain === 'student') {
         return metadata.class_definition_uuid
-          ? `${STUDENT_PATH}/learning-hub/classes/${metadata.class_definition_uuid}`
-          : '';
+          ? `${STUDENT_PATH}/schedule/classes/${metadata.class_definition_uuid}`
+          : action_url;
       }
 
-      return metadata.class_definition_uuid
-        ? `${STUDENT_PATH}/classes/class-training/${metadata.class_definition_uuid}`
-        : '';
+      if (activeDomain === 'instructor' && metadata.class_definition_uuid) {
+        return `${INSTRUCTOR_PATH}/classes/class-training/${metadata.class_definition_uuid}`;
+      }
+
+      return action_url;
 
     case 'COURSE_TRAINING_APPLICATION_SUBMITTED':
     case 'COURSE_TRAINING_APPLICATION_APPROVED':
@@ -236,7 +243,6 @@ export const getNotificationUrlPath = (
     case 'ACCOUNT_CREATED':
     case 'PASSWORD_RESET_REQUEST':
     case 'SECURITY_ALERT':
-    case 'ORDER_PAYMENT_RECEIPT':
     case 'LEARNING_CERTIFICATE_ISSUED':
     case 'PROFILE_DOCUMENT_VERIFIED':
     case 'PROFILE_COMPLETION_REMINDER':
@@ -258,6 +264,7 @@ export function DashboardNotifications({
   const shownPopupIds = useRef<Set<string>>(new Set());
   const invalidatedWorkflowNotificationIds = useRef<Set<string>>(new Set());
   const queryClient = useQueryClient();
+  const router = useRouter();
   const domain = activeDomain ?? undefined;
   const mountedAt = useRef(Date.now());
   const actionMutation = useNotificationAction();
@@ -318,11 +325,11 @@ export function DashboardNotifications({
         description: notification.body,
         action: popupHref
           ? {
-            label: 'Open',
-            onClick: () => {
-              window.location.href = popupHref || notificationHref;
-            },
-          }
+              label: 'Open',
+              onClick: () => {
+                router.push(popupHref || notificationHref);
+              },
+            }
           : undefined,
       });
     }
@@ -334,7 +341,7 @@ export function DashboardNotifications({
         action: {
           label: 'View all',
           onClick: () => {
-            window.location.href = notificationHref;
+            router.push(notificationHref);
           },
         },
       });
@@ -345,7 +352,7 @@ export function DashboardNotifications({
       domain,
       drainAll: popupData?.hasNext ?? false,
     });
-  }, [activeDomain, domain, markPopupsSeen, notificationHref, popupData]);
+  }, [activeDomain, domain, markPopupsSeen, notificationHref, popupData, router]);
 
   useEffect(() => {
     const items = [...(popupData?.items ?? []), ...(recentData?.items ?? [])];
