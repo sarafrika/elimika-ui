@@ -51,9 +51,16 @@ export default function TrainingHubClassCoursePage({ params }: Props) {
   const resolvedParams = React.use(params);
   const { id: classId } = resolvedParams;
 
-  const { data: classData, isLoading, isError } = useClassDetails(classId);
+  const {
+    data: classData,
+    isClassLoading,
+    isRelatedLoading,
+    isScheduleLoading,
+    isEnrollmentsLoading,
+    isError,
+  } = useClassDetails(classId);
 
-  if (isLoading && !classData) {
+  if (isClassLoading) {
     return (
       <div className='space-y-4 px-4 py-6 sm:px-6'>
         <Skeleton className='h-8 w-64' />
@@ -67,18 +74,24 @@ export default function TrainingHubClassCoursePage({ params }: Props) {
     );
   }
 
-  if (isError || !classData) {
+  if (isError || !classData.class) {
     return <PageNotFound />;
   }
 
-  if (classData?.course?.uuid) {
-    return <ClassCourseDetailsPage classData={classData} viewer='instructor' />;
+  const loading = {
+    related: isRelatedLoading,
+    schedule: isScheduleLoading,
+    enrollments: isEnrollmentsLoading,
+  };
+
+  if (classData.class.course_uuid) {
+    return <ClassCourseDetailsPage classData={classData} viewer='instructor' loading={loading} />;
   }
 
-  if (classData?.program?.uuid) {
+  if (classData.class.program_uuid) {
     return (
       <ClassProgramDetailsPage
-        programId={classData.program.uuid}
+        programId={classData.class.program_uuid}
         classData={classData}
         viewer='instructor'
       />

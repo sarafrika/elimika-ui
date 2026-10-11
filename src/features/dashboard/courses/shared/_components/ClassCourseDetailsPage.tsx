@@ -72,6 +72,7 @@ import {
   ClassHeaderMedia,
   ClassInstructorCard,
   ClassSchedulePanel,
+  classInstructor,
   DeleteClassButton,
   ShareLinkSheet,
   WriteReviewButton,
@@ -81,9 +82,11 @@ import {
 export default function ClassCourseDetailsPage({
   classData,
   viewer,
+  loading,
 }: {
   classData: CombinedClassDetailsData;
   viewer: ClassHubViewer;
+  loading?: ClassHubLoading;
 }) {
   const router = useRouter();
   const { activeDomain } = useUserDomain();
@@ -91,7 +94,10 @@ export default function ClassCourseDetailsPage({
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const course = classData.course;
-  const courseUuid = course?.uuid ?? '';
+  // The class definition already names the course, so course-scoped queries need not wait for it.
+  const courseUuid = course?.uuid ?? classData.class?.course_uuid ?? '';
+  const courseLoading = !course && !!loading?.related;
+  const instructorLoading = !classInstructor(classData) && !!loading?.related;
   const classId = classData.class?.uuid ?? '';
 
   /* ── data ──────────────────────────────────────────────────────────── */
@@ -110,14 +116,18 @@ export default function ClassCourseDetailsPage({
   });
   const assessmentScheme = assessmentsQuery.data?.data?.content ?? [];
 
-  const { data: creatorResponse, isLoading: creatorLoading } = useQuery({
+  const inlineCreatorName = course?.course_creator_name?.trim() ?? '';
+  const { data: creatorResponse, isLoading: creatorQueryLoading } = useQuery({
     ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } }),
-    enabled: !!course?.course_creator_uuid,
+    enabled: !!course?.course_creator_uuid && !inlineCreatorName,
   });
+  const creatorLoading = courseLoading || creatorQueryLoading;
   // The generated type drops the response envelope; the payload sits under `data`.
   const creatorName =
-    (creatorResponse as unknown as { data?: { full_name?: string } } | undefined)?.data
-      ?.full_name ?? '';
+    inlineCreatorName ||
+    ((creatorResponse as unknown as { data?: { full_name?: string } } | undefined)?.data
+      ?.full_name ??
+      '');
 
   const classReviewsQuery = useQuery({
     ...getClassReviewsOptions({ path: { uuid: classId }, query: { pageable: {} } }),
@@ -183,8 +193,8 @@ export default function ClassCourseDetailsPage({
     setSiteOrigin(window.location.origin);
   }, []);
   const registrationLink =
-    siteOrigin && course?.uuid
-      ? `${siteOrigin}/dashboard/student/courses/available-classes/${course.uuid}/enroll?id=${classId}`
+    siteOrigin && courseUuid
+      ? `${siteOrigin}/dashboard/student/courses/available-classes/${courseUuid}/enroll?id=${classId}`
       : '';
 
   /* ── header ────────────────────────────────────────────────────────── */
@@ -195,16 +205,29 @@ export default function ClassCourseDetailsPage({
   const assessmentCount = filteredAssignments.length + filteredQuizzes.length;
   const assessmentCountLoading = lessonsLoading || quizzesLoading || assignmentLoading;
   const factSkeleton = <Skeleton className='inline-block h-4 w-6 align-middle' />;
+  const scheduleLoading = !!loading?.schedule;
 
   const facts: EntityFact[] = [
     {
       key: 'schedule',
       icon: CalendarClock,
-      value: sessionCount,
-      label: `${sessionCount === 1 ? 'session' : 'sessions'} · ${scheduleTotalDuration(classData.schedule)}`,
+      value: scheduleLoading ? factSkeleton : sessionCount,
+      label: scheduleLoading
+        ? 'sessions'
+        : `${sessionCount === 1 ? 'session' : 'sessions'} · ${scheduleTotalDuration(classData.schedule)}`,
     },
-    { key: 'weeks', icon: Clock, value: scheduleWeekSpan(classData.schedule), label: 'weeks' },
-    { key: 'enrolled', icon: Users, value: enrolledCount, label: 'enrolled' },
+    {
+      key: 'weeks',
+      icon: Clock,
+      value: scheduleLoading ? factSkeleton : scheduleWeekSpan(classData.schedule),
+      label: 'weeks',
+    },
+    {
+      key: 'enrolled',
+      icon: Users,
+      value: loading?.enrollments ? factSkeleton : enrolledCount,
+      label: 'enrolled',
+    },
     {
       key: 'lessons',
       icon: BookOpen,
@@ -272,7 +295,7 @@ export default function ClassCourseDetailsPage({
         eyebrow='Class'
         badges={
           <>
-            {difficultyLoading ? (
+            {difficultyLoading || courseLoading ? (
               <Skeleton className='h-5 w-16 rounded-full' />
             ) : difficultyName ? (
               <Badge variant='secondary'>{difficultyName}</Badge>
@@ -291,7 +314,12 @@ export default function ClassCourseDetailsPage({
         }
         context={
           <span className='text-muted-foreground'>
-            Course <b className='text-foreground font-semibold'>{course?.name}</b>
+            Course{' '}
+            {courseLoading ? (
+              <Skeleton className='inline-block h-3.5 w-32 align-middle' />
+            ) : (
+              <b className='text-foreground font-semibold'>{course?.name}</b>
+            )}
             {creatorLoading ? (
               <>
                 {' · by '}
@@ -333,23 +361,29 @@ export default function ClassCourseDetailsPage({
       >
         <SectionTabPanel value='overview'>
           <div className='flex flex-col gap-[18px]'>
-            <OverviewTab
-              access={access}
-              description={course?.description}
-              objectives={courseBulletLines(course?.objectives)}
-              prerequisites={courseBulletLines(course?.prerequisites)}
-              requirements={requirementsQuery.data?.data?.content}
-              // A learner gains nothing from an empty "no requirements" note meant for providers.
-              hideRequirements={
-                requirementsQuery.isSuccess && !requirementsQuery.data?.data?.content?.length
-              }
-              requirementsAsync={{
-                loading: requirementsQuery.isLoading,
-                error: requirementsQuery.error,
-                onRetry: () => requirementsQuery.refetch(),
-              }}
-            />
-            <ClassInstructorCard classData={classData} />
+            <AsyncSection
+              name='class-course-overview'
+              loading={courseLoading}
+              skeleton={<Skeleton className='h-64 w-full rounded-xl' />}
+            >
+              <OverviewTab
+                access={access}
+                description={course?.description}
+                objectives={courseBulletLines(course?.objectives)}
+                prerequisites={courseBulletLines(course?.prerequisites)}
+                requirements={requirementsQuery.data?.data?.content}
+                // A learner gains nothing from an empty "no requirements" note meant for providers.
+                hideRequirements={
+                  requirementsQuery.isSuccess && !requirementsQuery.data?.data?.content?.length
+                }
+                requirementsAsync={{
+                  loading: requirementsQuery.isLoading,
+                  error: requirementsQuery.error,
+                  onRetry: () => requirementsQuery.refetch(),
+                }}
+              />
+            </AsyncSection>
+            <ClassInstructorCard classData={classData} loading={instructorLoading} />
             {course?.course_creator_uuid ? (
               <LazySection skeleton={<div className='h-px' />}>
                 <RelatedCreatorCourses
@@ -434,6 +468,9 @@ export default function ClassCourseDetailsPage({
 }
 
 const NO_LESSONS: string[] = [];
+
+/** Which useClassDetails waves are still in flight once the class definition has landed. */
+export type ClassHubLoading = { related?: boolean; schedule?: boolean; enrollments?: boolean };
 
 /** Other courses by the same creator; mounted by LazySection so it loads near the viewport. */
 function RelatedCreatorCourses({
