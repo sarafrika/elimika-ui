@@ -44,14 +44,21 @@ const READ_PIPELINING = 100;
 const READ_CONNECTIONS = 4;
 const readsOverH2 = process.env.API_HTTP2_READS !== 'false';
 
-let readDispatcher: Dispatcher | undefined;
+// Each built chunk has its own module scope, so the Agents live on globalThis:
+// the instrumentation warm-up and the proxy route then share one instance.
+const READ_DISPATCHER_KEY = Symbol.for('elimika.api.readDispatcher');
+const HEDGE_DISPATCHER_KEY = Symbol.for('elimika.api.hedgeDispatcher');
+const HEDGE_CONNECTIONS = 16;
+
+type DispatcherStore = Record<symbol, Dispatcher | undefined>;
+const store = globalThis as unknown as DispatcherStore;
 
 /** Dispatcher for body-less upstream reads, or undefined when the kill switch is set. */
 export function getApiReadDispatcher(): Dispatcher | undefined {
   if (!readsOverH2) {
     return undefined;
   }
-  readDispatcher ??= new Agent({
+  store[READ_DISPATCHER_KEY] ??= new Agent({
     allowH2: true,
     bodyTimeout: BODY_TIMEOUT_MS,
     connect: { timeout: CONNECT_TIMEOUT_MS },
@@ -61,5 +68,20 @@ export function getApiReadDispatcher(): Dispatcher | undefined {
     keepAliveTimeout: KEEP_ALIVE_TIMEOUT_MS,
     pipelining: READ_PIPELINING,
   });
-  return readDispatcher;
+  return store[READ_DISPATCHER_KEY];
+}
+
+/** HTTP/1.1 pool for hedges and retries, so a stalled h2 session cannot hold them too. */
+export function getApiHedgeDispatcher(): Dispatcher {
+  store[HEDGE_DISPATCHER_KEY] ??= new Agent({
+    allowH2: false,
+    bodyTimeout: BODY_TIMEOUT_MS,
+    connect: { timeout: CONNECT_TIMEOUT_MS },
+    connections: HEDGE_CONNECTIONS,
+    headersTimeout: HEADERS_TIMEOUT_MS,
+    keepAliveMaxTimeout: KEEP_ALIVE_MAX_TIMEOUT_MS,
+    keepAliveTimeout: KEEP_ALIVE_TIMEOUT_MS,
+    pipelining: 1,
+  });
+  return store[HEDGE_DISPATCHER_KEY];
 }
