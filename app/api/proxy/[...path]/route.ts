@@ -13,6 +13,7 @@ import {
   storePrivateBffCacheEntry,
 } from '@/lib/api/private-bff-cache';
 import { getApiReadDispatcher } from '@/lib/server/api-dispatcher';
+import { hedgedRead } from '@/lib/server/hedged-read';
 import { getServerApiBaseUrl } from '@/services/api/base-url';
 import { auth } from '@/services/auth';
 import { ACTING_DOMAIN_HEADER } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -30,6 +31,7 @@ const UPSTREAM_TIMEOUT_MS = 20_000;
 const UNDICI_TIMEOUT_CODES = new Set([
   'UND_ERR_HEADERS_TIMEOUT',
   'UND_ERR_BODY_TIMEOUT',
+  'UND_ERR_CONNECT_TIMEOUT',
   'UND_ERR_SOCKET',
   'UND_ERR_INFO',
   'ERR_HTTP2_STREAM_ERROR',
@@ -67,11 +69,12 @@ async function fetchUpstream(
   // Reads ride the multiplexed h2 dispatcher; Node's fetch accepts an undici dispatcher.
   const dispatcher = getApiReadDispatcher();
   const readInit: RequestInit & { dispatcher?: ReturnType<typeof getApiReadDispatcher> } = dispatcher
-    ? { ...init, dispatcher, signal }
-    : { ...init, signal };
+    ? { ...init, dispatcher }
+    : { ...init };
 
   try {
-    return await fetch(url, readInit);
+    // The wall budget and client abort cover the hedge and the retry as well.
+    return await hedgedRead(url, readInit, { signal });
   } catch (error) {
     throw controller.signal.aborted ? controller.signal.reason : error;
   } finally {
