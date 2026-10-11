@@ -83,7 +83,7 @@ export function useCourseStats(courseUuid: string | undefined) {
  * Everyone approved to deliver the course. `rate_card` comes back only for the
  * creator and platform admins; for anyone else the field is simply absent.
  */
-export function useCourseTrainers(courseUuid: string | undefined) {
+export function useCourseTrainers(courseUuid: string | undefined, enabled = true) {
   return useQuery({
     queryKey: courseTrainersQueryKey(courseUuid),
     queryFn: async (): Promise<CourseTrainersEnvelope | undefined> => {
@@ -95,7 +95,7 @@ export function useCourseTrainers(courseUuid: string | undefined) {
       if (error) throw error;
       return data?.data;
     },
-    enabled: Boolean(courseUuid),
+    enabled: enabled && Boolean(courseUuid),
     staleTime: STALE_TIMES.live,
   });
 }
