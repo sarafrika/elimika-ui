@@ -43,6 +43,30 @@ const remotePatterns = Array.from(
   ).values()
 );
 
+const removedDashboardRoutes: Array<[string, string]> = [
+  ['/dashboard/student/contacts/:path*', '/dashboard/student/overview'],
+  ['/dashboard/student/communities', '/dashboard/student/overview'],
+  ['/dashboard/student/library', '/dashboard/student/overview'],
+  ['/dashboard/student/assessment/exams', '/dashboard/student/assessment'],
+  ['/dashboard/student/assessment/quizzes', '/dashboard/student/assessment'],
+  ['/dashboard/instructor/library', '/dashboard/instructor/overview'],
+  ['/dashboard/instructor/communities', '/dashboard/instructor/overview'],
+  ['/dashboard/course-creator/library', '/dashboard/course-creator/overview'],
+  ['/dashboard/instructor/portfolio/:projectId', '/dashboard/instructor/portfolio'],
+  ['/dashboard/instructor/credentials/certificate', '/dashboard/instructor/credentials'],
+  ['/dashboard/course-creator/credentials/certificate', '/dashboard/course-creator/credentials'],
+  ['/dashboard/student/credentials/certificate', '/dashboard/student/skills-wallet?tab=credentials'],
+  ['/dashboard/organisation/account/admin', '/dashboard/organisation/account'],
+  ['/dashboard/instructor/trainings', '/dashboard/instructor/classes'],
+  ['/dashboard/instructor/trainings/overview', '/dashboard/instructor/classes'],
+  ['/dashboard/instructor/trainings/overview/:id', '/dashboard/instructor/classes/overview/:id'],
+  ['/dashboard/instructor/trainings/create-new', '/dashboard/instructor/classes/new'],
+  ['/dashboard/instructor/trainings/instructor-console/:id', '/dashboard/instructor/classes/class-training/:id'],
+  ['/dashboard/instructor/trainings/students', '/dashboard/instructor/students'],
+  ['/dashboard/instructor/trainings/timetable', '/dashboard/instructor/calendar'],
+  ['/dashboard/instructor/learning/:path*', '/dashboard/instructor/courses'],
+];
+
 const nextConfig: NextConfig = {
   /* config options here */
   output: 'standalone',
@@ -72,6 +96,14 @@ const nextConfig: NextConfig = {
     return ['/logos/:path*', '/assets/:path*'].map(source => ({
       source,
       headers: publicAssetCache,
+    }));
+  },
+  // Placeholder and legacy dashboard pages were deleted; old bookmarks land somewhere real.
+  async redirects() {
+    return removedDashboardRoutes.map(([source, destination]) => ({
+      source,
+      destination,
+      permanent: false,
     }));
   },
 };

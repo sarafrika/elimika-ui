@@ -351,7 +351,7 @@ export function useOverviewLiveClasses(source: OverviewClassesSource) {
           students: `${enrolledCount} students`,
           actionLabel: 'Manage class',
           infoHref: item.classDefinition.uuid
-            ? `/dashboard/trainings/overview/${item.classDefinition.uuid}`
+            ? `/dashboard/classes/overview/${item.classDefinition.uuid}`
             : item.instance.uuid
               ? `/dashboard/class-instance/${item.instance.uuid}`
               : `/dashboard/classes/class-training/${item.classDefinition.uuid ?? ''}`,

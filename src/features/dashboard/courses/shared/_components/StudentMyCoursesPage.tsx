@@ -261,10 +261,7 @@ export function StudentMyCoursesPage() {
         showInstructorCta: false,
         detailsHref: roleScopedDashboardPath('student', `/dashboard/courses/${course.uuid}`),
         detailsPrefetchQuery: coursePrefetchQuery(course.uuid),
-        certificateHref: roleScopedDashboardPath(
-          'student',
-          `/dashboard/credentials/certificate?csid=${student?.uuid}&ccid=${course?.uuid}&clid=${classDetails?.uuid}`
-        ),
+        certificateHref: roleScopedDashboardPath('student', '/dashboard/skills-wallet?tab=credentials'),
         // enrollHref: roleScopedDashboardPath('student', `/dashboard/learning-hub/classes/${classId}`),
         enrollHref: roleScopedDashboardPath('student', `/dashboard/learning-hub/classes`),
         instructorHref: roleScopedDashboardPath(

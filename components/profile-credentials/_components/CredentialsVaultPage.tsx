@@ -38,7 +38,6 @@ import type {
 } from '@/services/client/types.gen';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { FileText } from 'lucide-react';
-import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { useOrganisation } from '../../../context/organisation-context';
@@ -52,8 +51,6 @@ import { GrowthTimelineSection } from './GrowthTimelineSection';
 import { ProfileOverviewCard } from './ProfileOverviewCard';
 import { VaultHighlights } from './VaultHighlights';
 import { useCoursesByIds, useProgramsByIds } from '../../../hooks/use-batched-lookups';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { surfaceTheme } from '@/components/data-display';
 
 type CredentialsVaultPageProps = {
@@ -84,7 +81,6 @@ function useOptionalGeneratedQuery(
 }
 
 export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
-  const { activeDomain } = useUserDomain();
   const user = useUserProfile();
   const organisation = useOrganisation();
   const [searchValue, setSearchValue] = useState('');
@@ -385,10 +381,6 @@ export function CredentialsVaultPage({ role }: CredentialsVaultPageProps) {
   return (
     <main className='min-h-screen bg-[linear-gradient(180deg,color-mix(in_srgb,var(--background)_96%,var(--el-accent-azure)_4%),color-mix(in_srgb,var(--background)_94%,white_6%))] px-3 py-4 sm:px-5 lg:px-7'>
       <div className='mx-auto flex w-full max-w-[2400px] flex-col gap-4'>
-        <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/credentials/certificate')}>
-          View sample certificate
-        </Link>
-
         <CredentialsHeader
           title={content.pageTitle}
           description={content.pageDescription}
