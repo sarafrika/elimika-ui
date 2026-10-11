@@ -374,12 +374,9 @@ export function ClassSchedulePanel({
 export function ClassInstructorCard({
   classData,
   loading = false,
-  deferStats = false,
 }: {
   classData: CombinedClassDetailsData | undefined;
   loading?: boolean;
-  /** Holds the class-count and rating reads back until the hub's first wave has landed. */
-  deferStats?: boolean;
 }) {
   const qc = useQueryClient();
   const userProfile = useUserProfile();
@@ -393,7 +390,7 @@ export function ClassInstructorCard({
     ...getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructorUuid as string },
     }),
-    enabled: !!instructorUuid && !deferStats,
+    enabled: !!instructorUuid,
   });
   const instructorClassCount =
     instructorClassResp?.data?.filter(item => item.class_definition?.is_active).length ?? 0;
@@ -402,10 +399,10 @@ export function ClassInstructorCard({
     ...getInstructorRatingSummaryOptions({
       path: { instructorUuid: instructorUuid as string },
     }),
-    enabled: !!instructorUuid && !deferStats,
+    enabled: !!instructorUuid,
   });
   const instructorRating = instructorReviewResp?.data?.average_rating;
-  const statsLoading = !!instructorUuid && (deferStats || classCountLoading || ratingLoading);
+  const statsLoading = !!instructorUuid && (classCountLoading || ratingLoading);
 
   const studentUuid = userProfile?.student?.uuid as string | undefined;
   const courseUuid = (classData?.course?.uuid ?? classData?.class?.course_uuid) as string;

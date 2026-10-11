@@ -1,6 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 
 import { type QueryClient, useQuery, useQueryClient } from '@tanstack/react-query';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   getCourseByUuid,
   getInstructorByUuid,
@@ -19,6 +20,7 @@ import type {
 } from '@/services/client/types.gen';
 import {
   getClassDefinitionOptions,
+  getClassRatingSummaryOptions,
   getClassScheduleOptions,
   getCourseCreatorByUuidOptions,
   getCourseLessonsOptions,
@@ -125,7 +127,7 @@ async function fetchClassRelated(
   };
 }
 
-/** `prefetchCourseCreator`: the caller renders the class hub, which names the course's creator. */
+/** `prefetchCourseCreator`: the caller renders the class hub (creator name, rating summary). */
 export const useClassDetails = (
   classId?: string,
   options: { prefetchCourseCreator?: boolean } = {}
@@ -159,6 +161,14 @@ export const useClassDetails = (
       path: { uuid: classId as string },
     }),
     enabled: !!classId,
+  });
+
+  // The hub's rating summary needs only the route id, so it joins the first wave.
+  useQuery({
+    ...getClassRatingSummaryOptions({ path: { uuid: classId as string } }),
+    enabled: !!classId && !!options.prefetchCourseCreator,
+    staleTime: STALE_TIMES.entity,
+    refetchOnWindowFocus: false,
   });
 
   const courseUuid = classDefinition?.course_uuid;
