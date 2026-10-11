@@ -29,6 +29,7 @@ import { useClassSchedule } from '../../../../../hooks/use-class-schedule';
 import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
 import type { ClassSessionTemplate, Organisation } from '../../../../../services/client';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
+import { useUserDomain } from '../../context/user-domain-context';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { ClassDetailSheet } from '../shared/_components/ClassDetailsSheet';
 import { VideoPreviewModal } from '@/components/ui/video-preview-modal';
@@ -41,6 +42,8 @@ type Props = {
   onViewClass: (cls: BundledClass) => void;
   // Looked up once by the listing page for every card, never per card.
   organisation?: Organisation | null;
+  // Above-the-fold cards load their thumbnail eagerly.
+  priority?: boolean;
 };
 
 // type SessionTemplate = {
@@ -156,8 +159,11 @@ export default function AvailabilityClassCard({
   onViewCourse,
   onViewClass,
   organisation = null,
+  priority = false,
 }: Props) {
   const profile = useUserProfile();
+  const { activeDomain } = useUserDomain();
+  const isStudentDomain = activeDomain === 'student';
   const student = profile?.student;
 
   const [detail, setDetail] = useState<BundledClass | null>(null);
@@ -185,18 +191,33 @@ export default function AvailabilityClassCard({
 
   const promotionalVideoUrl = toAuthenticatedMediaUrl(cls.promotional_video_url);
 
-  // CLASS SCHEDULES: listings send none, so the card loads its own when Class Info opens, or on
-  // sight when no academic end date exists to tell whether the class has ended.
+  // CLASS SCHEDULES: listings send none, so the card loads its own when Class Info opens. Students
+  // also load it on sight when no end date exists, since end state gates enrolment for them.
   const cardRef = useRef<HTMLDivElement>(null);
-  const needsEndDate = !cls.scheduleLoaded && !cls.academic_period_end_date;
+  const needsEndDate =
+    isStudentDomain && !cls.scheduleLoaded && !cls.academic_period_end_date;
   const inView = useInView(cardRef, needsEndDate);
   const ownSchedule = useClassSchedule(
     cls.uuid,
     !cls.scheduleLoaded && (detail !== null || (needsEndDate && inView))
   );
+  // Staff read session progress from the class DTO instead of fetching the schedule.
+  const dtoSessionCount =
+    !isStudentDomain && cls.scheduled_session_count != null
+      ? Number(cls.scheduled_session_count)
+      : undefined;
+  const dtoEnded =
+    dtoSessionCount !== undefined &&
+    dtoSessionCount > 0 &&
+    Number(cls.completed_session_count ?? 0) >= dtoSessionCount;
   const scheduleKnown = cls.scheduleLoaded || ownSchedule.isLoaded;
+  const sessionsKnown = scheduleKnown || dtoSessionCount !== undefined;
   const schedules = cls.scheduleLoaded ? cls.schedule : ownSchedule.schedule;
-  const sessionCount = cls.scheduleLoaded ? cls.sessionCount : ownSchedule.sessionCount;
+  const sessionCount = cls.scheduleLoaded
+    ? cls.sessionCount
+    : ownSchedule.isLoaded
+      ? ownSchedule.sessionCount
+      : dtoSessionCount;
   const sortedSchedules = [...schedules].sort(
     (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
   );
@@ -209,7 +230,8 @@ export default function AvailabilityClassCard({
   const endsAt: Date | string | undefined =
     lastSchedule?.end_time ?? cls.academic_period_end_date ?? undefined;
   // Unknown until a date or a loaded schedule says otherwise; never assume "not ended".
-  const endStateKnown = !!endsAt || scheduleKnown || ownSchedule.isError;
+  const endStateKnown =
+    !!endsAt || scheduleKnown || ownSchedule.isError || dtoSessionCount !== undefined;
   const registrationStart = cls?.registration_period_start_date;
   const registrationEnd = cls?.registration_period_end_date
 
@@ -252,8 +274,9 @@ export default function AvailabilityClassCard({
       );
 
     const classEnded =
-      classEndDate !== null &&
-      now >= classEndDate;
+      dtoEnded ||
+      (classEndDate !== null &&
+        now >= classEndDate);
 
     setIsRegistrationPeriodUndefined(noRegistrationPeriod);
     setIsRegistrationOngoing(registrationOngoing);
@@ -269,6 +292,7 @@ export default function AvailabilityClassCard({
     registrationEnd,
     endsAt,
     endStateKnown,
+    dtoEnded,
   ]);
 
   useEffect(() => {
@@ -305,6 +329,8 @@ export default function AvailabilityClassCard({
               <img
                 src={toAuthenticatedMediaUrl(cls.thumbnail_url) as string}
                 alt={cls.name || cls.title}
+                loading={priority ? 'eager' : 'lazy'}
+                fetchPriority={priority ? 'high' : 'auto'}
                 className='h-12 w-12 rounded-full object-cover'
               />
             ) : (
@@ -392,7 +418,7 @@ export default function AvailabilityClassCard({
           <div className='mb-2 flex flex-wrap gap-2'>
             <Badge variant='outline' className='bg-primary/5 text-primary gap-1'>
               <Calendar className='h-3 w-3' />
-              {scheduleKnown ? `${sessionCount ?? schedules.length} sessions` : 'Schedule in Class Info'}
+              {sessionsKnown ? `${sessionCount ?? schedules.length} sessions` : 'Schedule in Class Info'}
             </Badge>
 
             <Badge variant='outline' className='bg-primary/5 text-primary gap-1'>
@@ -526,7 +552,7 @@ export default function AvailabilityClassCard({
         startsAt={startsAt}
         endsAt={endsAt}
         seatsTaken={seatsTaken}
-        sessionCount={scheduleKnown ? (sessionCount ?? schedules.length) : 'Loading…'}
+        sessionCount={sessionsKnown ? (sessionCount ?? schedules.length) : 'Loading…'}
         courseLessons={courseLessons}
         onClose={() => setDetail(null)}
         onEnroll={onEnroll}
