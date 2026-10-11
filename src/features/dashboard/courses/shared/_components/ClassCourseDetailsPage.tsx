@@ -130,10 +130,10 @@ export default function ClassCourseDetailsPage({
       ?.full_name ??
       '');
 
-  // The hero rating comes from the summary after the related wave; the list waits for its tab.
+  // useClassDetails starts the summary in wave one; the reviews list waits for its tab.
   const ratingSummaryQuery = useQuery({
     ...getClassRatingSummaryOptions({ path: { uuid: classId } }),
-    enabled: !!classId && !loading?.related,
+    enabled: !!classId,
     staleTime: STALE_TIMES.entity,
     refetchOnWindowFocus: false,
   });
@@ -141,7 +141,7 @@ export default function ClassCourseDetailsPage({
   const summaryRating = ratingSummary?.average_rating ?? null;
   const summaryReviewCount =
     ratingSummary?.review_count == null ? undefined : Number(ratingSummary.review_count);
-  const ratingPending = !!classId && (!!loading?.related || ratingSummaryQuery.isLoading);
+  const ratingPending = !!classId && ratingSummaryQuery.isLoading;
 
   const classReviewsQuery = useQuery({
     ...getClassReviewsOptions({ path: { uuid: classId }, query: { pageable: {} } }),
@@ -404,11 +404,7 @@ export default function ClassCourseDetailsPage({
                 }}
               />
             </AsyncSection>
-            <ClassInstructorCard
-              classData={classData}
-              loading={instructorLoading}
-              deferStats={instructorLoading}
-            />
+            <ClassInstructorCard classData={classData} loading={instructorLoading} />
             {course?.course_creator_uuid ? (
               <LazySection skeleton={<div className='h-px' />}>
                 <RelatedCreatorCourses
