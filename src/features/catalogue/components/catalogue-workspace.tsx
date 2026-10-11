@@ -351,7 +351,7 @@ export function CatalogueWorkspace({
 }) {
   const copy = scopeCopy[scope];
   const includeHidden = copy.includeHiddenByDefault;
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pickedId, setSelectedId] = useState<string | null>(null);
   const [displayLimit, setDisplayLimit] = useState(20);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const profile = useUserProfile();
@@ -503,15 +503,11 @@ export function CatalogueWorkspace({
     });
   }, [includeHidden, scopedRows]);
 
-  useEffect(() => {
-    if (filteredRows.length === 0) {
-      setSelectedId(null);
-      return;
-    }
-    if (!selectedId || !filteredRows.find(row => row.id === selectedId)) {
-      setSelectedId(filteredRows[0]?.id ?? null);
-    }
-  }, [filteredRows, selectedId]);
+  // Derived in render, so the first row's details (and their lookups) mount with the list.
+  const selectedId =
+    pickedId && filteredRows.some(row => row.id === pickedId)
+      ? pickedId
+      : (filteredRows[0]?.id ?? null);
 
   const selectedBaseRow = filteredRows.find(row => row.id === selectedId) ?? null;
   const visibleRows = useMemo(() => {
