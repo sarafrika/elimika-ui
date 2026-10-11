@@ -831,6 +831,10 @@ export type RubricScoring = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Classification of performance expectation level.
+   */
+  readonly performance_expectation?: string;
+  /**
    * **[READ-ONLY]** Expected score range for this performance level.
    */
   readonly score_range?: string;
@@ -842,10 +846,6 @@ export type RubricScoring = {
    * **[READ-ONLY]** Feedback category for constructive assessment guidance.
    */
   readonly feedback_category?: string;
-  /**
-   * **[READ-ONLY]** Classification of performance expectation level.
-   */
-  readonly performance_expectation?: string;
 };
 
 export type ApiResponseRubricScoring = {
@@ -6046,18 +6046,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Human-readable formatted duration.
-   */
-  readonly duration_formatted?: string;
-  /**
-   * **[READ-ONLY]** Human-readable date and time range.
-   */
-  readonly time_range?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
-   */
-  readonly is_currently_active?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
@@ -6069,6 +6057,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
    */
   readonly can_be_ended?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration.
+   */
+  readonly duration_formatted?: string;
+  /**
+   * **[READ-ONLY]** Human-readable date and time range.
+   */
+  readonly time_range?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
+   */
+  readonly is_currently_active?: boolean;
 };
 
 /**
@@ -9909,11 +9909,11 @@ export type Page = {
   size?: number;
   content?: Array<unknown>;
   number?: number;
-  first?: boolean;
-  last?: boolean;
   numberOfElements?: number;
   sort?: SortObject;
   pageable?: PageableObject;
+  first?: boolean;
+  last?: boolean;
   empty?: boolean;
 };
 
