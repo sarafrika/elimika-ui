@@ -38,6 +38,7 @@ import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
   getAllDifficultyLevelsOptions,
+  getClassRatingSummaryOptions,
   getClassReviewsOptions,
   getCourseAssessmentsOptions,
   getCourseCreatorByUuidOptions,
@@ -129,11 +130,23 @@ export default function ClassCourseDetailsPage({
       ?.full_name ??
       '');
 
-  // Reviews and their reviewer names load when the Reviews tab opens, not in the first burst.
+  // The hero rating comes from the summary after the related wave; the list waits for its tab.
+  const ratingSummaryQuery = useQuery({
+    ...getClassRatingSummaryOptions({ path: { uuid: classId } }),
+    enabled: !!classId && !loading?.related,
+    staleTime: STALE_TIMES.entity,
+    refetchOnWindowFocus: false,
+  });
+  const ratingSummary = ratingSummaryQuery.data?.data;
+  const summaryRating = ratingSummary?.average_rating ?? null;
+  const summaryReviewCount =
+    ratingSummary?.review_count == null ? undefined : Number(ratingSummary.review_count);
+  const ratingPending = !!classId && (!!loading?.related || ratingSummaryQuery.isLoading);
+
   const classReviewsQuery = useQuery({
     ...getClassReviewsOptions({ path: { uuid: classId }, query: { pageable: {} } }),
     enabled: !!classId && tab === 'reviews',
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.entity,
     refetchOnWindowFocus: false,
   });
   const classReviews = useMemo(
@@ -146,7 +159,8 @@ export default function ClassCourseDetailsPage({
     [classReviews, tab]
   );
   const { studentMap } = useStudentsByIds(reviewerIds);
-  const avgRating = averageRating(classReviews);
+  const avgRating = summaryRating ?? averageRating(classReviews);
+  const reviewCount = classReviewsQuery.data ? classReviews.length : summaryReviewCount;
 
   const { data: difficultyResponse, isLoading: difficultyLoading } = useQuery(
     getAllDifficultyLevelsOptions()
@@ -249,12 +263,15 @@ export default function ClassCourseDetailsPage({
       label: 'assessments',
     },
   ];
-  if (avgRating !== null) {
+  if (ratingPending && avgRating === null) {
+    facts.push({ key: 'rating', icon: Star, value: factSkeleton, label: 'rating' });
+  } else if (avgRating !== null) {
+    const count = reviewCount ?? 0;
     facts.push({
       key: 'rating',
       icon: Star,
       value: avgRating.toFixed(1),
-      label: `from ${classReviews.length} ${classReviews.length === 1 ? 'review' : 'reviews'}`,
+      label: `from ${count} ${count === 1 ? 'review' : 'reviews'}`,
     });
   }
 
@@ -262,7 +279,7 @@ export default function ClassCourseDetailsPage({
     curriculum: curriculumLessons.length,
     assessment: assessmentsQuery.data ? assessmentScheme.length : undefined,
     schedule: sessionCount,
-    reviews: classReviewsQuery.data ? classReviews.length : undefined,
+    reviews: reviewCount,
   };
   const tabs: SectionTab<ClassCourseTab>[] = CLASS_COURSE_TABS.map(id => ({
     id,
