@@ -8,7 +8,7 @@ import { BookOpen, UserPlus, Wallet } from 'lucide-react';
 import { useMemo } from 'react';
 import { ActivityFeed, ActivityFeedSkeleton, type ActivityItem } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
-import { useOrganisation } from '@/context/organisation-context';
+import { useOrganisationId } from '@/context/organisation-context';
 import { useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { getActivityFeedOptions } from '@/services/client/@tanstack/react-query.gen';
 
@@ -37,8 +37,7 @@ const formatAmount = (amount?: number | null, currencyCode?: string | null) => {
  * batched directory lookups. Renders the feed's own empty state when nothing has happened yet.
  */
 export function OverviewActivityFeed() {
-  const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
+  const organisationUuid = useOrganisationId() ?? '';
 
   const feedQuery = useQuery({
     ...getActivityFeedOptions({ path: { organisationUuid }, query: { limit: 20 } }),

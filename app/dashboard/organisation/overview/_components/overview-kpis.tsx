@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Building, GraduationCap, MapPin, Presentation, Users } from 'lucide-react';
 
 import { KpiCard, KpiCardSkeleton, type KpiCardVariant } from '@/components/dashboard';
-import { useOrganisation } from '@/context/organisation-context';
+import { useOrganisationId } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { toNumber } from '@/lib/metrics';
 import {
@@ -17,8 +17,7 @@ import {
  * fetches org-scoped counts and hands them to the presentational {@link KpiCard}.
  */
 export function OverviewKpis() {
-  const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
+  const organisationUuid = useOrganisationId() ?? '';
   const enabled = Boolean(organisationUuid);
 
   // One statistics call carries all four people/branch counts.

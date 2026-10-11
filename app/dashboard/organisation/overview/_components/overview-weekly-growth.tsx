@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { WeeklyGrowthChart } from '@/components/dashboard/charts-lazy';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useOrganisation } from '@/context/organisation-context';
+import { useOrganisationId } from '@/context/organisation-context';
 import { getWeeklyGrowthOptions } from '@/services/client/@tanstack/react-query.gen';
 
 /**
@@ -13,8 +13,7 @@ import { getWeeklyGrowthOptions } from '@/services/client/@tanstack/react-query.
  * empty when there has been no enrolment activity in the window.
  */
 export function OverviewWeeklyGrowth() {
-  const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
+  const organisationUuid = useOrganisationId() ?? '';
 
   const growthQuery = useQuery({
     ...getWeeklyGrowthOptions({ path: { organisationUuid }, query: { weeks: 8 } }),

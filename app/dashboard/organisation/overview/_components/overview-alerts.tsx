@@ -13,7 +13,7 @@ import {
 import { type AlertItem, AlertPanel, type AlertSeverity } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useOrganisation } from '@/context/organisation-context';
+import { useOrganisation, useOrganisationId } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import type { NotificationDto } from '@/services/client';
 import {
@@ -49,8 +49,9 @@ const iconFor = (n: NotificationDto) => {
  */
 export function OverviewAlerts() {
   const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
-  const isUnverified = Boolean(organisationUuid) && organisation?.admin_verified !== true;
+  const organisationUuid = useOrganisationId() ?? '';
+  // Verification needs the fetched row; the id alone would flash an unverified alert.
+  const isUnverified = Boolean(organisation) && organisation?.admin_verified !== true;
   const awaitingReview = isUnverified && Boolean(organisation?.verification_requested_at);
 
   const applicationsQuery = useQuery({

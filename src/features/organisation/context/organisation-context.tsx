@@ -17,10 +17,13 @@ type OrganisationContextValue = Organisation | null;
 
 const OrganisationContext = createContext<OrganisationContextValue>(null);
 const OrganisationLoadingContext = createContext(false);
+const OrganisationIdContext = createContext<string | null>(null);
 
 export const useOrganisation = () => useContext(OrganisationContext);
 /** True while an org member's organisation is still resolving; children render meanwhile. */
 export const useOrganisationLoading = () => useContext(OrganisationLoadingContext);
+/** The org id known at first render (profile, session or cache), before the org row loads. */
+export const useOrganisationId = () => useContext(OrganisationIdContext);
 
 export default function OrganisationProvider({
   children,
@@ -101,15 +104,21 @@ export default function OrganisationProvider({
 
   // Never block children on the org: pages gate their own queries on organisation?.uuid.
   const value = data ?? seed ?? null;
+  const organisationId = useMemo(
+    () => value?.uuid ?? (hasOrgDomain ? activeOrgId : null),
+    [value?.uuid, hasOrgDomain, activeOrgId]
+  );
   const loading =
     hasOrgDomain &&
     !value &&
     (!hydrated || Boolean(userProfile?.isLoading) || (!!activeOrgId && isPending));
 
   return (
-    <OrganisationLoadingContext.Provider value={loading}>
-      <OrganisationContext.Provider value={value}>{children}</OrganisationContext.Provider>
-    </OrganisationLoadingContext.Provider>
+    <OrganisationIdContext.Provider value={organisationId}>
+      <OrganisationLoadingContext.Provider value={loading}>
+        <OrganisationContext.Provider value={value}>{children}</OrganisationContext.Provider>
+      </OrganisationLoadingContext.Provider>
+    </OrganisationIdContext.Provider>
   );
 }
 
