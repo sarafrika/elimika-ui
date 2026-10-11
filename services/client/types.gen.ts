@@ -831,10 +831,6 @@ export type RubricScoring = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Classification of performance expectation level.
-   */
-  readonly performance_expectation?: string;
-  /**
    * **[READ-ONLY]** Expected score range for this performance level.
    */
   readonly score_range?: string;
@@ -846,6 +842,10 @@ export type RubricScoring = {
    * **[READ-ONLY]** Feedback category for constructive assessment guidance.
    */
   readonly feedback_category?: string;
+  /**
+   * **[READ-ONLY]** Classification of performance expectation level.
+   */
+  readonly performance_expectation?: string;
 };
 
 export type ApiResponseRubricScoring = {
@@ -930,10 +930,6 @@ export type Quiz = {
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable format of quiz time limit.
-   */
-  readonly time_limit_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if the quiz has a time limit.
    */
   readonly is_timed?: boolean;
@@ -941,6 +937,10 @@ export type Quiz = {
    * **[READ-ONLY]** Indicates if students can take the quiz multiple times.
    */
   readonly has_multiple_attempts?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable format of quiz time limit.
+   */
+  readonly time_limit_display?: string;
 };
 
 export type ApiResponseQuiz = {
@@ -1000,13 +1000,13 @@ export type QuizQuestion = {
    */
   readonly question_category?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted question number for display in quiz interface.
    */
   readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
 };
 
 export type ApiResponseQuizQuestion = {
