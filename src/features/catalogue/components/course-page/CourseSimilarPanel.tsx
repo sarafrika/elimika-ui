@@ -1,13 +1,10 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { Sparkles } from 'lucide-react';
 import type { MouseEvent } from 'react';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { STALE_TIMES } from '@/lib/query-client';
-import { getSimilarCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { RecommendedCourse } from '@/services/client/types.gen';
 import type { CatalogueItem } from '@/src/features/catalogue/catalogue-search';
 import {
@@ -16,6 +13,7 @@ import {
 } from '@/src/features/catalogue/components/CatalogueItemCard';
 import { stripRichText } from '@/src/features/catalogue/format';
 import { sendDiscoveryEvent } from '@/src/features/discovery/discovery-events';
+import { useSimilarCourses } from '@/src/features/recommendations/use-similar-courses';
 
 const SIMILAR_LIMIT = 8;
 
@@ -39,11 +37,7 @@ export function CourseSimilarPanel({
   courseUuid: string;
   signedIn: boolean;
 }) {
-  const query = useQuery({
-    ...getSimilarCoursesOptions({ path: { uuid: courseUuid }, query: { limit: SIMILAR_LIMIT } }),
-    enabled: Boolean(courseUuid),
-    staleTime: STALE_TIMES.entity,
-  });
+  const query = useSimilarCourses(courseUuid, SIMILAR_LIMIT);
 
   const courses = (query.data?.data ?? []).filter(
     (course): course is RecommendedCourse & { course_uuid: string } => Boolean(course.course_uuid)
