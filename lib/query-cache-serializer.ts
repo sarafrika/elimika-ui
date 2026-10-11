@@ -6,11 +6,13 @@ const DATE_TAG = '$date';
 
 let reportedFailure = false;
 
-// A function replacer sees the raw value via this[key], before Date#toJSON runs.
+// Date#toJSON has already turned a Date into an ISO string (or null when invalid),
+// so only ISO-shaped strings need the raw this[key] lookup; everything else returns early.
 function replacer(this: Record<string, unknown>, key: string, value: unknown): unknown {
-  const raw = this[key];
-  if (raw instanceof Date) {
-    return Number.isNaN(raw.getTime()) ? null : { [DATE_TAG]: raw.toISOString() };
+  if (typeof value === 'string') {
+    if (value.length < 24 || value.charCodeAt(value.length - 1) !== 90) return value;
+    const raw = this[key];
+    return raw instanceof Date ? { [DATE_TAG]: raw.toISOString() } : value;
   }
   if (typeof value === 'bigint') return { [BIGINT_TAG]: value.toString() };
   return value;
