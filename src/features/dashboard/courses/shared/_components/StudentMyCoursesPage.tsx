@@ -216,7 +216,11 @@ export function StudentMyCoursesPage() {
       const course = item.course;
       const classDetails = item.classDetails;
       const classId = item.uuid;
-      const activeEnrollment = item?.classEnrollments?.find(
+      // The roster holds every learner; only this student's rows decide the card.
+      const enrolledClasses = (item.classEnrollments ?? []).filter(
+        s => s.student_uuid === student?.uuid
+      );
+      const activeEnrollment = enrolledClasses.find(
         enrollment => enrollment.status !== 'CANCELLED'
       );
 
@@ -225,7 +229,6 @@ export function StudentMyCoursesPage() {
       const presentation = getCardPresentation(index);
       if (cards.has(course.uuid)) return;
 
-      const enrolledClasses = item.classEnrollments.filter(s => s.student_uuid === student?.uuid);
       const scheduleCount =
         item.studentEnrollments?.[0]?.scheduled_instance_count ?? enrolledClasses.length;
 
@@ -252,7 +255,7 @@ export function StudentMyCoursesPage() {
         secondaryMeta:
           classDetails?.title ??
           course.category_names?.[0] ??
-          (scheduleCount === 1 ? '1 enrolled class' : `${scheduleCount} enrolled classes`),
+          (scheduleCount === 1 ? '1 session' : `${scheduleCount} sessions`),
         ctaLabel: isCompleted ? 'View Certificate' : 'Continue',
         ctaKind: 'link',
         showInstructorCta: false,
