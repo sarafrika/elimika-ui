@@ -7,7 +7,7 @@ import type { FundUtilizationPoint } from '@/components/dashboard/charts';
 import { FundUtilizationChart } from '@/components/dashboard/charts-lazy';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useOrganisation } from '@/context/organisation-context';
+import { useOrganisationId } from '@/context/organisation-context';
 import { localDate } from '@/lib/date';
 import {
   getMonthlySettlementsOptions,
@@ -53,8 +53,7 @@ const sumAmounts = (list?: Array<{ amount?: number }> | null) =>
  * has been no fund movement.
  */
 export function OverviewFundUtilisation() {
-  const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
+  const organisationUuid = useOrganisationId() ?? '';
   const enabled = Boolean(organisationUuid);
 
   const { windowStart, startParam, endParam } = useMemo(() => {

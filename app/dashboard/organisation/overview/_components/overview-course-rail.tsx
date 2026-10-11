@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { CourseRail, type CourseRailItem, CourseRailSkeleton } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
-import { useOrganisation } from '@/context/organisation-context';
+import { useOrganisationId } from '@/context/organisation-context';
 import { getClassDefinitionsForOrganisationOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition } from '@/services/client/types.gen';
 
@@ -21,8 +21,7 @@ const prettify = (value?: string | null) =>
  * definitions endpoint and maps each definition into a presentational rail item.
  */
 export function OverviewCourseRail() {
-  const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
+  const organisationUuid = useOrganisationId() ?? '';
 
   const classesQuery = useQuery({
     ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),

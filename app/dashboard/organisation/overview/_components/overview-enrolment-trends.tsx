@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { EnrollmentTrendsChart } from '@/components/dashboard/charts-lazy';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useOrganisation } from '@/context/organisation-context';
+import { useOrganisationId } from '@/context/organisation-context';
 import { getEnrolmentTrendsOptions } from '@/services/client/@tanstack/react-query.gen';
 
 /**
@@ -13,8 +13,7 @@ import { getEnrolmentTrendsOptions } from '@/services/client/@tanstack/react-que
  * chart's graceful empty state when there is no enrolment history yet.
  */
 export function OverviewEnrolmentTrends() {
-  const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
+  const organisationUuid = useOrganisationId() ?? '';
 
   const trendsQuery = useQuery({
     ...getEnrolmentTrendsOptions({
