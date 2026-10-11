@@ -57,12 +57,6 @@ type SarafrikaAccount = {
     connectedAt: string;
 };
 
-/** Stand-in for the Sarafrika ecosystem profile until the real sign-in is wired up. */
-export const SAMPLE_SARAFRIKA_ACCOUNT: Omit<SarafrikaAccount, "connectedAt"> = {
-    fullName: "Amina Otieno",
-    email: "amina.otieno@sarafrika.com",
-};
-
 type CreatorJourney = {
     step: number;
     account: SarafrikaAccount | null;

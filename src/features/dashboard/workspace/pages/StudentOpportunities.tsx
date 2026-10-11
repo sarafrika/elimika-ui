@@ -32,17 +32,6 @@ type StudentOpportunitiesProps = {
 };
 
 const StudentOpportunities = ({ opportunities, classInvites }: StudentOpportunitiesProps) => {
-  // const sampleOpportunities = [
-  //     { role: "Junior Web Developer", org: "Bright Wave Marketing", location: "Nairobi, Kenya", type: "Hybrid · Full-Time", match: 82 },
-  //     { role: "UI/UX Design Intern", org: "Coursera", location: "Remote", type: "Part-Time · 3 mo", match: 75 },
-  //     { role: "Graphic Design Contract", org: "CreativeBrands", location: "In-Office · Nairobi", type: "Contract", match: 68 },
-  // ];
-
-  // const sampleClassInvites = [
-  //     { title: "Live: Design Systems in Figma", when: "Today · 4:00 PM", host: "Amina Njoroge" },
-  //     { title: "Workshop: Portfolio Review", when: "Thu · 6:30 PM", host: "Daniel Mwangi" },
-  // ];
-
   const credentialsQuery = useStudentCredentials();
   const data = credentialsQuery.data;
   const credentials =
