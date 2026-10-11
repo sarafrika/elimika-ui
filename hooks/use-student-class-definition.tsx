@@ -1,15 +1,16 @@
-import { STALE_TIMES } from '@/lib/query-client';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { logger } from '@/lib/logger';
+import { STALE_TIMES } from '@/lib/query-client';
 
 import type {
   ClassDefinition,
   CourseEnrollment,
+  Enrollment,
   GetAssignmentSchedulesResponse,
   GetClassEnrollmentsForStudentResponse,
   GetCourseByUuidResponse,
   GetCourseLessonsResponse,
-  GetEnrollmentsForClassResponse,
   GetQuizSchedulesResponse,
   ScheduledInstance,
 } from '../services/client';
@@ -17,11 +18,11 @@ import type {
 import {
   getAssignmentSchedulesOptions,
   getClassEnrollmentsForStudentOptions,
-  getClassScheduleOptions,
+  getClassSchedulesOptions,
   getCourseEnrollmentsOptions,
   getCourseLessonsOptions,
-  getEnrollmentsForClassOptions,
   getQuizSchedulesOptions,
+  searchEnrollmentsOptions,
 } from '../services/client/@tanstack/react-query.gen';
 
 import { useClassDefinitionsByIds, useCoursesByIds } from './use-batched-lookups';
@@ -38,9 +39,22 @@ type CourseDetails = NonNullable<GetCourseByUuidResponse['data']>;
 type LessonDetails = NonNullable<NonNullable<GetCourseLessonsResponse['data']>['content']>;
 type QuizDetails = NonNullable<GetQuizSchedulesResponse['data']>;
 type AssignmentDetails = NonNullable<GetAssignmentSchedulesResponse['data']>;
-type EnrollmentDetails = NonNullable<GetEnrollmentsForClassResponse['data']>;
 
 const isDefined = <T,>(value: T | null | undefined): value is T => value != null;
+
+// Backend cap on class_uuids for GET /classes/schedules (ClassScheduleBatchService.MAX_BATCH_SIZE).
+const MAX_CLASSES_PER_CALL = 100;
+const MAX_CLASS_CHUNKS = 5;
+const ENROLLMENT_PAGE_SIZE = 500;
+
+function chunkIds(ids: string[]): string[][] {
+  const sorted = [...ids].sort();
+  const chunks: string[][] = [];
+  for (let i = 0; i < sorted.length; i += MAX_CLASSES_PER_CALL) {
+    chunks.push(sorted.slice(i, i + MAX_CLASSES_PER_CALL));
+  }
+  return chunks;
+}
 
 export type StudentClassSection =
   | 'schedules'
@@ -110,21 +124,23 @@ function useStudentClassDefinitions(
     [classDefinitionsQuery.classDefinitionMap]
   );
 
-  /**
-   * Class schedules
-   */
-  const scheduleClassUuids = wants('schedules') ? classDefinitionUuids : NO_IDS;
+  // One /classes/schedules call per 100 classes; also feeds classEnrollments grouping.
+  const scheduleClassUuids =
+    wants('schedules') || wants('classEnrollments') ? classDefinitionUuids : NO_IDS;
+  const classIdChunks = useMemo(() => {
+    const chunks = chunkIds(scheduleClassUuids);
+    if (chunks.length > MAX_CLASS_CHUNKS) {
+      logger.warn('Student classes: class batch truncated', {
+        classes: scheduleClassUuids.length,
+        kept: MAX_CLASS_CHUNKS * MAX_CLASSES_PER_CALL,
+      });
+    }
+    return chunks;
+  }, [scheduleClassUuids]);
   const scheduleQueries = useQueries({
-    queries: scheduleClassUuids.map(uuid => ({
-      ...getClassScheduleOptions({
-        path: { uuid },
-        query: {
-          pageable: {
-            size: 200,
-          },
-        },
-      }),
-      enabled: !!uuid,
+    queries: classIdChunks.slice(0, MAX_CLASS_CHUNKS).map(classUuids => ({
+      ...getClassSchedulesOptions({ query: { class_uuids: classUuids } }),
+      enabled: classUuids.length > 0,
       staleTime: STALE_TIMES.live,
     })),
   });
@@ -219,17 +235,18 @@ function useStudentClassDefinitions(
   });
 
   /**
-   * Class enrollments
+   * Class enrollments: one search per 100 classes instead of one roster call per class.
    */
-  const enrollmentClassUuids = wants('classEnrollments') ? classDefinitionUuids : NO_IDS;
+  const enrollmentClassChunks = wants('classEnrollments') ? classIdChunks : [];
   const classEnrollmentQueries = useQueries({
-    queries: enrollmentClassUuids.map(classUuid => ({
-      ...getEnrollmentsForClassOptions({
-        path: {
-          uuid: classUuid,
+    queries: enrollmentClassChunks.slice(0, MAX_CLASS_CHUNKS).map(classUuids => ({
+      ...searchEnrollmentsOptions({
+        query: {
+          searchParams: { class_definition_uuid_in: classUuids.join(',') },
+          pageable: { page: 0, size: ENROLLMENT_PAGE_SIZE },
         },
       }),
-      enabled: !!classUuid,
+      enabled: classUuids.length > 0,
       staleTime: STALE_TIMES.live,
     })),
   });
@@ -277,13 +294,26 @@ function useStudentClassDefinitions(
    * Schedule map
    */
   const scheduleMap = new Map<string, ScheduledInstance[]>();
+  const instanceClassMap = new Map<string, string>();
 
-  scheduleQueries.forEach((query, index) => {
-    const classUuid = scheduleClassUuids[index];
+  scheduleQueries.forEach(query => {
+    (query.data?.data ?? []).forEach(instance => {
+      const classUuid = instance.class_definition_uuid;
 
-    if (classUuid) {
-      scheduleMap.set(classUuid, query.data?.data?.content ?? []);
-    }
+      if (!classUuid) {
+        return;
+      }
+
+      const existing = scheduleMap.get(classUuid) ?? [];
+
+      existing.push(instance);
+
+      scheduleMap.set(classUuid, existing);
+
+      if (instance.uuid) {
+        instanceClassMap.set(instance.uuid, classUuid);
+      }
+    });
   });
 
   /**
@@ -310,14 +340,26 @@ function useStudentClassDefinitions(
   /**
    * Class enrollments grouped by class UUID
    */
-  const classEnrollmentMap = new Map<string, EnrollmentDetails>();
+  const classEnrollmentMap = new Map<string, Enrollment[]>();
 
-  classEnrollmentQueries.forEach((query, index) => {
-    const classUuid = enrollmentClassUuids[index];
-
-    if (classUuid) {
-      classEnrollmentMap.set(classUuid, query.data?.data ?? []);
+  classEnrollmentQueries.forEach(query => {
+    const totalPages = query.data?.data?.metadata?.totalPages ?? 1;
+    if (totalPages > 1) {
+      logger.warn('Student classes: enrolment search truncated to one page', { totalPages });
     }
+    (query.data?.data?.content ?? []).forEach(enrollment => {
+      const classUuid = instanceClassMap.get(enrollment.scheduled_instance_uuid);
+
+      if (!classUuid) {
+        return;
+      }
+
+      const existing = classEnrollmentMap.get(classUuid) ?? [];
+
+      existing.push(enrollment);
+
+      classEnrollmentMap.set(classUuid, existing);
+    });
   });
 
   /**
@@ -338,7 +380,7 @@ function useStudentClassDefinitions(
 
     const assignments = assignmentMap.get(classUuid) ?? [];
 
-    const schedules = scheduleMap.get(classUuid) ?? [];
+    const schedules = wants('schedules') ? (scheduleMap.get(classUuid) ?? []) : [];
 
     const classEnrollments = classEnrollmentMap.get(classUuid) ?? [];
 
