@@ -7,6 +7,8 @@ const POOL_CONNECTIONS = 64;
 // enforces its own tighter per-request budget.
 const HEADERS_TIMEOUT_MS = 120_000;
 const BODY_TIMEOUT_MS = 120_000;
+// A TCP/TLS handshake that has not finished in 3 s is dead; fail fast so the read retries.
+const CONNECT_TIMEOUT_MS = 3000;
 
 // undici's HTTP/2 client is experimental (duplex uploads, aborts), so it is
 // opt-in via API_HTTP2=true until an upload smoke test passes over h2.
@@ -25,6 +27,7 @@ export function installApiDispatcher() {
     new Agent({
       allowH2,
       bodyTimeout: BODY_TIMEOUT_MS,
+      connect: { timeout: CONNECT_TIMEOUT_MS },
       connections: POOL_CONNECTIONS,
       headersTimeout: HEADERS_TIMEOUT_MS,
       keepAliveMaxTimeout: KEEP_ALIVE_MAX_TIMEOUT_MS,
@@ -51,6 +54,7 @@ export function getApiReadDispatcher(): Dispatcher | undefined {
   readDispatcher ??= new Agent({
     allowH2: true,
     bodyTimeout: BODY_TIMEOUT_MS,
+    connect: { timeout: CONNECT_TIMEOUT_MS },
     connections: READ_CONNECTIONS,
     headersTimeout: HEADERS_TIMEOUT_MS,
     keepAliveMaxTimeout: KEEP_ALIVE_MAX_TIMEOUT_MS,
