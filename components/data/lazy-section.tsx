@@ -1,20 +1,20 @@
 'use client';
 
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export type LazySectionProps = {
-  /** Shown until the section nears the viewport; size it like the real content. */
+  /** Static space shown until the section nears the viewport; never a skeleton. */
   skeleton?: ReactNode;
   /** How far outside the viewport mounting starts (IntersectionObserver rootMargin). */
   rootMargin?: string;
-  /** Reserves height for the default skeleton so the page does not jump. */
+  /** Reserves height for the default placeholder so the page does not jump. */
   minHeight?: number | string;
   className?: string;
   children: ReactNode;
 };
 
-/** Mounts children (and so their queries) only once the region is about to scroll into view. */
+/** Mounts children (and so their queries) only once the region nears the viewport.
+ * The placeholder is deferred space, not a loading state: static and never aria-busy. */
 export function LazySection({
   skeleton,
   rootMargin = '300px 0px',
@@ -48,8 +48,8 @@ export function LazySection({
   if (visible) return <>{children}</>;
 
   return (
-    <div ref={ref} className={className} aria-busy='true'>
-      {skeleton ?? <Skeleton className='w-full rounded-xl' style={{ minHeight }} />}
+    <div ref={ref} className={className} data-lazy-pending=''>
+      {skeleton ?? <div aria-hidden className='bg-muted/40 w-full rounded-xl' style={{ minHeight }} />}
     </div>
   );
 }
