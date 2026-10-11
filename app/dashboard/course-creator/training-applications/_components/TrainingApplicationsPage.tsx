@@ -310,7 +310,10 @@ function ApplicationsTab({
                 heading={
                   applicantUuid ? (
                     <Link
-                      href={dashboardUrl('course_creator', `manage-applicant/${applicantUuid}`)}
+                      href={dashboardUrl(
+                        'course_creator',
+                        `manage-applicant/${applicantUuid}?type=${isOrganisation ? 'organisation' : 'instructor'}`
+                      )}
                       className='hover:underline'
                     >
                       {name}

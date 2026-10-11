@@ -1,5 +1,19 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Circle,
+  Clock,
+  FileQuestion,
+  Send,
+  Sparkles,
+  XCircle,
+} from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -17,32 +31,20 @@ import {
   getQuizAttemptsOptions,
   getQuizAttemptsQueryKey,
   getStudentQuizReviewOptions,
-  getStudentQuizViewOptions,
+  getStudentQuizViewQueryKey,
   startQuizAttemptMutation,
   submitQuizAttemptMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { getStudentQuizView } from '@/services/client/sdk.gen';
 import type {
   ClassQuizSchedule,
   CourseEnrollment,
   Enrollment,
+  GetStudentQuizViewResponse,
   QuizAttempt,
   QuizResponseSubmission,
   StudentQuizQuestion,
 } from '@/services/client/types.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Circle,
-  Clock,
-  FileQuestion,
-  Send,
-  Sparkles,
-  XCircle,
-} from 'lucide-react';
-import { useParams, useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 
 // ── Types & helpers ───────────────────────────────────────────────────────────
 
@@ -256,12 +258,24 @@ export default function StudentQuizSubmissionPage() {
   const schedule = matchingScheduleRow?.schedule;
 
   // ── Secure student view (no answer key) + this student's attempts ────────────
+  // The backend 404s a scheduled quiz that is unpublished or inactive; cache that as "not available".
   const studentQuizQuery = useQuery({
-    ...getStudentQuizViewOptions({
+    queryKey: getStudentQuizViewQueryKey({
       path: { quizUuid: quizId },
       query: { enrollment_uuid: courseEnrollmentUuid as string },
     }),
+    queryFn: async ({ signal }): Promise<GetStudentQuizViewResponse | null> => {
+      const { data, error, response } = await getStudentQuizView({
+        path: { quizUuid: quizId },
+        query: { enrollment_uuid: courseEnrollmentUuid as string },
+        signal,
+      });
+      if (response?.status === 404) return null;
+      if (error) throw error;
+      return data ?? null;
+    },
     enabled: !!quizId && !!courseEnrollmentUuid,
+    retry: false,
     staleTime: STALE_TIMES.entity,
   });
   const studentQuiz = studentQuizQuery.data?.data;
