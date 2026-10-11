@@ -234,7 +234,7 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/all-courses/available-classes/${course.uuid}`
+                        `/dashboard/courses/available-classes/${course.uuid}`
                       )
                     )
                   }
@@ -242,13 +242,13 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/all-courses/instructor?courseId=${course.uuid}`
+                        `/dashboard/courses/instructor?courseId=${course.uuid}`
                       )
                     )
                   }
                   handleClick={() =>
                     router.push(
-                      roleScopedDashboardPath(activeDomain, `/dashboard/all-courses/${course.uuid}`)
+                      roleScopedDashboardPath(activeDomain, `/dashboard/courses/${course.uuid}`)
                     )
                   }
                 />
@@ -299,7 +299,7 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/all-courses/available-programs/${program.uuid}`
+                        `/dashboard/courses/available-programs/${program.uuid}`
                       )
                     )
                   }
@@ -307,7 +307,7 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/all-courses/instructor?courseId=${program.uuid}`
+                        `/dashboard/courses/instructor?courseId=${program.uuid}`
                       )
                     )
                   }
@@ -315,7 +315,7 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/all-courses/available-programs/${program.uuid}`
+                        `/dashboard/courses/available-programs/${program.uuid}`
                       )
                     )
                   }

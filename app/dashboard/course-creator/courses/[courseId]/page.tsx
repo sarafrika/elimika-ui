@@ -8,10 +8,8 @@
  * older rendering of the course over the list in a drawer; it now lands here,
  * on the shared course record, whose back link returns to that catalogue.
  *
- * This is not the creator's own course-management preview
- * (`/dashboard/course-creator/course-management/preview/<uuid>`): a creator
- * browsing the catalogue is usually looking at somebody else's course, and it
- * is the API — not this route — that says which of the two they are.
+ * It is also where Course Management previews the creator's own courses: the
+ * API, not this route, says whether the viewer owns the course.
  */
 
 import { useParams } from 'next/navigation';

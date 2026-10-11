@@ -88,6 +88,40 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // Retired duplicate routes: one implementation per role, old URLs and bookmarks still resolve.
+  async redirects() {
+    const learnerRoles = ['student', 'course-creator', 'parent'];
+    return [
+      { source: '/cart', destination: '/dashboard/cart', permanent: false },
+      ...learnerRoles.flatMap(role => [
+        {
+          source: `/dashboard/${role}/all-courses/:path*`,
+          destination: `/dashboard/${role}/courses/:path*`,
+          permanent: false,
+        },
+        {
+          source: `/dashboard/${role}/messaging-notifications`,
+          destination: `/dashboard/${role}/notifications`,
+          permanent: false,
+        },
+      ]),
+      {
+        source: '/dashboard/course-creator/course-management/preview/:id',
+        destination: '/dashboard/course-creator/courses/:id',
+        permanent: false,
+      },
+      {
+        source: '/dashboard/course-creator/course-management/programs/:id',
+        destination: '/dashboard/course-creator/programs/:id',
+        permanent: false,
+      },
+      {
+        source: '/dashboard/instructor/my-courses/:id',
+        destination: '/dashboard/instructor/courses/:id',
+        permanent: false,
+      },
+    ];
+  },
   // /public files are not content-hashed: cache a day, revalidate in the background for a week.
   async headers() {
     const publicAssetCache = [
