@@ -42,7 +42,35 @@ type EnrollmentDetails = NonNullable<GetEnrollmentsForClassResponse['data']>;
 
 const isDefined = <T,>(value: T | null | undefined): value is T => value != null;
 
-function useStudentClassDefinitions(student?: StudentLike) {
+export type StudentClassSection =
+  | 'schedules'
+  | 'courseEnrollments'
+  | 'lessons'
+  | 'quizzes'
+  | 'assignments'
+  | 'classEnrollments';
+
+const ALL_SECTIONS: readonly StudentClassSection[] = [
+  'schedules',
+  'courseEnrollments',
+  'lessons',
+  'quizzes',
+  'assignments',
+  'classEnrollments',
+];
+
+const NO_IDS: string[] = [];
+
+type StudentClassDefinitionsOptions = {
+  /** Per-class sections to fetch; each costs one request per class or course. Default: all. */
+  include?: readonly StudentClassSection[];
+};
+
+function useStudentClassDefinitions(
+  student?: StudentLike,
+  { include = ALL_SECTIONS }: StudentClassDefinitionsOptions = {}
+) {
+  const wants = (section: StudentClassSection) => include.includes(section);
   /**
    * Student enrollments
    */
@@ -85,8 +113,9 @@ function useStudentClassDefinitions(student?: StudentLike) {
   /**
    * Class schedules
    */
+  const scheduleClassUuids = wants('schedules') ? classDefinitionUuids : NO_IDS;
   const scheduleQueries = useQueries({
-    queries: classDefinitionUuids.map(uuid => ({
+    queries: scheduleClassUuids.map(uuid => ({
       ...getClassScheduleOptions({
         path: { uuid },
         query: {
@@ -124,7 +153,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
    * Course enrollments
    */
   const courseEnrollmentQueries = useQueries({
-    queries: courseUuids.map(courseUuid => ({
+    queries: (wants('courseEnrollments') ? courseUuids : NO_IDS).map(courseUuid => ({
       ...getCourseEnrollmentsOptions({
         path: {
           courseUuid,
@@ -141,8 +170,9 @@ function useStudentClassDefinitions(student?: StudentLike) {
   /**
    * Lessons
    */
+  const lessonCourseUuids = wants('lessons') ? courseUuids : NO_IDS;
   const lessonQueries = useQueries({
-    queries: courseUuids.map(courseUuid => ({
+    queries: lessonCourseUuids.map(courseUuid => ({
       ...getCourseLessonsOptions({
         path: {
           courseUuid,
@@ -159,8 +189,9 @@ function useStudentClassDefinitions(student?: StudentLike) {
   /**
    * Quizzes
    */
+  const quizClassUuids = wants('quizzes') ? classDefinitionUuids : NO_IDS;
   const quizQueries = useQueries({
-    queries: classDefinitionUuids.map(classUuid => ({
+    queries: quizClassUuids.map(classUuid => ({
       ...getQuizSchedulesOptions({
         path: {
           classUuid,
@@ -174,8 +205,9 @@ function useStudentClassDefinitions(student?: StudentLike) {
   /**
    * Assignments
    */
+  const assignmentClassUuids = wants('assignments') ? classDefinitionUuids : NO_IDS;
   const assignmentQueries = useQueries({
-    queries: classDefinitionUuids.map(classUuid => ({
+    queries: assignmentClassUuids.map(classUuid => ({
       ...getAssignmentSchedulesOptions({
         path: {
           classUuid,
@@ -189,8 +221,9 @@ function useStudentClassDefinitions(student?: StudentLike) {
   /**
    * Class enrollments
    */
+  const enrollmentClassUuids = wants('classEnrollments') ? classDefinitionUuids : NO_IDS;
   const classEnrollmentQueries = useQueries({
-    queries: classDefinitionUuids.map(classUuid => ({
+    queries: enrollmentClassUuids.map(classUuid => ({
       ...getEnrollmentsForClassOptions({
         path: {
           uuid: classUuid,
@@ -207,7 +240,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
   const lessonMap = new Map<string, LessonDetails>();
 
   lessonQueries.forEach((query, index) => {
-    const courseUuid = courseUuids[index];
+    const courseUuid = lessonCourseUuids[index];
 
     if (courseUuid) {
       lessonMap.set(courseUuid, query.data?.data?.content ?? []);
@@ -220,7 +253,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
   const quizMap = new Map<string, QuizDetails>();
 
   quizQueries.forEach((query, index) => {
-    const classUuid = classDefinitionUuids[index];
+    const classUuid = quizClassUuids[index];
 
     if (classUuid) {
       quizMap.set(classUuid, (query.data?.data as QuizDetails) ?? []);
@@ -233,7 +266,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
   const assignmentMap = new Map<string, AssignmentDetails>();
 
   assignmentQueries.forEach((query, index) => {
-    const classUuid = classDefinitionUuids[index];
+    const classUuid = assignmentClassUuids[index];
 
     if (classUuid) {
       assignmentMap.set(classUuid, (query.data?.data as AssignmentDetails) ?? []);
@@ -246,7 +279,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
   const scheduleMap = new Map<string, ScheduledInstance[]>();
 
   scheduleQueries.forEach((query, index) => {
-    const classUuid = classDefinitionUuids[index];
+    const classUuid = scheduleClassUuids[index];
 
     if (classUuid) {
       scheduleMap.set(classUuid, query.data?.data?.content ?? []);
@@ -280,7 +313,7 @@ function useStudentClassDefinitions(student?: StudentLike) {
   const classEnrollmentMap = new Map<string, EnrollmentDetails>();
 
   classEnrollmentQueries.forEach((query, index) => {
-    const classUuid = classDefinitionUuids[index];
+    const classUuid = enrollmentClassUuids[index];
 
     if (classUuid) {
       classEnrollmentMap.set(classUuid, query.data?.data ?? []);

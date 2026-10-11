@@ -40,9 +40,14 @@ const tabs = [
   },
 ] as const;
 
+// Every tab reads class, course and sessions only; quizzes, rosters and lessons are not shown.
+const SCHEDULE_SECTIONS = ['schedules'] as const;
+
 const Page = () => {
   const student = useStudent();
-  const { classDefinitions, isError, loading } = useStudentClassDefinitions(student ?? undefined);
+  const { classDefinitions, isError, loading } = useStudentClassDefinitions(student ?? undefined, {
+    include: SCHEDULE_SECTIONS,
+  });
   const scheduleInstances = useMemo(
     () => buildStudentScheduleInstances(classDefinitions),
     [classDefinitions]
