@@ -10,7 +10,7 @@ type Step = { delayMs: number; status?: number; error?: Error };
 function scriptedFetch(steps: Step[]) {
   const calls: { method?: string; aborted: () => boolean }[] = [];
   const fetchImpl = (_url: URL, init: RequestInit) => {
-    const step = steps[calls.length] ?? steps[steps.length - 1];
+    const step = steps[calls.length] ?? steps[steps.length - 1] ?? { delayMs: 0 };
     const signal = init.signal;
     calls.push({ method: init.method, aborted: () => Boolean(signal?.aborted) });
     return new Promise<Response>((resolve, reject) => {
@@ -37,7 +37,7 @@ test('the hedge wins when the first attempt is slow, and the slow one is aborted
   assert.equal(response.status, 200);
   assert.equal(calls.length, 2);
   assert.ok(Date.now() - started < 300);
-  assert.equal(calls[0].aborted(), true);
+  assert.equal(calls[0]?.aborted(), true);
 });
 
 test('a fast read never hedges', async () => {
@@ -108,7 +108,7 @@ test('a mutating request is never hedged or retried', async () => {
     );
     assert.equal(response.status, 500);
     assert.equal(calls.length, 1);
-    assert.equal(calls[0].method, method);
+    assert.equal(calls[0]?.method, method);
   }
 });
 
