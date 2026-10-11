@@ -21,13 +21,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { useStudent } from '@/context/student-context';
-import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { useClassesByIds } from '@/hooks/use-batched-lookups';
+import { useClassAssessmentSchedules } from '@/hooks/use-class-assessment-schedules';
 import { cx, getEmptyStateClasses } from '@/lib/design-system';
 import { STALE_TIMES } from '@/lib/query-client';
-import { Student } from '@/services/api/schema';
 import {
-  getCourseEnrollmentsOptions,
-  getEnrollmentsForClassOptions,
+  getClassEnrollmentsForStudentOptions,
   getQuizAttemptsOptions,
   getQuizAttemptsQueryKey,
   getStudentQuizReviewOptions,
@@ -37,9 +36,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { getStudentQuizView } from '@/services/client/sdk.gen';
 import type {
-  ClassQuizSchedule,
-  CourseEnrollment,
-  Enrollment,
   GetStudentQuizViewResponse,
   QuizAttempt,
   QuizResponseSubmission,
@@ -48,42 +44,10 @@ import type {
 
 // ── Types & helpers ───────────────────────────────────────────────────────────
 
-type ClassMeta = {
-  classUuid: string;
-  classTitle: string;
-  courseTitle: string;
-  enrollmentUuid?: string;
-  courseEnrollment: CourseEnrollment | null;
-};
-
-const QUIZ_PAGE_SECTIONS = ['quizzes'] as const;
-
-type StudentClassDefinitionRow = ReturnType<
-  typeof useStudentClassDefinitions
->['classDefinitions'][number];
-
-type ResolvedClassDetails = {
-  class_definition?: { title?: string; uuid?: string };
-  course_name?: string;
-  course_uuid?: string | null;
-  name?: string;
-  title?: string;
-  uuid?: string;
-};
-
 /** Single answer per question: an option uuid (choice questions) or free text. */
 type AnswerMap = Record<string, string>;
 
 type QuizPhase = 'intro' | 'attempt' | 'result';
-
-function getClassTitle(classDetails?: ResolvedClassDetails) {
-  return (
-    classDetails?.class_definition?.title ||
-    classDetails?.title ||
-    classDetails?.name ||
-    'Untitled class'
-  );
-}
 
 function formatDate(value?: string | Date | null) {
   if (!value) return 'No deadline';
@@ -191,113 +155,85 @@ export default function StudentQuizSubmissionPage() {
   const [resultAttempt, setResultAttempt] = useState<QuizAttempt | undefined>();
   const [showReview, setShowReview] = useState(false);
 
-  // ── Resolve the student's enrollment for this quiz via their class schedules ──
-  // Only quiz schedules load per class; rosters load for the one class that schedules this quiz.
-  const { classDefinitions, loading: classDefinitionsLoading } = useStudentClassDefinitions(
-    student as Student,
-    { include: QUIZ_PAGE_SECTIONS }
-  );
+  const studentUuid = student?.uuid;
 
-  const matchingClass = useMemo(() => {
-    for (const classDefinition of (classDefinitions ?? []) as StudentClassDefinitionRow[]) {
-      const classDetails = classDefinition.classDetails as ResolvedClassDetails | undefined;
-      const classUuid =
-        classDefinition.uuid || classDetails?.uuid || classDetails?.class_definition?.uuid;
-      if (!classUuid) continue;
-      const schedule = ((classDefinition.quizzes ?? []) as ClassQuizSchedule[]).find(
-        s => s.quiz_uuid === quizId
-      );
-      if (!schedule) continue;
-      return {
-        schedule,
-        classUuid,
-        classTitle: getClassTitle(classDetails),
-        courseTitle: classDefinition.course?.name || classDetails?.course_name || '',
-        courseUuid: classDefinition.course?.uuid || classDetails?.course_uuid || undefined,
-      };
-    }
-    return null;
-  }, [classDefinitions, quizId]);
-
-  const classEnrollmentsQuery = useQuery({
-    ...getEnrollmentsForClassOptions({ path: { uuid: matchingClass?.classUuid as string } }),
-    enabled: !!matchingClass?.classUuid,
-    staleTime: STALE_TIMES.live,
-    refetchOnWindowFocus: false,
-  });
-
-  const courseEnrollmentsQuery = useQuery({
-    ...getCourseEnrollmentsOptions({
-      path: { courseUuid: matchingClass?.courseUuid as string },
-      query: { pageable: {} },
-    }),
-    enabled: !!matchingClass?.courseUuid,
-    staleTime: STALE_TIMES.live,
-    refetchOnWindowFocus: false,
-  });
-
-  const matchingScheduleRow = useMemo(() => {
-    if (!matchingClass) return null;
-    const { schedule, courseUuid: _courseUuid, ...classItem } = matchingClass;
-    const enrollments = classEnrollmentsQuery.data?.data ?? [];
-    const courseEnrollments = courseEnrollmentsQuery.data?.data?.content ?? [];
-    const matchingEnrollment =
-      enrollments.find((e: Enrollment) => e.student_uuid === student?.uuid) ?? null;
-    const courseEnrollment =
-      courseEnrollments.find(e => e.student_uuid === student?.uuid) ?? null;
-    const classMeta: ClassMeta = {
-      ...classItem,
-      enrollmentUuid: matchingEnrollment?.uuid,
-      courseEnrollment,
-    };
-    return { classMeta, schedule };
-  }, [classEnrollmentsQuery.data, courseEnrollmentsQuery.data, matchingClass, student?.uuid]);
-
-  const enrollmentUuid = matchingScheduleRow?.classMeta?.enrollmentUuid;
-  const courseEnrollmentUuid = matchingScheduleRow?.classMeta?.courseEnrollment?.uuid;
-  const schedule = matchingScheduleRow?.schedule;
-
-  // ── Secure student view (no answer key) + this student's attempts ────────────
+  // ── Wave 1: quiz view, own attempts and own class enrollments, all at mount ──
   // The backend 404s a scheduled quiz that is unpublished or inactive; cache that as "not available".
   const studentQuizQuery = useQuery({
-    queryKey: getStudentQuizViewQueryKey({
-      path: { quizUuid: quizId },
-      query: { enrollment_uuid: courseEnrollmentUuid as string },
-    }),
+    queryKey: getStudentQuizViewQueryKey({ path: { quizUuid: quizId } }),
     queryFn: async ({ signal }): Promise<GetStudentQuizViewResponse | null> => {
       const { data, error, response } = await getStudentQuizView({
         path: { quizUuid: quizId },
-        query: { enrollment_uuid: courseEnrollmentUuid as string },
         signal,
       });
       if (response?.status === 404) return null;
       if (error) throw error;
       return data ?? null;
     },
-    enabled: !!quizId && !!courseEnrollmentUuid,
+    enabled: !!quizId && !!studentUuid,
     retry: false,
     staleTime: STALE_TIMES.entity,
   });
   const studentQuiz = studentQuizQuery.data?.data;
 
-
-  // const attempts: QuizAttempt[] = [];
+  // The endpoint returns only the caller's own attempts.
   const quizAttemptsQuery = useQuery({
     ...getQuizAttemptsOptions({ path: { quizUuid: quizId }, query: { pageable: {} } }),
-    enabled: !!quizId,
+    enabled: !!quizId && !!studentUuid,
     staleTime: STALE_TIMES.live,
   });
 
-  const attempts = useMemo<QuizAttempt[]>(() => {
-    const all = quizAttemptsQuery.data?.data?.content ?? [];
+  // Same options as the shell and learning hub, so this is usually a cache hit.
+  const classEnrollmentsQuery = useQuery({
+    ...getClassEnrollmentsForStudentOptions({
+      path: { studentUuid: studentUuid as string },
+      query: { pageable: {} },
+    }),
+    enabled: !!studentUuid,
+  });
+  const enrollmentRows = useMemo(
+    () => classEnrollmentsQuery.data?.data?.content ?? [],
+    [classEnrollmentsQuery.data]
+  );
+  const classUuids = useMemo(
+    () => enrollmentRows.map(row => row.class_definition_uuid).filter(Boolean),
+    [enrollmentRows]
+  );
 
-    return all
-      .filter(a => !courseEnrollmentUuid || a.enrollment_uuid === courseEnrollmentUuid)
-      .slice()
-      .sort((l, r) => (r.attempt_number ?? 0) - (l.attempt_number ?? 0));
-  }, [quizAttemptsQuery.data, courseEnrollmentUuid]);
+  // ── Wave 2: one schedules call for every class finds the class that schedules this quiz ──
+  const { quizSchedules, isLoading: schedulesLoading } = useClassAssessmentSchedules(classUuids);
+  const schedule = useMemo(() => {
+    const matches = quizSchedules.filter(s => s.quiz_uuid === quizId);
+    const preferred = studentQuiz?.class_definition_uuid;
+    return (
+      (preferred && matches.find(s => s.class_definition_uuid === preferred)) || matches[0] || null
+    );
+  }, [quizSchedules, quizId, studentQuiz?.class_definition_uuid]);
+  const matchedClassUuid = schedule?.class_definition_uuid ?? studentQuiz?.class_definition_uuid;
 
+  const matchedClassIds = useMemo(
+    () => (matchedClassUuid ? [matchedClassUuid] : []),
+    [matchedClassUuid]
+  );
+  const { classMap, isLoading: classLoading } = useClassesByIds(matchedClassIds);
+  const classSummary = matchedClassUuid ? classMap[matchedClassUuid] : undefined;
+  const enrollmentRow = enrollmentRows.find(row => row.class_definition_uuid === matchedClassUuid);
+  const classTitle = enrollmentRow?.class_title || classSummary?.title || '';
+  const courseTitle = classSummary?.course_title || '';
 
+  // A class-enrollment uuid is translated server side; omitted, the backend derives it.
+  const enrollmentUuid = enrollmentRow?.latest_enrollment_uuid;
+  const enrollmentQuery = enrollmentUuid ? { enrollment_uuid: enrollmentUuid } : undefined;
+  const scheduleLoading = classEnrollmentsQuery.isLoading || schedulesLoading;
+  const classMetaLoading = scheduleLoading || classLoading;
+
+  const attempts = useMemo<QuizAttempt[]>(
+    () =>
+      (quizAttemptsQuery.data?.data?.content ?? [])
+        .slice()
+        .sort((l, r) => (r.attempt_number ?? 0) - (l.attempt_number ?? 0)),
+    [quizAttemptsQuery.data]
+  );
 
   const latestAttempt = attempts[0] ?? null;
   const inProgressAttempt = attempts.find(a => String(a.status).toLowerCase() === 'in_progress');
@@ -321,34 +257,24 @@ export default function StudentQuizSubmissionPage() {
     phase === 'result' &&
     showReview &&
     !!attemptUuid &&
-    !!courseEnrollmentUuid &&
     String(resultAttempt?.status || '').toLowerCase() === 'graded';
 
   const reviewQuery = useQuery({
     ...getStudentQuizReviewOptions({
       path: { quizUuid: quizId, attemptUuid: attemptUuid as string },
-      query: { enrollment_uuid: courseEnrollmentUuid as string },
+      query: enrollmentQuery,
     }),
     enabled: reviewEnabled,
     staleTime: STALE_TIMES.entity,
   });
   const review = reviewQuery.data?.data;
 
-  const isPageLoading =
-    classDefinitionsLoading ||
-    classEnrollmentsQuery.isLoading ||
-    courseEnrollmentsQuery.isLoading ||
-    (!!courseEnrollmentUuid && studentQuizQuery.isLoading);
-  // ||    quizAttemptsQuery.isLoading;
+  const isPageLoading = !studentUuid || studentQuizQuery.isLoading || quizAttemptsQuery.isLoading;
 
   // ── Handlers ─────────────────────────────────────────────────────────────────
   const startAttempt = () => {
-    if (!enrollmentUuid) {
-      toast.error('We could not find your enrollment for this quiz.');
-      return;
-    }
     startMut.mutate(
-      { path: { quizUuid: quizId }, query: { enrollment_uuid: courseEnrollmentUuid as string } },
+      { path: { quizUuid: quizId }, query: enrollmentQuery },
       {
         onSuccess: response => {
           setAttemptUuid(response.data?.uuid);
@@ -363,7 +289,7 @@ export default function StudentQuizSubmissionPage() {
   };
 
   const submitAttempt = () => {
-    if (!courseEnrollmentUuid || !attemptUuid) return;
+    if (!attemptUuid) return;
     const responses: QuizResponseSubmission[] = [];
     for (const question of questions) {
       const value = answers[question.uuid ?? ''];
@@ -378,7 +304,7 @@ export default function StudentQuizSubmissionPage() {
     submitMut.mutate(
       {
         path: { quizUuid: quizId, attemptUuid },
-        query: { enrollment_uuid: courseEnrollmentUuid },
+        query: enrollmentQuery,
         body: { responses },
       },
       {
@@ -423,14 +349,14 @@ export default function StudentQuizSubmissionPage() {
     );
   }
 
-  if (!matchingScheduleRow || !studentQuiz) {
+  if (!studentQuiz) {
     return (
       <div className='flex min-h-[60vh] flex-col items-center justify-center gap-4 text-center'>
         <FileQuestion className='text-primary/70 h-10 w-10' />
         <div className='space-y-1'>
           <h3 className='text-lg font-semibold'>Quiz not available</h3>
           <p className='text-muted-foreground max-w-lg text-sm'>
-            This quiz may not be scheduled for your current classes yet.
+            This quiz may not be published or scheduled for your current classes yet.
           </p>
         </div>
         <Button variant='outline' onClick={() => router.push('/dashboard/student/learning-hub?tab=assignments')}>
@@ -442,12 +368,18 @@ export default function StudentQuizSubmissionPage() {
   }
 
   const metaCells = [
-    { label: 'Due date', value: formatDate(schedule?.due_at) },
+    {
+      label: 'Due date',
+      value: scheduleLoading ? null : formatDate(schedule?.due_at),
+    },
     {
       label: 'Time limit',
       value: studentQuiz.time_limit_minutes ? `${studentQuiz.time_limit_minutes} min` : 'Not timed',
     },
-    { label: 'Attempts', value: `${attempts.length} / ${attemptsAllowed ?? '∞'}` },
+    {
+      label: 'Attempts',
+      value: scheduleLoading ? null : `${attempts.length} / ${attemptsAllowed ?? '∞'}`,
+    },
     {
       label: 'Passing score',
       value: studentQuiz.passing_score != null ? `${studentQuiz.passing_score}%` : 'Not set',
@@ -468,10 +400,17 @@ export default function StudentQuizSubmissionPage() {
           All quizzes
         </Button>
 
-        <div className='flex flex-wrap items-center gap-2'>
-          <Badge variant='secondary'>{matchingScheduleRow.classMeta.courseTitle}</Badge>
-          <Badge variant='outline'>{matchingScheduleRow.classMeta.classTitle}</Badge>
-        </div>
+        {classMetaLoading ? (
+          <div className='flex flex-wrap items-center gap-2'>
+            <Skeleton className='h-5 w-28 rounded-full' />
+            <Skeleton className='h-5 w-24 rounded-full' />
+          </div>
+        ) : courseTitle || classTitle ? (
+          <div className='flex flex-wrap items-center gap-2'>
+            {courseTitle ? <Badge variant='secondary'>{courseTitle}</Badge> : null}
+            {classTitle ? <Badge variant='outline'>{classTitle}</Badge> : null}
+          </div>
+        ) : null}
         <h1 className='text-foreground text-2xl font-bold tracking-tight sm:text-3xl'>
           {studentQuiz.title || 'Quiz'}
         </h1>
@@ -490,7 +429,11 @@ export default function StudentQuizSubmissionPage() {
             <p className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
               {cell.label}
             </p>
-            <p className='text-foreground mt-1 text-sm font-medium'>{cell.value}</p>
+            {cell.value == null ? (
+              <Skeleton className='mt-1 h-5 w-24' />
+            ) : (
+              <p className='text-foreground mt-1 text-sm font-medium'>{cell.value}</p>
+            )}
           </div>
         ))}
       </div>
