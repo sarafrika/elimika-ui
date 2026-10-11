@@ -4,9 +4,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { toast } from 'sonner';
 
+import { prefetchCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
 import { toNumber } from '@/lib/metrics';
+import { withOnData } from '@/lib/query-on-data';
 import { classifySearchError, toSearchTerm } from '@/lib/search/query';
 import { type AssessmentRubric, type RubricMatrix, updateAssessmentRubric } from '@/services/client';
 import {
@@ -73,12 +75,22 @@ export function useRubrics(filters: RubricFilters) {
     [filterParams, term]
   );
   const sorted = { page, size: RUBRICS_PAGE_SIZE, sort: ['lastModifiedDate,desc'] };
+  const queryClient = useQueryClient();
+  // Rows carry only a creator uuid; the names lookup starts as soon as the rows land.
+  const prefetchCreators = (data: unknown) =>
+    prefetchCourseCreatorsByIds(
+      queryClient,
+      extractPage<AssessmentRubric>(data).items.map(rubric => rubric.course_creator_uuid)
+    );
 
   // With a term the index ranks by relevance, so no sort is sent.
   const primary = useQuery({
-    ...searchAssessmentRubricsOptions({
-      query: { searchParams, pageable: term ? { page, size: RUBRICS_PAGE_SIZE } : sorted },
-    }),
+    ...withOnData(
+      searchAssessmentRubricsOptions({
+        query: { searchParams, pageable: term ? { page, size: RUBRICS_PAGE_SIZE } : sorted },
+      }),
+      prefetchCreators
+    ),
     ...listQuery,
   });
 
@@ -87,7 +99,10 @@ export function useRubrics(filters: RubricFilters) {
 
   // The index is down: the directory still answers without the term.
   const fallback = useQuery({
-    ...searchAssessmentRubricsOptions({ query: { searchParams: filterParams, pageable: sorted } }),
+    ...withOnData(
+      searchAssessmentRubricsOptions({ query: { searchParams: filterParams, pageable: sorted } }),
+      prefetchCreators
+    ),
     ...listQuery,
     enabled: unavailable,
   });

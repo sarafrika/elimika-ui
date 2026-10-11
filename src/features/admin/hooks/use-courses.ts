@@ -1,10 +1,12 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { prefetchCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { toNumber } from '@/lib/metrics';
+import { withOnData } from '@/lib/query-on-data';
 import { classifySearchError, type SearchIssue, toSearchTerm } from '@/lib/search/query';
 import type {
   ContentModerationHistory,
@@ -79,15 +81,25 @@ export function useCourses(filters: CourseFilters): CoursesResult {
     [filterParams, term]
   );
   const sorted = { page: pageIndex, size: COURSE_PAGE_SIZE, sort: ['lastModifiedDate,desc'] };
+  const queryClient = useQueryClient();
+  // Rows carry only a creator uuid; the names lookup starts as soon as the rows land.
+  const prefetchCreators = (data: unknown) =>
+    prefetchCourseCreatorsByIds(
+      queryClient,
+      extractPage<Course>(data).items.map(course => course.course_creator_uuid)
+    );
 
   // With a term the index ranks by relevance, so no sort is sent.
   const primary = useQuery({
-    ...searchCoursesOptions({
-      query: {
-        searchParams,
-        pageable: term ? { page: pageIndex, size: COURSE_PAGE_SIZE } : sorted,
-      },
-    }),
+    ...withOnData(
+      searchCoursesOptions({
+        query: {
+          searchParams,
+          pageable: term ? { page: pageIndex, size: COURSE_PAGE_SIZE } : sorted,
+        },
+      }),
+      prefetchCreators
+    ),
     ...listQuery,
   });
 
@@ -96,7 +108,10 @@ export function useCourses(filters: CourseFilters): CoursesResult {
 
   // The index is down: the list still answers without the term.
   const fallback = useQuery({
-    ...searchCoursesOptions({ query: { searchParams: filterParams, pageable: sorted } }),
+    ...withOnData(
+      searchCoursesOptions({ query: { searchParams: filterParams, pageable: sorted } }),
+      prefetchCreators
+    ),
     ...listQuery,
     enabled: unavailable,
   });
