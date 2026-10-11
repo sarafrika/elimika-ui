@@ -129,9 +129,10 @@ export default function ClassCourseDetailsPage({
       ?.full_name ??
       '');
 
+  // Reviews and their reviewer names load when the Reviews tab opens, not in the first burst.
   const classReviewsQuery = useQuery({
     ...getClassReviewsOptions({ path: { uuid: classId }, query: { pageable: {} } }),
-    enabled: !!classId,
+    enabled: !!classId && tab === 'reviews',
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: false,
   });
@@ -140,7 +141,10 @@ export default function ClassCourseDetailsPage({
     [classReviewsQuery.data]
   );
   const blockReviews = useMemo(() => toBlockReviews(classReviews), [classReviews]);
-  const reviewerIds = useMemo(() => reviewerUuids(classReviews), [classReviews]);
+  const reviewerIds = useMemo(
+    () => (tab === 'reviews' ? reviewerUuids(classReviews) : NO_IDS),
+    [classReviews, tab]
+  );
   const { studentMap } = useStudentsByIds(reviewerIds);
   const avgRating = averageRating(classReviews);
 
@@ -258,7 +262,7 @@ export default function ClassCourseDetailsPage({
     curriculum: curriculumLessons.length,
     assessment: assessmentsQuery.data ? assessmentScheme.length : undefined,
     schedule: sessionCount,
-    reviews: classReviews.length,
+    reviews: classReviewsQuery.data ? classReviews.length : undefined,
   };
   const tabs: SectionTab<ClassCourseTab>[] = CLASS_COURSE_TABS.map(id => ({
     id,
@@ -383,7 +387,11 @@ export default function ClassCourseDetailsPage({
                 }}
               />
             </AsyncSection>
-            <ClassInstructorCard classData={classData} loading={instructorLoading} />
+            <ClassInstructorCard
+              classData={classData}
+              loading={instructorLoading}
+              deferStats={instructorLoading}
+            />
             {course?.course_creator_uuid ? (
               <LazySection skeleton={<div className='h-px' />}>
                 <RelatedCreatorCourses
@@ -468,6 +476,7 @@ export default function ClassCourseDetailsPage({
 }
 
 const NO_LESSONS: string[] = [];
+const NO_IDS: string[] = [];
 
 /** Which useClassDetails waves are still in flight once the class definition has landed. */
 export type ClassHubLoading = { related?: boolean; schedule?: boolean; enrollments?: boolean };
