@@ -374,9 +374,12 @@ export function ClassSchedulePanel({
 export function ClassInstructorCard({
   classData,
   loading = false,
+  deferStats = false,
 }: {
   classData: CombinedClassDetailsData | undefined;
   loading?: boolean;
+  /** Holds the class-count and rating reads back until the hub's first wave has landed. */
+  deferStats?: boolean;
 }) {
   const qc = useQueryClient();
   const userProfile = useUserProfile();
@@ -386,22 +389,23 @@ export function ClassInstructorCard({
   // The class definition names its instructor, so these start before the profile arrives.
   const instructorUuid = instructor?.uuid ?? classData?.class?.default_instructor_uuid;
 
-  const { data: instructorClassResp } = useQuery({
+  const { data: instructorClassResp, isLoading: classCountLoading } = useQuery({
     ...getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructorUuid as string },
     }),
-    enabled: !!instructorUuid,
+    enabled: !!instructorUuid && !deferStats,
   });
   const instructorClassCount =
     instructorClassResp?.data?.filter(item => item.class_definition?.is_active).length ?? 0;
 
-  const { data: instructorReviewResp } = useQuery({
+  const { data: instructorReviewResp, isLoading: ratingLoading } = useQuery({
     ...getInstructorRatingSummaryOptions({
       path: { instructorUuid: instructorUuid as string },
     }),
-    enabled: !!instructorUuid,
+    enabled: !!instructorUuid && !deferStats,
   });
   const instructorRating = instructorReviewResp?.data?.average_rating;
+  const statsLoading = !!instructorUuid && (deferStats || classCountLoading || ratingLoading);
 
   const studentUuid = userProfile?.student?.uuid as string | undefined;
   const courseUuid = (classData?.course?.uuid ?? classData?.class?.course_uuid) as string;
@@ -533,7 +537,11 @@ export function ClassInstructorCard({
             {stats.map(stat => (
               <div key={stat.label}>
                 <p className='text-foreground inline-flex items-center gap-1 text-sm font-black sm:text-base'>
-                  {stat.value ?? 0}
+                  {statsLoading && stat.label !== 'Students' ? (
+                    <Skeleton className='h-4 w-6' />
+                  ) : (
+                    (stat.value ?? 0)
+                  )}
                   {stat.label === 'Rating' ? (
                     <Star className='fill-warning text-warning size-4' aria-hidden />
                   ) : null}
