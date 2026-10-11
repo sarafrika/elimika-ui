@@ -38,7 +38,7 @@ import type {
   User,
 } from '@/services/client/types.gen';
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type {
   ClassWithScheduleInput,
   InstructorSummary,
@@ -226,16 +226,19 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
     return entries;
   }, [enrollmentQueries, normalizedClassUuids]);
 
-  // Rosters land one class at a time; resolving ids per arrival re-fires the student and
-  // user searches with a growing id set, so wait for every roster first.
-  const rostersSettled = enrollmentQueries.every(query => !query.isLoading);
-  const uniqueStudentUuids = useMemo(
-    () =>
-      rostersSettled
-        ? Array.from(new Set(uniqueStudentEntries.map(entry => entry.studentUuid).filter(Boolean)))
-        : [],
-    [rostersSettled, uniqueStudentEntries]
+  // Wait for every roster before searching (a growing id set re-fires the lookups); a failing
+  // roster counts as settled after its first failure, and the last settled set bridges the gap.
+  const rostersSettled = enrollmentQueries.every(
+    query => !query.isPending || query.failureCount > 0
   );
+  const lastSettledUuidsRef = useRef<string[]>([]);
+  const uniqueStudentUuids = useMemo(() => {
+    if (!rostersSettled) return lastSettledUuidsRef.current;
+    return Array.from(new Set(uniqueStudentEntries.map(entry => entry.studentUuid).filter(Boolean)));
+  }, [rostersSettled, uniqueStudentEntries]);
+  useEffect(() => {
+    if (rostersSettled) lastSettledUuidsRef.current = uniqueStudentUuids;
+  }, [rostersSettled, uniqueStudentUuids]);
 
   const { studentMap: batchedStudents, isLoading: studentsLoading } =
     useStudentsByIds(uniqueStudentUuids);
@@ -814,8 +817,7 @@ function StudentCalendarPage() {
       studentScheduleQuery.isLoading ||
       studentClassDefinitionQueries.some(q => q.isLoading) ||
       studentCoursesLoading ||
-      studentInstructorsLoading ||
-      studentData.isLoading,
+      studentInstructorsLoading,
   };
 
   return (
