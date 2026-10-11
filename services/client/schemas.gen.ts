@@ -1662,6 +1662,12 @@ export const RubricScoringSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    performance_expectation: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of performance expectation level.',
+      example: 'Exceptional Performance',
+      readOnly: true,
+    },
     score_range: {
       type: 'string',
       description: '**[READ-ONLY]** Expected score range for this performance level.',
@@ -1679,12 +1685,6 @@ export const RubricScoringSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Feedback category for constructive assessment guidance.',
       example: 'Excellence',
-      readOnly: true,
-    },
-    performance_expectation: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of performance expectation level.',
-      example: 'Exceptional Performance',
       readOnly: true,
     },
   },
@@ -12691,25 +12691,6 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
-      readOnly: true,
-    },
-    time_range: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable date and time range.',
-      example: '2024-09-15 09:00 - 10:30',
-      readOnly: true,
-    },
-    is_currently_active: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
-      example: false,
-      readOnly: true,
-    },
     can_be_cancelled: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
@@ -12726,6 +12707,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
+      example: false,
+      readOnly: true,
+    },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
+    time_range: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable date and time range.',
+      example: '2024-09-15 09:00 - 10:30',
+      readOnly: true,
+    },
+    is_currently_active: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
       example: false,
       readOnly: true,
     },
@@ -19514,12 +19514,6 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
-    },
     numberOfElements: {
       type: 'integer',
       format: 'int32',
@@ -19529,6 +19523,12 @@ export const PageSchema = {
     },
     pageable: {
       $ref: '#/components/schemas/PageableObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
     },
     empty: {
       type: 'boolean',
