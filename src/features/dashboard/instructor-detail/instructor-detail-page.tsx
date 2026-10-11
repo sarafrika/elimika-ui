@@ -635,7 +635,11 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
 
   const tabCounts: Partial<Record<InstructorTab, number | null>> = {
     classes: classesQuery.isLoading ? null : assignedClasses.length,
-    reviews: reviewsQuery.isSuccess ? reviews.length : (rating?.review_count ?? null),
+    reviews: reviewsQuery.isSuccess
+      ? reviews.length
+      : rating?.review_count == null
+        ? null
+        : toNumber(rating.review_count),
     documents: documentsQuery.isSuccess ? documents.length : null,
   };
   const tabs: SectionTab<InstructorTab>[] = config.tabs.map(id => ({
