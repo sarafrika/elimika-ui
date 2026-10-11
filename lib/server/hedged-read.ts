@@ -1,6 +1,6 @@
 import { logger } from '../logger';
 
-const DEFAULT_HEDGE_AFTER_MS = 2000;
+export const DEFAULT_HEDGE_AFTER_MS = 1200;
 // Staging answers a stuck read with a 500 after ~10 s; anything this slow is retried.
 const DEFAULT_SLOW_FAILURE_MS = 5000;
 const CONNECT_TIMEOUT_CODE = 'UND_ERR_CONNECT_TIMEOUT';
@@ -13,6 +13,8 @@ export type HedgedReadOptions = {
   fetchImpl?: FetchLike;
   hedgeAfterMs?: number;
   slowFailureMs?: number;
+  /** Init for hedge and retry attempts (e.g. a separate dispatcher); the primary keeps `init`. */
+  alternateInit?: RequestInit;
 };
 
 /** Hedge delay from API_READ_HEDGE_MS; 0 turns hedging off. */
@@ -99,7 +101,8 @@ export function hedgedRead(url: URL, init: RequestInit, options: HedgedReadOptio
       const signal = outerSignal
         ? AbortSignal.any([controller.signal, outerSignal])
         : controller.signal;
-      fetchImpl(url, { ...init, signal }).then(
+      const base = kind === 'primary' ? init : (options.alternateInit ?? init);
+      fetchImpl(url, { ...base, signal }).then(
         response => onResponse(attempt, response),
         error => onError(attempt, error)
       );
