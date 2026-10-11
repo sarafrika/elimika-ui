@@ -2,12 +2,13 @@
 
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
+import { useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import useProgramBundledClassInfo from '@/hooks/use-program-classes';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import AvailabilityClassCard from '@/src/features/dashboard/courses/components/availability-listing-layout';
 import { ArrowLeft, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Button } from '../../../../../components/ui/button';
 import {
   Sheet,
@@ -54,6 +55,18 @@ export default function AvailableProgramsPage({
       ...cls,
       course: cls.course?.[0] ?? null,
     }));
+
+  // One organisation lookup for every card on screen instead of one per card.
+  const organisationKey = [
+    ...new Set(cardClasses.map(cls => cls.organisation_uuid).filter((id): id is string => !!id)),
+  ]
+    .sort()
+    .join(',');
+  const organisationIds = useMemo(
+    () => (organisationKey ? organisationKey.split(',') : []),
+    [organisationKey]
+  );
+  const { organisationMap } = useOrganisationsByIds(organisationIds);
 
   return (
     <div className='space-y-4 p-4'>
@@ -119,6 +132,9 @@ export default function AvailableProgramsPage({
             <AvailabilityClassCard
               key={item.uuid}
               cls={item}
+              organisation={
+                item.organisation_uuid ? (organisationMap[item.organisation_uuid] ?? null) : null
+              }
               onViewCourse={() => setCourseDetailsOpen(true)}
               onViewClass={() => setClassDetailsOpen(true)}
               onEnroll={selectedClass => {
