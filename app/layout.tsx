@@ -1,9 +1,10 @@
+import type { Metadata } from 'next';
+import { JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
+import { StreamRevealSeed } from '@/components/perf/stream-reveal-seed';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { RootProviders } from '@/context/root-providers';
 import { siteMetadata } from '@/src/lib/seo';
-import type { Metadata } from 'next';
-import { JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -30,6 +31,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang='en' suppressHydrationWarning>
+      <head>
+        <StreamRevealSeed />
+      </head>
       <body
         className={`${plusJakartaSans.className} ${plusJakartaSans.variable} ${jetBrainsMono.variable} bg-background text-foreground min-h-screen antialiased`}
       >
