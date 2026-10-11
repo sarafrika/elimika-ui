@@ -42,6 +42,13 @@ function createdAt(notification: UserNotification) {
   return parseApiDate(notification.occurred_at ?? notification.created_at)?.valueOf() ?? 0;
 }
 
+// Hints the applicant kind so the dossier skips the lookup that would 404.
+function applicantTypeQuery(applicantType: unknown): string {
+  return applicantType === 'instructor' || applicantType === 'organisation'
+    ? `?type=${applicantType}`
+    : '';
+}
+
 export const getNotificationUrlPath = (
   notification: UserNotification,
   activeDomain: string
@@ -135,7 +142,7 @@ export const getNotificationUrlPath = (
         return metadata?.application_uuid ? `${ORGANISATION_PATH}/courses` : '';
       } else if (activeDomain === 'course_creator') {
         return metadata?.application_uuid
-          ? `${COURSE_CREATOR_PATH}/manage-applicant/${metadata?.applicant_uuid}`
+          ? `${COURSE_CREATOR_PATH}/manage-applicant/${metadata?.applicant_uuid}${applicantTypeQuery(metadata?.applicant_type)}`
           : '';
       }
 

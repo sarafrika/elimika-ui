@@ -372,7 +372,7 @@ export default function ManageApplicantPage({
   const creatorUuid = courseCreator?.uuid ?? '';
   const { value: requestedTab, setValue: setTab, hrefFor } = useSectionTab(DOSSIER_TABS, 'profile');
 
-  // The id is an instructor or an organisation; unhinted, the organisation is asked only on a miss.
+  // The id is an instructor or an organisation; the organisation is asked only on an instructor miss.
   const instructorQuery = useQuery({
     ...getInstructorByUuidOptions({ path: { uuid } }),
     enabled: !!uuid && typeHint !== 'organisation',
@@ -384,7 +384,7 @@ export default function ManageApplicantPage({
   const instructorMissed = typeHint === 'organisation' || (instructorQuery.isFetched && !instructor);
   const { data: organisationData, isLoading: isOrganisationLoading } = useQuery({
     ...getOrganisationByUuidOptions({ path: { uuid } }),
-    enabled: !!uuid && typeHint !== 'instructor' && instructorMissed,
+    enabled: !!uuid && instructorMissed,
     retry: false,
     staleTime: 30_000,
   });
