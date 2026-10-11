@@ -25,10 +25,9 @@ import {
   Wallet
 } from 'lucide-react';
 import { type RefObject, useEffect, useMemo, useRef, useState } from 'react';
-import { useOrganisationsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useClassSchedule } from '../../../../../hooks/use-class-schedule';
 import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
-import { ClassSessionTemplate } from '../../../../../services/client';
+import type { ClassSessionTemplate, Organisation } from '../../../../../services/client';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { ClassDetailSheet } from '../shared/_components/ClassDetailsSheet';
@@ -40,6 +39,8 @@ type Props = {
   onEnroll: (cls: BundledClass) => void;
   onViewCourse: (cls: BundledClass) => void;
   onViewClass: (cls: BundledClass) => void;
+  // Looked up once by the listing page for every card, never per card.
+  organisation?: Organisation | null;
 };
 
 // type SessionTemplate = {
@@ -149,7 +150,13 @@ const formatScheduleDate = (date: Date | string) =>
     minute: '2-digit',
   });
 
-export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onViewClass }: Props) {
+export default function AvailabilityClassCard({
+  cls,
+  onEnroll,
+  onViewCourse,
+  onViewClass,
+  organisation = null,
+}: Props) {
   const profile = useUserProfile();
   const student = profile?.student;
 
@@ -165,13 +172,10 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   const hasRating = cls.classRating != null;
   const rating = Math.round(cls?.classRating?.average_rating ?? 0);
 
-  const { organisationMap } = useOrganisationsByIds([cls?.organisation_uuid!]);
-  const organisation =
-    (cls?.organisation_uuid && organisationMap[cls.organisation_uuid]) || null;
-
-  // CLASS LESSONS
+  // CLASS LESSONS: only the lesson list is shown, so no content (one shared, deduped call).
   const { isLoading: lessonsLoading, lessons: lessonsWithContent } = useCourseLessonsWithContent({
     courseUuid: cls.course_uuid as string,
+    contentEnabled: false,
   });
 
   const courseLessons = useMemo(
