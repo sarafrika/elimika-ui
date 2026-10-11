@@ -513,6 +513,7 @@ import type {
   SearchTrainingApplicationsResponse,
   SearchCoursesResponse,
   GetPublishedCoursesResponse,
+  GetLessonsForCoursesResponse,
   GetCoursesByInstructorResponse,
   GetCoursesByCategoryResponse,
   GetActiveCoursesResponse,
@@ -538,6 +539,7 @@ import type {
   GetClassScheduleResponse,
   GetClassRatingSummaryResponse,
   GetEnrollmentsForClassResponse,
+  GetClassSchedulesResponse,
   GetClassDefinitionsForOrganisationResponse,
   GetInstructorPayablesForOrganisationResponse,
   GetJobEligibilityResponse,
@@ -9063,6 +9065,22 @@ export const getPublishedCoursesResponseTransformer = async (
   return data;
 };
 
+const apiResponseListLessonSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return lessonSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getLessonsForCoursesResponseTransformer = async (
+  data: any
+): Promise<GetLessonsForCoursesResponse> => {
+  data = apiResponseListLessonSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getCoursesByInstructorResponseTransformer = async (
   data: any
 ): Promise<GetCoursesByInstructorResponse> => {
@@ -9322,6 +9340,13 @@ export const getEnrollmentsForClassResponseTransformer = async (
   data: any
 ): Promise<GetEnrollmentsForClassResponse> => {
   data = apiResponseListEnrollmentSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getClassSchedulesResponseTransformer = async (
+  data: any
+): Promise<GetClassSchedulesResponse> => {
+  data = apiResponseListScheduledInstanceSchemaResponseTransformer(data);
   return data;
 };
 

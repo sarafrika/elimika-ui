@@ -2031,6 +2031,9 @@ import type {
   GetCourseMediaData,
   GetCourseMediaResponses,
   GetCourseMediaErrors,
+  GetLessonsForCoursesData,
+  GetLessonsForCoursesResponses,
+  GetLessonsForCoursesErrors,
   GetCoursesByInstructorData,
   GetCoursesByInstructorResponses,
   GetCoursesByInstructorErrors,
@@ -2124,6 +2127,9 @@ import type {
   GetEnrollmentsForClassData,
   GetEnrollmentsForClassResponses,
   GetEnrollmentsForClassErrors,
+  GetClassSchedulesData,
+  GetClassSchedulesResponses,
+  GetClassSchedulesErrors,
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForOrganisationResponses,
   GetClassDefinitionsForOrganisationErrors,
@@ -2879,6 +2885,7 @@ import {
   searchTrainingApplicationsResponseTransformer,
   searchCoursesResponseTransformer,
   getPublishedCoursesResponseTransformer,
+  getLessonsForCoursesResponseTransformer,
   getCoursesByInstructorResponseTransformer,
   getCoursesByCategoryResponseTransformer,
   getActiveCoursesResponseTransformer,
@@ -2904,6 +2911,7 @@ import {
   getClassScheduleResponseTransformer,
   getClassRatingSummaryResponseTransformer,
   getEnrollmentsForClassResponseTransformer,
+  getClassSchedulesResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
   getInstructorPayablesForOrganisationResponseTransformer,
   getJobEligibilityResponseTransformer,
@@ -22233,7 +22241,7 @@ export const getStatusTransitions = <ThrowOnError extends boolean = false>(
 
 /**
  * Courses similar to a public course
- * Anyone, signed in or not. Not personal: co-enrolment neighbours (pairs shared by at least 5 learners, 10 when a minor is involved), the same categories, and "more like this" on the course text. Only public courses; 404 when the course itself is not public. Same item shape as the recommendations endpoint, with surface `similar`.
+ * Anyone, signed in or not. Not personal: co-enrolment neighbours (pairs shared by at least 5 learners, 10 when a minor is involved), the same categories, and "more like this" on the course text. Only public courses; empty when the course itself is not public, 404 when it does not exist. Same item shape as the recommendations endpoint, with surface `similar`.
  */
 export const getSimilarCourses = <ThrowOnError extends boolean = false>(
   options: Options<GetSimilarCoursesData, ThrowOnError>
@@ -22594,8 +22602,9 @@ export const getOrganisationCourseContent = <ThrowOnError extends boolean = fals
 
 /**
  * List the classes a visitor can still join on a public course
- * Readable without a token. Answers only for a publicly visible course (root, published,
- * active and admin-approved); any other course is a 404 for every caller.
+ * Readable without a token. Lists classes only for a publicly visible course (root, published,
+ * active and admin-approved); any other existing course answers an empty list, and an
+ * unknown course is a 404.
  *
  * Lists the course's classes that are active, `PUBLIC`, and whose registration window
  * and teaching period have not ended (a missing end date counts as open), cheapest
@@ -23083,6 +23092,34 @@ export const getCourseMedia = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/media/{filePath}',
+    ...options,
+  });
+};
+
+/**
+ * List the lessons of several courses
+ * course_uuids is comma-separated or repeated, 1 to 100 entries. Each course is admitted by the same rule as GET /courses/{courseUuid}/lessons, and learners see only published, active lessons. Courses the caller may not read are omitted. Ordered by course then lesson number; group by course_uuid.
+ */
+export const getLessonsForCourses = <ThrowOnError extends boolean = false>(
+  options: Options<GetLessonsForCoursesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetLessonsForCoursesResponses,
+    GetLessonsForCoursesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getLessonsForCoursesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/lessons',
     ...options,
   });
 };
@@ -24002,6 +24039,34 @@ export const getEnrollmentsForClass = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/classes/{uuid}/enrollments',
+    ...options,
+  });
+};
+
+/**
+ * List the scheduled sessions of several classes
+ * class_uuids is comma-separated or repeated, 1 to 100 entries. Returns every scheduled instance of those classes ordered by start time; group by class_definition_uuid. Unknown ids are omitted. Same access as GET /classes/{uuid}/schedule.
+ */
+export const getClassSchedules = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassSchedulesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassSchedulesResponses,
+    GetClassSchedulesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassSchedulesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/schedules',
     ...options,
   });
 };

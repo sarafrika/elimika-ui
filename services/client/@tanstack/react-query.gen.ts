@@ -678,6 +678,7 @@ import {
   getCourseRecommendations,
   getPublishedCourses,
   getCourseMedia,
+  getLessonsForCourses,
   getCoursesByInstructor,
   getCourseContentMedia,
   getCoursesByCategory,
@@ -709,6 +710,7 @@ import {
   getClassSchedule,
   getClassRatingSummary,
   getEnrollmentsForClass,
+  getClassSchedules,
   getClassDefinitionsForOrganisation,
   getInstructorPayablesForOrganisation,
   getClassMedia,
@@ -2422,6 +2424,7 @@ import type {
   GetPublishedCoursesError,
   GetPublishedCoursesResponse,
   GetCourseMediaData,
+  GetLessonsForCoursesData,
   GetCoursesByInstructorData,
   GetCoursesByInstructorError,
   GetCoursesByInstructorResponse,
@@ -2485,6 +2488,7 @@ import type {
   GetClassScheduleResponse,
   GetClassRatingSummaryData,
   GetEnrollmentsForClassData,
+  GetClassSchedulesData,
   GetClassDefinitionsForOrganisationData,
   GetInstructorPayablesForOrganisationData,
   GetClassMediaData,
@@ -29601,7 +29605,7 @@ export const getSimilarCoursesQueryKey = (options: Options<GetSimilarCoursesData
 
 /**
  * Courses similar to a public course
- * Anyone, signed in or not. Not personal: co-enrolment neighbours (pairs shared by at least 5 learners, 10 when a minor is involved), the same categories, and "more like this" on the course text. Only public courses; 404 when the course itself is not public. Same item shape as the recommendations endpoint, with surface `similar`.
+ * Anyone, signed in or not. Not personal: co-enrolment neighbours (pairs shared by at least 5 learners, 10 when a minor is involved), the same categories, and "more like this" on the course text. Only public courses; empty when the course itself is not public, 404 when it does not exist. Same item shape as the recommendations endpoint, with surface `similar`.
  */
 export const getSimilarCoursesOptions = (options: Options<GetSimilarCoursesData>) => {
   return queryOptions({
@@ -30069,8 +30073,9 @@ export const getCourseOpenClassesQueryKey = (options: Options<GetCourseOpenClass
 
 /**
  * List the classes a visitor can still join on a public course
- * Readable without a token. Answers only for a publicly visible course (root, published,
- * active and admin-approved); any other course is a 404 for every caller.
+ * Readable without a token. Lists classes only for a publicly visible course (root, published,
+ * active and admin-approved); any other existing course answers an empty list, and an
+ * unknown course is a 404.
  *
  * Lists the course's classes that are active, `PUBLIC`, and whose registration window
  * and teaching period have not ended (a missing end date counts as open), cheapest
@@ -30796,6 +30801,28 @@ export const getCourseMediaOptions = (options: Options<GetCourseMediaData>) => {
       return data;
     },
     queryKey: getCourseMediaQueryKey(options),
+  });
+};
+
+export const getLessonsForCoursesQueryKey = (options: Options<GetLessonsForCoursesData>) =>
+  createQueryKey('getLessonsForCourses', options);
+
+/**
+ * List the lessons of several courses
+ * course_uuids is comma-separated or repeated, 1 to 100 entries. Each course is admitted by the same rule as GET /courses/{courseUuid}/lessons, and learners see only published, active lessons. Courses the caller may not read are omitted. Ordered by course then lesson number; group by course_uuid.
+ */
+export const getLessonsForCoursesOptions = (options: Options<GetLessonsForCoursesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getLessonsForCourses({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getLessonsForCoursesQueryKey(options),
   });
 };
 
@@ -32380,6 +32407,28 @@ export const getEnrollmentsForClassOptions = (options: Options<GetEnrollmentsFor
       return data;
     },
     queryKey: getEnrollmentsForClassQueryKey(options),
+  });
+};
+
+export const getClassSchedulesQueryKey = (options: Options<GetClassSchedulesData>) =>
+  createQueryKey('getClassSchedules', options);
+
+/**
+ * List the scheduled sessions of several classes
+ * class_uuids is comma-separated or repeated, 1 to 100 entries. Returns every scheduled instance of those classes ordered by start time; group by class_definition_uuid. Unknown ids are omitted. Same access as GET /classes/{uuid}/schedule.
+ */
+export const getClassSchedulesOptions = (options: Options<GetClassSchedulesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassSchedules({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassSchedulesQueryKey(options),
   });
 };
 
