@@ -39,6 +39,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sheet,
   SheetContent,
@@ -372,34 +373,38 @@ export function ClassSchedulePanel({
 /** "Meet your instructor", with the student's instructor review. */
 export function ClassInstructorCard({
   classData,
+  loading = false,
 }: {
   classData: CombinedClassDetailsData | undefined;
+  loading?: boolean;
 }) {
   const qc = useQueryClient();
   const userProfile = useUserProfile();
   const [showFullBio, setShowFullBio] = useState(false);
 
   const instructor = classInstructor(classData);
+  // The class definition names its instructor, so these start before the profile arrives.
+  const instructorUuid = instructor?.uuid ?? classData?.class?.default_instructor_uuid;
 
   const { data: instructorClassResp } = useQuery({
     ...getClassDefinitionsForInstructorOptions({
-      path: { instructorUuid: instructor?.uuid as string },
+      path: { instructorUuid: instructorUuid as string },
     }),
-    enabled: !!instructor?.uuid,
+    enabled: !!instructorUuid,
   });
   const instructorClassCount =
     instructorClassResp?.data?.filter(item => item.class_definition?.is_active).length ?? 0;
 
   const { data: instructorReviewResp } = useQuery({
     ...getInstructorRatingSummaryOptions({
-      path: { instructorUuid: instructor?.uuid as string },
+      path: { instructorUuid: instructorUuid as string },
     }),
-    enabled: !!instructor?.uuid,
+    enabled: !!instructorUuid,
   });
   const instructorRating = instructorReviewResp?.data?.average_rating;
 
   const studentUuid = userProfile?.student?.uuid as string | undefined;
-  const courseUuid = classData?.course?.uuid as string;
+  const courseUuid = (classData?.course?.uuid ?? classData?.class?.course_uuid) as string;
   const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
   // The roster is only needed to find the viewer's enrolment once they open the feedback form.
   const { courseEnrollmentMap } = useCourseEnrollmentsMap(
@@ -488,14 +493,24 @@ export function ClassInstructorCard({
         </div>
 
         <div className='min-w-0 flex-1'>
-          <h4 className='text-foreground text-sm font-bold sm:text-base'>
-            {instructor?.full_name}
-          </h4>
-          <p className='text-muted-foreground mb-2 text-xs sm:text-sm'>
-            {instructor?.professional_headline}
-          </p>
+          {loading ? (
+            <div className='mb-3 space-y-2'>
+              <Skeleton className='h-4 w-40' />
+              <Skeleton className='h-3.5 w-56 max-w-full' />
+              <Skeleton className='h-3.5 w-full max-w-prose' />
+            </div>
+          ) : (
+            <>
+              <h4 className='text-foreground text-sm font-bold sm:text-base'>
+                {instructor?.full_name}
+              </h4>
+              <p className='text-muted-foreground mb-2 text-xs sm:text-sm'>
+                {instructor?.professional_headline}
+              </p>
+            </>
+          )}
 
-          {instructor?.bio ? (
+          {!loading && instructor?.bio ? (
             <div className='mb-3 max-w-prose'>
               <div
                 className={`text-muted-foreground text-xs leading-relaxed sm:text-sm ${

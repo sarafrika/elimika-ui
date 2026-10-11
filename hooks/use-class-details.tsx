@@ -167,6 +167,11 @@ export const useClassDetails = (classId?: string) => {
       instructorProfile: related?.instructorProfile,
     },
     isLoading,
+    // Per-wave flags let the class hub render as soon as the definition lands.
+    isClassLoading: isLoadingClass,
+    isRelatedLoading: Boolean(classDefinition) && isLoadingRelated,
+    isScheduleLoading: isLoadingSchedule,
+    isEnrollmentsLoading: isLoadingEnrollments,
     isError: isClassError,
     refetch: refetchClass,
   };
