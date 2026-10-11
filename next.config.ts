@@ -88,7 +88,8 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Retired duplicate routes: one implementation per role, old URLs and bookmarks still resolve.
+  // Retired duplicate routes and deleted placeholder pages: old URLs and bookmarks still resolve.
+  // Keep a single redirects() member; a second key silently replaces the first.
   async redirects() {
     const learnerRoles = ['student', 'course-creator', 'parent'];
     return [
@@ -120,6 +121,11 @@ const nextConfig: NextConfig = {
         destination: '/dashboard/instructor/courses/:id',
         permanent: false,
       },
+      ...removedDashboardRoutes.map(([source, destination]) => ({
+        source,
+        destination,
+        permanent: false,
+      })),
     ];
   },
   // /public files are not content-hashed: cache a day, revalidate in the background for a week.
@@ -130,14 +136,6 @@ const nextConfig: NextConfig = {
     return ['/logos/:path*', '/assets/:path*'].map(source => ({
       source,
       headers: publicAssetCache,
-    }));
-  },
-  // Placeholder and legacy dashboard pages were deleted; old bookmarks land somewhere real.
-  async redirects() {
-    return removedDashboardRoutes.map(([source, destination]) => ({
-      source,
-      destination,
-      permanent: false,
     }));
   },
 };
