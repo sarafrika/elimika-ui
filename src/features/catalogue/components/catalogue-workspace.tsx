@@ -213,7 +213,10 @@ const toClassMap = (data: { class_definition?: ClassDefinition }[] | undefined) 
 const useScopeMaps = (
   rows: CatalogueRow[],
   scope: CatalogueScope,
-  ids: { instructorUuid?: string | null; organisationUuid?: string | null }
+  ids: {
+    instructorClassData?: { class_definition?: ClassDefinition }[];
+    organisationUuid?: string | null;
+  }
 ): ScopeMaps => {
   // The snapshot has no organisation uuid, so the organisation scope still needs the courses.
   const courseIds = useMemo(() => {
@@ -225,13 +228,7 @@ const useScopeMaps = (
   }, [rows, scope]);
   const { courseMap: courseLookup } = useCoursesByIds(courseIds);
 
-  const instructorUuid = ids.instructorUuid ?? '';
   const organisationUuid = ids.organisationUuid ?? '';
-  const instructorClassesQuery = useQuery({
-    ...getClassDefinitionsForInstructorOptions({ path: { instructorUuid } }),
-    enabled: scope === 'instructor' && !!instructorUuid,
-    staleTime: STALE_TIMES.entity,
-  });
   const organisationClassesQuery = useQuery({
     ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
     enabled: scope === 'organization' && !!organisationUuid,
@@ -239,7 +236,7 @@ const useScopeMaps = (
   });
   const scopeClassData =
     scope === 'instructor'
-      ? instructorClassesQuery.data?.data
+      ? ids.instructorClassData
       : scope === 'organization'
         ? organisationClassesQuery.data?.data
         : undefined;
@@ -359,23 +356,65 @@ export function CatalogueWorkspace({
 
   const fetchActiveOnly = scope === 'admin' ? false : !includeHidden;
 
+  // The instructor's classes come first: the catalogue search is scoped to their ids.
+  const instructorUuid = profile?.instructor?.uuid ?? '';
+  const instructorClassesQuery = useQuery({
+    ...getClassDefinitionsForInstructorOptions({ path: { instructorUuid } }),
+    enabled: scope === 'instructor' && !!instructorUuid,
+    staleTime: STALE_TIMES.entity,
+  });
+  const instructorClassData = instructorClassesQuery.data?.data;
+  const instructorClassIds = useMemo(() => {
+    const ids = (instructorClassData ?? [])
+      .map(item => item?.class_definition?.uuid)
+      .filter((id): id is string => !!id);
+    return Array.from(new Set(ids)).sort();
+  }, [instructorClassData]);
+  const isInstructorScope = scope === 'instructor';
+
   // Admin reviews the whole unbounded listing; every other scope reads the paged search.
   const listQuery = useQuery({
     ...listCatalogItemsOptions({ query: { active_only: fetchActiveOnly } }),
     enabled: scope === 'admin',
     staleTime: STALE_TIMES.entity,
   });
+  const activeParams: Record<string, string> = fetchActiveOnly ? { active: 'true' } : {};
   const searchQuery = useQuery({
     ...searchCatalogueOptions({
-      query: {
-        searchParams: fetchActiveOnly ? { active: 'true' } : {},
-        pageable: { page: 0, size: CATALOGUE_SEARCH_PAGE_SIZE },
-      },
+      query: isInstructorScope
+        ? {
+            searchParams: {
+              ...activeParams,
+              class_definition_uuid_in: instructorClassIds.join(','),
+            },
+            pageable: {
+              page: 0,
+              size: Math.min(Math.max(instructorClassIds.length, 1), CATALOGUE_SEARCH_PAGE_SIZE),
+            },
+          }
+        : {
+            searchParams: activeParams,
+            pageable: { page: 0, size: CATALOGUE_SEARCH_PAGE_SIZE },
+          },
     }),
-    enabled: scope !== 'admin',
+    enabled: isInstructorScope ? instructorClassIds.length > 0 : scope !== 'admin',
     staleTime: STALE_TIMES.entity,
   });
   const catalogueQuery = scope === 'admin' ? listQuery : searchQuery;
+  // A disabled search is not loading, so the instructor list also waits on its classes.
+  const isListLoading =
+    catalogueQuery.isLoading || (isInstructorScope && instructorClassesQuery.isLoading);
+  const listQueryState = useMemo(() => ({ isLoading: isListLoading }), [isListLoading]);
+  const isRefreshing =
+    catalogueQuery.isFetching || (isInstructorScope && instructorClassesQuery.isFetching);
+  const handleRefresh = () => {
+    if (!isInstructorScope) {
+      catalogueQuery.refetch();
+      return;
+    }
+    instructorClassesQuery.refetch();
+    if (instructorClassIds.length > 0) searchQuery.refetch();
+  };
 
   const catalogueItems = useMemo((): CommerceCatalogueItem[] => {
     if (scope === 'admin') {
@@ -407,7 +446,7 @@ export function CatalogueWorkspace({
   }, [organisation?.uuid, profile?.organisation_affiliations, profile?.organizations]);
 
   const scopeMaps = useScopeMaps(rows, scope, {
-    instructorUuid: profile?.instructor?.uuid,
+    instructorClassData,
     organisationUuid: activeOrgUuid,
   });
 
@@ -575,11 +614,11 @@ export function CatalogueWorkspace({
             <Button
               variant='outline'
               size='icon'
-              onClick={() => catalogueQuery.refetch()}
-              disabled={catalogueQuery.isFetching}
+              onClick={handleRefresh}
+              disabled={isRefreshing}
               className='shrink-0'
             >
-              <RefreshCw className={`h-4 w-4 ${catalogueQuery.isFetching ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
           </div>
           <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
@@ -592,7 +631,7 @@ export function CatalogueWorkspace({
         <CardContent className='flex-1 overflow-hidden pt-0'>
           <ScrollArea className='h-full pr-3'>
             <div className='space-y-2 pb-3'>
-              {catalogueQuery.isLoading ? (
+              {isListLoading ? (
                 Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={`catalogue-skeleton-${index}`}
@@ -709,7 +748,7 @@ export function CatalogueWorkspace({
       {/* Desktop Details Panel */}
       <Card className='hidden min-h-0 flex-1 flex-col lg:flex'>
         <CatalogueDetailsContent
-          catalogueQuery={catalogueQuery}
+          catalogueQuery={listQueryState}
           selectedRow={selectedRow}
           titleMaps={titleMaps}
           handleCopy={handleCopy}
@@ -720,7 +759,7 @@ export function CatalogueWorkspace({
       <CatalogueDetailsSheet
         open={isSheetOpen && Boolean(selectedRow)}
         onOpenChange={setIsSheetOpen}
-        catalogueQuery={catalogueQuery}
+        catalogueQuery={listQueryState}
         selectedRow={selectedRow}
         titleMaps={titleMaps}
         handleCopy={handleCopy}
@@ -1053,6 +1092,9 @@ function CatalogueItemCreatorInfo({
   const courseCreatorUuid = selectedRow.courseCreatorUuid ?? course?.course_creator_uuid;
   const instructorUuid = classDef?.default_instructor_uuid;
   const snapshotCreatorName = selectedRow.creatorName;
+  // The signed-in instructor's own classes render from the loaded profile, not a refetch.
+  const ownInstructor = useUserProfile()?.instructor;
+  const isOwnInstructor = !!instructorUuid && instructorUuid === ownInstructor?.uuid;
 
   // The snapshot already names the creator; fetch the profile only for rows without one.
   const { data: creatorData } = useQuery({
@@ -1067,12 +1109,13 @@ function CatalogueItemCreatorInfo({
     ...getInstructorByUuidOptions({
       path: { uuid: instructorUuid ?? '' },
     }),
-    enabled: Boolean(instructorUuid),
+    enabled: Boolean(instructorUuid) && !isOwnInstructor,
+    staleTime: STALE_TIMES.entity,
   });
 
   const creator = snapshotCreatorName ? null : extractEntity<CourseCreator>(creatorData);
   const creatorName = snapshotCreatorName ?? creator?.full_name;
-  const instructor = extractEntity<Instructor>(instructorData);
+  const instructor = isOwnInstructor ? ownInstructor : extractEntity<Instructor>(instructorData);
 
   if (!creatorName && !instructor) return null;
 
