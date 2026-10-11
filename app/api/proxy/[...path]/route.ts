@@ -14,6 +14,13 @@ import {
 } from '@/lib/api/private-bff-cache';
 import { getApiReadDispatcher } from '@/lib/server/api-dispatcher';
 import { hedgedRead } from '@/lib/server/hedged-read';
+import {
+  etagMatches,
+  getPublicFileCache,
+  isPublicFileCacheable,
+  type PublicFileEntry,
+  publicFileCacheKey,
+} from '@/lib/server/public-file-cache';
 import { getServerApiBaseUrl } from '@/services/api/base-url';
 import { auth } from '@/services/auth';
 import { ACTING_DOMAIN_HEADER } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -232,14 +239,48 @@ function dropVary(headers: Headers, values: string[]) {
   }
 }
 
+const PUBLIC_FILE_CONDITIONAL_HEADERS = ['if-none-match', 'if-modified-since', 'range', 'if-range'];
+
+function buildPublicFileEntryResponse(request: NextRequest, entry: PublicFileEntry, hit: boolean) {
+  const headers = new Headers();
+  headers.set('cache-control', getPublicFileCacheControl(entry.status));
+  headers.set('x-bff-cache', hit ? 'PUBLIC-HIT' : 'PUBLIC');
+  if (entry.etag) headers.set('etag', entry.etag);
+  if (entry.lastModified) headers.set('last-modified', entry.lastModified);
+  if (entry.status === 200 && etagMatches(request.headers.get('if-none-match'), entry.etag)) {
+    return new NextResponse(null, { status: 304, headers });
+  }
+  if (entry.contentType) headers.set('content-type', entry.contentType);
+  if (entry.contentDisposition) headers.set('content-disposition', entry.contentDisposition);
+  headers.set('content-length', String(entry.body.byteLength));
+  return new NextResponse(entry.body.byteLength > 0 ? entry.body : null, {
+    status: entry.status,
+    headers,
+  });
+}
+
 async function proxyPublicFile(request: NextRequest, upstreamUrl: URL) {
   const headers = pickForwardHeaders(request.headers, FORWARD_HEADER_ALLOWLIST.publicFile);
 
-  const upstreamResponse = await fetchUpstream(
-    upstreamUrl,
-    { method: request.method, headers, redirect: 'manual' },
-    request.signal
-  );
+  let upstreamResponse: Response;
+  if (isPublicFileCacheable(request.method, request.headers)) {
+    // One shared whole-file fetch per key: drop the caller's conditionals, answer them here.
+    const sharedHeaders = new Headers(headers);
+    for (const name of PUBLIC_FILE_CONDITIONAL_HEADERS) sharedHeaders.delete(name);
+    const loaded = await getPublicFileCache().load(publicFileCacheKey(upstreamUrl), () =>
+      fetchUpstream(upstreamUrl, { method: 'GET', headers: sharedHeaders, redirect: 'manual' })
+    );
+    if ('entry' in loaded) {
+      return buildPublicFileEntryResponse(request, loaded.entry, loaded.hit);
+    }
+    upstreamResponse = loaded.response;
+  } else {
+    upstreamResponse = await fetchUpstream(
+      upstreamUrl,
+      { method: request.method, headers, redirect: 'manual' },
+      request.signal
+    );
+  }
   const responseHeaders = new Headers(upstreamResponse.headers);
   sanitizeHeaders(responseHeaders);
   stripUpstreamSessionHeaders(responseHeaders);
