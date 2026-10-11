@@ -1,5 +1,6 @@
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { logger } from '@/lib/logger';
 import { STALE_TIMES } from '@/lib/query-client';
 
 import type {
@@ -123,13 +124,19 @@ function useStudentClassDefinitions(
     [classDefinitionsQuery.classDefinitionMap]
   );
 
-  /**
-   * Class schedules: one batch call per 100 classes. Class enrolments are grouped through
-   * their sessions, so the schedules load for that section too.
-   */
+  // One /classes/schedules call per 100 classes; also feeds classEnrollments grouping.
   const scheduleClassUuids =
     wants('schedules') || wants('classEnrollments') ? classDefinitionUuids : NO_IDS;
-  const classIdChunks = useMemo(() => chunkIds(scheduleClassUuids), [scheduleClassUuids]);
+  const classIdChunks = useMemo(() => {
+    const chunks = chunkIds(scheduleClassUuids);
+    if (chunks.length > MAX_CLASS_CHUNKS) {
+      logger.warn('Student classes: class batch truncated', {
+        classes: scheduleClassUuids.length,
+        kept: MAX_CLASS_CHUNKS * MAX_CLASSES_PER_CALL,
+      });
+    }
+    return chunks;
+  }, [scheduleClassUuids]);
   const scheduleQueries = useQueries({
     queries: classIdChunks.slice(0, MAX_CLASS_CHUNKS).map(classUuids => ({
       ...getClassSchedulesOptions({ query: { class_uuids: classUuids } }),
@@ -336,6 +343,10 @@ function useStudentClassDefinitions(
   const classEnrollmentMap = new Map<string, Enrollment[]>();
 
   classEnrollmentQueries.forEach(query => {
+    const totalPages = query.data?.data?.metadata?.totalPages ?? 1;
+    if (totalPages > 1) {
+      logger.warn('Student classes: enrolment search truncated to one page', { totalPages });
+    }
     (query.data?.data?.content ?? []).forEach(enrollment => {
       const classUuid = instanceClassMap.get(enrollment.scheduled_instance_uuid);
 
