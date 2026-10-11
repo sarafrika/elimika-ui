@@ -1,17 +1,23 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { logger } from '@/lib/logger';
 import { STALE_TIMES } from '@/lib/query-client';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import {
   getClassDefinitionsForCourseOptions,
   getClassRatingSummaryOptions,
+  getClassSchedulesOptions,
   getCourseByUuidOptions,
   getEnrollmentsForClassOptions,
 } from '../services/client/@tanstack/react-query.gen';
-import type { ClassDefinition, Course } from '../services/client/types.gen';
+import type { ClassDefinition, Course, ScheduledInstance } from '../services/client/types.gen';
 import type { BundledClass } from '../src/features/dashboard/courses/types';
 import { ACTIVE_ENROLLMENT_STATUSES } from '../src/features/dashboard/instructor-overview/overview-enrollments';
 import { toCardInstructor, toCount, useClassListingSummaries } from './use-class-listing-summaries';
 import { useClassSchedule } from './use-class-schedule';
+
+// Backend cap on class_uuids for GET /classes/schedules (ClassScheduleBatchService.MAX_BATCH_SIZE).
+const MAX_CLASSES_PER_CALL = 100;
 
 type StudentLike =
   | {
@@ -20,11 +26,13 @@ type StudentLike =
   | null
   | undefined;
 
-// Seat counts, instructors and catalogue rows come from batched lookups and listings load no
-// schedules (each card fetches its own on demand). `onlyClassUuid` (the enrolment page) adds that
-// class's full schedule, rating and enrolment list.
+// Seat counts, instructors and catalogue rows come from batched lookups. Learner listings batch
+// schedules for classes with no end date in one call; `onlyClassUuid` (the enrolment page) adds
+// that class's full schedule, rating and enrolment list.
 function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyClassUuid?: string) {
   const studentUuid = student?.uuid ?? undefined;
+  const { activeDomain } = useUserDomain();
+  const isLearnerDomain = activeDomain === 'student' || activeDomain === 'parent';
 
   const { data, isLoading, isError, isFetching } = useQuery({
     ...getClassDefinitionsForCourseOptions({ path: { courseUuid: courseUuid ?? '' } }),
@@ -45,6 +53,45 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
         : classes.map(cls => cls.uuid).filter((uuid): uuid is string => !!uuid),
     [classes, onlyClassUuid]
   );
+
+  // End state gates enrolment for learners, so undated classes need their schedule up front.
+  const undatedClassUuids = useMemo(() => {
+    if (onlyClassUuid || !isLearnerDomain) return [];
+    const undated = new Set(
+      classes.filter(cls => !cls.academic_period_end_date).map(cls => cls.uuid)
+    );
+    return classUuids.filter(uuid => undated.has(uuid)).sort();
+  }, [classUuids, classes, isLearnerDomain, onlyClassUuid]);
+  const scheduleIds = useMemo(
+    () => undatedClassUuids.slice(0, MAX_CLASSES_PER_CALL),
+    [undatedClassUuids]
+  );
+  useEffect(() => {
+    if (undatedClassUuids.length > MAX_CLASSES_PER_CALL) {
+      logger.warn('Available classes: schedule batch truncated', {
+        classes: undatedClassUuids.length,
+        kept: MAX_CLASSES_PER_CALL,
+      });
+    }
+  }, [undatedClassUuids.length]);
+  const schedulesQuery = useQuery({
+    ...getClassSchedulesOptions({ query: { class_uuids: scheduleIds } }),
+    enabled: scheduleIds.length > 0,
+    staleTime: STALE_TIMES.live,
+  });
+  const batchedSchedules = useMemo(() => {
+    const map = new Map<string, ScheduledInstance[]>();
+    // A failed batch settles as empty, as a failed per-card fetch did, so enrolment is not stuck.
+    if (!schedulesQuery.isSuccess && !schedulesQuery.isError) return map;
+    for (const uuid of scheduleIds) map.set(uuid, []);
+    for (const instance of schedulesQuery.data?.data ?? []) {
+      const list = instance.class_definition_uuid
+        ? map.get(instance.class_definition_uuid)
+        : undefined;
+      list?.push(instance);
+    }
+    return map;
+  }, [scheduleIds, schedulesQuery.data, schedulesQuery.isError, schedulesQuery.isSuccess]);
 
   const courseQuery = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseUuid ?? '' } }),
@@ -96,13 +143,18 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
       classes.map(cls => {
         const isDetail = !!cls.uuid && cls.uuid === onlyClassUuid;
         const summary = cls.uuid ? summaryMap[cls.uuid] : undefined;
+        const batched = cls.uuid ? batchedSchedules.get(cls.uuid) : undefined;
         return {
           ...cls,
           course: cls.course_uuid && cls.course_uuid === courseUuid ? course : null,
           instructor: toCardInstructor(summary, cls.default_instructor_uuid),
-          schedule: isDetail ? detailSchedule.schedule : [],
-          scheduleLoaded: isDetail && detailSchedule.isLoaded,
-          sessionCount: isDetail && detailSchedule.isLoaded ? detailSchedule.sessionCount : null,
+          schedule: isDetail ? detailSchedule.schedule : (batched ?? []),
+          scheduleLoaded: isDetail ? detailSchedule.isLoaded : batched !== undefined,
+          sessionCount: isDetail
+            ? detailSchedule.isLoaded
+              ? detailSchedule.sessionCount
+              : null
+            : (batched?.length ?? null),
           enrollments: isDetail ? (classEnrollments ?? []) : [],
           catalogue: cls.uuid ? (catalogueMap[cls.uuid] ?? null) : null,
           classRating: isDetail ? classRating : null,
@@ -115,6 +167,7 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
         };
       }),
     [
+      batchedSchedules,
       catalogueMap,
       classes,
       classEnrollments,
