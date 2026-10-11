@@ -2,6 +2,7 @@
 
 import { useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import useBundledClassInfo from '@/hooks/use-course-classes';
+import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { SearchUnavailable } from '@/components/search/search-unavailable';
 import { isSearchUnavailable } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
@@ -47,9 +48,9 @@ export default function AvailableClassesPage({
   const [courseDetailsOpen, setCourseDetailsOpen] = useState(false);
   const [classDetailsOpen, setClassDetailsOpen] = useState(false);
 
-
-
   const { classes = [], loading } = useBundledClassInfo(courseId, student);
+  // Same args as each card, so the cards join this wave-1 lesson request via one query key.
+  useCourseLessonsWithContent({ courseUuid: courseId, contentEnabled: false });
 
   const course = classes[0]?.course;
 
