@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { onboardingPath } from '@/src/features/onboarding/lib/user-onboarding';
 import { HelpSection, SkillsFundSection } from '@/src/features/marketing/sections/PublicSections';
 
 const featureCards = [
@@ -92,8 +93,8 @@ function Hero() {
           </p>
         </div>
         <div className='flex flex-wrap gap-3'>
-          <Button size='lg' className='rounded-full px-6'>
-            Create Your Skills Wallet
+          <Button size='lg' className='rounded-full px-6' asChild>
+            <Link href={onboardingPath()}>Create Your Skills Wallet</Link>
           </Button>
           <Button variant='outline' size='lg' className='rounded-full px-6' asChild>
             <Link href='/courses'>Browse Courses</Link>
@@ -202,8 +203,8 @@ function Employers() {
           and employees to spend on approved courses or upskilling programs.
         </p>
         <div className='flex flex-wrap gap-3'>
-          <Button size='lg' className='rounded-full px-6'>
-            Search Talent
+          <Button size='lg' className='rounded-full px-6' asChild>
+            <Link href={onboardingPath('organisation_user')}>Search Talent</Link>
           </Button>
           <Button size='lg' variant='outline' className='rounded-full px-6'>
             Fund Students
@@ -278,8 +279,8 @@ function FinalCta() {
         <h3 className='text-foreground text-3xl font-semibold sm:text-4xl'>
           Join thousands building their future with Skills Wallet today.
         </h3>
-        <Button size='lg' className='rounded-full px-8'>
-          Sign Up Now
+        <Button size='lg' className='rounded-full px-8' asChild>
+          <Link href={onboardingPath()}>Sign Up Now</Link>
         </Button>
       </div>
     </section>
