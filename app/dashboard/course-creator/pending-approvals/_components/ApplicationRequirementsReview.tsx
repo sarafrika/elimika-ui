@@ -1,20 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Check, CircleAlert, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
-import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
 import { offeredMethods } from '@/lib/rate-card';
-import { OfferedVenuesList } from '@/src/features/rate-card/components/application-sections';
+import {
+  ApplicationAgeGroups,
+  OfferedVenuesList,
+} from '@/src/features/rate-card/components/application-sections';
 import { useDecideApplication } from '@/src/features/rate-card/components/creator-application-review';
 import type { TrainingApplicationEntry } from '@/src/features/rate-card/hooks/use-training-application-list';
 import { RequirementReviewCard } from './RequirementReviewCard';
-import { SkillsWalletReview } from './SkillsWalletReview';
 import {
   emptyReviewDraft,
   parseReviewDraft,
@@ -22,6 +24,7 @@ import {
   reviewDecisionNotes,
   reviewSummary,
 } from './requirement-review';
+import { SkillsWalletReview } from './SkillsWalletReview';
 
 export function ApplicationRequirementsReview({
   entry,
@@ -153,15 +156,24 @@ export function ApplicationRequirementsReview({
                 )}
               </div>
             )}
-            {item.id === 'target-age-group' && (
-              <p className='text-muted-foreground text-sm'>
-                No target age group was included in this application.
-              </p>
-            )}
+            {item.id === 'age-groups' &&
+              (applicantType === 'instructor' ? (
+                <ApplicationAgeGroups
+                  kind={entry.kind}
+                  parentUuid={entry.parentUuid}
+                  groups={application.age_groups}
+                />
+              ) : (
+                <p className='text-muted-foreground text-sm'>
+                  Organisations don’t send age groups with their applications.
+                </p>
+              ))}
             {item.id === 'lesson-plan' && (
               <div className='space-y-3'>
                 <p className='text-muted-foreground text-sm'>
-                  No lesson plan was included in this application.
+                  {application.age_groups?.length
+                    ? 'Each age group’s hours per lesson are listed under Age groups.'
+                    : 'No lesson plan was included in this application.'}
                 </p>
                 {application.application_notes && (
                   <div className='bg-card rounded-md border p-3 text-sm'>

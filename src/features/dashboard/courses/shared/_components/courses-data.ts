@@ -12,6 +12,7 @@ import {
 import type { PrefetchQuery } from '@/components/data/intent-link';
 import type { UserDomain } from '@/lib/types';
 import type { CourseTrainingRateCard } from '@/services/client';
+import { instructorApplyToTrainHref } from '@/src/features/apply-to-train/links';
 export type CoursesCatalogTab = 'programs' | 'short-courses' | 'all-courses' | 'my-courses';
 
 export type CoursesFilterSection = {
@@ -148,7 +149,9 @@ export function getInstructorHref(domain: UserDomain, uuid: string) {
   return `${domainBasePaths[domain]}/instructor?courseId=${uuid}`;
 }
 
-export function getApplyToTrainHref(kind: 'course' | 'program', uuid: string) {
+/** Instructors apply through their own flow; other domains keep the shared wizard. */
+export function getApplyToTrainHref(kind: 'course' | 'program', uuid: string, domain?: UserDomain) {
+  if (domain === 'instructor') return instructorApplyToTrainHref({ kind, uuid });
   return `/dashboard/apply-to-train/${uuid}?kind=${kind}`;
 }
 

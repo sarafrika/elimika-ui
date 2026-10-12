@@ -22,7 +22,11 @@ import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/das
 import { useTrainingApplication } from '../hooks/use-training-application';
 import type { TrainingApplicationEntry } from '../hooks/use-training-application-list';
 import type { TrainingApplicationKind } from '../types';
-import { OfferedVenuesList, RequirementAnswersTable } from './application-sections';
+import {
+  ApplicationAgeGroups,
+  OfferedVenuesList,
+  RequirementAnswersTable,
+} from './application-sections';
 import { ApplicationStatusBadge } from './application-status-badge';
 
 type Decision = 'approve' | 'reject' | 'revoke';
@@ -161,6 +165,17 @@ export function CreatorApplicationReview({
           <section className='space-y-2'>
             <h3 className='text-foreground text-sm font-semibold'>Venues offered</h3>
             <OfferedVenuesList venues={application.offered_venues} />
+          </section>
+        ) : null}
+
+        {application.applicant_type === 'instructor' ? (
+          <section className='space-y-2'>
+            <h3 className='text-foreground text-sm font-semibold'>Age groups</h3>
+            <ApplicationAgeGroups
+              kind={kind}
+              parentUuid={entry.parentUuid}
+              groups={application.age_groups}
+            />
           </section>
         ) : null}
 

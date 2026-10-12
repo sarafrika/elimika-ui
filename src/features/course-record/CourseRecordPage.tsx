@@ -63,6 +63,7 @@ import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { LessonContent } from '@/services/client/types.gen';
+import { instructorApplyToTrainHref } from '@/src/features/apply-to-train/links';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
   absoluteUrl,
@@ -152,6 +153,12 @@ const COURSE_BUILDER_PATH = '/dashboard/course-creator/courses/create-course';
 const MODERATION_PATH = '/dashboard/admin/courses';
 /** The five-step training application, role-independent by design. */
 const APPLY_TO_TRAIN_PATH = '/dashboard/apply-to-train';
+
+/** Instructors apply through their own flow; everyone else uses the shared wizard. */
+function applyToTrainHref(segment: RoleSegment | null, courseUuid: string): string {
+  if (segment === 'instructor') return instructorApplyToTrainHref({ kind: 'course', uuid: courseUuid });
+  return `${APPLY_TO_TRAIN_PATH}/${encodeURIComponent(courseUuid)}?kind=course`;
+}
 /** Where "Continue learning" goes, matching the learner's own course cards. */
 const LEARNING_HUB_CLASSES_HREF = '/dashboard/student/learning-hub/classes';
 const CREATOR_APPLICATIONS_HREF = '/dashboard/course-creator/training-applications';
@@ -448,7 +455,7 @@ export function CourseRecordPage({
   const resolvedEnrolHref = enrolHref ?? (onEnrol ? undefined : defaultClassesHref);
   const resolvedCompareHref = compareHref ?? (onCompareClasses ? undefined : defaultClassesHref);
 
-  const defaultPrimaryHref = primaryActionHref(access, courseUuid, defaultClassesHref);
+  const defaultPrimaryHref = primaryActionHref(access, courseUuid, defaultClassesHref, segment);
   const resolvedPrimaryAction =
     primaryAction ??
     (onPrimaryAction || !defaultPrimaryHref ? undefined : (
@@ -471,7 +478,7 @@ export function CourseRecordPage({
         if (action.label === COURSE_EXPORT_ACTION_LABEL) {
           return onExport ? [{ ...action, onSelect: onExport }] : [];
         }
-        const href = railActionHref(action.label, access, courseUuid, defaultClassesHref);
+        const href = railActionHref(action.label, access, courseUuid, defaultClassesHref, segment);
         return [href ? { ...action, href } : { ...action }];
       }),
     [capability.railActions, access, courseUuid, defaultClassesHref, onExport]
@@ -775,7 +782,8 @@ function classesListHref(segment: RoleSegment | null, courseUuid: string): strin
 function primaryActionHref(
   access: CourseAccess,
   courseUuid: string,
-  classesHref: string | undefined
+  classesHref: string | undefined,
+  segment: RoleSegment | null
 ): string | undefined {
   if (!courseUuid) return undefined;
   const uuid = encodeURIComponent(courseUuid);
@@ -786,7 +794,7 @@ function primaryActionHref(
     case 'admin':
       return `${MODERATION_PATH}/${uuid}`;
     case 'applicant':
-      return `${APPLY_TO_TRAIN_PATH}/${uuid}?kind=course`;
+      return applyToTrainHref(segment, courseUuid);
     case 'prospect':
       return classesHref;
     case 'student':
@@ -810,7 +818,8 @@ function railActionHref(
   label: string,
   access: CourseAccess,
   courseUuid: string,
-  classesHref: string | undefined
+  classesHref: string | undefined,
+  segment: RoleSegment | null
 ): string | undefined {
   const uuid = encodeURIComponent(courseUuid);
 
@@ -828,7 +837,7 @@ function railActionHref(
         ? `${INSTRUCTOR_RATE_CARD_HREF}?kind=course&parent=${uuid}`
         : INSTRUCTOR_RATE_CARD_HREF;
     case 'Start a training application':
-      return courseUuid ? `${APPLY_TO_TRAIN_PATH}/${uuid}?kind=course` : undefined;
+      return courseUuid ? applyToTrainHref(segment, courseUuid) : undefined;
     case 'Compare the {openClasses} open classes':
       return classesHref;
     case 'Continue where I left off':

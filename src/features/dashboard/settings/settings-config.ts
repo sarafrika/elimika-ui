@@ -145,12 +145,14 @@ export function getSettingsVariantConfig(
     ],
     instructor: [
       { value: 'profile', label: 'Profile' },
+      { value: 'age-groups', label: 'Age groups' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },
     ],
     organisation: [
       { value: 'profile', label: 'Institution Profile' },
       { value: 'groups', label: 'Student Groups' },
+      { value: 'age-groups', label: 'Age groups' },
       { value: 'roles', label: 'Roles & Permissions' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },

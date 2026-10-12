@@ -1,4 +1,5 @@
 import type { ClassMarketplaceJob } from '@/services/client/types.gen';
+import { instructorApplyToTrainHref } from '@/src/features/apply-to-train/links';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 
 import type { ReadinessCtaKind } from './job-readiness';
@@ -15,12 +16,11 @@ export function rateCardHref(job: ClassMarketplaceJob) {
   return dashboardUrl('instructor', `rate-card?${params.toString()}`);
 }
 
-/** The instructor's apply-to-train wizard for the job's course or program. */
+/** The instructor's apply-to-train flow, opened on the job's course or program. */
 export function applyToTrainHref(job: ClassMarketplaceJob) {
   const parent = job.program_uuid ?? job.course_uuid;
-  if (!parent) return dashboardUrl('instructor', 'courses');
-  const query = job.program_uuid ? '?kind=program' : '';
-  return dashboardUrl('instructor', `courses/apply/${encodeURIComponent(parent)}${query}`);
+  if (!parent) return instructorApplyToTrainHref();
+  return instructorApplyToTrainHref({ kind: contentKind(job), uuid: parent });
 }
 
 export const verificationHref = () => dashboardUrl('instructor', 'profile');
