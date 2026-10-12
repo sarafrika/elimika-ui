@@ -20,15 +20,15 @@ const personal = {
 };
 
 test('registration sends the selected domain, accepted terms and a date-only DOB', () => {
-  const body = JSON.parse(JSON.stringify(buildRegistrationRequest(personal, '')));
+  const body = JSON.parse(JSON.stringify(buildRegistrationRequest(personal, 'instructor', '')));
   assert.deepEqual(body, {
     ...personal,
     first_name: 'Amina',
     last_name: 'Otieno',
-    domain: 'course_creator',
+    domain: 'instructor',
   });
   assert.equal('captcha_token' in body, false);
-  assert.equal(buildRegistrationRequest(personal, ' token ').captcha_token, 'token');
+  assert.equal(buildRegistrationRequest(personal, 'student', ' token ').captcha_token, 'token');
 });
 
 test('registration rejects unaccepted terms, invalid dates and incomplete personal details', () => {
