@@ -4,10 +4,10 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 
 import { getErrorMessage } from '@/lib/error-utils';
-import { moderateOrganisation, type SchemaEnum3Writable } from '@/services/client';
+import { type ModerateOrganisationData, moderateOrganisation } from '@/services/client';
 import { invalidateAfterVerification } from '../lib/admin-queries';
 
-export type OrganisationDecision = SchemaEnum3Writable;
+export type OrganisationDecision = ModerateOrganisationData['query']['action'];
 
 interface ModerateOrganisationVariables {
   uuid: string;

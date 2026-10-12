@@ -62,7 +62,7 @@ function SavedCoursePassMark({ courseUuid }: { courseUuid: string }) {
         path: { uuid: courseUuid },
         body: { ...course, pass_mark: toPassMark(values.pass_mark) },
         bodySerializer: body => {
-          const { active, is_published, is_draft, ...content } = body;
+          const { active, is_published, is_draft, ...content } = body as Record<string, unknown>;
           return JSON.stringify(content);
         },
       });

@@ -478,8 +478,6 @@ const RubricManager: React.FC = () => {
     title: rubric.title,
     description: rubric.description,
     rubric_type: rubric.rubric_type,
-    rubric_category: rubric.rubric_category,
-    assessment_scope: rubric.assessment_scope,
     course_creator_uuid: creatorUuid || '',
     is_public: rubric.is_public,
     is_published: rubric.is_published,
@@ -631,9 +629,7 @@ const RubricManager: React.FC = () => {
             body: {
               rubric_uuid: newRubricUuid,
               component_name: criterion.component_name,
-              criteria_number: criterion.criteria_number,
               description: criterion.description || '',
-              criteria_category: criterion.criteria_category || '',
               display_order: index + 1,
             } satisfies CreateRubricCriterionBody,
             path: { rubricUuid: newRubricUuid },
@@ -679,8 +675,6 @@ const RubricManager: React.FC = () => {
         title: currentRubric.title,
         description: currentRubric.description,
         rubric_type: currentRubric.rubric_type,
-        rubric_category: currentRubric.rubric_category,
-        assessment_scope: currentRubric.assessment_scope,
         total_weight: Number(currentRubric.total_weight),
         max_score: Number(currentRubric.max_score),
         min_passing_score: Number(currentRubric.min_passing_score),
@@ -750,9 +744,7 @@ const RubricManager: React.FC = () => {
             const payload: UpdateRubricCriterionBody = {
               rubric_uuid: currentRubric.uuid,
               component_name: criterion.component_name,
-              criteria_number: criterion.criteria_number,
               description: criterion.description || '',
-              criteria_category: criterion.criteria_category || '',
               display_order: criterion.display_order,
             };
             if (!criterion.uuid) {

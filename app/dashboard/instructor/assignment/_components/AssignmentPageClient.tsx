@@ -456,9 +456,12 @@ export function AssignmentPageClient() {
     const totalSubmissions = taskCards.reduce((sum, item) => sum + (item.submissionCount ?? 0), 0);
     const overdueTasks = taskCards.filter(item => item.status === 'overdue').length;
     const pendingGrading = pendingGradingData?.data?.length ?? 0;
+    // Counts arrive as bigint from the response transformer.
     const analyticsValues = analyticsQuery.flatMap(query =>
-      Object.values(query.data?.data ?? {}).filter(value => typeof value === 'number')
-    ) as number[];
+      Object.values(query.data?.data ?? {})
+        .filter(value => typeof value === 'number' || typeof value === 'bigint')
+        .map(value => Number(value))
+    );
     const averageSignal = analyticsValues.length
       ? `${Math.round(analyticsValues.reduce((sum, value) => sum + value, 0) / analyticsValues.length)}`
       : '0';

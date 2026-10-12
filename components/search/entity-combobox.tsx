@@ -31,9 +31,14 @@ export type EntityOption = {
   disabled?: boolean;
 };
 
-type EntityQueryOptions<TData, TKey extends QueryKey> = UseQueryOptions<TData, Error, TData, TKey>;
+type EntityQueryOptions<TData, TKey extends QueryKey, TError> = UseQueryOptions<
+  TData,
+  TError,
+  TData,
+  TKey
+>;
 
-export type EntityComboboxProps<TData, TKey extends QueryKey = QueryKey> = {
+export type EntityComboboxProps<TData, TKey extends QueryKey = QueryKey, TError = Error> = {
   /** Heading for the server results when other groups are shown alongside. */
   groupHeading?: string;
   /** Selected id, or empty. */
@@ -43,7 +48,7 @@ export type EntityComboboxProps<TData, TKey extends QueryKey = QueryKey> = {
    * The generated `*Options(...)` for one page of candidates. `q` is the debounced term
    * (2+ characters) or undefined; send it as `q` where the endpoint supports it.
    */
-  queryOptions: (q: string | undefined) => EntityQueryOptions<TData, TKey>;
+  queryOptions: (q: string | undefined) => EntityQueryOptions<TData, TKey, TError>;
   /** Pull the options out of a response. */
   toOptions: (data: TData) => EntityOption[];
   /** Label for the selected id when it is not in the current page (e.g. from a lookup). */
@@ -74,7 +79,7 @@ export type EntityComboboxProps<TData, TKey extends QueryKey = QueryKey> = {
  * previous page while a new term loads, and falls back to the unfiltered page (with a
  * notice) when the search index answers 503.
  */
-export function EntityCombobox<TData, TKey extends QueryKey = QueryKey>({
+export function EntityCombobox<TData, TKey extends QueryKey = QueryKey, TError = Error>({
   value,
   onChange,
   queryOptions,
@@ -89,7 +94,7 @@ export function EntityCombobox<TData, TKey extends QueryKey = QueryKey>({
   portalled = true,
   className,
   'aria-label': ariaLabel,
-}: EntityComboboxProps<TData, TKey>) {
+}: EntityComboboxProps<TData, TKey, TError>) {
   const [open, setOpen] = useState(false);
   const search = useSearchQuery();
   const query = useQuery({

@@ -19,8 +19,7 @@ export default defineConfig({
     watch: false,
   },
   output: {
-    format: 'prettier',
-    lint: 'eslint',
+    postProcess: ['prettier'],
     path: './services/client',
   },
   parser: {
@@ -74,7 +73,7 @@ export default defineConfig({
     },
     {
       name: '@hey-api/client-next',
-      runtimeConfigPath: './hey-api.ts',
+      runtimeConfigPath: './hey-api',
     },
   ],
 });

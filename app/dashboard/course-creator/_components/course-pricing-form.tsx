@@ -30,10 +30,8 @@ import {
   getCourseByUuidOptions,
   getCourseByUuidQueryKey,
   publishCourseMutation,
-  publishCourseQueryKey,
   searchCoursesQueryKey,
   unpublishCourseMutation,
-  unpublishCourseQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateContentModerationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -211,11 +209,6 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
         await Promise.all([
           queryClient.invalidateQueries({
-            queryKey: publishCourseQueryKey({
-              path: { uuid: targetCourseId },
-            }),
-          }),
-          queryClient.invalidateQueries({
             queryKey: getCourseByUuidQueryKey({
               path: { uuid: targetCourseId },
             }),
@@ -249,12 +242,6 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
           {
             async onSuccess(data) {
               toast.success(data?.message || 'Course unpublished successfully');
-              queryClient.invalidateQueries({
-                queryKey: unpublishCourseQueryKey({ path: { uuid: targetCourseId } }),
-              });
-              queryClient.invalidateQueries({
-                queryKey: publishCourseQueryKey({ path: { uuid: targetCourseId } }),
-              });
               queryClient.invalidateQueries({
                 queryKey: getCourseByUuidQueryKey({ path: { uuid: targetCourseId } }),
               });

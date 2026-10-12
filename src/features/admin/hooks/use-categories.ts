@@ -54,7 +54,7 @@ export function useSubCategories(parentUuid: string | undefined, enabled: boolea
 }
 
 /** Folds the later category pages into one list; module-level so its result is memoised. */
-function combineCategoryPages(results: UseQueryResult<unknown>[]) {
+function combineCategoryPages(results: UseQueryResult<unknown, unknown>[]) {
   return {
     items: results.flatMap(result => extractPage<Category>(result.data).items),
     isLoading: results.some(result => result.isLoading),

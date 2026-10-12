@@ -48,6 +48,7 @@ import {
   updateUser,
   uploadProfileImage,
 } from '../../../../../../services/client';
+import type { UpdateUserData, User } from '../../../../../../services/client';
 
 const generalProfileSchema = z.object({
   user: zUser
@@ -202,18 +203,19 @@ export default function CourseCreatorProfile() {
                   body: updatedProfileData.courseCreator,
                 });
 
+          const userBody: UpdateUserData['body'] & Pick<User, 'profile_image_url'> = {
+            ...updatedProfileData.user,
+            profile_image_url:
+              uploadProfilePicResp && !uploadProfilePicResp.error
+                ? uploadProfilePicResp.data?.profile_image_url
+                : user?.profile_image_url,
+          };
           const response = await Promise.all([
             updateUser({
               path: {
                 uuid: user?.uuid!,
               },
-              body: {
-                ...updatedProfileData.user,
-                profile_image_url:
-                  uploadProfilePicResp && !uploadProfilePicResp.error
-                    ? uploadProfilePicResp.data?.profile_image_url
-                    : user?.profile_image_url,
-              },
+              body: userBody,
             }),
             manageCourseCreator(),
           ]);

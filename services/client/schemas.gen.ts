@@ -1442,12 +1442,6 @@ export const RubricCriteriaSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    is_primary_criteria: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
-      example: true,
-      readOnly: true,
-    },
     criteria_category: {
       type: 'string',
       description: '**[READ-ONLY]** Category classification of the assessment criteria.',
@@ -1464,6 +1458,12 @@ export const RubricCriteriaSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted criteria number for display in assessment interface.',
       example: 'Criteria 1',
+      readOnly: true,
+    },
+    is_primary_criteria: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is a primary assessment criteria.',
+      example: true,
       readOnly: true,
     },
   },
@@ -1549,19 +1549,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -1993,12 +1993,6 @@ export const QuizQuestionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of the points value.',
-      example: '2.0 points',
-      readOnly: true,
-    },
     requires_options: {
       type: 'boolean',
       description:
@@ -2010,6 +2004,12 @@ export const QuizQuestionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable category of the question type.',
       example: 'Multiple Choice Question',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of the points value.',
+      example: '2.0 points',
       readOnly: true,
     },
     question_number: {
@@ -3766,9 +3766,8 @@ export const ApiResponseOrganisationResourceSchema = {
 
 export const ResourceAvailabilityRuleSchema = {
   type: 'object',
-  description: `Calendar rule for a resource. Recurring rules use start_time/end_time (with optional
-days_of_week and effective dates); one-off BLACKOUT rules use specific_start/specific_end.
-A resource with no OPEN_HOURS rules is open at all times.`,
+  description:
+    'Calendar rule for a resource. Recurring rules use start_time/end_time (with optional\ndays_of_week and effective dates); one-off BLACKOUT rules use specific_start/specific_end.\nA resource with no OPEN_HOURS rules is open at all times.',
   properties: {
     uuid: {
       type: 'string',
@@ -4851,17 +4850,17 @@ export const InstructorSchema = {
       example: 12,
       readOnly: true,
     },
-    has_location_coordinates: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
-      example: true,
-      readOnly: true,
-    },
     is_profile_complete: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the instructor profile is considered complete. Requires bio and professional headline.',
+      example: true,
+      readOnly: true,
+    },
+    has_location_coordinates: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
       example: true,
       readOnly: true,
     },
@@ -5148,10 +5147,11 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: '4 years, 3 months',
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
+      example: true,
       readOnly: true,
     },
     membership_duration_months: {
@@ -5165,11 +5165,10 @@ export const InstructorProfessionalMembershipSchema = {
     membership_status: {
       $ref: '#/components/schemas/MembershipStatusEnum',
     },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the membership record has all essential information.',
-      example: true,
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: '4 years, 3 months',
       readOnly: true,
     },
     membership_period: {
@@ -5360,18 +5359,11 @@ export const InstructorExperienceSchema = {
       example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
-    duration_in_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
+    is_complete: {
+      type: 'boolean',
       description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: '5 years, 5 months',
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
       readOnly: true,
     },
     employment_period: {
@@ -5409,11 +5401,18 @@ export const InstructorExperienceSchema = {
       example: 5.46,
       readOnly: true,
     },
-    is_complete: {
-      type: 'boolean',
+    duration_in_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
       description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: '5 years, 5 months',
       readOnly: true,
     },
   },
@@ -5562,23 +5561,6 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    years_since_completion: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
-      example: 4,
-      readOnly: true,
-    },
-    education_level: {
-      $ref: '#/components/schemas/EducationLevelEnum',
-    },
-    has_certificate_number: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
-      example: true,
-      readOnly: true,
-    },
     is_complete: {
       type: 'boolean',
       description:
@@ -5597,6 +5579,23 @@ export const InstructorEducationSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
       example: '2020 - University of Nairobi',
+      readOnly: true,
+    },
+    years_since_completion: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
+      example: 4,
+      readOnly: true,
+    },
+    education_level: {
+      $ref: '#/components/schemas/EducationLevelEnum',
+    },
+    has_certificate_number: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
+      example: true,
       readOnly: true,
     },
   },
@@ -7674,16 +7673,16 @@ export const LessonContentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    file_size_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of file size.',
-      example: '150 MB',
-      readOnly: true,
-    },
     content_category: {
       type: 'string',
       description: '**[READ-ONLY]** Category of content based on its type and format.',
       example: 'Video Content',
+      readOnly: true,
+    },
+    file_size_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of file size.',
+      example: '150 MB',
       readOnly: true,
     },
   },
@@ -10043,13 +10042,8 @@ export const CommerceCatalogueItemSchema = {
     },
     course: {
       $ref: '#/components/schemas/CourseCatalogueSnapshot',
-      description: `Public attributes of the course this entry sells, so a storefront can render a
-catalogue page without fetching each course separately.
-
-Present on course-backed entries returned by \`/search\`; null for class- and
-program-backed entries, and on endpoints that do not resolve it. Carries display
-fields only — the course's commercial terms are not part of this projection.
-`,
+      description:
+        "Public attributes of the course this entry sells, so a storefront can render a\ncatalogue page without fetching each course separately.\n\nPresent on course-backed entries returned by `/search`; null for class- and\nprogram-backed entries, and on endpoints that do not resolve it. Carries display\nfields only — the course's commercial terms are not part of this projection.\n",
     },
   },
 } as const;
@@ -10561,13 +10555,8 @@ export const ClassDefinitionSchema = {
     },
     session_templates: {
       type: 'array',
-      description: `**[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.
-Legacy classes created before template persistence may return an empty list.
-conflict_resolution per template:
-- FAIL: stop scheduling if any conflict; response 409 with conflicts.
-- SKIP: schedule non-conflicting occurrences; return conflicts for skipped dates.
-- ROLLOVER: push conflicting dates forward by the recurrence interval (bounded retries) and extend the series; return unrecoverable conflicts.
-`,
+      description:
+        '**[READ-ONLY]** Persisted session templates originally used to generate scheduled class instances.\nLegacy classes created before template persistence may return an empty list.\nconflict_resolution per template:\n- FAIL: stop scheduling if any conflict; response 409 with conflicts.\n- SKIP: schedule non-conflicting occurrences; return conflicts for skipped dates.\n- ROLLOVER: push conflicting dates forward by the recurrence interval (bounded retries) and extend the series; return unrecoverable conflicts.\n',
       items: {
         $ref: '#/components/schemas/ClassSessionTemplate',
       },
@@ -10647,17 +10636,17 @@ conflict_resolution per template:
       example: 90,
       readOnly: true,
     },
+    duration_formatted: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable formatted duration.',
+      example: '1h 30m',
+      readOnly: true,
+    },
     capacity_info: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
-      readOnly: true,
-    },
-    duration_formatted: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable formatted duration.',
-      example: '1h 30m',
       readOnly: true,
     },
   },
@@ -13069,10 +13058,8 @@ export const ApiResponseObjectSchema = {
 
 export const RegistrationRequestSchema = {
   type: 'object',
-  description: `Starts a self-registration. Personal details are written to Keycloak only; Elimika records the
-chosen domain, which a platform admin approves before any dashboard opens. Keycloak then emails
-a link to set a password and verify the address.
-`,
+  description:
+    'Starts a self-registration. Personal details are written to Keycloak only; Elimika records the\nchosen domain, which a platform admin approves before any dashboard opens. Keycloak then emails\na link to set a password and verify the address.\n',
   properties: {
     first_name: {
       type: 'string',
@@ -13097,9 +13084,8 @@ a link to set a password and verify the address.
     },
     phone_number: {
       type: 'string',
-      description: `**Phone Number Validation:**
-- Type: Mobile only
-- Format: E.164 only (+ then country code and number, no spaces), e.g. +254712345678`,
+      description:
+        '**Phone Number Validation:**\n- Type: Mobile only\n- Format: E.164 only (+ then country code and number, no spaces), e.g. +254712345678',
       example: '+254712345678',
       minLength: 1,
       pattern: '^\\+[1-9]\\d{6,14}$',
@@ -15531,12 +15517,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -15553,6 +15533,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -16263,13 +16249,6 @@ export const MultiValueMapStringStringSchema = {
     },
   },
   properties: {
-    all: {
-      type: 'object',
-      additionalProperties: {
-        type: 'string',
-      },
-      writeOnly: true,
-    },
     empty: {
       type: 'boolean',
     },
@@ -17667,6 +17646,12 @@ export const AssignmentSubmissionSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    is_graded: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the submission has been graded by an instructor.',
+      example: true,
+      readOnly: true,
+    },
     submission_category: {
       type: 'string',
       description:
@@ -17691,12 +17676,6 @@ export const AssignmentSubmissionSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Summary of files attached to this submission.',
       example: '2 files attached',
-      readOnly: true,
-    },
-    is_graded: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the submission has been graded by an instructor.',
-      example: true,
       readOnly: true,
     },
   },
@@ -18073,12 +18052,8 @@ export const SearchRebuildResponseSchema = {
 
 export const ContentModerationDecisionRequestSchema = {
   type: 'object',
-  description: `Payload for a moderation decision on a course or training program.
-
-When the content has a pending edit awaiting review, \`approved\` promotes that
-edit onto the live content and \`rejected\` discards it, leaving the live content
-untouched. Otherwise the decision applies to the content's own approval state.
-`,
+  description:
+    "Payload for a moderation decision on a course or training program.\n\nWhen the content has a pending edit awaiting review, `approved` promotes that\nedit onto the live content and `rejected` discards it, leaving the live content\nuntouched. Otherwise the decision applies to the content's own approval state.\n",
   example: {
     action: 'rejected',
     reason: 'Lesson 3 video is missing captions.',
@@ -19126,16 +19101,16 @@ export const StudentScheduleSchema = {
       example: 90,
       readOnly: true,
     },
-    is_upcoming: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended this class.',
       example: false,
+      readOnly: true,
+    },
+    is_upcoming: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this class is upcoming.',
+      example: true,
       readOnly: true,
     },
   },
@@ -24479,10 +24454,8 @@ export const ApiResponsePagedDTOCourseVersionSnapshotSchema = {
 
 export const CourseVersionSnapshotSchema = {
   type: 'object',
-  description: `An approved version of a course's content. One is written each time an edit is
-promoted onto the live course, giving a durable record of what the course
-looked like at each approved version.
-`,
+  description:
+    "An approved version of a course's content. One is written each time an edit is\npromoted onto the live course, giving a durable record of what the course\nlooked like at each approved version.\n",
   example: {
     uuid: 'snap-1234-5678-90ab-cdef12345678',
     course_uuid: 'course-1234-5678-90ab-cdef12345678',
@@ -24689,12 +24662,8 @@ export const ApiResponseCoursePendingEditSchema = {
 
 export const CoursePendingEditSchema = {
   type: 'object',
-  description: `An edit to a published course that is awaiting admin review.
-
-The live course is unaffected while the edit is pending: it stays published,
-keeps accepting enrollments, and continues to serve its last-approved content.
-The proposed content lives on the draft course referenced by \`draft_course_uuid\`.
-`,
+  description:
+    'An edit to a published course that is awaiting admin review.\n\nThe live course is unaffected while the edit is pending: it stays published,\nkeeps accepting enrollments, and continues to serve its last-approved content.\nThe proposed content lives on the draft course referenced by `draft_course_uuid`.\n',
   example: {
     uuid: 'edit-1234-5678-90ab-cdef12345678',
     course_uuid: 'course-1234-5678-90ab-cdef12345678',
@@ -25020,12 +24989,8 @@ export const CourseStatsPublicSchema = {
     average_class_fill: {
       type: 'integer',
       format: 'int32',
-      description: `Mean seat fill across the running classes, as a percentage rounded to the nearest 5.
-
-The seat counts behind it are deliberately not published. Filled seats and total
-seats printed beside a course's price make gross revenue a multiplication, so the
-ratio leaves the server already coarsened and the operands never leave at all.
-`,
+      description:
+        "Mean seat fill across the running classes, as a percentage rounded to the nearest 5.\n\nThe seat counts behind it are deliberately not published. Filled seats and total\nseats printed beside a course's price make gross revenue a multiplication, so the\nratio leaves the server already coarsened and the operands never leave at all.\n",
       example: 75,
     },
     completion_rate: {
@@ -25791,17 +25756,17 @@ export const CourseAssessmentScoreSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    grade_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '87.50 / 100.00 (87.50%)',
-      readOnly: true,
-    },
     is_passing: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).',
       example: true,
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '87.50 / 100.00 (87.50%)',
       readOnly: true,
     },
     score_category: {
@@ -28292,7 +28257,8 @@ export const CatalogueItemSchema = {
     },
     age_label: {
       type: 'string',
-      description: `Age band label such as "18+" when the course's lower age limit is 18 or more; null otherwise and for programmes.`,
+      description:
+        'Age band label such as "18+" when the course\'s lower age limit is 18 or more; null otherwise and for programmes.',
       example: '18+',
     },
     price: {
@@ -29780,9 +29746,8 @@ export const ApiResponseCourseEditDiffSchema = {
 
 export const CourseEditDiffSchema = {
   type: 'object',
-  description: `What a pending edit would change if approved, so an admin can review the
-decision without comparing two full course payloads by eye.
-`,
+  description:
+    'What a pending edit would change if approved, so an admin can review the\ndecision without comparing two full course payloads by eye.\n',
   example: {
     course_uuid: 'course-1234-5678-90ab-cdef12345678',
     draft_course_uuid: 'draft-1234-5678-90ab-cdef12345678',
@@ -31070,7 +31035,228 @@ export const ContentTypeEnumSchema = {
   readOnly: true,
 } as const;
 
-export const JsonNodeWritableSchema = {} as const;
+export const UserWritableSchema = {
+  type: 'object',
+  description:
+    'Complete user profile information including personal details, authentication, and organizational data',
+  example: {
+    uuid: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    user_no: '123456789',
+    first_name: 'Jane',
+    middle_name: 'A.',
+    last_name: 'Doe',
+    email: 'jane.doe@example.com',
+    phone_number: '+254712345678',
+    profile_image_url: 'https://example.com/images/jane.jpg',
+    dob: '1990-01-01',
+    username: 'janedoe',
+    active: true,
+    keycloak_id: 'keycloak-user-123',
+    created_date: '2024-04-01T12:00:00',
+    updated_date: '2024-04-15T15:30:00',
+    created_by: 'system',
+    updated_by: 'admin',
+    gender: 'FEMALE',
+    user_domain: ['Student', 'Instructor', 'Course Creator'],
+  },
+  properties: {
+    first_name: {
+      type: 'string',
+      description:
+        "**[REQUIRED]** User's given/first name. Used for display purposes and official documentation. Must not be blank.",
+      example: 'Jane',
+      maxLength: 50,
+      minLength: 0,
+    },
+    middle_name: {
+      type: ['string', 'null'],
+      description:
+        "**[OPTIONAL]** User's middle name or initial. Can be null or empty if not applicable.",
+      example: 'A.',
+      maxLength: 50,
+      minLength: 0,
+    },
+    last_name: {
+      type: 'string',
+      description:
+        "**[REQUIRED]** User's family/last name. Used for display purposes and official documentation. Must not be blank.",
+      example: 'Doe',
+      maxLength: 50,
+      minLength: 0,
+    },
+    email: {
+      type: 'string',
+      format: 'email',
+      description:
+        "**[REQUIRED]** User's primary email address. Must be unique across the system and follow valid email format. Used for authentication and notifications.",
+      example: 'jane.doe@example.com',
+      maxLength: 100,
+      minLength: 0,
+    },
+    username: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Unique username for system login. Must be unique across the system and cannot be changed after account creation.',
+      example: 'janedoe',
+      maxLength: 50,
+      minLength: 0,
+    },
+    dob: {
+      type: 'string',
+      format: 'date',
+      description:
+        "**[REQUIRED]** User's date of birth in ISO 8601 format (YYYY-MM-DD). Used for age verification and personalization features.",
+      example: '1990-01-01',
+    },
+    phone_number: {
+      type: ['string', 'null'],
+      description:
+        "**[OPTIONAL]** User's contact phone number. Should include country code for international numbers when provided.",
+      example: '+254712345678',
+      maxLength: 20,
+      minLength: 0,
+      pattern: '^\\+[1-9]\\d{6,14}$',
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[REQUIRED]** Indicates whether the user account is active and can access the system. Inactive users cannot log in or perform any operations.',
+      example: true,
+    },
+    keycloak_id: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Keycloak user identifier for authentication integration. Links the user to their Keycloak identity for SSO functionality.',
+      example: 'keycloak-user-123',
+      maxLength: 255,
+      minLength: 0,
+    },
+    gender: {
+      $ref: '#/components/schemas/GenderEnum',
+    },
+  },
+  required: ['active', 'dob', 'email', 'first_name', 'last_name', 'username'],
+} as const;
+
+export const ApiResponseUserWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const TrainingBranchWritableSchema = {
+  type: 'object',
+  description: 'Training branch information including location details and point of contact',
+  example: {
+    uuid: 'c1d2e3f4-g5h6-i7j8-k9l0-mnopqrstuvw',
+    organisation_uuid: 'b1c2d3e4-f5g6-h7i8-j9k0-lmnopqrstuv',
+    branch_name: 'Nairobi Main Campus',
+    address: '123 University Way, Nairobi',
+    poc_name: 'John Doe',
+    poc_email: 'john.doe@example.com',
+    poc_telephone: '+254700000000',
+    active: true,
+    created_date: '2024-01-01T09:00:00',
+    updated_date: '2024-04-15T14:30:00',
+  },
+  properties: {
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the parent organisation this branch belongs to.',
+      example: 'b1c2d3e4-f5g6-h7i8-j9k0-lmnopqrstuv',
+    },
+    branch_name: {
+      type: 'string',
+      description: '**[REQUIRED]** Name of the training branch or location. Must not be blank.',
+      example: 'Nairobi Main Campus',
+      maxLength: 200,
+      minLength: 0,
+    },
+    address: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Physical address of the training branch.',
+      example: '123 University Way, Nairobi',
+    },
+    latitude: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Latitude of the branch address, resolved when the address was searched. Send it together with longitude. Omitting both keeps the stored pin unless the address is cleared.',
+      example: -1.2921,
+      maximum: 90,
+      minimum: -90,
+    },
+    longitude: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Longitude of the branch address, resolved when the address was searched. Send it together with latitude.',
+      example: 36.8219,
+      maximum: 180,
+      minimum: -180,
+    },
+    poc_name: {
+      type: 'string',
+      description: '**[REQUIRED]** Name of the point of contact for this branch.',
+      example: 'John Doe',
+      maxLength: 200,
+      minLength: 0,
+    },
+    poc_email: {
+      type: 'string',
+      format: 'email',
+      description: '**[REQUIRED]** Email address of the point of contact for this branch.',
+      example: 'john.doe@example.com',
+      maxLength: 320,
+    },
+    poc_telephone: {
+      type: 'string',
+      description: '**[REQUIRED]** Telephone number of the point of contact for this branch.',
+      example: '+254700000000',
+      maxLength: 20,
+      pattern: '^\\+[1-9]\\d{6,14}$',
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[REQUIRED]** Indicates whether the training branch is active and operational.',
+      example: true,
+    },
+  },
+  required: [
+    'active',
+    'branch_name',
+    'organisation_uuid',
+    'poc_email',
+    'poc_name',
+    'poc_telephone',
+  ],
+} as const;
+
+export const ApiResponseTrainingBranchWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/TrainingBranchWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
 
 export const StudentWritableSchema = {
   type: 'object',
@@ -31200,6 +31386,8232 @@ export const ApiResponseStudentWritableSchema = {
   },
 } as const;
 
+export const ApiResponseStudentGroupWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/StudentGroupWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const StudentGroupWritableSchema = {
+  type: 'object',
+  description: 'An organisation-scoped named collection of students.',
+  properties: {
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Owning organisation UUID.',
+    },
+    name: {
+      type: 'string',
+      description: 'Group name.',
+    },
+    description: {
+      type: ['string', 'null'],
+      description: 'Optional description.',
+    },
+    group_type: {
+      type: ['string', 'null'],
+      description: 'Stream label within the branch and tier, e.g. "Stream A".',
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Training branch (campus) running the group. Null for unassigned legacy groups.',
+    },
+    tier_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Academic tier (schooling level). Null for unassigned legacy groups.',
+    },
+    capacity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        'Intended size of the group. Advisory: enrolment above it is reported, not blocked.',
+    },
+  },
+} as const;
+
+export const AssessmentRubricWritableSchema = {
+  type: 'object',
+  description: 'Assessment rubric with evaluation criteria and grading standards',
+  example: {
+    uuid: 'a1s2s3r4-5u6b-7r8i-9c10-abcdefghijkl',
+    title: 'Music Performance Assessment Rubric',
+    description: 'Comprehensive rubric for evaluating music performance across multiple criteria',
+    rubric_type: 'Performance',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r8u-9i10-abcdefghijkl',
+    is_public: true,
+    status: 'PUBLISHED',
+    active: true,
+    total_weight: 100,
+    weight_unit: 'percentage',
+    uses_custom_levels: true,
+    max_score: 400,
+    min_passing_score: 240,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'creator@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'creator@sarafrika.com',
+    rubric_category: 'Performance Assessment',
+    is_published: true,
+    assessment_scope: 'General Use',
+    usage_status: 'Active Public Rubric',
+  },
+  properties: {
+    title: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Title of the assessment rubric that clearly describes its purpose.',
+      example: 'Music Performance Assessment Rubric',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description:
+        "**[OPTIONAL]** Detailed description of the rubric's purpose and assessment scope.",
+      example:
+        'Comprehensive rubric for evaluating music performance across multiple criteria including technique, tonal quality, rhythm, and presentation',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    rubric_type: {
+      type: 'string',
+      description: '**[REQUIRED]** Type of assessment this rubric is designed for.',
+      example: 'Performance',
+      maxLength: 50,
+      minLength: 0,
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the course creator UUID who defined this rubric.',
+      example: 'c1r2e3a4-5t6o-7r8u-9i10-abcdefghijkl',
+    },
+    is_public: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if this rubric is publicly available for other course creators to use.',
+      example: true,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum',
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if the rubric is actively available for use. Can only be true for published rubrics.',
+      example: true,
+    },
+    total_weight: {
+      type: 'number',
+      description: '**[OPTIONAL]** Total weight distribution across all criteria for this rubric.',
+      example: 100,
+      maximum: 1000,
+      minimum: 1,
+    },
+    weight_unit: {
+      $ref: '#/components/schemas/WeightUnitEnum',
+    },
+    uses_custom_levels: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates whether this rubric uses custom scoring levels or global grading levels.',
+      example: true,
+    },
+    max_score: {
+      type: 'number',
+      description:
+        '**[OPTIONAL]** Maximum possible score for this rubric based on weighted criteria and highest scoring levels.',
+      example: 400,
+      minimum: 0,
+    },
+    min_passing_score: {
+      type: 'number',
+      description: '**[OPTIONAL]** Minimum score required to pass this rubric assessment.',
+      example: 240,
+      minimum: 0,
+    },
+  },
+  required: ['course_creator_uuid', 'rubric_type', 'status', 'title'],
+} as const;
+
+export const ApiResponseAssessmentRubricWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AssessmentRubricWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const RubricScoringLevelWritableSchema = {
+  type: 'object',
+  description:
+    'Custom scoring level within a rubric defining evaluation standards and point values',
+  example: {
+    uuid: 'rsl1r2i3-4c5k-6s7c-8o9r-abcdefghijkl',
+    rubric_uuid: 'a1s2s3r4-5u6b-7r8i-9c10-abcdefghijkl',
+    name: 'Excellent',
+    description: 'Exceeds expectations in all areas with exceptional quality',
+    points: 4,
+    level_order: 1,
+    color_code: '#4CAF50',
+    is_passing: true,
+    created_date: '2024-08-13T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-08-13T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    display_name: 'Excellent (4.0 pts)',
+    performance_indicator: 'Exceeds Expectations',
+  },
+  properties: {
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the rubric UUID that contains this scoring level.',
+      example: 'a1s2s3r4-5u6b-7r8i-9c10-abcdefghijkl',
+    },
+    name: {
+      type: 'string',
+      description: '**[REQUIRED]** Name of the scoring level for display in the rubric matrix.',
+      example: 'Excellent',
+      maxLength: 50,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Detailed description of what constitutes this performance level.',
+      example:
+        'Exceeds expectations in all areas with exceptional quality and demonstrates mastery',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    points: {
+      type: 'number',
+      description: '**[REQUIRED]** Point value assigned to this scoring level for calculations.',
+      example: 4,
+      maximum: 1000,
+      minimum: 0,
+    },
+    level_order: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[REQUIRED]** Display order of the level in the rubric matrix (1 = highest performance).',
+      example: 1,
+      minimum: 1,
+    },
+    color_code: {
+      type: 'string',
+      description: '**[OPTIONAL]** Hex color code for UI display and visual distinction.',
+      example: '#4CAF50',
+      pattern: '^#[0-9A-Fa-f]{6}$',
+    },
+    is_passing: {
+      type: 'boolean',
+      description:
+        '**[REQUIRED]** Indicates whether this scoring level constitutes a passing grade.',
+      example: true,
+    },
+  },
+  required: ['is_passing', 'level_order', 'name', 'points', 'rubric_uuid'],
+} as const;
+
+export const ApiResponseRubricScoringLevelWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/RubricScoringLevelWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const RubricMatrixCellWritableSchema = {
+  type: 'object',
+  description: 'Single cell in the rubric matrix representing criteria-scoring level intersection',
+  example: {
+    criteria_uuid: 'rc1-uuid',
+    scoring_level_uuid: 'rsl1-uuid',
+    description: 'Demonstrates exceptional technical skill with flawless execution',
+    points: 4,
+  },
+  properties: {
+    criteria_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the criteria (row) this cell belongs to.',
+      example: 'rc1-uuid',
+    },
+    scoring_level_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the scoring level (column) this cell belongs to.',
+      example: 'rsl1-uuid',
+    },
+    description: {
+      type: 'string',
+      description: '**[REQUIRED]** Description of performance expectations at this intersection.',
+      example: 'Demonstrates exceptional technical skill with flawless execution',
+      maxLength: 1000,
+      minLength: 0,
+    },
+  },
+  required: ['criteria_uuid', 'description', 'scoring_level_uuid'],
+} as const;
+
+export const ApiResponseRubricMatrixWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/RubricMatrixWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const RubricCriteriaWritableSchema = {
+  type: 'object',
+  description: 'Individual assessment criteria within a rubric defining evaluation components',
+  example: {
+    uuid: 'r1c2r3i4-5t6e-7r8i-9a10-abcdefghijkl',
+    rubric_uuid: 'a1s2s3r4-5u6b-7r8i-9c10-abcdefghijkl',
+    component_name: 'Technique',
+    description: 'Technical proficiency and skill execution in performance',
+    display_order: 1,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    criteria_category: 'Performance Component',
+    is_primary_criteria: true,
+    weight_suggestion: 'High Priority',
+    criteria_number: 'Criteria 1',
+  },
+  properties: {
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the rubric UUID that contains this criteria.',
+      example: 'a1s2s3r4-5u6b-7r8i-9c10-abcdefghijkl',
+    },
+    component_name: {
+      type: 'string',
+      description: '**[REQUIRED]** Name of the assessment component being evaluated.',
+      example: 'Technique',
+      maxLength: 100,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Detailed description of what this criteria evaluates and measures.',
+      example:
+        'Technical proficiency and skill execution in performance including accuracy, fluency, and control',
+      maxLength: 500,
+      minLength: 0,
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[REQUIRED]** Display order of the criteria within the rubric for consistent presentation.',
+      example: 1,
+      minimum: 1,
+    },
+  },
+  required: ['component_name', 'display_order', 'rubric_uuid'],
+} as const;
+
+export const RubricMatrixWritableSchema = {
+  type: 'object',
+  description:
+    'Complete rubric matrix with criteria, scoring levels, and intersection descriptions',
+  example: {
+    rubric: {
+      uuid: 'a1s2s3r4-5u6b-7r8i-9c10-abcdefghijkl',
+      title: 'Music Performance Assessment Rubric',
+      uses_custom_levels: true,
+      is_weighted: true,
+      total_weight: 100,
+    },
+    scoring_levels: [
+      {
+        uuid: 'rsl1-uuid',
+        name: 'Excellent',
+        points: 4,
+        level_order: 1,
+        color_code: '#4CAF50',
+        is_passing: true,
+      },
+    ],
+    criteria: [
+      {
+        uuid: 'rc1-uuid',
+        component_name: 'Technical Proficiency',
+        weight: 30,
+        display_order: 1,
+      },
+    ],
+    matrix_cells: {
+      'rc1-uuid_rsl1-uuid': {
+        criteria_uuid: 'rc1-uuid',
+        scoring_level_uuid: 'rsl1-uuid',
+        description: 'Demonstrates exceptional technical skill with flawless execution',
+        points: 4,
+      },
+    },
+    matrix_statistics: {
+      total_cells: 15,
+      completed_cells: 12,
+      completion_percentage: 80,
+      max_possible_score: 400,
+      weighted_max_score: 100,
+    },
+  },
+  properties: {
+    rubric: {
+      $ref: '#/components/schemas/AssessmentRubricWritable',
+      description: '**[REQUIRED]** The rubric metadata and configuration.',
+    },
+    scoring_levels: {
+      type: 'array',
+      description: '**[REQUIRED]** List of scoring levels (columns) ordered by level_order.',
+      items: {
+        $ref: '#/components/schemas/RubricScoringLevelWritable',
+      },
+    },
+    criteria: {
+      type: 'array',
+      description: '**[REQUIRED]** List of criteria (rows) ordered by display_order.',
+      items: {
+        $ref: '#/components/schemas/RubricCriteriaWritable',
+      },
+    },
+    matrix_cells: {
+      type: 'object',
+      additionalProperties: {
+        $ref: '#/components/schemas/RubricMatrixCellWritable',
+      },
+      description:
+        "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'.",
+    },
+  },
+  required: ['criteria', 'matrix_cells', 'rubric', 'scoring_levels'],
+} as const;
+
+export const ApiResponseRubricCriteriaWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/RubricCriteriaWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const RubricScoringWritableSchema = {
+  type: 'object',
+  description: 'Scoring description for rubric criteria at specific grading levels',
+  example: {
+    uuid: 'r1s2c3o4-5r6i-7n8g-9d10-abcdefghijkl',
+    criteria_uuid: 'r1c2r3i4-5t6e-7r8i-9a10-abcdefghijkl',
+    grading_level_uuid: 'g1r2a3d4-5i6n-7g8l-9v10-abcdefghijkl',
+    description: 'Highly confident and fluent techniques given consistently throughout',
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    performance_expectation: 'Exceptional Performance',
+    score_range: '5 points',
+    is_passing_level: true,
+    feedback_category: 'Excellence',
+  },
+  properties: {
+    criteria_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the rubric criteria UUID this scoring applies to.',
+      example: 'r1c2r3i4-5t6e-7r8i-9a10-abcdefghijkl',
+    },
+    rubric_scoring_level_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the rubric scoring level UUID this scoring represents.',
+      example: 's1c2o3r4-5i6n-7g8l-9v10-abcdefghijkl',
+    },
+    description: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Detailed description of performance expectations at this grading level.',
+      example:
+        'Highly confident and fluent techniques given consistently throughout the performance with no errors',
+      maxLength: 1000,
+      minLength: 0,
+    },
+  },
+  required: ['criteria_uuid', 'description', 'rubric_scoring_level_uuid'],
+} as const;
+
+export const ApiResponseRubricScoringWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/RubricScoringWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const QuizWritableSchema = {
+  type: 'object',
+  description: 'Quiz assessment with configurable questions, timing, and scoring',
+  example: {
+    uuid: 'q1u2i3z4-5a6s-7s8e-9s10-abcdefghijkl',
+    lesson_uuid: 'l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl',
+    scope: 'COURSE_TEMPLATE',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    source_quiz_uuid: 'q1u2i3z4-5a6s-sourcequiz-abcdefghijkl',
+    title: 'OOP Concepts Quiz',
+    description: 'Test your understanding of object-oriented programming fundamentals',
+    instructions: 'Answer all questions. You have 30 minutes to complete this quiz.',
+    time_limit_minutes: 30,
+    attempts_allowed: 3,
+    passing_score: 70,
+    rubric_uuid: 'r1u2b3r4-5i6c-7s8c-9o10-abcdefghijkl',
+    status: 'PUBLISHED',
+    active: true,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    time_limit_display: '30 minutes',
+    is_timed: true,
+    is_published: true,
+    has_multiple_attempts: true,
+  },
+  properties: {
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the lesson UUID that contains this quiz.',
+      example: 'l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl',
+    },
+    scope: {
+      $ref: '#/components/schemas/ScopeEnum2',
+    },
+    class_definition_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the class definition that owns this quiz when scope is CLASS_CLONE.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
+    },
+    title: {
+      type: 'string',
+      description: '**[REQUIRED]** Quiz title that clearly describes the assessment content.',
+      example: 'OOP Concepts Quiz',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: '**[OPTIONAL]** Detailed description of the quiz purpose and content coverage.',
+      example:
+        'Test your understanding of object-oriented programming fundamentals including classes, inheritance, and polymorphism',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    instructions: {
+      type: 'string',
+      description: '**[OPTIONAL]** Instructions for students on how to complete the quiz.',
+      example:
+        'Answer all questions carefully. You have 30 minutes to complete this quiz. Make sure to review your answers before submitting.',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    time_limit_minutes: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Time limit for completing the quiz in minutes. Null means no time limit.',
+      example: 30,
+      minimum: 1,
+    },
+    attempts_allowed: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[REQUIRED]** Number of attempts allowed for this quiz. Set to 1 for single attempt.',
+      example: 3,
+      minimum: 1,
+    },
+    passing_score: {
+      type: 'number',
+      description: '**[REQUIRED]** Minimum score percentage required to pass the quiz.',
+      example: 70,
+      maximum: 100,
+      minimum: 0,
+    },
+    rubric_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to assessment rubric UUID for detailed grading criteria.',
+      example: 'r1u2b3r4-5i6c-7s8c-9o10-abcdefghijkl',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum',
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if the quiz is actively available to students. Can only be true for published quizzes.',
+      example: true,
+    },
+  },
+  required: ['attempts_allowed', 'lesson_uuid', 'passing_score', 'status', 'title'],
+} as const;
+
+export const ApiResponseQuizWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/QuizWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const QuizQuestionWritableSchema = {
+  type: 'object',
+  description: 'Individual question within a quiz supporting multiple question types',
+  example: {
+    uuid: 'q1u2e3s4-5t6i-7o8n-9q10-abcdefghijkl',
+    quiz_uuid: 'q1u2i3z4-5a6s-7s8e-9s10-abcdefghijkl',
+    question_text:
+      'What is the main principle of object-oriented programming that allows a class to inherit properties from another class?',
+    question_type: 'MULTIPLE_CHOICE',
+    points: 2,
+    display_order: 1,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    question_category: 'Multiple Choice Question',
+    points_display: '2.0 points',
+    requires_options: true,
+    question_number: 'Question 1',
+  },
+  properties: {
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the quiz UUID that contains this question.',
+      example: 'q1u2i3z4-5a6s-7s8e-9s10-abcdefghijkl',
+    },
+    question_text: {
+      type: 'string',
+      description: '**[REQUIRED]** The actual question text that students will see and answer.',
+      example:
+        'What is the main principle of object-oriented programming that allows a class to inherit properties from another class?',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    question_type: {
+      $ref: '#/components/schemas/QuestionTypeEnum',
+    },
+    points: {
+      type: 'number',
+      description: '**[REQUIRED]** Point value for this question when answered correctly.',
+      example: 2,
+      minimum: 0.01,
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[REQUIRED]** Display order of the question within the quiz for sequential presentation.',
+      example: 1,
+      minimum: 1,
+    },
+  },
+  required: ['display_order', 'points', 'question_text', 'question_type', 'quiz_uuid'],
+} as const;
+
+export const ApiResponseQuizQuestionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/QuizQuestionWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const QuizQuestionOptionWritableSchema = {
+  type: 'object',
+  description:
+    'Individual answer option for quiz questions with correctness and ordering information',
+  example: {
+    uuid: 'o1p2t3i4-5o6n-7q8u-9e10-abcdefghijkl',
+    question_uuid: 'q1u2e3s4-5t6i-7o8n-9u10-abcdefghijkl',
+    option_text:
+      'A major scale consists of seven different pitches arranged in a specific pattern of whole and half steps.',
+    is_correct: true,
+    display_order: 2,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-03T10:15:00',
+    updated_by: 'instructor@sarafrika.com',
+    option_category: 'Correct Answer Option',
+    is_incorrect: false,
+    position_display: 'Option 2',
+    correctness_status: 'Correct Answer',
+    option_summary: 'Correct answer option in position 2',
+  },
+  properties: {
+    question_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the quiz question UUID this option belongs to.',
+      example: 'q1u2e3s4-5t6i-7o8n-9u10-abcdefghijkl',
+    },
+    option_text: {
+      type: 'string',
+      description: '**[REQUIRED]** Text content of the answer option displayed to students.',
+      example:
+        'A major scale consists of seven different pitches arranged in a specific pattern of whole and half steps.',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    is_correct: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if this option is the correct answer for the question.',
+      example: true,
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        "**[OPTIONAL]** Display order of this option within the question's answer choices.",
+      example: 2,
+      minimum: 1,
+    },
+  },
+  required: ['option_text', 'question_uuid'],
+} as const;
+
+export const ApiResponseQuizQuestionOptionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/QuizQuestionOptionWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseQuizAttemptWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/QuizAttemptWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const QuizAttemptWritableSchema = {
+  type: 'object',
+  description: 'Student quiz attempt with timing, scoring, and completion tracking',
+  example: {
+    uuid: 'q1a2t3t4-5e6m-7p8t-9a10-abcdefghijkl',
+    enrollment_uuid: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    quiz_uuid: 'q1u2i3z4-5u6u-7i8d-9q10-abcdefghijkl',
+    attempt_number: 2,
+    started_at: '2024-04-10T14:15:00',
+    submitted_at: '2024-04-10T15:30:00',
+    time_taken_minutes: 75,
+    score: 85,
+    max_score: 100,
+    percentage: 85,
+    is_passed: true,
+    status: 'GRADED',
+    created_date: '2024-04-10T14:15:00',
+    created_by: 'student@sarafrika.com',
+    updated_date: '2024-04-10T15:30:00',
+    updated_by: 'system@sarafrika.com',
+    attempt_category: 'Graded Attempt',
+    is_completed: true,
+    grade_display: '85.00 / 100.00 (85%)',
+    time_display: '1 hour 15 minutes',
+    performance_summary: 'Passed on attempt 2 with 85% score',
+  },
+  properties: {
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the enrollment UUID of the student taking the quiz.',
+      example: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    },
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the quiz UUID being attempted.',
+      example: 'q1u2i3z4-5u6u-7i8d-9q10-abcdefghijkl',
+    },
+    attempt_number: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Sequential number of this attempt for the same quiz by the same student.',
+      example: 2,
+      minimum: 1,
+    },
+    started_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Timestamp when the student started the quiz attempt.',
+      example: '2024-04-10T14:15:00Z',
+    },
+    submitted_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: '**[OPTIONAL]** Timestamp when the student submitted the quiz attempt.',
+      example: '2024-04-10T15:30:00Z',
+    },
+    time_taken_minutes: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Total time taken to complete the quiz in minutes.',
+      example: 75,
+      minimum: 0,
+    },
+    score: {
+      type: 'number',
+      description: '**[OPTIONAL]** Score achieved by the student on this quiz attempt.',
+      example: 85,
+      minimum: 0,
+    },
+    max_score: {
+      type: 'number',
+      description: '**[OPTIONAL]** Maximum possible score for this quiz.',
+      example: 100,
+      minimum: 0,
+    },
+    percentage: {
+      type: 'number',
+      description: '**[OPTIONAL]** Percentage score calculated from score and max_score.',
+      example: 85,
+      maximum: 100,
+      minimum: 0,
+    },
+    is_passed: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.',
+      example: true,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum2',
+    },
+  },
+  required: ['enrollment_uuid', 'quiz_uuid', 'status'],
+} as const;
+
+export const TrainingProgramWritableSchema = {
+  type: 'object',
+  description: 'Training program bundling multiple courses into structured learning pathways',
+  example: {
+    uuid: 't1r2a3i4-5n6i-7n8g-9p10-abcdefghijkl',
+    title: 'Complete Java Development Masterclass',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r8u-9u10-abcdefghijkl',
+    category_uuid: 'c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl',
+    description:
+      'Comprehensive training program covering Java from basics to advanced enterprise development',
+    objectives: 'Master Java programming, frameworks, and enterprise development practices',
+    prerequisites: 'Basic programming knowledge and familiarity with software development concepts',
+    total_duration_hours: 120,
+    total_duration_minutes: 30,
+    class_limit: 50,
+    price: 899.99,
+    status: 'PUBLISHED',
+    active: true,
+    admin_approved: true,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    total_duration_display: '120 hours 30 minutes',
+    is_published: true,
+    program_type: 'Comprehensive Masterclass',
+  },
+  properties: {
+    title: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Title of the training program that clearly describes the learning pathway.',
+      example: 'Complete Java Development Masterclass',
+      maxLength: 255,
+      minLength: 0,
+    },
+    program_code: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Short unique code for the program, stored upper case.',
+      example: 'PRG-MUSIC-01',
+      pattern: '^[A-Za-z0-9][A-Za-z0-9-]{1,29}$',
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the course creator UUID who created and manages this program.',
+      example: 'c1r2e3a4-5t6o-7r8u-9u10-abcdefghijkl',
+    },
+    category_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the category UUID for program organization and discovery.',
+      example: 'c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl',
+    },
+    description: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Detailed description of the program content, approach, and outcomes.',
+      example:
+        'Comprehensive training program covering Java from basics to advanced enterprise development including frameworks, best practices, and real-world projects',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    objectives: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Learning objectives and goals students will achieve upon program completion.',
+      example:
+        'Master Java programming fundamentals, understand enterprise frameworks, implement scalable applications, and develop professional coding practices',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    status: {
+      $ref: '#/components/schemas/SchemaEnum6',
+    },
+    prerequisites: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Required knowledge and skills students should have before starting this program.',
+      example:
+        'Basic programming knowledge and familiarity with software development concepts, understanding of algorithms and data structures',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    total_duration_hours: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[REQUIRED]** Total program duration in hours across all courses.',
+      example: 120,
+      minimum: 0,
+    },
+    total_duration_minutes: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[REQUIRED]** Additional program duration in minutes (0-59).',
+      example: 30,
+      maximum: 59,
+      minimum: 0,
+    },
+    class_limit: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[OPTIONAL]** Maximum number of students that can enroll in the program.',
+      example: 50,
+      minimum: 1,
+    },
+    price: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Program price in the system currency. Set to null or 0 for free programs.',
+      example: 899.99,
+      minimum: 0,
+    },
+    pass_mark: {
+      type: ['number', 'null'],
+      description: '**[OPTIONAL]** Final grade percentage a learner needs to pass the program.',
+      example: 80,
+      maximum: 100,
+      minimum: 0,
+    },
+    thumbnail_url: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Program thumbnail; upload through POST /{uuid}/thumbnail.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    banner_url: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Program banner; upload through POST /{uuid}/banner.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    intro_video_url: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Program intro video; upload through POST /{uuid}/intro-video.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if the program is actively available to students. Can only be true for published programs.',
+      example: true,
+    },
+    published: {
+      type: 'boolean',
+      description: '**[REQUIRED]** Indicates if the program is published,',
+      example: true,
+    },
+  },
+  required: [
+    'course_creator_uuid',
+    'published',
+    'status',
+    'title',
+    'total_duration_hours',
+    'total_duration_minutes',
+  ],
+} as const;
+
+export const ApiResponseTrainingProgramWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/TrainingProgramWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ProgramAssessmentWritableSchema = {
+  type: 'object',
+  description: 'A weighted assessment component of a training program',
+  properties: {
+    title: {
+      type: 'string',
+      example: 'Practical',
+      maxLength: 255,
+      minLength: 0,
+    },
+    assessment_type: {
+      type: 'string',
+      example: 'PRACTICAL',
+      maxLength: 50,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+    },
+    weight_percentage: {
+      type: 'number',
+      example: 40,
+      maximum: 100,
+      minimum: 0.01,
+    },
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    is_required: {
+      type: 'boolean',
+    },
+    active: {
+      type: 'boolean',
+    },
+  },
+  required: ['assessment_type', 'title', 'weight_percentage'],
+} as const;
+
+export const ApiResponseProgramAssessmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProgramAssessmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseProgramTrainingApplicationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProgramTrainingApplicationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ProgramTrainingApplicationWritableSchema = {
+  type: 'object',
+  description: 'Represents an instructor or organisation request to deliver a training program',
+  example: {
+    uuid: 'b9c6e44f-37d4-4cf9-aa1c-3cfc1ffdd520',
+    program_uuid: 'p1r2o3g4-5r6a-7m8u-9u10-abcdefghijkl',
+    applicant_type: 'instructor',
+    applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    status: 'pending',
+    rate_card: {
+      currency: 'KES',
+      private_online_rate: 3500,
+      private_inperson_rate: 3600,
+      group_online_rate: 2800,
+      group_inperson_rate: 3000,
+    },
+    application_notes: 'We already deliver this program for other cohorts.',
+    review_notes: null,
+    reviewed_by: null,
+    reviewed_at: null,
+    created_date: '2025-10-24T13:16:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: null,
+    updated_by: null,
+  },
+  properties: {
+    application_notes: {
+      type: ['string', 'null'],
+      description: 'Submission notes provided by the applicant.',
+    },
+    review_notes: {
+      type: ['string', 'null'],
+      description: 'Decision notes provided by the program creator.',
+    },
+    reviewed_by: {
+      type: ['string', 'null'],
+      description: 'Reviewer identifier captured when the request is approved or rejected.',
+    },
+    reviewed_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'Timestamp of the review decision.',
+    },
+  },
+} as const;
+
+export const TrainingRequirementAnswerWritableSchema = {
+  type: 'object',
+  description: "The applicant's answer to one training requirement",
+  properties: {
+    acquisition: {
+      $ref: '#/components/schemas/AcquisitionEnum',
+    },
+  },
+} as const;
+
+export const ProgramRequirementWritableSchema = {
+  type: 'object',
+  description: 'Program requirement with type classification and mandatory status',
+  example: {
+    uuid: 'r1e2q3u4-5i6r-7e8m-9e10-abcdefghijkl',
+    program_uuid: 'p1r2o3g4-5r6a-7m8u-9u10-abcdefghijkl',
+    requirement_type: 'STUDENT',
+    requirement_text:
+      'Students must maintain a minimum GPA of 3.0 throughout the program and complete all core courses with a grade of C or better.',
+    is_mandatory: true,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'admin@sarafrika.com',
+    updated_date: '2024-04-05T14:30:00',
+    updated_by: 'admin@sarafrika.com',
+    requirement_category: 'Mandatory Student Requirement',
+    is_optional: false,
+    requirement_priority: 'High Priority',
+    compliance_level: 'Mandatory Compliance',
+    requirement_summary: 'Student requirement with mandatory compliance',
+  },
+  properties: {
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the program UUID this requirement applies to.',
+      example: 'p1r2o3g4-5r6a-7m8u-9u10-abcdefghijkl',
+    },
+    requirement_type: {
+      $ref: '#/components/schemas/RequirementTypeEnum',
+    },
+    requirement_text: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Detailed text describing the specific requirement and its criteria.',
+      example:
+        'Students must maintain a minimum GPA of 3.0 throughout the program and complete all core courses with a grade of C or better.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    is_mandatory: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if this requirement is mandatory for program completion.',
+      example: true,
+    },
+  },
+  required: ['program_uuid', 'requirement_text', 'requirement_type'],
+} as const;
+
+export const ApiResponseProgramRequirementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProgramRequirementWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ProgramCourseWritableSchema = {
+  type: 'object',
+  description:
+    'Association between programs and courses with sequencing and requirement information',
+  example: {
+    uuid: 'p1c2o3u4-5r6s-7e8a-9s10-abcdefghijkl',
+    program_uuid: 'p1r2o3g4-5r6a-7m8u-9u10-abcdefghijkl',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    sequence_order: 3,
+    is_required: true,
+    prerequisite_course_uuid: 'c0o1u2r3-4s5e-6d7a-8t90-abcdefghijkl',
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'admin@sarafrika.com',
+    updated_date: '2024-04-02T09:30:00',
+    updated_by: 'admin@sarafrika.com',
+    association_category: 'Required Course',
+    has_prerequisites: true,
+    sequence_display: 'Course 3 of Program',
+    requirement_status: 'Mandatory Course',
+    curriculum_summary: 'Required course with prerequisites in sequence position 3',
+  },
+  properties: {
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the program UUID that contains this course.',
+      example: 'p1r2o3g4-5r6a-7m8u-9u10-abcdefghijkl',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the course UUID that is part of this program.',
+      example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    },
+    sequence_order: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Sequential order of this course within the program curriculum.',
+      example: 3,
+      minimum: 1,
+    },
+    is_required: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Indicates if this course is required for program completion.',
+      example: true,
+    },
+    prerequisite_course_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the prerequisite course UUID that must be completed before this course.',
+      example: 'c0o1u2r3-4s5e-6d7a-8t90-abcdefghijkl',
+    },
+  },
+  required: ['course_uuid', 'program_uuid'],
+} as const;
+
+export const ApiResponseProgramCourseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProgramCourseWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationWritableSchema = {
+  type: 'object',
+  description:
+    'Complete organisation profile information including basic details, configuration, and metadata',
+  example: {
+    uuid: 'b1c2d3e4-f5g6-h7i8-j9k0-lmnopqrstuv',
+    name: 'Sarafrika University',
+    description: 'Leading educational institution in Kenya',
+    active: true,
+    licence_no: 'EDU-2024-001',
+    location: 'Nairobi, Kenya',
+    country: 'Kenya',
+    slug: 'sarafrika-university',
+    latitude: -1.2921,
+    longitude: 36.8219,
+    admin_verified: true,
+    created_date: '2024-01-01T09:00:00',
+    updated_date: '2024-04-15T14:30:00',
+  },
+  properties: {
+    name: {
+      type: 'string',
+      description:
+        "**[REQUIRED]** Organisation's official name. Used for display purposes and official documentation. Must not be blank.",
+      example: 'Sarafrika University',
+      maxLength: 50,
+      minLength: 0,
+    },
+    description: {
+      type: ['string', 'null'],
+      description:
+        "**[OPTIONAL]** Detailed description of the organisation. Provides additional context about the organisation's purpose and activities.",
+      example: 'Leading educational institution in Kenya',
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[REQUIRED]** Indicates whether the organisation is active and can access the system. Inactive organisations cannot perform any operations.',
+      example: true,
+    },
+    licence_no: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Official licence number or registration number for the organisation. Used for regulatory compliance and verification.',
+      example: 'EDU-2024-001',
+      maxLength: 100,
+    },
+    location: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Physical location or address of the organisation.',
+      example: 'Nairobi, Kenya',
+      maxLength: 200,
+    },
+    country: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Country where the organisation is located.',
+      example: 'Kenya',
+      maxLength: 100,
+    },
+    latitude: {
+      type: ['number', 'null'],
+      description: "**[OPTIONAL]** Latitude coordinate for the organisation's location.",
+      example: -1.2921,
+    },
+    longitude: {
+      type: ['number', 'null'],
+      description: "**[OPTIONAL]** Longitude coordinate for the organisation's location.",
+      example: 36.8219,
+    },
+  },
+  required: ['active', 'name'],
+} as const;
+
+export const ApiResponseOrganisationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/OrganisationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationResourceWritableSchema = {
+  type: 'object',
+  description:
+    'Bookable resource registered by an organisation: a venue (classroom, lab) or an equipment pool',
+  properties: {
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Active training branch of the organisation the resource belongs to. It cannot move to another branch while it has future holds or confirmed bookings.',
+    },
+    resource_type: {
+      $ref: '#/components/schemas/ResourceTypeEnum',
+    },
+    name: {
+      type: 'string',
+      description: 'Resource name, unique per organisation',
+      example: 'Physics Lab B',
+      minLength: 1,
+    },
+    description: {
+      type: ['string', 'null'],
+      description: 'Free-form description',
+    },
+    seat_capacity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Seat capacity (VENUE only)',
+      example: 30,
+    },
+    total_quantity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Total available units (EQUIPMENT_POOL only)',
+      example: 25,
+    },
+    location_name: {
+      type: ['string', 'null'],
+      description: "Optional within-branch location label, e.g. 'Main Hall, 2nd floor'",
+    },
+    is_active: {
+      type: 'boolean',
+      description: 'Whether the resource can currently be booked',
+      example: true,
+    },
+  },
+  required: ['branch_uuid', 'name', 'resource_type'],
+} as const;
+
+export const ApiResponseOrganisationResourceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/OrganisationResourceWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ResourceAvailabilityRuleWritableSchema = {
+  type: 'object',
+  description:
+    'Calendar rule for a resource. Recurring rules use start_time/end_time (with optional\ndays_of_week and effective dates); one-off BLACKOUT rules use specific_start/specific_end.\nA resource with no OPEN_HOURS rules is open at all times.',
+  properties: {
+    rule_type: {
+      $ref: '#/components/schemas/RuleTypeEnum',
+    },
+    days_of_week: {
+      type: ['string', 'null'],
+      description: 'Comma separated day names the recurring rule applies to; empty = every day',
+      example: 'MONDAY,WEDNESDAY,FRIDAY',
+    },
+    start_time: {
+      type: ['string', 'null'],
+      description: 'Daily window start (recurring rules)',
+      example: '08:00:00',
+    },
+    end_time: {
+      type: ['string', 'null'],
+      description: 'Daily window end (recurring rules)',
+      example: '18:00:00',
+    },
+    specific_start: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'One-off window start (BLACKOUT only)',
+    },
+    specific_end: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'One-off window end (BLACKOUT only)',
+    },
+    effective_start_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: 'First date the recurring rule applies; null = unbounded',
+    },
+    effective_end_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: 'Last date the recurring rule applies (inclusive); null = unbounded',
+    },
+    notes: {
+      type: ['string', 'null'],
+      description: "Free-form notes (e.g. 'Public holiday')",
+    },
+  },
+  required: ['rule_type'],
+} as const;
+
+export const ApiResponseResourceAvailabilityRuleWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ResourceAvailabilityRuleWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ProfessionalProfileWritableSchema = {
+  type: 'object',
+  description: 'User-owned professional basics shared by every domain',
+  properties: {
+    bio: {
+      type: 'string',
+      maxLength: 10000,
+      minLength: 0,
+    },
+    professional_headline: {
+      type: 'string',
+      maxLength: 500,
+      minLength: 0,
+    },
+    website: {
+      type: 'string',
+      maxLength: 500,
+      minLength: 0,
+    },
+    location_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    latitude: {
+      type: 'number',
+      maximum: 90,
+      minimum: -90,
+    },
+    longitude: {
+      type: 'number',
+      maximum: 180,
+      minimum: -180,
+    },
+  },
+} as const;
+
+export const ApiResponseProfessionalProfileWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProfessionalProfileWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserSkillWritableSchema = {
+  type: 'object',
+  description: 'A skill in the user-owned skills wallet',
+  properties: {
+    skill_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    proficiency_level: {
+      $ref: '#/components/schemas/ProficiencyLevelEnum',
+    },
+    evidence: {
+      type: 'string',
+    },
+    last_assessed_on: {
+      type: 'string',
+      format: 'date',
+    },
+  },
+  required: ['skill_name'],
+} as const;
+
+export const ApiResponseUserSkillWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserSkillWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserPortfolioItemWritableSchema = {
+  type: 'object',
+  description: 'A portfolio item in the user-owned skills wallet',
+  properties: {
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    item_type: {
+      $ref: '#/components/schemas/ItemTypeEnum',
+    },
+    link_url: {
+      type: 'string',
+      maxLength: 2048,
+      minLength: 0,
+    },
+    completed_on: {
+      type: 'string',
+      format: 'date',
+    },
+    description: {
+      type: 'string',
+    },
+  },
+  required: ['item_type', 'title'],
+} as const;
+
+export const ApiResponseUserPortfolioItemWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserPortfolioItemWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserMembershipWritableSchema = {
+  type: 'object',
+  description: 'A professional membership on the user-owned professional profile',
+  properties: {
+    organisation_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    membership_number: {
+      type: 'string',
+      maxLength: 100,
+      minLength: 0,
+    },
+    start_date: {
+      type: 'string',
+      format: 'date',
+    },
+    end_date: {
+      type: 'string',
+      format: 'date',
+    },
+    is_active: {
+      type: 'boolean',
+    },
+  },
+  required: ['organisation_name'],
+} as const;
+
+export const ApiResponseUserMembershipWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserMembershipWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserExperienceWritableSchema = {
+  type: 'object',
+  description: 'An experience record on the user-owned professional profile',
+  properties: {
+    position: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    organisation_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    responsibilities: {
+      type: 'string',
+    },
+    years_of_experience: {
+      type: 'number',
+      maximum: 60,
+      minimum: 0,
+    },
+    start_date: {
+      type: 'string',
+      format: 'date',
+    },
+    end_date: {
+      type: 'string',
+      format: 'date',
+    },
+    is_current_position: {
+      type: 'boolean',
+    },
+    experience_type: {
+      $ref: '#/components/schemas/ExperienceTypeEnum',
+    },
+  },
+  required: ['organisation_name', 'position'],
+} as const;
+
+export const ApiResponseUserExperienceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserExperienceWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserEducationWritableSchema = {
+  type: 'object',
+  description: 'An education record on the user-owned professional profile',
+  properties: {
+    qualification: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    field_of_study: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    school_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    start_year: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 2100,
+      minimum: 1950,
+    },
+    year_completed: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 2100,
+      minimum: 1950,
+    },
+    certificate_number: {
+      type: 'string',
+      maxLength: 100,
+      minLength: 0,
+    },
+  },
+  required: ['qualification', 'school_name'],
+} as const;
+
+export const ApiResponseUserEducationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserEducationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserDocumentWritableSchema = {
+  type: 'object',
+  description: 'A credential document on the user-owned professional profile',
+  properties: {
+    document_type_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    education_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    experience_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    membership_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    expiry_date: {
+      type: 'string',
+      format: 'date',
+    },
+  },
+  required: ['document_type_uuid'],
+} as const;
+
+export const ApiResponseUserDocumentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserDocumentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserCompetencyWritableSchema = {
+  type: 'object',
+  description: 'A competency in the user-owned skills wallet',
+  properties: {
+    competency: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    framework: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    level: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 5,
+      minimum: 1,
+    },
+    evidence: {
+      type: 'string',
+    },
+  },
+  required: ['competency'],
+} as const;
+
+export const ApiResponseUserCompetencyWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserCompetencyWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserCertificationWritableSchema = {
+  type: 'object',
+  description: 'A credential in the user-owned skills wallet',
+  properties: {
+    certification_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    issuing_organization: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    issued_date: {
+      type: 'string',
+      format: 'date',
+    },
+    expiry_date: {
+      type: 'string',
+      format: 'date',
+    },
+    credential_id: {
+      type: 'string',
+      maxLength: 120,
+      minLength: 0,
+    },
+    credential_url: {
+      type: 'string',
+      maxLength: 500,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+    },
+    credential_type: {
+      $ref: '#/components/schemas/CredentialTypeEnum',
+    },
+  },
+  required: ['certification_name', 'issuing_organization'],
+} as const;
+
+export const ApiResponseUserCertificationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserCertificationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const UserAchievementWritableSchema = {
+  type: 'object',
+  description: 'An achievement in the user-owned skills wallet',
+  properties: {
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    achievement_type: {
+      $ref: '#/components/schemas/AchievementTypeEnum',
+    },
+    awarded_by: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    awarded_on: {
+      type: 'string',
+      format: 'date',
+    },
+    description: {
+      type: 'string',
+    },
+  },
+  required: ['achievement_type', 'title'],
+} as const;
+
+export const ApiResponseUserAchievementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/UserAchievementWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorWritableSchema = {
+  type: 'object',
+  description: 'Instructor profile including location data for educational service delivery',
+  example: {
+    uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    user_uuid: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    full_name: 'Dr. Jane Smith',
+    latitude: -1.2921,
+    longitude: 36.8219,
+    website: 'https://drjanesmith.com',
+    bio: 'Experienced educator with 10+ years in software development training and mentorship.',
+    professional_headline: 'Senior Software Development Instructor & Tech Consultant',
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'admin@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'admin@sarafrika.com',
+    has_location_coordinates: true,
+    formatted_location: '-1.292100, 36.821900',
+    is_profile_complete: true,
+  },
+  properties: {
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the base user account UUID. Links instructor profile to user authentication and personal details.',
+      example: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    },
+    location_name: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Name of the place the instructor searched for, stored alongside the coordinates so their location reads back as a place rather than a coordinate pair.',
+      example: 'Sarit Centre, Nairobi, Kenya',
+    },
+    latitude: {
+      type: ['number', 'null'],
+      description:
+        "**[OPTIONAL]** Geographical latitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.",
+      example: -1.2921,
+      maximum: 90,
+      minimum: -90,
+    },
+    longitude: {
+      type: ['number', 'null'],
+      description:
+        "**[OPTIONAL]** Geographical longitude coordinate of instructor's primary training location. Used for location-based instructor matching and distance calculations. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.",
+      example: 36.8219,
+      maximum: 180,
+      minimum: -180,
+    },
+    website: {
+      type: ['string', 'null'],
+      format: 'uri',
+      description:
+        "**[OPTIONAL]** Professional website or portfolio URL. Used to showcase instructor's work, testimonials, and additional credentials.",
+      example: 'https://drjanesmith.com',
+      maxLength: 255,
+      minLength: 0,
+    },
+    bio: {
+      type: ['string', 'null'],
+      description:
+        "**[OPTIONAL]** Professional biography describing instructor's background, expertise, teaching philosophy, and experience. Used in instructor profiles and course descriptions.",
+      example:
+        'Experienced educator with 10+ years in software development training and mentorship. Specializes in full-stack development, cloud architecture, and agile methodologies.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    professional_headline: {
+      type: ['string', 'null'],
+      description:
+        "**[OPTIONAL]** Professional headline or title that summarizes instructor's expertise and role. Used in search results and instructor listings.",
+      example: 'Senior Software Development Instructor & Tech Consultant',
+      maxLength: 150,
+      minLength: 0,
+    },
+  },
+  required: ['user_uuid'],
+} as const;
+
+export const ApiResponseInstructorWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorSkillWritableSchema = {
+  type: 'object',
+  description:
+    'Technical and professional skill record for instructors with proficiency levels and competency classifications',
+  example: {
+    uuid: 'skill123-4567-89ab-cdef-0123456789ab',
+    instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    skill_name: 'Java Programming',
+    proficiency_level: 'EXPERT',
+    created_date: '2024-06-15T14:30:22',
+    created_by: 'instructor@example.com',
+    updated_date: '2024-06-16T09:15:00',
+    updated_by: 'instructor@example.com',
+    skill_category: 'PROGRAMMING_LANGUAGE',
+    proficiency_description: 'Expert level with 7+ years of experience',
+    proficiency_percentage: 95,
+    is_core_skill: true,
+    is_teaching_qualified: true,
+    skill_level_numeric: 4,
+    certification_recommended: false,
+    market_demand: 'HIGH',
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the instructor profile UUID. Links skill record to specific instructor.',
+      example: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    },
+    skill_name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Name of the technical or professional skill. Should be specific and standardized for consistency.',
+      example: 'Java Programming',
+      maxLength: 100,
+      minLength: 0,
+    },
+    proficiency_level: {
+      $ref: '#/components/schemas/ProficiencyLevelEnum2',
+    },
+  },
+  required: ['instructor_uuid', 'proficiency_level', 'skill_name'],
+} as const;
+
+export const ApiResponseInstructorSkillWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorSkillWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorProfessionalMembershipWritableSchema = {
+  type: 'object',
+  description:
+    'Professional membership record for instructors including associations, industry bodies, and certification organizations',
+  example: {
+    uuid: 'mem12345-6789-abcd-ef01-234567890abc',
+    instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    organisation_name: 'Institute of Electrical and Electronics Engineers (IEEE)',
+    membership_number: 'IEEE-92345678',
+    start_date: '2020-03-15',
+    end_date: null,
+    is_active: true,
+    created_date: '2024-06-15T14:30:22',
+    created_by: 'instructor@example.com',
+    updated_date: '2024-06-16T09:15:00',
+    updated_by: 'instructor@example.com',
+    membership_duration_months: 51,
+    formatted_duration: '4 years, 3 months',
+    membership_period: 'Mar 2020 - Present',
+    is_long_standing_member: true,
+    has_membership_number: true,
+    membership_status: 'ACTIVE',
+    organisation_type: 'PROFESSIONAL_INSTITUTE',
+    years_of_membership: 4.25,
+    is_recent_membership: true,
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the instructor profile UUID. Links membership record to specific instructor.',
+      example: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    },
+    organisation_name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Full name of the professional organisation, association, or certification body.',
+      example: 'Institute of Electrical and Electronics Engineers (IEEE)',
+      maxLength: 255,
+      minLength: 0,
+    },
+    membership_number: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Official membership number or identifier issued by the organisation.',
+      example: 'IEEE-92345678',
+      maxLength: 100,
+      minLength: 0,
+    },
+    start_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: '**[OPTIONAL]** Date when the membership began or was first obtained.',
+      example: '2020-03-15',
+    },
+    end_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description:
+        '**[OPTIONAL]** Date when the membership ended or expired. Should be null for active memberships.',
+      example: null,
+    },
+    is_active: {
+      type: ['boolean', 'null'],
+      description:
+        '**[OPTIONAL]** Indicates whether the membership is currently active. True for active memberships, false for inactive or expired.',
+      example: true,
+    },
+  },
+  required: ['instructor_uuid', 'organisation_name'],
+} as const;
+
+export const ApiResponseInstructorProfessionalMembershipWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorProfessionalMembershipWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorExperienceWritableSchema = {
+  type: 'object',
+  description:
+    'Professional work experience record for instructors including positions, organizations, responsibilities, and employment duration',
+  example: {
+    uuid: 'exp12345-6789-abcd-ef01-234567890abc',
+    instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    position: 'Senior Software Developer',
+    organisation_name: 'Safaricom PLC',
+    responsibilities:
+      'Led development of mobile banking applications, mentored junior developers, implemented DevOps practices, and collaborated with cross-functional teams to deliver high-quality software solutions.',
+    years_of_experience: 5.5,
+    start_date: '2019-01-15',
+    end_date: '2024-06-30',
+    is_current_position: false,
+    created_date: '2024-06-15T14:30:22',
+    created_by: 'instructor@example.com',
+    updated_date: '2024-06-16T09:15:00',
+    updated_by: 'instructor@example.com',
+    duration_in_months: 66,
+    formatted_duration: '5 years, 5 months',
+    employment_period: 'Jan 2019 - Jun 2024',
+    is_long_term_position: true,
+    has_responsibilities: true,
+    experience_level: 'SENIOR',
+    is_recent_experience: true,
+    calculated_years: 5.46,
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the instructor profile UUID. Links experience record to specific instructor.',
+      example: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    },
+    position: {
+      type: 'string',
+      description: '**[REQUIRED]** Job title or position held by the instructor in this role.',
+      example: 'Senior Software Developer',
+      maxLength: 255,
+      minLength: 0,
+    },
+    organisation_name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Name of the organisation, company, or institution where the instructor worked.',
+      example: 'Safaricom PLC',
+      maxLength: 255,
+      minLength: 0,
+    },
+    responsibilities: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Detailed description of key responsibilities, achievements, and duties performed in this position.',
+      example:
+        'Led development of mobile banking applications, mentored junior developers, implemented DevOps practices, and collaborated with cross-functional teams to deliver high-quality software solutions.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    years_of_experience: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Total years of experience in this position, including fractional years for more precise representation.',
+      example: 5.5,
+      maximum: 50,
+      minimum: 0,
+    },
+    start_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: '**[OPTIONAL]** Date when employment in this position began.',
+      example: '2019-01-15',
+    },
+    end_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description:
+        '**[OPTIONAL]** Date when employment in this position ended. Should be null for current positions.',
+      example: '2024-06-30',
+    },
+    is_current_position: {
+      type: ['boolean', 'null'],
+      description:
+        "**[OPTIONAL]** Indicates whether this is the instructor's current position. True for ongoing employment.",
+      example: false,
+    },
+  },
+  required: ['instructor_uuid', 'organisation_name', 'position'],
+} as const;
+
+export const ApiResponseInstructorExperienceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorExperienceWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorEducationWritableSchema = {
+  type: 'object',
+  description:
+    'Educational qualification record for instructors including degrees, diplomas, certificates, and academic credentials',
+  example: {
+    uuid: 'edu12345-6789-abcd-ef01-234567890abc',
+    instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    qualification: 'Master of Science in Computer Science',
+    field_of_study: 'Computer Science',
+    school_name: 'University of Nairobi',
+    start_year: 2018,
+    year_completed: 2020,
+    certificate_number: 'MSC/CS/2020/0456',
+    created_date: '2024-06-15T14:30:22',
+    created_by: 'instructor@example.com',
+    updated_date: '2024-06-16T09:15:00',
+    updated_by: 'instructor@example.com',
+    is_recent_qualification: true,
+    years_since_completion: 4,
+    education_level: 'POSTGRADUATE',
+    has_certificate_number: true,
+    formatted_completion: '2020 - University of Nairobi',
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the instructor profile UUID. Links education record to specific instructor.',
+      example: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    },
+    qualification: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Name or title of the academic qualification, degree, diploma, or certificate obtained.',
+      example: 'Master of Science in Computer Science',
+      maxLength: 255,
+      minLength: 0,
+    },
+    field_of_study: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Academic field of study or specialization for the qualification.',
+      example: 'Computer Science',
+      maxLength: 255,
+      minLength: 0,
+    },
+    school_name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Full name of the educational institution, university, college, or training organization.',
+      example: 'University of Nairobi',
+      maxLength: 255,
+      minLength: 0,
+    },
+    start_year: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Year when the qualification program started. Must be a valid year not before 1950.',
+      example: 2018,
+      maximum: 2030,
+      minimum: 1950,
+    },
+    year_completed: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Year when the qualification was completed or awarded. Must be a valid year not in the future.',
+      example: 2020,
+      maximum: 2030,
+      minimum: 1950,
+    },
+    certificate_number: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Official certificate, diploma, or degree number issued by the educational institution.',
+      example: 'MSC/CS/2020/0456',
+      maxLength: 100,
+      minLength: 0,
+    },
+  },
+  required: ['instructor_uuid', 'qualification', 'school_name'],
+} as const;
+
+export const ApiResponseInstructorEducationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorEducationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorDocumentWritableSchema = {
+  type: 'object',
+  description:
+    'Document record for instructor credential verification including educational certificates, experience documents, and professional memberships',
+  example: {
+    uuid: 'doc12345-6789-abcd-ef01-234567890abc',
+    instructor_uuid: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    document_type_uuid: 'dt123456-7890-abcd-ef01-234567890abc',
+    education_uuid: 'edu12345-6789-abcd-ef01-234567890abc',
+    experience_uuid: null,
+    membership_uuid: null,
+    original_filename: 'AWS_Solutions_Architect_Certificate.pdf',
+    stored_filename: 'instructor_doc_20240615_143022_abc123.pdf',
+    file_path: '/documents/instructors/2024/06/instructor_doc_20240615_143022_abc123.pdf',
+    file_size_bytes: 2048576,
+    mime_type: 'application/pdf',
+    file_hash: 'sha256:a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6',
+    title: 'AWS Certified Solutions Architect - Professional Certificate',
+    description: 'Professional certification in cloud architecture and solutions design',
+    upload_date: '2024-06-15T14:30:22',
+    is_verified: true,
+    verified_by: 'admin@sarafrika.com',
+    verified_at: '2024-06-16T09:15:00',
+    verification_notes: 'Certificate verified against AWS official database',
+    status: 'APPROVED',
+    expiry_date: '2027-06-15',
+    created_date: '2024-06-15T14:30:22',
+    created_by: 'instructor@example.com',
+    updated_date: '2024-06-16T09:15:00',
+    updated_by: 'admin@sarafrika.com',
+    file_size_formatted: '2.0 MB',
+    is_expired: false,
+    days_until_expiry: 1095,
+    is_pending_verification: false,
+    has_expiry_date: true,
+    verification_status: 'VERIFIED',
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the instructor profile UUID. Links document to specific instructor.',
+      example: 'i1s2t3r4-5u6c-7t8o-9r10-abcdefghijkl',
+    },
+    document_type_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the document type UUID. Defines the category and validation rules for this document.',
+      example: 'dt123456-7890-abcd-ef01-234567890abc',
+    },
+    education_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to specific education record UUID if this document supports an educational qualification.',
+      example: 'edu12345-6789-abcd-ef01-234567890abc',
+    },
+    experience_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to specific experience record UUID if this document supports work experience.',
+      example: 'exp12345-6789-abcd-ef01-234567890abc',
+    },
+    membership_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to specific membership record UUID if this document supports professional body membership.',
+      example: 'mem12345-6789-abcd-ef01-234567890abc',
+    },
+    original_filename: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Original filename as uploaded by the user. Preserved for user reference and display purposes.',
+      example: 'AWS_Solutions_Architect_Certificate.pdf',
+      maxLength: 255,
+      minLength: 0,
+    },
+    title: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Descriptive title for the document. Used for identification and display in document lists.',
+      example: 'AWS Certified Solutions Architect - Professional Certificate',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Detailed description of the document content and its relevance to instructor qualifications.',
+      example:
+        'Professional certification in cloud architecture and solutions design, demonstrating expertise in AWS services and best practices.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    expiry_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description:
+        '**[OPTIONAL]** Expiry date of the document if applicable. Used for certificates and time-limited credentials.',
+      example: '2027-06-15',
+    },
+  },
+  required: ['document_type_uuid', 'instructor_uuid', 'original_filename', 'title'],
+} as const;
+
+export const ApiResponseInstructorDocumentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorDocumentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const AvailabilitySlotWritableSchema = {
+  type: 'object',
+  description:
+    'Instructor availability slot that defines when an instructor is available for teaching',
+  example: {
+    uuid: 'as123456-7890-abcd-ef01-234567890abc',
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    availability_type: 'weekly',
+    day_of_week: 1,
+    day_of_month: null,
+    specific_date: null,
+    start_time: '09:00:00',
+    end_time: '17:00:00',
+    timezone: 'Africa/Nairobi',
+    custom_pattern: null,
+    is_available: true,
+    recurrence_interval: 1,
+    effective_start_date: '2024-09-01',
+    effective_end_date: '2024-12-31',
+    created_date: '2024-09-05T10:00:00',
+    updated_date: '2024-09-05T15:30:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the instructor UUID for this availability slot.',
+      example: 'inst1234-5678-90ab-cdef-123456789abc',
+    },
+    availability_type: {
+      $ref: '#/components/schemas/AvailabilityTypeEnum',
+    },
+    day_of_week: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[CONDITIONAL]** Day of the week (1=Monday, 7=Sunday). Required for weekly availability type.',
+      example: 1,
+      maximum: 7,
+      minimum: 1,
+    },
+    day_of_month: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[CONDITIONAL]** Day of the month (1-31). Required for monthly availability type.',
+      example: 15,
+      maximum: 31,
+      minimum: 1,
+    },
+    specific_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description:
+        '**[CONDITIONAL]** Specific date for one-time availability. Used with custom patterns.',
+      example: '2024-09-15',
+    },
+    start_time: {
+      type: 'string',
+      format: 'time',
+      description: '**[REQUIRED]** Start time of the availability slot.',
+      example: '09:00:00',
+    },
+    end_time: {
+      type: 'string',
+      format: 'time',
+      description: '**[REQUIRED]** End time of the availability slot.',
+      example: '17:00:00',
+    },
+    custom_pattern: {
+      type: ['string', 'null'],
+      description:
+        '**[CONDITIONAL]** Custom pattern expression for complex availability rules. Required for custom availability type.',
+      example: '0 0 9 ? * MON-FRI',
+      maxLength: 255,
+    },
+    is_available: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Whether this slot represents availability (true) or blocked time (false).',
+      example: true,
+    },
+    recurrence_interval: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Interval for recurrence. For example, 2 means every 2 weeks for weekly type.',
+      example: 1,
+      maximum: 52,
+      minimum: 1,
+    },
+    effective_start_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: '**[OPTIONAL]** Date when this availability pattern becomes effective.',
+      example: '2024-09-01',
+    },
+    effective_end_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: '**[OPTIONAL]** Date when this availability pattern expires.',
+      example: '2024-12-31',
+    },
+    color_code: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Hex color code for blocked time visualization (e.g., for categorizing different types of blocked times).',
+      example: '#FF6B6B',
+      pattern: '^#[0-9A-Fa-f]{6}$',
+    },
+    timezone: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** IANA timezone the start and end times are written in. Defaults to UTC when omitted, which is how slots recorded before the zone was captured are read.',
+      example: 'Africa/Nairobi',
+    },
+  },
+  required: ['availability_type', 'end_time', 'instructor_uuid', 'start_time'],
+} as const;
+
+export const ApiResponseAvailabilitySlotWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AvailabilitySlotWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseWritableSchema = {
+  type: 'object',
+  description:
+    'Complete course with metadata, content organization, and publication status supporting multiple categories',
+  example: {
+    uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    name: 'Advanced Java Programming',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    category_uuids: [
+      'c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl',
+      'p1r2o3g4-5r6a-7m8m-9i10-abcdefghijkl',
+    ],
+    difficulty_uuid: 'd1i2f3f4-5i6c-7u8l-9t10-abcdefghijkl',
+    description: 'Comprehensive course covering advanced Java concepts and enterprise development',
+    objectives: 'Master advanced Java features, design patterns, and enterprise frameworks',
+    prerequisites: 'Basic Java knowledge and OOP concepts',
+    duration_hours: 40,
+    duration_minutes: 30,
+    class_limit: 25,
+    minimum_training_fee: 180,
+    creator_share_percentage: 60,
+    instructor_share_percentage: 40,
+    revenue_share_notes: 'Creator retains 60% to cover tooling; instructors earn 40% net.',
+    age_lower_limit: 18,
+    age_upper_limit: 65,
+    thumbnail_url: 'https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg',
+    intro_video_url: 'https://cdn.sarafrika.com/courses/java-advanced-intro.mp4',
+    banner_url: 'https://cdn.sarafrika.com/courses/java-advanced-banner.jpg',
+    status: 'PUBLISHED',
+    active: true,
+    admin_approved: true,
+    training_requirements: [
+      {
+        uuid: '5a8074cc-8893-497b-8d58-4b151c994a80',
+        requirement_type: 'equipment',
+        name: 'Dual-screen instructor workstation',
+        quantity: 1,
+        unit: 'workstation',
+        is_mandatory: true,
+      },
+    ],
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    category_names: ['Programming', 'Advanced Java'],
+    total_duration_display: '40 hours 30 minutes',
+    is_free: false,
+    is_published: true,
+    is_draft: false,
+  },
+  properties: {
+    name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Course title. Should be descriptive and engaging for potential students.',
+      example: 'Advanced Java Programming',
+      maxLength: 255,
+      minLength: 0,
+    },
+    course_code: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Short unique code for the course, stored upper case.',
+      example: 'MUS-101',
+      pattern: '^[A-Za-z0-9][A-Za-z0-9-]{1,29}$',
+    },
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        "**[REQUIRED]** Reference to the course creator's UUID who created and owns this course.",
+      example: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    },
+    category_uuids: {
+      type: 'array',
+      description:
+        '**[OPTIONAL]** List of category UUIDs for organizing the course. A course can belong to multiple categories.',
+      example: ['c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl', 'p1r2o3g4-5r6a-7m8m-9i10-abcdefghijkl'],
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+      uniqueItems: true,
+    },
+    difficulty_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the difficulty level UUID indicating course complexity.',
+      example: 'd1i2f3f4-5i6c-7u8l-9t10-abcdefghijkl',
+    },
+    description: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Detailed course description explaining content, approach, and outcomes.',
+      example:
+        'Comprehensive course covering advanced Java concepts including concurrency, design patterns, and enterprise development frameworks',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    objectives: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Learning objectives and goals students will achieve upon completion.',
+      example:
+        'Master advanced Java features, understand design patterns, implement enterprise solutions',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    prerequisites: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Required knowledge and skills students should have before taking this course.',
+      example:
+        'Basic Java knowledge, understanding of OOP concepts, familiarity with development tools',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    duration_hours: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Legacy course duration in hours; course creators no longer set it.',
+      example: 40,
+      minimum: 0,
+    },
+    duration_minutes: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Legacy additional duration in minutes (0-59); course creators no longer set it.',
+      example: 30,
+      maximum: 59,
+      minimum: 0,
+    },
+    pass_mark: {
+      type: ['number', 'null'],
+      description: '**[OPTIONAL]** Final grade percentage a learner needs to pass the course.',
+      example: 80,
+      maximum: 100,
+      minimum: 0,
+    },
+    class_limit: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[OPTIONAL]** Maximum number of students that can enroll in the course.',
+      example: 25,
+      minimum: 1,
+    },
+    price: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Legacy course list price. Leave blank while pricing workflows are under review.',
+      minimum: 0,
+    },
+    minimum_training_fee: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Minimum rate per trainee per hour that any instructor-led class for this course must meet or exceed.',
+      example: 180,
+      minimum: 0,
+    },
+    creator_share_percentage: {
+      type: 'number',
+      description:
+        '**[REQUIRED]** Percentage of training revenue allocated to the course creator. Must work with instructor share to total 100%.',
+      example: 60,
+      maximum: 100,
+      minimum: 0,
+    },
+    instructor_share_percentage: {
+      type: 'number',
+      description:
+        '**[REQUIRED]** Percentage of training revenue allocated to instructors. Must work with creator share to total 100%.',
+      example: 40,
+      maximum: 100,
+      minimum: 0,
+    },
+    revenue_share_notes: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Additional context explaining how revenue is allocated between course creator and instructors.',
+      example: 'Creator retains 60% to cover tooling; instructors earn 40% net.',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    age_lower_limit: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[OPTIONAL]** Minimum age requirement for course enrollment.',
+      example: 18,
+      maximum: 120,
+      minimum: 1,
+    },
+    age_upper_limit: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[OPTIONAL]** Maximum age requirement for course enrollment.',
+      example: 65,
+      maximum: 120,
+      minimum: 1,
+    },
+    thumbnail_url: {
+      type: ['string', 'null'],
+      format: 'uri',
+      description: '**[OPTIONAL]** URL to course thumbnail image for course listings and previews.',
+      example: 'https://cdn.sarafrika.com/courses/java-advanced-thumb.jpg',
+      maxLength: 500,
+      minLength: 0,
+    },
+    intro_video_url: {
+      type: ['string', 'null'],
+      format: 'uri',
+      description:
+        '**[OPTIONAL]** URL to course introduction video for marketing and preview purposes.',
+      example: 'https://cdn.sarafrika.com/courses/java-advanced-intro.mp4',
+      maxLength: 500,
+      minLength: 0,
+    },
+    banner_url: {
+      type: ['string', 'null'],
+      format: 'uri',
+      description: '**[OPTIONAL]** URL to course banner image for detailed course pages.',
+      example: 'https://cdn.sarafrika.com/courses/java-advanced-banner.jpg',
+      maxLength: 500,
+      minLength: 0,
+    },
+    status: {
+      $ref: '#/components/schemas/SchemaEnum6',
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.',
+      example: true,
+    },
+  },
+  required: [
+    'course_creator_uuid',
+    'creator_share_percentage',
+    'instructor_share_percentage',
+    'name',
+    'status',
+  ],
+} as const;
+
+export const CourseTrainingRequirementWritableSchema = {
+  type: 'object',
+  description:
+    'Operational resources that must be available when delivering the course (materials, equipment, facilities).',
+  example: {
+    uuid: '5a8074cc-8893-497b-8d58-4b151c994a80',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    requirement_type: 'equipment',
+    name: 'Dual-screen instructor workstation',
+    description: 'Instructor requires dual monitors with HDMI input and adjustable desk mount.',
+    quantity: 1,
+    unit: 'workstation',
+    provided_by: 'organisation',
+    is_mandatory: true,
+  },
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Course identifier this requirement belongs to.',
+      example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    },
+    requirement_type: {
+      $ref: '#/components/schemas/RequirementTypeEnum2',
+    },
+    name: {
+      type: 'string',
+      description: '**[REQUIRED]** Concise label for the resource or material.',
+      example: 'Lab safety goggles',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: '**[OPTIONAL]** Extra details or specifications for the resource.',
+      example: 'Provide ANSI Z87.1 certified safety goggles for each participant.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    quantity: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Quantity needed for each class session.',
+      example: 15,
+      minimum: 1,
+    },
+    unit: {
+      type: 'string',
+      description: '**[OPTIONAL]** Unit that the quantity refers to.',
+      example: 'sets',
+      maxLength: 50,
+      minLength: 0,
+    },
+    provided_by: {
+      $ref: '#/components/schemas/ProvidedByEnum',
+    },
+    is_mandatory: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Indicates if the requirement is mandatory.',
+      example: true,
+    },
+  },
+  required: ['course_uuid', 'name', 'requirement_type'],
+} as const;
+
+export const ApiResponseCourseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListCoursePrerequisiteWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CoursePrerequisiteWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CoursePrerequisiteWritableSchema = {
+  type: 'object',
+  description: 'A prior course that a course requires or recommends',
+  properties: {
+    prerequisite_course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The prior course.',
+    },
+    is_mandatory: {
+      type: 'boolean',
+      description: 'true: required before starting; false: recommended only.',
+    },
+  },
+} as const;
+
+export const ApiResponseCourseTrainingRequirementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseTrainingRequirementWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseCourseTrainingApplicationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseTrainingApplicationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseTrainingApplicationWritableSchema = {
+  type: 'object',
+  description: 'Represents an instructor or organisation request to deliver a course',
+  example: {
+    uuid: 'b9c6e44f-37d4-4cf9-aa1c-3cfc1ffdd520',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    applicant_type: 'instructor',
+    applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    status: 'pending',
+    rate_card: {
+      currency: 'KES',
+      private_online_rate: 3500,
+      private_inperson_rate: 3600,
+      group_online_rate: 2800,
+      group_inperson_rate: 3000,
+    },
+    application_notes: 'I have delivered similar courses for 5 years.',
+    review_notes: null,
+    reviewed_by: null,
+    reviewed_at: null,
+    created_date: '2025-10-24T13:16:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: null,
+    updated_by: null,
+  },
+  properties: {
+    application_notes: {
+      type: ['string', 'null'],
+      description: 'Submission notes provided by the applicant.',
+    },
+    review_notes: {
+      type: ['string', 'null'],
+      description: 'Decision notes provided by the course creator.',
+    },
+    reviewed_by: {
+      type: ['string', 'null'],
+      description: 'Reviewer identifier captured when the request is approved or rejected.',
+    },
+    reviewed_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'Timestamp of the review decision.',
+    },
+  },
+} as const;
+
+export const ApiResponseCourseRubricAssociationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseRubricAssociationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseRubricAssociationWritableSchema = {
+  type: 'object',
+  description: 'Association between a course and a rubric for assessment purposes',
+  example: {
+    uuid: 'a1b2c3d4-5e6f-7g8h-9i10-abcdefghijkl',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    rubric_uuid: 'r1u2b3r4-5i6c-7d8a-9t10-abcdefghijkl',
+    associated_by: 'i1n2s3t4-5r6u-7c8t-9o10-abcdefghijkl',
+    association_date: '2024-08-13T10:30:00',
+    is_primary_rubric: true,
+    usage_context: 'final_assessment',
+    created_date: '2024-08-13T10:30:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-08-13T10:30:00',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the course that will use this rubric',
+      example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    },
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the rubric to be associated with the course',
+      example: 'r1u2b3r4-5i6c-7d8a-9t10-abcdefghijkl',
+    },
+    associated_by: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the instructor who created this association',
+      example: 'i1n2s3t4-5r6u-7c8t-9o10-abcdefghijkl',
+    },
+    is_primary_rubric: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Whether this is the primary rubric for the course',
+      example: true,
+    },
+    usage_context: {
+      type: 'string',
+      description: '**[OPTIONAL]** Context of rubric usage (e.g., midterm, final, assignment)',
+      example: 'final_assessment',
+      maxLength: 100,
+      minLength: 0,
+    },
+  },
+  required: ['associated_by', 'course_uuid', 'rubric_uuid'],
+} as const;
+
+export const CourseRequirementWritableSchema = {
+  type: 'object',
+  description: 'Course prerequisites and participation requirements',
+  example: {
+    uuid: 'r1e2q3u4-5i6r-7e8m-9e10-abcdefghijkl',
+    requirement_type: 'STUDENT',
+    requirement_text: 'Basic knowledge of Java programming and object-oriented concepts',
+    is_mandatory: true,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    requirement_type: {
+      $ref: '#/components/schemas/RequirementTypeEnum',
+    },
+    requirement_text: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Detailed description of the specific requirement or prerequisite.',
+      example:
+        'Basic knowledge of Java programming and object-oriented concepts including classes, inheritance, and polymorphism',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    is_mandatory: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if this requirement is mandatory or optional for course participation.',
+      example: true,
+    },
+  },
+  required: ['requirement_text', 'requirement_type'],
+} as const;
+
+export const ApiResponseCourseRequirementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseRequirementWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const LessonWritableSchema = {
+  type: 'object',
+  description:
+    'Individual lesson within a course containing structured learning content. Lesson timing is now defined during class scheduling by instructors.',
+  example: {
+    uuid: 'l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    lesson_number: 3,
+    title: 'Object-Oriented Programming Fundamentals',
+    description:
+      'Introduction to OOP concepts including classes, objects, inheritance, and polymorphism',
+    learning_objectives:
+      'Understand OOP principles, implement classes and objects, apply inheritance concepts',
+    status: 'PUBLISHED',
+    active: true,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    is_published: true,
+    lesson_sequence: 'Lesson 3',
+  },
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the parent course UUID that contains this lesson.',
+      example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    },
+    lesson_number: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[REQUIRED]** Sequential number of the lesson within the course. Must be unique per course.',
+      example: 3,
+      minimum: 1,
+    },
+    title: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Descriptive title of the lesson that clearly indicates the learning content.',
+      example: 'Object-Oriented Programming Fundamentals',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Detailed description of the lesson content and what students will learn.',
+      example:
+        'Introduction to Object-Oriented Programming concepts including classes, objects, inheritance, and polymorphism with practical examples',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    learning_objectives: {
+      type: 'string',
+      description: '**[OPTIONAL]** Specific learning objectives and outcomes for this lesson.',
+      example:
+        'Understand OOP principles, implement classes and objects, apply inheritance concepts in practical scenarios',
+      maxLength: 500,
+      minLength: 0,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum',
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if the lesson is actively available to students. Can only be true for published lessons.',
+      example: true,
+    },
+  },
+  required: ['course_uuid', 'lesson_number', 'status', 'title'],
+} as const;
+
+export const ApiResponseLessonWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/LessonWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const LessonPracticeActivityWritableSchema = {
+  type: 'object',
+  description: 'Reusable practice activity template attached to a lesson',
+  example: {
+    uuid: 'f0f57b88-6a16-4b75-a39d-ecb1a04c2ac6',
+    lesson_uuid: '30b49de6-f266-4a5e-8e81-fd706a601a15',
+    title: 'Think-pair-share: API contract review',
+    instructions:
+      'Students review the sample API payload individually, discuss issues in pairs, then share one improvement with the class.',
+    activity_type: 'DISCUSSION',
+    grouping: 'PAIR',
+    estimated_minutes: 15,
+    materials: ['Sample API payload', 'Review checklist'],
+    expected_output: 'Each pair identifies one contract risk and one improvement.',
+    display_order: 1,
+    status: 'published',
+    active: true,
+    created_date: '2026-04-29T18:04:00',
+    created_by: 'creator@sarafrika.com',
+    updated_date: '2026-04-29T18:30:00',
+    updated_by: 'creator@sarafrika.com',
+    is_published: true,
+    estimated_duration: '15 minutes',
+  },
+  properties: {
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Lesson UUID. When used through nested lesson endpoints, the path lesson is authoritative.',
+    },
+    title: {
+      type: 'string',
+      description: '**[REQUIRED]** Descriptive title of the practice activity.',
+      example: 'Think-pair-share: API contract review',
+      maxLength: 255,
+      minLength: 0,
+    },
+    instructions: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Facilitator-facing instructions for running the practice activity.',
+      example:
+        'Students review the sample API payload individually, discuss issues in pairs, then share one improvement with the class.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    activity_type: {
+      $ref: '#/components/schemas/ActivityTypeEnum',
+    },
+    grouping: {
+      $ref: '#/components/schemas/GroupingEnum',
+    },
+    estimated_minutes: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Estimated time needed to run the activity.',
+      example: 15,
+      minimum: 1,
+    },
+    materials: {
+      type: 'array',
+      description: '**[OPTIONAL]** Materials, handouts, links, or tools needed for the activity.',
+      example: ['Sample API payload', 'Review checklist'],
+      items: {
+        type: 'string',
+      },
+    },
+    expected_output: {
+      type: 'string',
+      description: '**[OPTIONAL]** Expected learner output or facilitator debrief artifact.',
+      example: 'Each pair identifies one contract risk and one improvement.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Display order within the lesson. If omitted, the system appends the activity.',
+      example: 1,
+      minimum: 1,
+    },
+    status: {
+      $ref: '#/components/schemas/SchemaEnum6',
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Whether the practice activity is visible for use. Can only be true when status is published.',
+      example: true,
+    },
+  },
+  required: ['instructions', 'title'],
+} as const;
+
+export const ApiResponseLessonPracticeActivityWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/LessonPracticeActivityWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const LessonContentWritableSchema = {
+  type: 'object',
+  description: 'Individual content item within a lesson supporting various media types',
+  example: {
+    uuid: 'l1c2o3n4-5t6e-7n8t-9i10-abcdefghijkl',
+    lesson_uuid: 'l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl',
+    content_type_uuid: 'c1o2n3t4-5e6n-7t8t-9y10-abcdefghijkl',
+    title: 'Introduction to Classes and Objects',
+    description: 'Comprehensive video explanation of OOP fundamentals with examples',
+    content_text: null,
+    file_url: 'https://cdn.sarafrika.com/lessons/oop-intro.mp4',
+    file_size_bytes: 157286400,
+    mime_type: 'video/mp4',
+    display_order: 1,
+    is_required: true,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    file_size_display: '150 MB',
+    content_category: 'Video Content',
+    is_downloadable: true,
+    estimated_duration: '15 minutes',
+  },
+  properties: {
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the lesson UUID that contains this content.',
+      example: 'l1e2s3s4-5o6n-7d8a-9t10-abcdefghijkl',
+    },
+    content_type_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the content type UUID defining the format and restrictions.',
+      example: 'c1o2n3t4-5e6n-7t8t-9y10-abcdefghijkl',
+    },
+    title: {
+      type: 'string',
+      description: '**[REQUIRED]** Descriptive title of the content item for student navigation.',
+      example: 'Introduction to Classes and Objects',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: '**[OPTIONAL]** Detailed description of the content and its learning purpose.',
+      example:
+        'Comprehensive video explanation of object-oriented programming fundamentals with practical examples and code demonstrations',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    content_text: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Text content for text-based content types. Null for file-based content.',
+      example: null,
+    },
+    file_url: {
+      type: ['string', 'null'],
+      format: 'uri',
+      description: '**[OPTIONAL]** URL to the uploaded content file. Null for text-based content.',
+      example: 'https://cdn.sarafrika.com/lessons/oop-intro.mp4',
+      maxLength: 500,
+      minLength: 0,
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Display order of content within the lesson for sequential presentation. If omitted, the system appends the content at the end.',
+      example: 1,
+      minimum: 1,
+    },
+    is_required: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Indicates if this content is required for lesson completion.',
+      example: true,
+    },
+  },
+  required: ['content_type_uuid', 'lesson_uuid', 'title'],
+} as const;
+
+export const ApiResponseLessonContentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/LessonContentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseCourseEvaluationPlanWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseEvaluationPlanWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseAssessmentLineItemWritableSchema = {
+  type: 'object',
+  description: 'Gradebook line item nested under a weighted course assessment component',
+  example: {
+    uuid: 'li1a2n3e-4i5t-6e7m-8a9b-abcdefghijkl',
+    course_assessment_uuid: 'c1a2s3s4-5e6s-7s8m-9e10-abcdefghijkl',
+    title: 'Quiz 1',
+    description: 'Foundational knowledge check',
+    item_type: 'discussion',
+    quiz_uuid: 'q1u2i3z4-5u6u-7i8d-9q10-abcdefghijkl',
+    max_score: 20,
+    weight_percentage: 25,
+    display_order: 1,
+    active: true,
+    due_at: '2024-04-20T09:00:00',
+  },
+  properties: {
+    course_assessment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    item_type: {
+      $ref: '#/components/schemas/ItemTypeEnum2',
+    },
+    assignment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    rubric_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    scheduled_instance_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    max_score: {
+      type: 'number',
+      minimum: 0.01,
+    },
+    weight_percentage: {
+      type: 'number',
+      maximum: 100,
+      minimum: 0.01,
+    },
+    display_order: {
+      type: 'integer',
+      format: 'int32',
+    },
+    active: {
+      type: 'boolean',
+    },
+    due_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Lesson this item grades, for a per-lesson component.',
+    },
+  },
+  required: ['item_type', 'title'],
+} as const;
+
+export const CourseEvaluationPlanWritableSchema = {
+  type: 'object',
+  description:
+    'Lessons by per-lesson assessment components; each cell is the line item grading that lesson, or null',
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    pass_mark: {
+      type: 'number',
+    },
+    components: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Component',
+      },
+    },
+    lessons: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LessonRowWritable',
+      },
+    },
+  },
+} as const;
+
+export const LessonRowWritableSchema = {
+  type: 'object',
+  properties: {
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    lesson_number: {
+      type: 'integer',
+      format: 'int32',
+    },
+    title: {
+      type: 'string',
+    },
+    cells: {
+      type: 'array',
+      description:
+        'One entry per component, in component order; null where the lesson is not graded',
+      items: {
+        $ref: '#/components/schemas/CourseAssessmentLineItemWritable',
+      },
+    },
+  },
+} as const;
+
+export const CourseAssessmentWritableSchema = {
+  type: 'object',
+  description: 'Course-level assessment component with weighting for final grade calculation',
+  example: {
+    uuid: 'c1a2s3s4-5e6s-7s8m-9e10-abcdefghijkl',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    assessment_type: 'Attendance',
+    title: 'Class Attendance and Participation',
+    description: 'Regular attendance and active participation in class discussions and activities',
+    weight_percentage: 20,
+    aggregation_strategy: 'weighted_average',
+    rubric_uuid: 'a1s2s3r4-5u6b-7r8i-9c10-abcdefghijkl',
+    is_required: true,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    assessment_category: 'Participation Component',
+    weight_display: '20% of final grade',
+    is_major_assessment: false,
+    contribution_level: 'Standard Contribution',
+  },
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the course UUID that this assessment belongs to.',
+      example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    },
+    assessment_type: {
+      type: 'string',
+      description: '**[REQUIRED]** Type of assessment component for categorization and processing.',
+      example: 'Attendance',
+      maxLength: 50,
+      minLength: 0,
+    },
+    title: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Title of the assessment component that clearly describes its purpose.',
+      example: 'Class Attendance and Participation',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Detailed description of the assessment criteria and expectations.',
+      example:
+        'Regular attendance and active participation in class discussions, group activities, and collaborative learning sessions',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    weight_percentage: {
+      type: 'number',
+      description:
+        '**[REQUIRED]** Percentage weight of this assessment in the final grade calculation.',
+      example: 20,
+      maximum: 100,
+      minimum: 0,
+    },
+    aggregation_strategy: {
+      $ref: '#/components/schemas/AggregationStrategyEnum',
+    },
+    rubric_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to assessment rubric UUID for detailed grading criteria.',
+      example: 'a1s2s3r4-5u6b-7r8i-9c10-abcdefghijkl',
+    },
+    sync_class_attendance: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates that this component should auto-sync attendance marks from class sessions under the course.',
+      example: false,
+    },
+    is_required: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Indicates if this assessment is required for course completion.',
+      example: true,
+    },
+    per_lesson: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Graded lesson by lesson: each lesson gets its own cell in the evaluation plan.',
+    },
+    program_assessment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Program component this course component feeds, for a course inside a program',
+    },
+  },
+  required: ['assessment_type', 'course_uuid', 'title', 'weight_percentage'],
+} as const;
+
+export const ApiResponseCourseAssessmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseAssessmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseCourseAssessmentLineItemWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseAssessmentLineItemWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseAssessmentLineItemScoreWritableSchema = {
+  type: 'object',
+  description: 'Learner score stored against a gradebook line item',
+  example: {
+    uuid: 'sc1o2r3e-4i5t-6e7m-8a9b-abcdefghijkl',
+    line_item_uuid: 'li1a2n3e-4i5t-6e7m-8a9b-abcdefghijkl',
+    enrollment_uuid: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    score: 18,
+    max_score: 20,
+    percentage: 90,
+    comments: 'Strong quiz performance',
+  },
+  properties: {
+    line_item_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    score: {
+      type: 'number',
+      minimum: 0,
+    },
+    max_score: {
+      type: 'number',
+      minimum: 0.01,
+    },
+    percentage: {
+      type: 'number',
+      maximum: 100,
+      minimum: 0,
+    },
+    comments: {
+      type: 'string',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    graded_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    graded_by_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+  },
+} as const;
+
+export const ApiResponseCourseAssessmentLineItemScoreWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseAssessmentLineItemScoreWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseAssessmentLineItemRubricEvaluationWritableSchema = {
+  type: 'object',
+  description: 'Stored rubric evaluation for a learner against a gradebook line item',
+  properties: {
+    line_item_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    comments: {
+      type: 'string',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    graded_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    graded_by_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    criteria_selections: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseAssessmentLineItemRubricEvaluationRowWritable',
+      },
+    },
+  },
+} as const;
+
+export const CourseAssessmentLineItemRubricEvaluationRowWritableSchema = {
+  type: 'object',
+  description: 'Selected rubric scoring level for one criterion in a line-item evaluation',
+  properties: {
+    criteria_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    scoring_level_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    comments: {
+      type: 'string',
+      maxLength: 5000,
+      minLength: 0,
+    },
+  },
+  required: ['criteria_uuid', 'scoring_level_uuid'],
+} as const;
+
+export const ApiResponseCourseAssessmentLineItemRubricEvaluationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseAssessmentLineItemRubricEvaluationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorWritableSchema = {
+  type: 'object',
+  description: 'Course creator profile for users dedicated to educational content creation',
+  example: {
+    uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    user_uuid: 'u1s2e3r4-5a6c-7t89-0abc-defghijklmno',
+    full_name: 'Alice Johnson',
+    bio: 'Passionate content creator with expertise in designing engaging online courses. Specializes in technical training materials and interactive learning experiences.',
+    professional_headline: 'Educational Content Designer & Course Architect',
+    website: 'https://alicejohnson.com',
+    admin_verified: true,
+    created_date: '2024-09-30T10:00:00',
+    created_by: 'admin@sarafrika.com',
+    updated_date: '2024-09-30T15:30:00',
+    updated_by: 'admin@sarafrika.com',
+    is_profile_complete: true,
+  },
+  properties: {
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the base user account UUID. Links course creator profile to user authentication and personal details.',
+      example: 'u1s2e3r4-5a6c-7t89-0abc-defghijklmno',
+    },
+    full_name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Complete name of the course creator. Used in course authorship and creator profiles.',
+      example: 'Alice Johnson',
+      maxLength: 255,
+      minLength: 1,
+    },
+    location_name: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Name of the place the course creator searched for, stored alongside the coordinates so their location reads back as a place rather than a coordinate pair.',
+      example: 'Sarit Centre, Nairobi, Kenya',
+    },
+    latitude: {
+      type: ['number', 'null'],
+      description:
+        "**[OPTIONAL]** Geographical latitude of the course creator's primary location. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.",
+      example: -1.2921,
+    },
+    longitude: {
+      type: ['number', 'null'],
+      description:
+        "**[OPTIONAL]** Geographical longitude of the course creator's primary location. Rounded to 2 decimal places (about 1 km) for anyone other than the profile owner, except a platform admin reading the single profile by UUID.",
+      example: 36.8219,
+    },
+    bio: {
+      type: ['string', 'null'],
+      description:
+        "**[OPTIONAL]** Professional biography describing course creator's background, expertise, and content creation philosophy. Used in creator profiles and course descriptions.",
+      example:
+        'Passionate content creator with expertise in designing engaging online courses. Specializes in technical training materials and interactive learning experiences.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    professional_headline: {
+      type: ['string', 'null'],
+      description:
+        "**[OPTIONAL]** Professional headline or title that summarizes course creator's expertise and role. Used in search results and creator listings.",
+      example: 'Educational Content Designer & Course Architect',
+      maxLength: 500,
+      minLength: 0,
+    },
+    website: {
+      type: ['string', 'null'],
+      format: 'uri',
+      description:
+        "**[OPTIONAL]** Professional website or portfolio URL. Used to showcase course creator's work and additional credentials.",
+      example: 'https://alicejohnson.com',
+      maxLength: 500,
+      minLength: 0,
+    },
+  },
+  required: ['full_name', 'user_uuid'],
+} as const;
+
+export const CourseCreatorSkillWritableSchema = {
+  type: 'object',
+  description:
+    'Technical or creative competency declared by a course creator with proficiency metadata',
+  example: {
+    uuid: 'skill123-4567-89ab-cdef-0123456789ab',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    skill_name: 'Instructional Design',
+    skill_uuid: '8e63c021-f640-4e7f-9f89-4d219f2d1ef0',
+    proficiency_level: 'EXPERT',
+    created_date: '2024-06-15T14:30:22',
+    created_by: 'creator@example.com',
+    updated_date: '2024-06-16T09:15:00',
+    updated_by: 'creator@example.com',
+  },
+  properties: {
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    skill_name: {
+      type: 'string',
+      maxLength: 100,
+      minLength: 0,
+    },
+    proficiency_level: {
+      $ref: '#/components/schemas/ProficiencyLevelEnum',
+    },
+    evidence: {
+      type: 'string',
+      description: 'Link to or description of evidence for the skill',
+    },
+    last_assessed_on: {
+      type: 'string',
+      format: 'date',
+    },
+  },
+  required: ['course_creator_uuid', 'proficiency_level', 'skill_name'],
+} as const;
+
+export const ApiResponseCourseCreatorSkillWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorSkillWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorPortfolioItemWritableSchema = {
+  type: 'object',
+  description: 'Work a course creator shows in the Portfolio tab of the skills wallet',
+  properties: {
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    item_type: {
+      $ref: '#/components/schemas/ItemTypeEnum',
+    },
+    link_url: {
+      type: 'string',
+      maxLength: 2048,
+      minLength: 0,
+    },
+    completed_on: {
+      type: 'string',
+      format: 'date',
+    },
+    description: {
+      type: 'string',
+    },
+  },
+  required: ['item_type', 'title'],
+} as const;
+
+export const ApiResponseCourseCreatorPortfolioItemWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorPortfolioItemWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorProfessionalMembershipWritableSchema = {
+  type: 'object',
+  description:
+    'Membership information for industry bodies or associations that endorse the course creator',
+  example: {
+    uuid: 'memb1234-5678-abcd-ef01-234567890abc',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    organisation_name: 'International Society for Technology in Education',
+    membership_number: 'ISTE-2024-991',
+    start_date: '2022-01-01',
+    end_date: null,
+    is_active: true,
+  },
+  properties: {
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    organisation_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    membership_number: {
+      type: 'string',
+      maxLength: 100,
+      minLength: 0,
+    },
+    start_date: {
+      type: 'string',
+      format: 'date',
+    },
+    end_date: {
+      type: 'string',
+      format: 'date',
+    },
+    is_active: {
+      type: 'boolean',
+    },
+  },
+  required: ['course_creator_uuid', 'organisation_name'],
+} as const;
+
+export const ApiResponseCourseCreatorProfessionalMembershipWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorProfessionalMembershipWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorExperienceWritableSchema = {
+  type: 'object',
+  description: 'Work history and practical delivery background for course creators',
+  example: {
+    uuid: 'exp12345-6789-abcd-ef01-234567890abc',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    position: 'Lead Content Strategist',
+    organisation_name: 'Digital Learning Labs',
+    responsibilities: 'Designed blended learning experiences for enterprise teams.',
+    years_of_experience: 5.5,
+    start_date: '2019-01-01',
+    end_date: null,
+    is_current_position: true,
+  },
+  properties: {
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    position: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    organisation_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    responsibilities: {
+      type: 'string',
+    },
+    years_of_experience: {
+      type: 'number',
+      maximum: 60,
+      minimum: 0,
+    },
+    start_date: {
+      type: 'string',
+      format: 'date',
+    },
+    end_date: {
+      type: 'string',
+      format: 'date',
+    },
+    is_current_position: {
+      type: 'boolean',
+    },
+    experience_type: {
+      $ref: '#/components/schemas/ExperienceTypeEnum',
+    },
+  },
+  required: ['course_creator_uuid', 'organisation_name', 'position'],
+} as const;
+
+export const ApiResponseCourseCreatorExperienceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorExperienceWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorEducationWritableSchema = {
+  type: 'object',
+  description: 'Academic credentials captured for course creators',
+  example: {
+    uuid: 'edu12345-6789-abcd-ef01-234567890abc',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    qualification: 'Master of Education',
+    field_of_study: 'Curriculum Studies',
+    school_name: 'Strathmore University',
+    start_year: 2019,
+    year_completed: 2021,
+    certificate_number: 'MEd-2021-0099',
+  },
+  properties: {
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    qualification: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    field_of_study: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    school_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    start_year: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 2100,
+      minimum: 1950,
+    },
+    year_completed: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 2100,
+      minimum: 1950,
+    },
+    certificate_number: {
+      type: 'string',
+      maxLength: 100,
+      minLength: 0,
+    },
+  },
+  required: ['course_creator_uuid', 'qualification', 'school_name'],
+} as const;
+
+export const ApiResponseCourseCreatorEducationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorEducationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorDocumentDTOWritableSchema = {
+  type: 'object',
+  properties: {
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    document_type_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    education_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    experience_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    membership_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    original_filename: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    expiry_date: {
+      type: 'string',
+      format: 'date',
+    },
+  },
+  required: ['course_creator_uuid', 'document_type_uuid', 'original_filename'],
+} as const;
+
+export const ApiResponseCourseCreatorDocumentDTOWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorDocumentDTOWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorCompetencyWritableSchema = {
+  type: 'object',
+  description: 'A competency against a framework, with evidence an admin verifies',
+  properties: {
+    competency: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    framework: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    level: {
+      type: 'integer',
+      format: 'int32',
+      maximum: 5,
+      minimum: 1,
+    },
+    evidence: {
+      type: 'string',
+    },
+  },
+  required: ['competency'],
+} as const;
+
+export const ApiResponseCourseCreatorCompetencyWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorCompetencyWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorCertificationWritableSchema = {
+  type: 'object',
+  description:
+    'Professional certification or accreditation evidence associated with a course creator',
+  example: {
+    uuid: 'cert1234-5678-abcd-ef01-234567890abc',
+    course_creator_uuid: 'c1r2e3a4-5t6o-7r89-0abc-defghijklmno',
+    certification_name: 'Adobe Captivate Specialist',
+    issuing_organisation: 'Adobe',
+    issued_date: '2023-04-01',
+    expiry_date: '2025-04-01',
+    credential_id: 'ADCAP-2023-8891',
+    credential_url: 'https://verify.example.com/ADCAP-2023-8891',
+    description: 'Validated expertise in creating immersive digital learning content.',
+    is_verified: true,
+  },
+  properties: {
+    course_creator_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    certification_name: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    issuing_organisation: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    issued_date: {
+      type: 'string',
+      format: 'date',
+    },
+    expiry_date: {
+      type: 'string',
+      format: 'date',
+    },
+    credential_id: {
+      type: 'string',
+      maxLength: 120,
+      minLength: 0,
+    },
+    credential_url: {
+      type: 'string',
+      maxLength: 500,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+    },
+    credential_type: {
+      $ref: '#/components/schemas/CredentialTypeEnum',
+    },
+  },
+  required: ['certification_name', 'course_creator_uuid', 'issuing_organisation'],
+} as const;
+
+export const ApiResponseCourseCreatorCertificationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorCertificationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCreatorAchievementWritableSchema = {
+  type: 'object',
+  description: 'An award, milestone or recognition in the skills wallet',
+  properties: {
+    title: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    achievement_type: {
+      $ref: '#/components/schemas/AchievementTypeEnum',
+    },
+    awarded_by: {
+      type: 'string',
+      maxLength: 255,
+      minLength: 0,
+    },
+    awarded_on: {
+      type: 'string',
+      format: 'date',
+    },
+    description: {
+      type: 'string',
+    },
+  },
+  required: ['achievement_type', 'title'],
+} as const;
+
+export const ApiResponseCourseCreatorAchievementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorAchievementWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const GradingLevelWritableSchema = {
+  type: 'object',
+  description: 'Grading scale level with points and ordering for assessments',
+  example: {
+    uuid: 'g1r2a3d4-5i6n-7g8l-9v10-abcdefghijkl',
+    name: 'Distinction',
+    points: 5,
+    level_order: 1,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'system',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'admin@sarafrika.com',
+    grade_display: 'Level 1: Distinction (5 points)',
+    is_passing_grade: true,
+    grade_category: 'Excellent',
+    percentage_range: '90-100%',
+  },
+  properties: {
+    name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Name of the grading level. Must be unique across all grading levels.',
+      example: 'Distinction',
+      maxLength: 50,
+      minLength: 0,
+    },
+    points: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[REQUIRED]** Point value assigned to this grading level for scoring calculations.',
+      example: 5,
+      maximum: 10,
+      minimum: 1,
+    },
+    level_order: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[REQUIRED]** Numeric order defining the grade hierarchy. Lower numbers indicate higher grades.',
+      example: 1,
+      maximum: 10,
+      minimum: 1,
+    },
+  },
+  required: ['level_order', 'name', 'points'],
+} as const;
+
+export const ApiResponseGradingLevelWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/GradingLevelWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const DifficultyLevelWritableSchema = {
+  type: 'object',
+  description: 'Course difficulty level defining learning progression stages',
+  example: {
+    uuid: 'd1i2f3f4-5i6c-7u8l-9t10-abcdefghijkl',
+    name: 'Intermediate',
+    level_order: 3,
+    description: 'For learners with basic knowledge seeking to develop intermediate skills',
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'system',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'admin@sarafrika.com',
+    display_name: 'Level 3: Intermediate',
+    is_entry_level: false,
+  },
+  properties: {
+    name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Name of the difficulty level. Must be unique across all difficulty levels.',
+      example: 'Intermediate',
+      maxLength: 50,
+      minLength: 0,
+    },
+    level_order: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[REQUIRED]** Numeric order defining the progression sequence. Lower numbers indicate easier levels.',
+      example: 3,
+      maximum: 10,
+      minimum: 1,
+    },
+    description: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** Detailed description of the difficulty level and target audience.',
+      example:
+        'For learners with basic knowledge seeking to develop intermediate skills and tackle more complex challenges',
+      maxLength: 500,
+      minLength: 0,
+    },
+  },
+  required: ['level_order', 'name'],
+} as const;
+
+export const ApiResponseDifficultyLevelWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/DifficultyLevelWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ContentTypeWritableSchema = {
+  type: 'object',
+  description: 'Supported content type with file format specifications and size limits',
+  example: {
+    uuid: 'c1o2n3t4-5e6n-7t8t-9y10-abcdefghijkl',
+    name: 'Video',
+    mime_types: ['video/mp4', 'video/webm', 'video/mpeg'],
+    max_file_size_mb: 500,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'system',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'admin@sarafrika.com',
+    supported_formats: 'MP4, WebM, MPEG',
+    size_limit_display: '500 MB',
+    is_media_type: true,
+    upload_category: 'Large Media Files',
+  },
+  properties: {
+    name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Name of the content type. Must be unique across all content types.',
+      example: 'Video',
+      maxLength: 50,
+      minLength: 0,
+    },
+    mime_types: {
+      type: 'array',
+      description: '**[REQUIRED]** Array of supported MIME types for this content type.',
+      example: ['video/mp4', 'video/webm', 'video/mpeg'],
+      items: {
+        type: 'string',
+      },
+      maxItems: 2147483647,
+      minItems: 1,
+    },
+    max_file_size_mb: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Maximum file size allowed in megabytes. Null means no size limit.',
+      example: 500,
+      minimum: 1,
+    },
+  },
+  required: ['mime_types', 'name'],
+} as const;
+
+export const ApiResponseContentTypeWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ContentTypeWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CategoryWritableSchema = {
+  type: 'object',
+  description: 'Course category supporting hierarchical organization',
+  example: {
+    uuid: 'c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl',
+    name: 'Programming',
+    description: 'Software development and programming courses',
+    parent_uuid: 't1e2c3h4-5n6o-7l8o-9g10-abcdefghijkl',
+    is_active: true,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'admin@sarafrika.com',
+    updated_date: '2024-04-15T15:30:00',
+    updated_by: 'admin@sarafrika.com',
+    is_root_category: false,
+    category_path: 'Technology > Programming',
+  },
+  properties: {
+    name: {
+      type: 'string',
+      description: '**[REQUIRED]** Category name. Must be unique within the same parent category.',
+      example: 'Programming',
+      maxLength: 100,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: '**[OPTIONAL]** Detailed description of the category and its scope.',
+      example:
+        'Software development and programming courses covering various languages and frameworks',
+      maxLength: 500,
+      minLength: 0,
+    },
+    parent_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to parent category UUID for hierarchical organization. Null for root categories.',
+      example: 't1e2c3h4-5n6o-7l8o-9g10-abcdefghijkl',
+    },
+    is_active: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if the category is active and available for course assignment.',
+      example: true,
+    },
+  },
+  required: ['name'],
+} as const;
+
+export const ApiResponseCategoryWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CategoryWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseClassDefinitionResponseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassDefinitionResponseWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassDefinitionWritableSchema = {
+  type: 'object',
+  description: 'Class definition template that defines what a class is, independent of scheduling',
+  example: {
+    uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    title: 'Introduction to Java Programming',
+    description:
+      'Comprehensive introduction to Java programming covering basics, OOP concepts, and practical application development.',
+    thumbnail_url:
+      '/api/v1/classes/media/class_thumbnails/cd123456-7890-abcd-ef01-234567890abc/thumbnail.jpg',
+    promotional_video_url:
+      '/api/v1/classes/media/class_promotional_videos/cd123456-7890-abcd-ef01-234567890abc/promo.mp4',
+    default_instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    organisation_uuid: 'org12345-6789-abcd-ef01-234567890abc',
+    course_uuid: 'course123-4567-89ab-cdef-123456789abc',
+    program_uuid: null,
+    training_fee: 240,
+    class_visibility: 'PUBLIC',
+    session_format: 'GROUP',
+    default_start_time: '2025-01-15T14:00:00Z',
+    default_end_time: '2025-01-15T15:30:00Z',
+    academic_period_start_date: '2025-01-15',
+    academic_period_end_date: '2025-03-15',
+    registration_period_start_date: '2024-12-15',
+    registration_period_end_date: '2025-01-10',
+    class_reminder_minutes: 30,
+    class_color: '#1F6FEB',
+    duration_minutes: 90,
+    location_type: 'HYBRID',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
+    meeting_link: 'https://meet.google.com/abc-defg-hij',
+    max_participants: 25,
+    allow_waitlist: true,
+    session_templates: [
+      {
+        start_time: '2025-01-15T14:00:00Z',
+        end_time: '2025-01-15T15:30:00Z',
+        recurrence: {
+          recurrence_type: 'WEEKLY',
+          interval_value: 1,
+          days_of_week: 'MONDAY,WEDNESDAY',
+          occurrence_count: 8,
+        },
+        conflict_resolution: 'FAIL',
+      },
+    ],
+    scheduled_session_count: 8,
+    completed_session_count: 2,
+    class_progress_percentage: 25,
+    is_active: true,
+    created_date: '2024-09-05T10:00:00',
+    updated_date: '2024-09-05T15:30:00',
+    created_by: 'admin@sarafrika.com',
+    updated_by: 'admin@sarafrika.com',
+  },
+  properties: {
+    title: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Title of the class definition. Used for identification and display.',
+      example: 'Introduction to Java Programming',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Detailed description of the class content, objectives, and what students will learn.',
+      example:
+        'Comprehensive introduction to Java programming covering basics, OOP concepts, and practical application development.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    thumbnail_url: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** URL to class thumbnail image for class listings and previews.',
+      example:
+        '/api/v1/classes/media/class_thumbnails/cd123456-7890-abcd-ef01-234567890abc/thumbnail.jpg',
+      maxLength: 500,
+      minLength: 0,
+    },
+    promotional_video_url: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** URL to class promotional video for marketing and preview purposes.',
+      example:
+        '/api/v1/classes/media/class_promotional_videos/cd123456-7890-abcd-ef01-234567890abc/promo.mp4',
+      maxLength: 500,
+      minLength: 0,
+    },
+    default_instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the default instructor UUID for this class definition.',
+      example: 'inst1234-5678-90ab-cdef-123456789abc',
+    },
+    organisation_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the organisation UUID that owns this class definition.',
+      example: 'org12345-6789-abcd-ef01-234567890abc',
+    },
+    branch_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[OPTIONAL]** Training branch (location) this class belongs to.',
+      example: 'branch12-3456-789a-bcde-f0123456789a',
+    },
+    course_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the course UUID if this class is part of a structured course.',
+      example: 'course123-4567-89ab-cdef-123456789abc',
+    },
+    program_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the training program UUID if this class is part of a training programme.',
+      example: 'program123-4567-89ab-cdef-123456789abc',
+    },
+    sale_price: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Training fee charged for sessions created from this class definition. Must match the approved training rate for linked courses or training programs.',
+      example: 220,
+      minimum: 0,
+    },
+    instructor_pay: {
+      type: ['number', 'null'],
+      description:
+        "**[OPTIONAL]** Per-session pay owed to the instructor. The difference between this and the sale price is the organisation's margin.",
+      example: 180,
+      minimum: 0,
+    },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum',
+    },
+    class_visibility: {
+      $ref: '#/components/schemas/ClassVisibilityEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    default_start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default start date-time for class sessions (UTC).',
+      example: '2025-01-15T09:00:00Z',
+    },
+    default_end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default end date-time for class sessions (UTC).',
+      example: '2025-01-15T10:30:00Z',
+    },
+    academic_period_start_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: '**[OPTIONAL]** Academic period start date for the class lifecycle.',
+      example: '2025-01-15',
+    },
+    academic_period_end_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: '**[OPTIONAL]** Academic period end date for the class lifecycle.',
+      example: '2025-03-15',
+    },
+    registration_period_start_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: '**[OPTIONAL]** Registration period start date for learner enrollment.',
+      example: '2024-12-15',
+    },
+    registration_period_end_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: '**[OPTIONAL]** Registration period end date for learner enrollment.',
+      example: '2025-01-10',
+    },
+    class_reminder_minutes: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Number of minutes before class start when reminders should be triggered.',
+      example: 30,
+      minimum: 0,
+    },
+    class_color: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Hex color code used to visually distinguish the class in UI surfaces.',
+      example: '#1F6FEB',
+      pattern: '^#[0-9A-Fa-f]{6}$',
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Human-readable name for the primary class location, used for Mapbox forward/reverse geocoding (e.g., campus, room, or venue name). Required when location_type is IN_PERSON or HYBRID.',
+      example: 'Nairobi HQ – Room 101',
+      maxLength: 255,
+    },
+    location_latitude: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Latitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.',
+      example: -1.292066,
+    },
+    location_longitude: {
+      type: ['number', 'null'],
+      description:
+        '**[OPTIONAL]** Longitude coordinate for the primary class location, used with Mapbox. Required when location_type is IN_PERSON or HYBRID.',
+      example: 36.821945,
+    },
+    meeting_link: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Virtual meeting URL for online participation (e.g., Zoom, Google Meet, Teams).',
+      example: 'https://meet.google.com/abc-defg-hij',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    max_participants: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Maximum number of participants allowed in the class.',
+      example: 25,
+      maximum: 1000,
+      minimum: 1,
+    },
+    allow_waitlist: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Whether to allow waitlisting when maximum capacity is reached.',
+      example: true,
+    },
+    is_active: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Whether this class definition is currently active and available for scheduling.',
+      example: true,
+    },
+    venue_resource_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Organisation venue resource the class sessions are booked into. Null for classes without a managed venue.',
+    },
+    category_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Category the class falls under. Courses supply their own categories, so this carries the category chosen for program-backed classes.',
+    },
+  },
+  required: [
+    'class_visibility',
+    'default_end_time',
+    'default_instructor_uuid',
+    'default_start_time',
+    'location_type',
+    'session_format',
+    'title',
+  ],
+} as const;
+
+export const ClassDefinitionResponseWritableSchema = {
+  type: 'object',
+  description: 'Response payload for class definition operations',
+  properties: {
+    class_definition: {
+      $ref: '#/components/schemas/ClassDefinitionWritable',
+      description: 'Persisted class definition',
+    },
+  },
+} as const;
+
+export const ClassSessionTemplateWritableSchema = {
+  type: 'object',
+  description:
+    'Time slot template used during class creation to generate scheduled instances with optional recurrence',
+  properties: {
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Start time for the first occurrence (UTC)',
+      example: '2025-01-15T14:00:00Z',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[REQUIRED]** End time for the first occurrence (UTC). Together with start_time this fixes the session length.',
+      example: '2025-01-15T15:30:00Z',
+    },
+    recurrence: {
+      type: 'null',
+      $ref: '#/components/schemas/ClassRecurrence',
+      description: 'Inline recurrence rule for this session template',
+    },
+    timezone: {
+      type: 'string',
+      description:
+        '**[OPTIONAL]** IANA timezone identifier used when displaying generated scheduled sessions.',
+      example: 'Africa/Nairobi',
+      maxLength: 64,
+      minLength: 0,
+    },
+    conflict_resolution: {
+      $ref: '#/components/schemas/ConflictResolutionEnum',
+    },
+  },
+  required: ['end_time', 'start_time'],
+} as const;
+
+export const ClassMarketplaceJobRequestWritableSchema = {
+  type: 'object',
+  description: 'Draft class advert posted by an organisation before a final instructor is assigned',
+  example: {
+    organisation_uuid: 'org-1234-5678-90ab-cdef12345678',
+    branch_uuid: 'branch-1234-5678-90ab-cdef12345678',
+    course_uuid: 'course-1234-5678-90ab-cdef12345678',
+    title: 'Weekend Data Analysis Bootcamp',
+    description: 'School-led advert for an approved course delivery slot.',
+    class_visibility: 'PUBLIC',
+    session_format: 'GROUP',
+    default_start_time: '2026-05-02T09:00:00',
+    default_end_time: '2026-05-02T12:00:00',
+    location_type: 'HYBRID',
+    meeting_link: 'https://meet.google.com/abc-defg-hij',
+    max_participants: 24,
+    allow_waitlist: true,
+    sale_price: 240,
+    instructor_pay: 180,
+    rate_basis: 'per_hour',
+    session_templates: [
+      {
+        start_time: '2026-05-02T09:00:00',
+        end_time: '2026-05-02T12:00:00',
+        recurrence: {
+          recurrence_type: 'WEEKLY',
+          interval_value: 1,
+          days_of_week: 'SATURDAY',
+          occurrence_count: 6,
+        },
+        conflict_resolution: 'FAIL',
+      },
+    ],
+  },
+  properties: {
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Organisation posting the marketplace class job.',
+    },
+    course_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Course backing the advertised class. Required when program_uuid is not provided.',
+    },
+    program_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Training program backing the advertised class. Required when course_uuid is not provided.',
+    },
+    title: {
+      type: 'string',
+      description: '**[REQUIRED]** Advert title for the class job.',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: ['string', 'null'],
+      description: 'Optional description for instructors evaluating the class job.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    class_visibility: {
+      $ref: '#/components/schemas/ClassVisibilityEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    default_start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default start date-time for the advertised class (UTC).',
+    },
+    default_end_time: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[REQUIRED]** Default end date-time for the advertised class (UTC). Together with default_start_time this fixes the class length.',
+    },
+    academic_period_start_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: 'Optional academic period start date.',
+    },
+    academic_period_end_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: 'Optional academic period end date.',
+    },
+    registration_period_start_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: 'Optional registration period start date.',
+    },
+    registration_period_end_date: {
+      type: ['string', 'null'],
+      format: 'date',
+      description: 'Optional registration period end date.',
+    },
+    class_reminder_minutes: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Optional reminder lead time in minutes.',
+    },
+    class_color: {
+      type: ['string', 'null'],
+      description: 'Optional UI color for the class advert.',
+      pattern: '^#[0-9A-Fa-f]{6}$',
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: ['string', 'null'],
+      description:
+        "Ignored for IN_PERSON and HYBRID: the name is derived from the branch as 'Branch name · address'. Kept as sent for ONLINE.",
+      maxLength: 255,
+      minLength: 0,
+    },
+    location_latitude: {
+      type: ['number', 'null'],
+      description:
+        "Ignored for IN_PERSON and HYBRID: copied from the branch's location pin when the job is saved. Kept as sent for ONLINE.",
+    },
+    location_longitude: {
+      type: ['number', 'null'],
+      description:
+        "Ignored for IN_PERSON and HYBRID: copied from the branch's location pin when the job is saved. Kept as sent for ONLINE.",
+    },
+    meeting_link: {
+      type: ['string', 'null'],
+      description: 'Optional virtual meeting link for ONLINE or HYBRID delivery.',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    max_participants: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Optional maximum participant count.',
+    },
+    allow_waitlist: {
+      type: ['boolean', 'null'],
+      description: 'Optional waitlist toggle for the eventual class.',
+    },
+    sale_price: {
+      type: 'number',
+      description:
+        "**[REQUIRED]** Price per learner in the rate_basis unit, charged once the class exists. Must be at least the organisation's approved rate for the job's format, delivery and basis, and at least the course minimum training fee.",
+      example: 240,
+    },
+    instructor_pay: {
+      type: 'number',
+      description:
+        "**[REQUIRED]** Pay offered to the eventual instructor in the rate_basis unit. Must be greater than zero and no more than sale_price. An instructor can apply and be hired only when their approved rate for the job's basis is at most this.",
+      example: 180,
+    },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
+    },
+    session_templates: {
+      type: 'array',
+      description:
+        '**[REQUIRED]** Session templates that will be used when the class is assigned and created.',
+      items: {
+        $ref: '#/components/schemas/ClassSessionTemplateWritable',
+      },
+      maxItems: 2147483647,
+      minItems: 1,
+    },
+    resources: {
+      type: ['array', 'null'],
+      description:
+        '**[OPTIONAL]** Organisation resources (venue, equipment pools) to reserve for every session while recruitment runs. At most one venue; posting fails with a per-occurrence conflict report if any resource is unavailable.',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobResourceWritable',
+      },
+    },
+    service_type: {
+      $ref: '#/components/schemas/ServiceTypeEnum',
+    },
+    preferred_instructor_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Instructor to assign at creation. When provided, the class is materialised and assigned to this instructor immediately (the job is filled, no open application step); when omitted, the class is posted for instructors to apply.',
+    },
+    target_groups: {
+      type: ['array', 'null'],
+      description:
+        "**[OPTIONAL]** Name snapshot of the target learner groups. Ignored when target_group_uuids is supplied — the names are then resolved from the organisation's student groups.",
+      items: {
+        type: 'string',
+      },
+    },
+    target_group_uuids: {
+      type: ['array', 'null'],
+      description:
+        '**[OPTIONAL]** Organisation student groups (cohorts / streams) the class is aimed at. Identifiers that do not belong to the owning organisation are rejected.',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    category_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        "**[OPTIONAL]** Category the class falls under. Course-backed classes inherit the course's own categories, so this is intended for program-backed classes which carry none per class.",
+    },
+    remind_students: {
+      type: ['boolean', 'null'],
+      description: '**[OPTIONAL]** Send session reminders to enrolled students.',
+    },
+    remind_instructor: {
+      type: ['boolean', 'null'],
+      description: '**[OPTIONAL]** Send session reminders to the assigned instructor.',
+    },
+    remind_via_email: {
+      type: ['boolean', 'null'],
+      description: '**[OPTIONAL]** Deliver reminders via email.',
+    },
+    remind_via_sms: {
+      type: ['boolean', 'null'],
+      description: '**[OPTIONAL]** Deliver reminders via SMS.',
+    },
+    remind_via_push: {
+      type: ['boolean', 'null'],
+      description: '**[OPTIONAL]** Deliver reminders via push notification.',
+    },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        "**[REQUIRED]** Training branch the class is delivered at. Its location pin becomes the job's location for IN_PERSON and HYBRID delivery.",
+    },
+  },
+  required: [
+    'branch_uuid',
+    'class_visibility',
+    'default_end_time',
+    'default_start_time',
+    'instructor_pay',
+    'location_type',
+    'organisation_uuid',
+    'rate_basis',
+    'sale_price',
+    'session_format',
+    'session_templates',
+    'title',
+  ],
+} as const;
+
+export const ClassMarketplaceJobResourceWritableSchema = {
+  type: 'object',
+  description:
+    'Organisation resource a marketplace job reserves for its sessions while recruitment runs (venue booked exclusively, equipment pools by quantity)',
+  properties: {
+    resource_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Organisation resource to reserve.',
+    },
+    quantity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Units to reserve per session (must be 1 for venues; defaults to 1).',
+      example: 1,
+      minimum: 1,
+    },
+  },
+  required: ['resource_uuid'],
+} as const;
+
+export const ApiResponseClassMarketplaceJobWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassMarketplaceJobWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassMarketplaceJobWritableSchema = {
+  type: 'object',
+  description:
+    'Marketplace job advert for an organisation-owned class awaiting instructor assignment',
+  properties: {
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
+    },
+    class_visibility: {
+      $ref: '#/components/schemas/ClassVisibilityEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+  },
+} as const;
+
+export const CertificateWritableSchema = {
+  type: 'object',
+  description: 'Issued certificate documenting course or program completion',
+  example: {
+    uuid: 'c1e2r3t4-5i6f-7i8c-9a10-abcdefghijkl',
+    certificate_number: 'CERT-2024-JAV-001234',
+    student_uuid: 's1t2u3d4-5e6n-7t8u-9s10-abcdefghijkl',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    program_uuid: null,
+    template_uuid: 't1e2m3p4-5l6a-7t8e-9u10-abcdefghijkl',
+    issued_date: '2024-05-15T16:30:00',
+    completion_date: '2024-05-15T15:45:00',
+    final_grade: 87.5,
+    certificate_url: 'https://cdn.sarafrika.com/certificates/CERT-2024-JAV-001234.pdf',
+    is_valid: true,
+    revoked_at: null,
+    revoked_reason: null,
+    created_date: '2024-05-15T16:30:00',
+    created_by: 'system',
+    updated_date: '2024-05-15T16:30:00',
+    updated_by: 'system',
+    certificate_type: 'Course Completion',
+    grade_letter: 'B+',
+    is_downloadable: true,
+    validity_status: 'Valid Certificate',
+  },
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the student UUID who earned this certificate.',
+      example: 's1t2u3d4-5e6n-7t8u-9s10-abcdefghijkl',
+    },
+    course_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the course UUID if this is a course completion certificate. Mutually exclusive with program_uuid.',
+      example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    },
+    program_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the program UUID if this is a program completion certificate. Mutually exclusive with course_uuid.',
+      example: null,
+    },
+    template_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the certificate template UUID used for generating this certificate.',
+      example: 't1e2m3p4-5l6a-7t8e-9u10-abcdefghijkl',
+    },
+    completion_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Date when the course or program was completed by the student.',
+      example: '2024-05-15T15:45:00Z',
+    },
+    final_grade: {
+      type: ['number', 'null'],
+      description: '**[OPTIONAL]** Final grade percentage achieved by the student.',
+      example: 87.5,
+      maximum: 100,
+      minimum: 0,
+    },
+    is_valid: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Indicates if the certificate is valid and has not been revoked.',
+      example: true,
+    },
+  },
+  required: ['completion_date', 'student_uuid', 'template_uuid'],
+} as const;
+
+export const ApiResponseCertificateWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CertificateWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CertificateTemplateWritableSchema = {
+  type: 'object',
+  description: 'Certificate template with design elements and layout configuration',
+  example: {
+    uuid: 'c1e2r3t4-5i6f-7i8c-9a10-abcdefghijkl',
+    name: 'Music Course Completion Certificate',
+    template_type: 'COURSE_COMPLETION',
+    template_html:
+      "<div class='certificate'><h1>Certificate of Completion</h1><p>This certifies that</p><h2>{{student_name}}</h2><p>has successfully completed</p><h3>{{course_name}}</h3></div>",
+    template_css:
+      ".certificate { font-family: 'Times New Roman', serif; text-align: center; padding: 50px; } h1 { color: #2c3e50; font-size: 36px; } h2 { color: #e74c3c; font-size: 28px; }",
+    background_image_url: 'https://storage.sarafrika.com/templates/music_cert_bg.jpg',
+    status: 'PUBLISHED',
+    active: true,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'admin@sarafrika.com',
+    updated_date: '2024-04-05T14:20:00',
+    updated_by: 'design@sarafrika.com',
+    template_category: 'Course Completion Template',
+    is_published: true,
+    design_complexity: 'Standard Design',
+    template_scope: 'General Use Template',
+    usage_summary: 'Active Public Template',
+  },
+  properties: {
+    name: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Name of the certificate template that clearly describes its purpose.',
+      example: 'Music Course Completion Certificate',
+      maxLength: 255,
+      minLength: 0,
+    },
+    template_type: {
+      $ref: '#/components/schemas/TemplateTypeEnum',
+    },
+    template_html: {
+      type: 'string',
+      description: '**[OPTIONAL]** HTML content defining the certificate layout and structure.',
+      example:
+        "<div class='certificate'><h1>Certificate of Completion</h1><p>This certifies that</p><h2>{{student_name}}</h2><p>has successfully completed</p><h3>{{course_name}}</h3></div>",
+      maxLength: 20000,
+      minLength: 0,
+    },
+    template_css: {
+      type: 'string',
+      description: '**[OPTIONAL]** CSS styles for the certificate template design.',
+      example:
+        ".certificate { font-family: 'Times New Roman', serif; text-align: center; padding: 50px; } h1 { color: #2c3e50; font-size: 36px; } h2 { color: #e74c3c; font-size: 28px; }",
+      maxLength: 50000,
+      minLength: 0,
+    },
+    background_image_url: {
+      type: 'string',
+      description: '**[OPTIONAL]** URL to the background image for the certificate.',
+      example: 'https://storage.sarafrika.com/templates/music_cert_bg.jpg',
+      maxLength: 500,
+      minLength: 0,
+    },
+    active: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates if the template is actively available for use. Can only be true for published templates.',
+      example: true,
+    },
+  },
+  required: ['name', 'template_type'],
+} as const;
+
+export const ApiResponseCertificateTemplateWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CertificateTemplateWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const AssignmentWritableSchema = {
+  type: 'object',
+  description: 'Assignment with learning activities and assessment criteria',
+  example: {
+    uuid: 'a1s2s3g4-5n6m-7e8n-9t10-abcdefghijkl',
+    lesson_uuid: 'l1e2s3s4-5o6n-7u8u-9i10-abcdefghijkl',
+    scope: 'COURSE_TEMPLATE',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    source_assignment_uuid: 'a1s2s3g4-5n6m-7e8n-9t10-sourceassign',
+    title: 'Music Theory Fundamentals Assignment',
+    description:
+      'Comprehensive assignment covering basic music theory concepts including scales, intervals, and chord progressions',
+    instructions:
+      'Complete all sections of the assignment. Submit your answers in PDF format along with any audio recordings as requested.',
+    due_date: '2024-04-15T23:59:59',
+    max_points: 100,
+    rubric_uuid: 'r1u2b3r4-5i6c-7a8s-9s10-abcdefghijkl',
+    submission_types: ['DOCUMENT', 'AUDIO', 'TEXT'],
+    is_published: true,
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-05T10:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    assignment_category: 'Theory Assignment',
+    points_display: '100.00 points',
+    assignment_scope: 'Lesson-Specific',
+    submission_summary: '3 submission types accepted',
+  },
+  properties: {
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the lesson UUID this assignment belongs to.',
+      example: 'l1e2s3s4-5o6n-7u8u-9i10-abcdefghijkl',
+    },
+    scope: {
+      $ref: '#/components/schemas/ScopeEnum2',
+    },
+    class_definition_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the class definition that owns this assignment when scope is CLASS_CLONE.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
+    },
+    title: {
+      type: 'string',
+      description: '**[REQUIRED]** Title of the assignment that clearly describes its purpose.',
+      example: 'Music Theory Fundamentals Assignment',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: "**[OPTIONAL]** Detailed description of the assignment's objectives and scope.",
+      example:
+        'Comprehensive assignment covering basic music theory concepts including scales, intervals, and chord progressions',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    instructions: {
+      type: 'string',
+      description: '**[OPTIONAL]** Detailed instructions for completing the assignment.',
+      example:
+        'Complete all sections of the assignment. Submit your answers in PDF format along with any audio recordings as requested.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    due_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Due date and time for assignment submission.',
+      example: '2024-04-15T23:59:59Z',
+    },
+    max_points: {
+      type: 'number',
+      description: '**[OPTIONAL]** Maximum points that can be earned for this assignment.',
+      example: 100,
+      minimum: 0,
+    },
+    rubric_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[OPTIONAL]** Reference to the rubric UUID used for grading this assignment.',
+      example: 'r1u2b3r4-5i6c-7a8s-9s10-abcdefghijkl',
+    },
+    submission_types: {
+      $ref: '#/components/schemas/SubmissionTypesEnum',
+    },
+    is_published: {
+      type: 'boolean',
+      description:
+        '**[OPTIONAL]** Indicates whether the assignment is published and visible to students.',
+      example: true,
+    },
+  },
+  required: ['lesson_uuid', 'title'],
+} as const;
+
+export const ApiResponseAssignmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AssignmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseSavedAgeGroupWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SavedAgeGroupWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SavedAgeGroupWritableSchema = {
+  type: 'object',
+  description: 'A reusable age group kept by an instructor or organisation',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    name: {
+      type: 'string',
+    },
+    min_age: {
+      type: 'integer',
+      format: 'int32',
+    },
+    max_age: {
+      type: 'integer',
+      format: 'int32',
+    },
+    owner_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    owner_name: {
+      type: ['string', 'null'],
+      description:
+        "The organisation's name for an organisation's group; null for the caller's own.",
+    },
+  },
+} as const;
+
+export const ApiResponseWalletTransferResponseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseWalletWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseScheduledInstanceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ScheduledInstanceWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ScheduledInstanceWritableSchema = {
+  type: 'object',
+  description:
+    'A scheduled class instance that represents a concrete class occurrence placed on the calendar',
+  example: {
+    uuid: 'si123456-7890-abcd-ef01-234567890abc',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    start_time: '2024-09-15T09:00:00',
+    end_time: '2024-09-15T10:30:00',
+    timezone: 'UTC',
+    title: 'Introduction to Java Programming',
+    location_type: 'IN_PERSON',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
+    max_participants: 25,
+    organisation_uuid: 'org12345-6789-abcd-ef01-234567890abc',
+    organisation_name: 'Sarafrika Technical College',
+    status: 'SCHEDULED',
+    cancellation_reason: null,
+    started_at: null,
+    concluded_at: null,
+    created_date: '2024-09-05T10:00:00',
+    updated_date: '2024-09-05T15:30:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[OPTIONAL]** Reference to the class definition UUID that this instance is based on. Null for instructor block entries.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the instructor UUID who will conduct this session.',
+      example: 'inst1234-5678-90ab-cdef-123456789abc',
+    },
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Start date and time of the scheduled class session.',
+      example: '2024-09-15T09:00:00Z',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** End date and time of the scheduled class session.',
+      example: '2024-09-15T10:30:00Z',
+    },
+    timezone: {
+      type: 'string',
+      description: '**[REQUIRED]** Timezone for the scheduled session.',
+      example: 'UTC',
+    },
+    title: {
+      type: 'string',
+      description:
+        '**[REQUIRED]** Title of the class (cached from class definition for performance).',
+      example: 'Introduction to Java Programming',
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Human-readable name for the session location (cached from class definition or overridden per instance).',
+      example: 'Nairobi HQ – Room 101',
+    },
+    location_latitude: {
+      type: ['number', 'null'],
+      description: '**[OPTIONAL]** Latitude coordinate for this scheduled instance location.',
+      example: -1.292066,
+    },
+    location_longitude: {
+      type: ['number', 'null'],
+      description: '**[OPTIONAL]** Longitude coordinate for this scheduled instance location.',
+      example: 36.821945,
+    },
+    max_participants: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Maximum number of participants for this session (cached from class definition).',
+      example: 25,
+      minimum: 0,
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum9',
+    },
+    cancellation_reason: {
+      type: ['string', 'null'],
+      description: '**[OPTIONAL]** Reason for cancellation if status is CANCELLED.',
+      example: 'Instructor unavailable due to illness',
+    },
+  },
+  required: ['end_time', 'instructor_uuid', 'location_type', 'start_time', 'timezone', 'title'],
+} as const;
+
+export const ApiResponseListStudentGroupMemberWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentGroupMemberWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const StudentGroupMemberWritableSchema = {
+  type: 'object',
+  description: "A student's membership within a group.",
+  properties: {
+    group_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Group UUID.',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Student user UUID.',
+    },
+  },
+} as const;
+
+export const ApiResponseListRubricScoringLevelWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RubricScoringLevelWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ProgramTrainingApplicationRequestWritableSchema = {
+  type: 'object',
+  description: 'Payload for instructors or organisations applying to deliver a training program',
+  example: {
+    applicant_type: 'instructor',
+    applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    rate_card: {
+      currency: 'KES',
+      private_online_rate: 3500,
+      private_inperson_rate: 3600,
+      group_online_rate: 2800,
+      group_inperson_rate: 3000,
+    },
+    application_notes: 'We already deliver this curriculum for other cohorts.',
+  },
+  properties: {
+    applicant_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the instructor or organisation applying.',
+    },
+    rate_card: {
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description:
+        '**[REQUIRED]** Instructor rate card across session format and delivery modality combinations.',
+    },
+    application_notes: {
+      type: ['string', 'null'],
+      description: 'Optional notes to help the program creator evaluate the request.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    offered_venue_uuids: {
+      type: ['array', 'null'],
+      description:
+        'Venue resource UUIDs the organisation offers for training: each must be an active VENUE of the applicant organisation. Organisation applicants only. Omitted means none.',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    requirement_answers: {
+      type: ['array', 'null'],
+      description:
+        "Answers to the course's training requirements (for programs, those of its courses). acquisition is required when has_it is false. Omitted means none.",
+      items: {
+        $ref: '#/components/schemas/TrainingRequirementAnswerRequest',
+      },
+    },
+    age_groups: {
+      type: ['array', 'null'],
+      description:
+        'Instructor applicants only: age groups, each a named age band with hours for every active lesson. Required on a new instructor application; on an update, omit to keep what is stored. Organisations must omit it.',
+      items: {
+        $ref: '#/components/schemas/AgeGroupRequest',
+      },
+    },
+  },
+  required: ['applicant_uuid', 'rate_card'],
+} as const;
+
+export const ApiResponseTrainingRateUpdateWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/TrainingRateUpdateWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const TrainingRateUpdateWritableSchema = {
+  type: 'object',
+  description: 'A proposed replacement rate card on an approved training application',
+} as const;
+
+export const ProgramReviewWritableSchema = {
+  type: 'object',
+  description: 'Student review and rating for a training program.',
+  example: {
+    uuid: 'd41707bc-e652-4ea4-8db0-ea9c85ff7d5c',
+    program_uuid: '640d0a57-76cc-46f2-ad46-72f5635d973a',
+    student_uuid: '4d91801f-0d0f-4078-9b70-7f68f7531c8a',
+    rating: 5,
+    headline: 'Excellent learning pathway',
+    comments: 'The program sequence was practical and easy to follow.',
+    is_anonymous: false,
+    created_date: '2026-06-11T12:33:00',
+    created_by: 'student@example.com',
+    updated_date: '2026-06-11T12:33:00',
+    updated_by: 'student@example.com',
+  },
+  properties: {
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Overall rating for the program (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Excellent learning pathway',
+      maxLength: 255,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'The program sequence was practical and easy to follow.',
+      maxLength: 5000,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+  },
+} as const;
+
+export const ApiResponseProgramReviewWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProgramReviewWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseOrganisationDocumentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/OrganisationDocumentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationDocumentWritableSchema = {
+  type: 'object',
+  description: 'Validation document attached to an organisation',
+  properties: {
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation the document belongs to',
+    },
+    document_type_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Document type this file satisfies',
+    },
+    original_filename: {
+      type: 'string',
+      description: 'Filename as supplied by the uploader',
+    },
+    stored_filename: {
+      type: 'string',
+      description: 'Filename as stored',
+    },
+    file_path: {
+      type: 'string',
+      description: 'Path the stored file is served from',
+    },
+    file_size_bytes: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Size of the stored file in bytes',
+    },
+    mime_type: {
+      type: 'string',
+      description: 'MIME type of the stored file',
+    },
+    title: {
+      type: 'string',
+      description: 'Human-readable title for the document',
+    },
+    description: {
+      type: 'string',
+      description: 'Notes supplied with the document',
+    },
+    expiry_date: {
+      type: 'string',
+      format: 'date',
+      description: 'Expiry date, where the document type carries one',
+    },
+  },
+} as const;
+
+export const ApiResponseSkillsFundTransactionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SkillsFundTransactionWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SkillsFundTransactionWritableSchema = {
+  type: 'object',
+  description: "A movement within an organisation's skills fund.",
+  properties: {
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    description: {
+      type: ['string', 'null'],
+      description: 'Human-readable description.',
+    },
+    target_name: {
+      type: ['string', 'null'],
+      description:
+        'Display label for the recipient. Not an identity — never resolve money against this.',
+    },
+    beneficiary_user_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description:
+        'The platform user this movement is for. Null on rows recorded before beneficiaries were identifiable, and on movements with no individual recipient.',
+    },
+    amount: {
+      type: 'number',
+      description: 'Amount.',
+    },
+    currency_code: {
+      type: 'string',
+      description: 'ISO-4217 currency the amount is denominated in, e.g. KES.',
+    },
+    transaction_type: {
+      type: 'string',
+      description: 'Type: Allocation, Disbursement, Adjustment.',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum13',
+    },
+    transaction_date: {
+      type: ['string', 'null'],
+      format: 'date-time',
+    },
+  },
+} as const;
+
+export const ApiResponseSkillsFundSourceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SkillsFundSourceWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SkillsFundSourceWritableSchema = {
+  type: 'object',
+  description: "A funding source for an organisation's skills fund.",
+  properties: {
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    name: {
+      type: 'string',
+      description: 'Source name.',
+    },
+    source_type: {
+      type: ['string', 'null'],
+      description: 'Source type (e.g. Government Grant, Sponsor/Donor).',
+    },
+    amount: {
+      type: 'number',
+      description: 'Amount contributed.',
+    },
+    currency_code: {
+      type: 'string',
+      description: 'ISO-4217 currency the amount is denominated in, e.g. KES.',
+    },
+  },
+} as const;
+
+export const ApiResponseNotificationDispatchWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/NotificationDispatchWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const NotificationDispatchWritableSchema = {
+  type: 'object',
+  description: 'A notification an organisation has sent to an audience of its members',
+  properties: {
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    sender_user_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'The user who sent it.',
+    },
+    audience: {
+      type: 'string',
+      description: 'Audience the message went to: all, students, instructors, parents or staff.',
+    },
+    channel: {
+      type: 'string',
+      description: 'Channel: in-app or email.',
+    },
+    title: {
+      type: 'string',
+    },
+    body: {
+      type: 'string',
+    },
+    recipient_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'How many recipients the broadcast reached.',
+    },
+    scheduled_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+    },
+  },
+} as const;
+
+export const ApiResponseCompetitionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CompetitionWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CompetitionWritableSchema = {
+  type: 'object',
+  description: 'An organisation-scoped competition/event.',
+  properties: {
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Owning organisation UUID.',
+    },
+    name: {
+      type: 'string',
+      description: 'Competition name.',
+    },
+    category: {
+      type: ['string', 'null'],
+      description: 'Category (e.g. STEM, Music, TVET).',
+    },
+    event_date: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'Scheduled date/time of the event.',
+    },
+    venue_name: {
+      type: ['string', 'null'],
+      description: 'Venue name.',
+    },
+    capacity: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Maximum number of teams.',
+    },
+    status: {
+      type: 'string',
+      description: 'Lifecycle status (Upcoming, Registration Open, In Progress, Completed).',
+    },
+    description: {
+      type: ['string', 'null'],
+      description: 'Optional description.',
+    },
+  },
+} as const;
+
+export const InstructorReviewWritableSchema = {
+  type: 'object',
+  description: 'Student review and rating for an instructor, scoped to a specific enrollment.',
+  example: {
+    uuid: 'rev-1234-5678-90ab-cdef12345678',
+    instructor_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    student_uuid: 'stud-1234-5678-90ab-cdef12345678',
+    enrollment_uuid: 'enr-1234-5678-90ab-cdef12345678',
+    rating: 5,
+    headline: 'Incredible instructor!',
+    comments: 'Very clear explanations and engaging sessions.',
+    clarity_rating: 5,
+    engagement_rating: 5,
+    punctuality_rating: 4,
+    is_anonymous: false,
+    created_date: '2025-11-18T09:00:00',
+    created_by: 'student@example.com',
+    updated_date: '2025-11-18T09:00:00',
+    updated_by: 'student@example.com',
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Instructor being reviewed.',
+      example: 'inst-1234-5678-90ab-cdef12345678',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Student leaving the review.',
+      example: 'stud-1234-5678-90ab-cdef12345678',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Enrollment that this review is tied to.',
+      example: 'enr-1234-5678-90ab-cdef12345678',
+    },
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Overall rating for the instructor (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Incredible instructor!',
+      maxLength: 255,
+      minLength: 0,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'Very clear explanations and engaging sessions.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    clarity_rating: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Optional clarity rating (1-5).',
+      maximum: 5,
+      minimum: 1,
+    },
+    engagement_rating: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Optional engagement rating (1-5).',
+      maximum: 5,
+      minimum: 1,
+    },
+    punctuality_rating: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Optional punctuality rating (1-5).',
+      maximum: 5,
+      minimum: 1,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+  },
+  required: ['enrollment_uuid', 'instructor_uuid', 'rating', 'student_uuid'],
+} as const;
+
+export const ApiResponseInstructorReviewWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorReviewWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListEnrollmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/EnrollmentWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const EnrollmentWritableSchema = {
+  type: 'object',
+  description: 'A student enrollment in a scheduled class instance with attendance tracking',
+  example: {
+    uuid: 'en123456-7890-abcd-ef01-234567890abc',
+    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
+    student_uuid: 'st123456-7890-abcd-ef01-234567890abc',
+    status: 'ENROLLED',
+    attendance_marked_at: null,
+    created_date: '2024-09-05T10:00:00',
+    updated_date: '2024-09-05T15:30:00',
+    created_by: 'student@sarafrika.com',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    scheduled_instance_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the scheduled instance UUID that the student is enrolling in.',
+      example: 'si123456-7890-abcd-ef01-234567890abc',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the student UUID who is enrolling.',
+      example: 'st123456-7890-abcd-ef01-234567890abc',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum16',
+    },
+    attendance_marked_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: '**[OPTIONAL]** Timestamp when attendance was marked for this enrollment.',
+      example: '2024-09-15T09:15:00Z',
+    },
+  },
+  required: ['scheduled_instance_uuid', 'student_uuid'],
+} as const;
+
+export const CourseTrainingApplicationRequestWritableSchema = {
+  type: 'object',
+  description: 'Payload for instructors or organisations applying to deliver a course',
+  example: {
+    applicant_type: 'instructor',
+    applicant_uuid: 'inst-1234-5678-90ab-cdef12345678',
+    rate_card: {
+      currency: 'KES',
+      private_online_rate: 3500,
+      private_inperson_rate: 3600,
+      group_online_rate: 2800,
+      group_inperson_rate: 3000,
+    },
+    application_notes: 'I hold the vendor certification required for this course.',
+  },
+  properties: {
+    applicant_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** UUID of the instructor or organisation applying.',
+    },
+    rate_card: {
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description:
+        '**[REQUIRED]** Instructor rate card across session format and delivery modality combinations.',
+    },
+    application_notes: {
+      type: ['string', 'null'],
+      description: 'Optional notes to help the course creator evaluate the request.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    offered_venue_uuids: {
+      type: ['array', 'null'],
+      description:
+        'Venue resource UUIDs the organisation offers for training: each must be an active VENUE of the applicant organisation. Organisation applicants only. Omitted means none.',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    requirement_answers: {
+      type: ['array', 'null'],
+      description:
+        "Answers to the course's training requirements (for programs, those of its courses). acquisition is required when has_it is false. Omitted means none.",
+      items: {
+        $ref: '#/components/schemas/TrainingRequirementAnswerRequest',
+      },
+    },
+    age_groups: {
+      type: ['array', 'null'],
+      description:
+        'Instructor applicants only: age groups, each a named age band with hours for every active lesson. Required on a new instructor application; on an update, omit to keep what is stored. Organisations must omit it.',
+      items: {
+        $ref: '#/components/schemas/AgeGroupRequest',
+      },
+    },
+  },
+  required: ['applicant_uuid', 'rate_card'],
+} as const;
+
+export const CourseReviewWritableSchema = {
+  type: 'object',
+  description: 'Student review and rating for a course.',
+  example: {
+    uuid: 'rev-1234-5678-90ab-cdef12345678',
+    course_uuid: 'course-1234-5678-90ab-cdef12345678',
+    student_uuid: 'stud-1234-5678-90ab-cdef12345678',
+    rating: 5,
+    headline: 'Great course!',
+    comments: 'Clear content and practical examples.',
+    is_anonymous: false,
+    created_date: '2026-01-30T09:00:00',
+    created_by: 'student@example.com',
+    updated_date: '2026-01-30T09:00:00',
+    updated_by: 'student@example.com',
+  },
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Course being reviewed.',
+      example: 'course-1234-5678-90ab-cdef12345678',
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Student leaving the review.',
+      example: 'stud-1234-5678-90ab-cdef12345678',
+    },
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Overall rating for the course (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Great course!',
+      maxLength: 255,
+      minLength: 0,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'Clear content and practical examples.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+  },
+  required: ['course_uuid', 'rating', 'student_uuid'],
+} as const;
+
+export const ApiResponseCourseReviewWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseReviewWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseCourseCreatorWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseCreatorWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CompetitionTeamWritableSchema = {
+  type: 'object',
+  description: 'A team registered for a competition.',
+  properties: {
+    team_name: {
+      type: 'string',
+      description: 'Team name.',
+      minLength: 1,
+    },
+  },
+  required: ['team_name'],
+} as const;
+
+export const ApiResponseCompetitionTeamWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CompetitionTeamWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const MultiValueMapStringStringWritableSchema = {
+  type: 'object',
+  additionalProperties: {
+    type: 'array',
+    items: {
+      type: 'string',
+    },
+  },
+  properties: {
+    all: {
+      type: 'object',
+      additionalProperties: {
+        type: 'string',
+      },
+      writeOnly: true,
+    },
+    empty: {
+      type: 'boolean',
+    },
+  },
+} as const;
+
+export const ClassDefinitionCreateRequestWritableSchema = {
+  type: 'object',
+  description: 'Request payload for creating a class definition and its initial schedule templates',
+  properties: {
+    title: {
+      type: 'string',
+      description: '**[REQUIRED]** Title of the class definition.',
+      example: 'Introduction to Java Programming',
+      maxLength: 255,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: '**[OPTIONAL]** Detailed description of the class.',
+      maxLength: 2000,
+      minLength: 0,
+    },
+    thumbnail_url: {
+      type: 'string',
+      description: '**[OPTIONAL]** URL to class thumbnail image.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    promotional_video_url: {
+      type: 'string',
+      description: '**[OPTIONAL]** URL to class promotional video.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    default_instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Default instructor UUID for the class.',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Organisation UUID that owns the class.',
+    },
+    branch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Training branch (location) this class is delivered at.',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Course UUID for course-scoped classes.',
+    },
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[OPTIONAL]** Program UUID for program-scoped classes.',
+    },
+    sale_price: {
+      type: 'number',
+      description: '**[OPTIONAL]** Training fee for the class.',
+      minimum: 0,
+    },
+    instructor_pay: {
+      type: 'number',
+      description: '**[OPTIONAL]** Per-session pay owed to the instructor.',
+      minimum: 0,
+    },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
+    },
+    class_visibility: {
+      $ref: '#/components/schemas/ClassVisibilityEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    default_start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[REQUIRED]** Default start date-time for the class.',
+    },
+    default_end_time: {
+      type: 'string',
+      format: 'date-time',
+      description:
+        '**[REQUIRED]** Default end date-time for the class. Together with default_start_time this fixes the class length.',
+    },
+    academic_period_start_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Academic period start date.',
+    },
+    academic_period_end_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[OPTIONAL]** Academic period end date.',
+    },
+    registration_period_start_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[REQUIRED]** First day, inclusive, on which students may enrol.',
+    },
+    registration_period_end_date: {
+      type: 'string',
+      format: 'date',
+      description: '**[REQUIRED]** Last day, inclusive, on which students may enrol.',
+    },
+    class_reminder_minutes: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Reminder lead time in minutes.',
+      minimum: 0,
+    },
+    class_color: {
+      type: 'string',
+      description: '**[OPTIONAL]** Hex color used in calendar UI.',
+      example: '#1F6FEB',
+      pattern: '^#[0-9A-Fa-f]{6}$',
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    location_name: {
+      type: 'string',
+      description: '**[OPTIONAL]** Human-readable location name.',
+    },
+    location_latitude: {
+      type: 'number',
+      description: '**[OPTIONAL]** Location latitude.',
+    },
+    location_longitude: {
+      type: 'number',
+      description: '**[OPTIONAL]** Location longitude.',
+    },
+    meeting_link: {
+      type: 'string',
+      description: '**[OPTIONAL]** Online meeting URL.',
+      maxLength: 1000,
+      minLength: 0,
+    },
+    max_participants: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Maximum participants.',
+      minimum: 1,
+    },
+    allow_waitlist: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Whether waitlisting is allowed.',
+    },
+    is_active: {
+      type: 'boolean',
+      description: '**[OPTIONAL]** Whether the class is active.',
+    },
+    session_templates: {
+      type: 'array',
+      description: '**[REQUIRED]** Schedule templates used to generate initial scheduled sessions.',
+      items: {
+        $ref: '#/components/schemas/ClassSessionTemplateWritable',
+      },
+      maxItems: 2147483647,
+      minItems: 1,
+    },
+  },
+  required: [
+    'class_visibility',
+    'default_end_time',
+    'default_instructor_uuid',
+    'default_start_time',
+    'location_type',
+    'registration_period_end_date',
+    'registration_period_start_date',
+    'session_format',
+    'session_templates',
+    'title',
+  ],
+} as const;
+
+export const ApiResponseClassSessionTemplateScheduleResponseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassSessionTemplateScheduleResponseWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassSessionTemplateScheduleResponseWritableSchema = {
+  type: 'object',
+  description: 'Result of adding a session template to an existing class schedule',
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Class definition that received the new template.',
+    },
+    session_template: {
+      $ref: '#/components/schemas/ClassSessionTemplateWritable',
+      description: '**[READ-ONLY]** Persisted session template.',
+    },
+    scheduled_instances: {
+      type: 'array',
+      description: '**[READ-ONLY]** Scheduled instances created from the template.',
+      items: {
+        $ref: '#/components/schemas/ScheduledInstanceWritable',
+      },
+    },
+    scheduling_conflicts: {
+      type: 'array',
+      description: '**[READ-ONLY]** Non-blocking conflicts recorded while applying the template.',
+      items: {
+        $ref: '#/components/schemas/ClassSchedulingConflict',
+      },
+    },
+  },
+} as const;
+
+export const ApiResponseClassReviewWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassReviewWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassReviewWritableSchema = {
+  type: 'object',
+  description: 'Student review and rating for a class.',
+  example: {
+    uuid: 'd41707bc-e652-4ea4-8db0-ea9c85ff7d5c',
+    class_definition_uuid: '640d0a57-76cc-46f2-ad46-72f5635d973a',
+    student_uuid: '4d91801f-0d0f-4078-9b70-7f68f7531c8a',
+    rating: 5,
+    headline: 'Practical class',
+    comments: 'The class session was clear and hands-on.',
+    is_anonymous: false,
+    created_date: '2026-06-22T17:00:00',
+    created_by: 'student@example.com',
+    updated_date: '2026-06-22T17:00:00',
+    updated_by: 'student@example.com',
+  },
+  properties: {
+    rating: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Overall rating for the class (1-5).',
+      example: 5,
+      maximum: 5,
+      minimum: 1,
+    },
+    headline: {
+      type: 'string',
+      description: 'Optional short headline for the review.',
+      example: 'Practical class',
+      maxLength: 255,
+    },
+    comments: {
+      type: 'string',
+      description: 'Detailed feedback from the student.',
+      example: 'The class session was clear and hands-on.',
+      maxLength: 5000,
+    },
+    is_anonymous: {
+      type: 'boolean',
+      description: 'Whether the review should be shown anonymously in public views.',
+      example: false,
+    },
+  },
+} as const;
+
+export const ClassQuizScheduleWritableSchema = {
+  type: 'object',
+  description: 'Class-level quiz schedule with release timing and override values',
+  example: {
+    uuid: 'cqs-1234-5678-90ab-cdef12345678',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
+    quiz_uuid: 'quiz-1234-5678-90ab-cdef12345678',
+    visible_at: '2024-05-09T07:00:00',
+    due_at: '2024-05-09T23:59:00',
+    timezone: 'Africa/Nairobi',
+    release_strategy: 'CUSTOM',
+    time_limit_override: 45,
+    attempt_limit_override: 2,
+    passing_score_override: 75.5,
+    instructor_uuid: 'inst1234-5678-90ab-cdef123456789abc',
+    notes: 'Extend time limit for the evening session.',
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-03T10:00:00',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Class definition that owns the quiz schedule.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Lesson associated with the quiz for this class.',
+      example: 'lesson-1234-5678-90ab-cdef12345678',
+    },
+    quiz_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Quiz template or clone referenced by this schedule.',
+      example: 'quiz-1234-5678-90ab-cdef12345678',
+    },
+    visible_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** When the quiz is visible to students (UTC).',
+      example: '2024-05-09T07:00:00Z',
+    },
+    due_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Deadline for completing the quiz (UTC).',
+      example: '2024-05-09T23:59:00Z',
+    },
+    timezone: {
+      type: 'string',
+      description: '**[OPTIONAL]** IANA timezone identifier for display purposes.',
+      example: 'Africa/Nairobi',
+    },
+    release_strategy: {
+      $ref: '#/components/schemas/ReleaseStrategyEnum',
+    },
+    time_limit_override: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Overrides the quiz time limit (minutes) for this class.',
+      example: 45,
+    },
+    attempt_limit_override: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[OPTIONAL]** Overrides the number of attempts allowed.',
+      example: 2,
+    },
+    passing_score_override: {
+      type: 'number',
+      description: '**[OPTIONAL]** Overrides the passing score requirement.',
+      example: 75.5,
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Instructor responsible for this quiz schedule.',
+      example: 'inst1234-5678-90ab-cdef123456789abc',
+    },
+    notes: {
+      type: 'string',
+      description: '**[OPTIONAL]** Instructor notes for this quiz schedule.',
+      example: 'Extend time limit for the evening session.',
+    },
+  },
+} as const;
+
+export const ApiResponseClassQuizScheduleWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassQuizScheduleWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassAssignmentScheduleWritableSchema = {
+  type: 'object',
+  description: 'Class-level assignment schedule with visibility windows and overrides',
+  example: {
+    uuid: 'cas-1234-5678-90ab-cdef12345678',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    lesson_uuid: 'lesson-1234-5678-90ab-cdef12345678',
+    assignment_uuid: 'assign-1234-5678-90ab-cdef12345678',
+    visible_at: '2024-05-08T07:00:00',
+    due_at: '2024-05-12T23:59:00',
+    grading_due_at: '2024-05-15T17:00:00',
+    timezone: 'Africa/Nairobi',
+    release_strategy: 'CUSTOM',
+    max_attempts: 2,
+    instructor_uuid: 'inst1234-5678-90ab-cdef123456789abc',
+    notes: 'Extend due date for the Nairobi cohort.',
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-03T09:15:00',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Class definition that owns the assignment schedule.',
+      example: 'cd123456-7890-abcd-ef01-234567890abc',
+    },
+    lesson_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Lesson this assignment is associated with for the class.',
+      example: 'lesson-1234-5678-90ab-cdef12345678',
+    },
+    assignment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Assignment template or clone that the schedule references.',
+      example: 'assign-1234-5678-90ab-cdef12345678',
+    },
+    visible_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** When the assignment becomes visible to students (UTC).',
+      example: '2024-05-08T07:00:00Z',
+    },
+    due_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Submission deadline for the class (UTC).',
+      example: '2024-05-12T23:59:00Z',
+    },
+    grading_due_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Deadline for trainers to complete grading (UTC).',
+      example: '2024-05-15T17:00:00Z',
+    },
+    timezone: {
+      type: 'string',
+      description: '**[OPTIONAL]** IANA timezone identifier used when displaying deadlines.',
+      example: 'Africa/Nairobi',
+    },
+    release_strategy: {
+      $ref: '#/components/schemas/ReleaseStrategyEnum',
+    },
+    max_attempts: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        '**[OPTIONAL]** Maximum attempts allowed for this class schedule (overrides template).',
+      example: 2,
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Instructor responsible for this assignment schedule.',
+      example: 'inst1234-5678-90ab-cdef123456789abc',
+    },
+    notes: {
+      type: 'string',
+      description: '**[OPTIONAL]** Instructor notes shown internally for context.',
+      example: 'Extend due date for the Nairobi cohort.',
+    },
+  },
+} as const;
+
+export const ApiResponseClassAssignmentScheduleWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassAssignmentScheduleWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseClassDefinitionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassDefinitionWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseClassMarketplaceJobApplicationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassMarketplaceJobApplicationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassMarketplaceJobApplicationWritableSchema = {
+  type: 'object',
+  description: 'Instructor application to deliver a marketplace class job',
+} as const;
+
+export const ClassMarketplaceJobSummaryWritableSchema = {
+  type: 'object',
+  description: 'Compact read-only summary of the job an application was made to',
+  properties: {
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
+    },
+  },
+} as const;
+
+export const ApiResponseAssignmentSubmissionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AssignmentSubmissionWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const AssignmentSubmissionWritableSchema = {
+  type: 'object',
+  description: 'Student submission for an assignment with grading and feedback information',
+  example: {
+    uuid: 's1u2b3m4-5i6s-7s8i-9o10-abcdefghijkl',
+    enrollment_uuid: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    assignment_uuid: 'a1s2s3g4-5n6m-7e8n-9t10-abcdefghijkl',
+    submission_text:
+      'This is my analysis of the music theory concepts covered in the lesson. I have identified the key signatures and analyzed the chord progressions as requested.',
+    file_urls: [
+      'https://storage.sarafrika.com/submissions/audio_example.mp3',
+      'https://storage.sarafrika.com/submissions/written_analysis.pdf',
+    ],
+    submitted_at: '2024-04-10T14:30:00',
+    status: 'GRADED',
+    score: 85,
+    max_score: 100,
+    percentage: 85,
+    instructor_comments:
+      'Excellent analysis of the chord progressions. The audio example demonstrates good understanding of the concepts. Minor improvement needed in identifying secondary dominants.',
+    graded_at: '2024-04-12T16:45:00',
+    graded_by_uuid: 'i1n2s3t4-5r6u-7c8t-9o10-abcdefghijkl',
+    created_date: '2024-04-10T14:30:00',
+    created_by: 'student@sarafrika.com',
+    updated_date: '2024-04-12T16:45:00',
+    updated_by: 'instructor@sarafrika.com',
+    submission_category: 'Mixed Media Submission',
+    is_graded: true,
+    grade_display: '85.00 / 100.00 (85%)',
+    submission_status_display: 'Graded - Instructor Feedback Available',
+    file_count_display: '2 files attached',
+  },
+  properties: {
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[REQUIRED]** Reference to the enrollment UUID of the student making this submission.',
+      example: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    },
+    assignment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the assignment UUID this submission is for.',
+      example: 'a1s2s3g4-5n6m-7e8n-9t10-abcdefghijkl',
+    },
+    submission_text: {
+      type: 'string',
+      description: "**[OPTIONAL]** Text content of the student's submission.",
+      example:
+        'This is my analysis of the music theory concepts covered in the lesson. I have identified the key signatures and analyzed the chord progressions as requested.',
+      maxLength: 10000,
+      minLength: 0,
+    },
+    file_urls: {
+      type: 'array',
+      description: '**[OPTIONAL]** Array of file URLs attached to this submission.',
+      example: [
+        'https://storage.sarafrika.com/submissions/audio_example.mp3',
+        'https://storage.sarafrika.com/submissions/written_analysis.pdf',
+      ],
+      items: {
+        type: 'string',
+      },
+    },
+    submitted_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Timestamp when the submission was made by the student.',
+      example: '2024-04-10T14:30:00Z',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum19',
+    },
+    score: {
+      type: 'number',
+      description: '**[OPTIONAL]** Score awarded to this submission by the instructor.',
+      example: 85,
+      minimum: 0,
+    },
+    max_score: {
+      type: 'number',
+      description: '**[OPTIONAL]** Maximum possible score for this submission.',
+      example: 100,
+      minimum: 0,
+    },
+    percentage: {
+      type: 'number',
+      description: '**[OPTIONAL]** Percentage score calculated from score and max_score.',
+      example: 85,
+      maximum: 100,
+      minimum: 0,
+    },
+    instructor_comments: {
+      type: 'string',
+      description: "**[OPTIONAL]** Instructor's feedback and comments on the submission.",
+      example:
+        'Excellent analysis of the chord progressions. The audio example demonstrates good understanding of the concepts. Minor improvement needed in identifying secondary dominants.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+    graded_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Timestamp when the submission was graded by the instructor.',
+      example: '2024-04-12T16:45:00Z',
+    },
+    graded_by_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[OPTIONAL]** Reference to the instructor UUID who graded this submission.',
+      example: 'i1n2s3t4-5r6u-7c8t-9o10-abcdefghijkl',
+    },
+  },
+  required: ['assignment_uuid', 'enrollment_uuid', 'status'],
+} as const;
+
+export const ApiResponseAssignmentSubmissionAttachmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AssignmentSubmissionAttachmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const AssignmentSubmissionAttachmentWritableSchema = {
+  type: 'object',
+  description: 'Attachment stored with a student assignment submission',
+  example: {
+    uuid: 'asa12345-7890-abcd-ef01-234567890abc',
+    submission_uuid: 's1u2b3m4-5i6s-7s8i-9o10-abcdefghijkl',
+    original_filename: 'audio_example.mp3',
+    stored_filename: 'assignments/submissions/s1u2b3m4/uuid.mp3',
+    file_url: 'https://storage.sarafrika.com/assignments/submissions/s1u2b3m4/uuid.mp3',
+    file_size_bytes: 5242880,
+    mime_type: 'audio/mpeg',
+    created_date: '2024-11-15T10:00:00',
+    created_by: 'student@sarafrika.com',
+    updated_date: '2024-11-15T10:00:00',
+    updated_by: 'student@sarafrika.com',
+  },
+  properties: {
+    submission_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Submission UUID that owns this attachment.',
+      example: 's1u2b3m4-5i6s-7s8i-9o10-abcdefghijkl',
+    },
+  },
+  required: ['submission_uuid'],
+} as const;
+
+export const ApiResponseAssignmentAttachmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/AssignmentAttachmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const AssignmentAttachmentWritableSchema = {
+  type: 'object',
+  description: 'Attachment stored with an assignment for instructor-provided resources',
+  example: {
+    uuid: 'aa123456-7890-abcd-ef01-234567890abc',
+    assignment_uuid: 'a1s2s3g4-5n6m-7e8n-9t10-abcdefghijkl',
+    original_filename: 'assignment_brief.pdf',
+    stored_filename: 'assignments/a1s2s3g4/attachments/uuid.pdf',
+    file_url: 'https://storage.sarafrika.com/assignments/a1s2s3g4/attachments/uuid.pdf',
+    file_size_bytes: 2048576,
+    mime_type: 'application/pdf',
+    created_date: '2024-11-15T09:30:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-11-15T09:30:00',
+    updated_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    assignment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Assignment UUID that owns this attachment.',
+      example: 'a1s2s3g4-5n6m-7e8n-9t10-abcdefghijkl',
+    },
+  },
+  required: ['assignment_uuid'],
+} as const;
+
+export const ApiResponsePagedDTOWalletTransactionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOWalletTransactionWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOWalletTransactionWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/WalletTransactionWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const WalletTransactionWritableSchema = {
+  type: 'object',
+  description: 'Wallet ledger entry capturing balance changes',
+} as const;
+
+export const ApiResponsePagedDTOUserWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOUserWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOUserWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const UserSummaryWritableSchema = {
+  type: 'object',
+  description:
+    'Reduced user projection for directory lookups: display identity only, no contact details',
+  example: {
+    uuid: 'd2e6f6c4-3d44-11ee-be56-0242ac120002',
+    user_no: '123456789',
+    first_name: 'Jane',
+    middle_name: 'A.',
+    last_name: 'Doe',
+    full_name: 'Jane A. Doe',
+    display_name: 'Jane Doe',
+    profile_image_url: 'https://example.com/images/jane.jpg',
+    gender: 'FEMALE',
+  },
+  properties: {
+    gender: {
+      $ref: '#/components/schemas/GenderEnum',
+    },
+  },
+} as const;
+
+export const ApiResponseProfessionalProfileSummaryWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ProfessionalProfileSummaryWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ProfessionalProfileSummaryWritableSchema = {
+  type: 'object',
+  description: 'Professional profile basics with per-section counts and completeness',
+  properties: {
+    user_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    basics: {
+      $ref: '#/components/schemas/ProfessionalProfileWritable',
+    },
+    section_counts: {
+      type: 'object',
+      additionalProperties: {
+        type: 'integer',
+        format: 'int64',
+      },
+      description:
+        "Item count per section, keyed by the section's path name (skills, education, ...)",
+    },
+    verified_items: {
+      type: 'integer',
+      format: 'int64',
+    },
+    completed_sections: {
+      type: 'integer',
+      format: 'int32',
+    },
+    total_sections: {
+      type: 'integer',
+      format: 'int32',
+    },
+    completeness_percent: {
+      type: 'integer',
+      format: 'int32',
+    },
+  },
+} as const;
+
+export const ApiResponseListUserSkillWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserSkillWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserPortfolioItemWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserPortfolioItemWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserMembershipWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserMembershipWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserExperienceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserExperienceWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserEducationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserEducationWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserDocumentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserDocumentWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserCompetencyWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserCompetencyWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserCertificationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserCertificationWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserAchievementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserAchievementWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListUserSummaryWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserSummaryWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOTrainingBranchWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOTrainingBranchWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOTrainingBranchWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TrainingBranchWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListStudentScheduleWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentScheduleWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const StudentScheduleWritableSchema = {
+  type: 'object',
+  description: "A student's view of their scheduled classes with enrollment information",
+  example: {
+    enrollment_uuid: 'en123456-7890-abcd-ef01-234567890abc',
+    scheduled_instance_uuid: 'si123456-7890-abcd-ef01-234567890abc',
+    class_definition_uuid: 'cd123456-7890-abcd-ef01-234567890abc',
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    title: 'Introduction to Java Programming',
+    start_time: '2024-09-15T09:00:00',
+    end_time: '2024-09-15T10:30:00',
+    timezone: 'UTC',
+    location_type: 'IN_PERSON',
+    location_name: 'Nairobi HQ – Room 101',
+    location_latitude: -1.292066,
+    location_longitude: 36.821945,
+    scheduling_status: 'SCHEDULED',
+    enrollment_status: 'ENROLLED',
+    attendance_marked_at: null,
+  },
+  properties: {
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+  },
+} as const;
+
+export const ApiResponseListOrganisationTimetableEntryWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationTimetableEntryWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationTimetableEntryWritableSchema = {
+  type: 'object',
+  description:
+    "One session of an organisation's class, carrying what a timetable cell shows without further lookups",
+  properties: {
+    status: {
+      $ref: '#/components/schemas/StatusEnum9',
+    },
+  },
+} as const;
+
+export const ApiResponseListInstructorTimeHoldWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorTimeHoldWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorTimeHoldWritableSchema = {
+  type: 'object',
+  description:
+    "A tentative or firm claim on an instructor's diary raised by a marketplace class job application",
+  example: {
+    uuid: 'ith12345-6789-abcd-ef01-234567890abc',
+    instructor_uuid: 'inst1234-5678-90ab-cdef-123456789abc',
+    job_uuid: 'job12345-6789-abcd-ef01-234567890abc',
+    application_uuid: 'app12345-6789-abcd-ef01-234567890abc',
+    organisation_uuid: 'org12345-6789-abcd-ef01-234567890abc',
+    organisation_name: 'Sarafrika Technical College',
+    title: 'Grade 5 Piano - Term 2',
+    start_time: '2026-09-16T09:00:00',
+    end_time: '2026-09-16T10:00:00',
+    timezone: 'UTC',
+    status: 'TENTATIVE',
+  },
+  properties: {
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Instructor whose diary the hold sits on',
+    },
+    job_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Marketplace job the hold was raised for',
+    },
+    application_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Application that raised the hold',
+    },
+    organisation_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Organisation recruiting for the job',
+    },
+    title: {
+      type: ['string', 'null'],
+      description: 'Title of the job the held window would deliver',
+    },
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Held window start (UTC)',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Held window end (UTC)',
+    },
+    timezone: {
+      type: 'string',
+      description: 'Timezone the window was authored in',
+      example: 'UTC',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum21',
+    },
+    class_definition_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Class definition the hold became, once confirmed',
+    },
+    scheduled_instance_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Scheduled instance the hold became, once confirmed',
+    },
+  },
+} as const;
+
+export const ApiResponseListScheduledInstanceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ScheduledInstanceWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponsePagedDTOStudentWritableSchema = {
   type: 'object',
   properties: {
@@ -31234,819 +39646,4012 @@ export const PagedDTOStudentWritableSchema = {
   },
 } as const;
 
-export const AfricanPhoneNumberWritableSchema = {
-  format: 'phone',
-  description: 'Valid African phone number in international or local format',
-  example: '+254712345678',
-  pattern: '^\\+?[1-9]\\d{7,14}$',
-} as const;
-
-export const KenyanPhoneNumberWritableSchema = {
-  format: 'phone',
-  description: 'Valid Kenyan mobile phone number (Safaricom, Airtel formats)',
-  example: '+254712345678',
-  pattern: '^(\\+254|0)?[17]\\d{8}$',
-} as const;
-
-export const NigerianPhoneNumberWritableSchema = {
-  format: 'phone',
-  description: 'Valid Nigerian mobile phone number (MTN, Glo, Airtel, 9mobile formats)',
-  example: '+2348012345678',
-  pattern: '^(\\+234|0)?[789]\\d{9}$',
-} as const;
-
-export const EastAfricanPhoneNumberWritableSchema = {
-  format: 'phone',
-  description:
-    'Valid East African phone number (Kenya, Uganda, Tanzania, Rwanda, Burundi, South Sudan)',
-  example: '+254712345678',
-  pattern: '^(\\+25[0-6]|0)?[1-9]\\d{7,9}$',
-} as const;
-
-export const WestAfricanPhoneNumberWritableSchema = {
-  format: 'phone',
-  description: 'Valid West African phone number (Nigeria, Ghana, Senegal, Mali, etc.)',
-  example: '+2348012345678',
-  pattern: '^(\\+2[2-3][0-9]|0)?[1-9]\\d{6,9}$',
-} as const;
-
-export const SouthernAfricanPhoneNumberWritableSchema = {
-  format: 'phone',
-  description:
-    'Valid Southern African phone number (South Africa, Zimbabwe, Zambia, Botswana, etc.)',
-  example: '+27821234567',
-  pattern: '^(\\+2[67]\\d|0)?[1-9]\\d{6,9}$',
-} as const;
-
-export const InternationalPhoneNumberWritableSchema = {
-  format: 'phone',
-  description: 'Valid international phone number in E.164 format',
-  example: '+1234567890',
-  pattern: '^\\+?[1-9]\\d{7,14}$',
-} as const;
-
-export const ValidUrlWritableSchema = {
-  format: 'uri',
-  description: 'A valid URL with HTTP or HTTPS protocol',
-  example: 'https://example.com',
-  pattern: '^https?://[^\\s/$.?#].[^\\s]*$',
-} as const;
-
-export const WebsiteUrlWritableSchema = {
-  format: 'uri',
-  description: 'A valid website URL for personal or business websites',
-  example: 'https://sarafrika.com',
-  pattern: '^https?://[^\\s/$.?#].[^\\s]*$',
-} as const;
-
-export const ApiUrlWritableSchema = {
-  format: 'uri',
-  description: 'A secure HTTPS URL for API endpoints',
-  example: 'https://api.elimika.sarafrika.com',
-  pattern: '^https://[^\\s/$.?#].[^\\s]*$',
-} as const;
-
-export const ImageUrlWritableSchema = {
-  format: 'uri',
-  description: 'A valid URL pointing to an image file',
-  example: 'https://images.sarafrika.com/logo.png',
-  pattern: '^https?://[^\\s/$.?#].[^\\s]*\\.(jpg|jpeg|png|gif|webp|svg)$',
-} as const;
-
-export const DocumentUrlWritableSchema = {
-  format: 'uri',
-  description: 'A valid URL pointing to a document file',
-  example: 'https://docs.sarafrika.com/manual.pdf',
-  pattern: '^https?://[^\\s/$.?#].[^\\s]*\\.(pdf|doc|docx|xls|xlsx|ppt|pptx)$',
-} as const;
-
-export const SocialMediaUrlWritableSchema = {
-  format: 'uri',
-  description: 'A valid social media profile URL',
-  example: 'https://linkedin.com/company/sarafrika',
-  pattern: '^https?://(www\\.)?(facebook|twitter|instagram|linkedin|youtube|tiktok)\\.com/[^\\s]*$',
-} as const;
-
-export const SchemaEnumWritableSchema = {
-  type: 'string',
-  enum: ['PLATFORM_FEE', 'AGE_GATE', 'ENROLLMENT_GUARD', 'CUSTOM'],
-} as const;
-
-export const SchemaEnum2WritableSchema = {
-  type: 'string',
-  enum: ['DRAFT', 'ACTIVE', 'INACTIVE'],
-} as const;
-
-export const ItemsEnumWritableSchema = {
-  type: 'string',
-  enum: ['PENDING', 'AWAITING_GUARDIAN_CONSENT', 'ACCEPTED', 'DECLINED', 'EXPIRED', 'REVOKED'],
-} as const;
-
-export const SchemaEnum3WritableSchema = {
-  type: 'string',
-  enum: ['skills', 'certifications', 'competencies', 'documents'],
-} as const;
-
-export const SchemaEnum4WritableSchema = {
-  type: 'string',
-  enum: ['approve', 'reject', 'revoke'],
-} as const;
-
-export const SchemaEnum5WritableSchema = {
-  type: 'string',
-  enum: ['skills', 'competencies', 'certifications'],
-} as const;
-
-export const SchemaEnum6WritableSchema = {
-  type: 'string',
-  enum: ['draft', 'in_review', 'published', 'archived'],
-} as const;
-
-export const SchemaEnum7WritableSchema = {
-  type: 'string',
-  enum: ['student', 'instructor', 'admin', 'parent', 'organisation_user', 'course_creator'],
-} as const;
-
-export const SchemaEnum8WritableSchema = {
-  type: 'string',
-  enum: ['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED'],
-} as const;
-
-export const SchemaEnum9WritableSchema = {
-  type: 'string',
-  default: 'all',
-  enum: ['all', 'courses', 'programmes'],
-} as const;
-
-export const ItemsEnum2WritableSchema = {
-  type: 'string',
-  enum: ['beginner', 'intermediate', 'advanced'],
-} as const;
-
-export const ItemsEnum3WritableSchema = {
-  type: 'string',
-  enum: ['free', 'paid'],
-} as const;
-
-export const SchemaEnum10WritableSchema = {
-  type: 'string',
-  enum: ['relevance', 'newest', 'rating', 'popular'],
-} as const;
-
-export const SchemaEnum11WritableSchema = {
-  type: 'string',
-  default: 'open',
-  enum: ['open', 'skills', 'applied'],
-} as const;
-
-export const SchemaEnum12WritableSchema = {
-  type: 'string',
-  enum: ['actor', 'target', 'all'],
-} as const;
-
-export const SchemaEnum13WritableSchema = {
-  type: 'string',
-  default: 'PENDING',
-  enum: ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'],
-} as const;
-
-export const SchemaEnum14WritableSchema = {
-  type: 'string',
-  enum: ['admin', 'organisation_user'],
-} as const;
-
-export const GenderEnumWritableSchema = {
-  type: ['string', 'null'],
-  description:
-    "**[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.",
-  enum: ['MALE', 'FEMALE', 'OTHER', 'PREFER_NOT_TO_SAY'],
-  example: 'FEMALE',
-} as const;
-
-export const ScopeEnumWritableSchema = {
-  type: 'string',
-  default: 'GLOBAL',
-  description: 'Scope the rule applies to',
-  enum: ['GLOBAL', 'TENANT', 'REGION', 'DEMOGRAPHIC', 'SEGMENT'],
-} as const;
-
-export const ValueTypeEnumWritableSchema = {
-  type: 'string',
-  default: 'JSON',
-  description: 'Payload interpretation hint',
-  enum: ['JSON', 'DECIMAL', 'INTEGER', 'BOOLEAN', 'STRING'],
-} as const;
-
-export const RelationshipTypeEnumWritableSchema = {
-  type: ['string', 'null'],
-  description: '**[OPTIONAL]** Relationship to the student. Defaults to GUARDIAN.',
-  enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
-  example: 'PARENT',
-  pattern: '(?i)PARENT|GUARDIAN|SPONSOR',
-} as const;
-
-export const StatusEnumWritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Rubric publication status in the content workflow.',
-  enum: ['DRAFT', 'IN_REVIEW', 'PUBLISHED', 'ARCHIVED'],
-  example: 'PUBLISHED',
-} as const;
-
-export const WeightUnitEnumWritableSchema = {
-  type: 'string',
-  description: '**[OPTIONAL]** Unit of measurement for weight calculations.',
-  enum: ['percentage', 'points', 'ratio'],
-  example: 'percentage',
-} as const;
-
-export const ScopeEnum2WritableSchema = {
-  type: 'string',
-  description:
-    '**[OPTIONAL]** Scope of the quiz definition. Course templates act as blueprints, while class clones belong to a single class.',
-  enum: ['COURSE_TEMPLATE', 'CLASS_CLONE'],
-  example: 'COURSE_TEMPLATE',
-} as const;
-
-export const QuestionTypeEnumWritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Type of question determining the answer format and validation.',
-  enum: ['MULTIPLE_CHOICE', 'TRUE_FALSE', 'SHORT_ANSWER', 'ESSAY'],
-  example: 'MULTIPLE_CHOICE',
-} as const;
-
-export const StatusEnum2WritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Current status of the quiz attempt.',
-  enum: ['IN_PROGRESS', 'SUBMITTED', 'GRADED'],
-  example: 'GRADED',
-} as const;
-
-export const AcquisitionEnumWritableSchema = {
-  type: ['string', 'null'],
-  description:
-    'How the applicant would obtain it: required when has_it is false, ignored when true.',
-  enum: ['lease', 'hire'],
-} as const;
-
-export const RequirementTypeEnumWritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Type of requirement classification for this program element.',
-  enum: ['STUDENT', 'TRAINING_CENTER', 'INSTRUCTOR'],
-  example: 'STUDENT',
-} as const;
-
-export const DomainNameEnumWritableSchema = {
-  type: 'string',
-  description:
-    "**[REQUIRED]** Org-scoped domain to assign to the member. Valid values: 'organisation_user', 'admin', 'instructor', 'student'.",
-  enum: ['organisation_user', 'admin', 'instructor', 'student'],
-  example: 'admin',
-  minLength: 1,
-} as const;
-
-export const ResourceTypeEnumWritableSchema = {
-  type: 'string',
-  description: 'Resource kind',
-  enum: ['VENUE', 'EQUIPMENT_POOL'],
-  example: 'VENUE',
-} as const;
-
-export const RuleTypeEnumWritableSchema = {
-  type: 'string',
-  description: 'Rule kind',
-  enum: ['OPEN_HOURS', 'BLACKOUT'],
-  example: 'OPEN_HOURS',
-} as const;
-
-export const ProficiencyLevelEnumWritableSchema = {
-  type: 'string',
-  enum: ['beginner', 'intermediate', 'advanced', 'expert'],
-} as const;
-
-export const ItemTypeEnumWritableSchema = {
-  type: 'string',
-  enum: ['PROJECT', 'PERFORMANCE', 'WORK_SAMPLE', 'MEDIA', 'OTHER'],
-} as const;
-
-export const ExperienceTypeEnumWritableSchema = {
-  type: 'string',
-  enum: ['TRAINING', 'WORK', 'VOLUNTEERING', 'PROJECT'],
-} as const;
-
-export const CredentialTypeEnumWritableSchema = {
-  type: 'string',
-  enum: ['CERTIFICATE', 'BADGE', 'AWARD', 'EXTERNAL_CREDENTIAL'],
-} as const;
-
-export const AchievementTypeEnumWritableSchema = {
-  type: 'string',
-  enum: ['AWARD', 'MILESTONE', 'COMPETITION', 'UNLOCKED_SKILL', 'RECOGNITION'],
-} as const;
-
-export const ProficiencyLevelEnum2WritableSchema = {
-  type: 'string',
-  description:
-    "**[REQUIRED]** Level of proficiency in this skill. Indicates instructor's competency and teaching capability.",
-  enum: ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'],
-  example: 'EXPERT',
-} as const;
-
-export const AvailabilityTypeEnumWritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Type of availability pattern.',
-  enum: ['daily', 'weekly', 'monthly', 'custom'],
-  example: 'weekly',
-} as const;
-
-export const RequirementTypeEnum2WritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Resource category.',
-  enum: ['material', 'equipment', 'facility', 'other'],
-  example: 'equipment',
-} as const;
-
-export const ProvidedByEnumWritableSchema = {
-  type: 'string',
-  description: '**[OPTIONAL]** Party responsible for providing this requirement.',
-  enum: ['course_creator', 'instructor', 'organisation', 'student'],
-  example: 'organisation',
-} as const;
-
-export const ActivityTypeEnumWritableSchema = {
-  type: 'string',
-  description: '**[OPTIONAL]** Practice activity format.',
-  enum: ['EXERCISE', 'DISCUSSION', 'CASE_STUDY', 'ROLE_PLAY', 'REFLECTION', 'HANDS_ON'],
-  example: 'DISCUSSION',
-} as const;
-
-export const GroupingEnumWritableSchema = {
-  type: 'string',
-  description: '**[OPTIONAL]** Student grouping mode for the activity.',
-  enum: ['INDIVIDUAL', 'PAIR', 'SMALL_GROUP', 'WHOLE_CLASS'],
-  example: 'PAIR',
-} as const;
-
-export const ItemTypeEnum2WritableSchema = {
-  type: 'string',
-  enum: [
-    'assignment',
-    'quiz',
-    'attendance',
-    'project',
-    'discussion',
-    'exam',
-    'practical',
-    'performance',
-    'participation',
-    'manual',
-  ],
-} as const;
-
-export const AggregationStrategyEnumWritableSchema = {
-  type: 'string',
-  description:
-    '**[OPTIONAL]** Strategy used to aggregate gradebook line items for this assessment component.',
-  enum: ['points_sum', 'weighted_average'],
-  example: 'weighted_average',
-} as const;
-
-export const VerificationStatusEnum3WritableSchema = {
-  type: 'string',
-  enum: ['DRAFT', 'SUBMITTED', 'APPROVED', 'REJECTED', 'REVOKED'],
-} as const;
-
-export const ClassVisibilityEnumWritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Class visibility.',
-  enum: ['PUBLIC', 'PRIVATE'],
-} as const;
-
-export const SessionFormatEnumWritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Session format.',
-  enum: ['INDIVIDUAL', 'GROUP'],
-} as const;
-
-export const LocationTypeEnumWritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Delivery location type.',
-  enum: ['ONLINE', 'IN_PERSON', 'HYBRID'],
-} as const;
-
-export const RateBasisEnumWritableSchema = {
-  type: ['string', 'null'],
-  description:
-    '**[OPTIONAL]** Unit the sale price and instructor pay are quoted in. When the class was contracted through a marketplace job this is carried over from that job; otherwise it defaults to `per_hour`.',
-  enum: ['per_hour', 'per_session', 'per_day'],
-  example: 'per_hour',
-} as const;
-
-export const RecurrenceTypeEnumWritableSchema = {
-  type: 'string',
-  description: 'Recurrence type to apply for the session template',
-  enum: ['DAILY', 'WEEKLY', 'MONTHLY'],
-  example: 'WEEKLY',
-} as const;
-
-export const ConflictResolutionEnumWritableSchema = {
-  type: 'string',
-  description: 'Conflict handling strategy: FAIL (default), SKIP, ROLLOVER',
-  enum: ['FAIL', 'SKIP', 'ROLLOVER'],
-  example: 'FAIL',
-} as const;
-
-export const RateBasisEnum2WritableSchema = {
-  type: 'string',
-  description:
-    '**[REQUIRED]** Unit both prices are quoted in, fixed by the contract this job represents.',
-  enum: ['per_hour', 'per_session', 'per_day'],
-  example: 'per_hour',
-} as const;
-
-export const ServiceTypeEnumWritableSchema = {
-  type: ['string', 'null'],
-  description:
-    '**[OPTIONAL]** Preset service the class is offered under (drives the commercial format shown to learners).',
-  enum: ['ONE_ON_ONE', 'GROUP', 'ONLINE', 'PRIVATE_ONLINE'],
-} as const;
-
-export const TemplateTypeEnumWritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Type of certificate this template is designed for.',
-  enum: ['COURSE_COMPLETION', 'PARTICIPATION', 'ACHIEVEMENT', 'CUSTOM'],
-  example: 'COURSE_COMPLETION',
-} as const;
-
-export const SubmissionTypesEnumWritableSchema = {
-  type: 'array',
-  description: '**[OPTIONAL]** Array of accepted submission types for this assignment.',
-  enum: ['TEXT', 'DOCUMENT', 'IMAGE', 'AUDIO', 'VIDEO', 'URL'],
-  example: ['DOCUMENT', 'AUDIO', 'TEXT'],
-  items: {
-    type: 'string',
+export const ApiResponsePagedDTOAssessmentRubricWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOAssessmentRubricWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
   },
 } as const;
 
-export const StatusEnum9WritableSchema = {
-  type: 'string',
-  description: '**[OPTIONAL]** Current status of the scheduled instance.',
-  enum: ['SCHEDULED', 'ONGOING', 'COMPLETED', 'CANCELLED', 'BLOCKED'],
-  example: 'SCHEDULED',
+export const PagedDTOAssessmentRubricWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AssessmentRubricWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
 } as const;
 
-export const RelationshipTypeEnum2WritableSchema = {
-  type: 'string',
-  description: 'Relationship to the student',
-  enum: ['PARENT', 'GUARDIAN', 'SPONSOR'],
-  example: 'PARENT',
+export const ApiResponsePagedDTORubricScoringLevelWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTORubricScoringLevelWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const StatusEnum10WritableSchema = {
-  type: 'string',
-  description: 'linked, invited, expired, declined or revoked',
-  enum: ['linked', 'invited', 'expired', 'declined', 'revoked'],
-  example: 'invited',
+export const PagedDTORubricScoringLevelWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RubricScoringLevelWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
 } as const;
 
-export const ShareScopeEnumWritableSchema = {
-  type: 'string',
-  enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
+export const ApiResponsePagedDTORubricCriteriaWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTORubricCriteriaWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const StatusEnum11WritableSchema = {
-  type: 'string',
-  enum: ['PENDING', 'ACTIVE', 'REVOKED'],
+export const PagedDTORubricCriteriaWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RubricCriteriaWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
 } as const;
 
-export const GenderEnum2WritableSchema = {
-  type: 'string',
-  enum: ['MALE', 'FEMALE', 'PREFER_NOT_TO_SAY'],
+export const ApiResponsePagedDTORubricScoringWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTORubricScoringWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const DomainEnumWritableSchema = {
-  type: 'string',
-  description: 'The domain to register into',
-  enum: ['student', 'instructor', 'course_creator', 'organisation_user'],
-  example: 'course_creator',
-  minLength: 1,
+export const PagedDTORubricScoringWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/RubricScoringWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
 } as const;
 
-export const StatusEnum13WritableSchema = {
-  type: 'string',
+export const ApiResponsePagedDTOQuizWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOQuizWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOQuizWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/QuizWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListQuizQuestionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/QuizQuestionWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOQuizQuestionOptionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOQuizQuestionOptionWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOQuizQuestionOptionWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/QuizQuestionOptionWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOQuizAttemptWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOQuizAttemptWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOQuizAttemptWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/QuizAttemptWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOQuizQuestionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOQuizQuestionWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOQuizQuestionWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/QuizQuestionWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOTrainingProgramWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOTrainingProgramWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOTrainingProgramWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TrainingProgramWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListProgramAssessmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ProgramAssessmentWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOTrainingRateUpdateWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOTrainingRateUpdateWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOTrainingRateUpdateWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TrainingRateUpdateWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOProgramTrainingApplicationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOProgramTrainingApplicationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOProgramTrainingApplicationWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ProgramTrainingApplicationWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListTrainingRateUpdateWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TrainingRateUpdateWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListTrainingApplicationEventWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/TrainingApplicationEventWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const TrainingApplicationEventWritableSchema = {
+  type: 'object',
+  description: "A step in a training application's history, newest first",
+} as const;
+
+export const ApiResponsePagedDTOProgramRequirementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOProgramRequirementWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOProgramRequirementWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ProgramRequirementWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOProgramEnrollmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOProgramEnrollmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOProgramEnrollmentWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ProgramEnrollmentWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ProgramEnrollmentWritableSchema = {
+  type: 'object',
   description:
-    "PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.",
-  enum: ['PENDING', 'ALLOCATED', 'APPROVED', 'DISBURSED'],
+    'Student enrollment in an educational program with progress tracking and completion details',
+  example: {
+    uuid: 'p1e2n3r4-5o6l-7l8m-9e10-abcdefghijkl',
+    student_uuid: 's1t2u3d4-5e6n-7t8u-9u10-abcdefghijkl',
+    program_uuid: 'p1r2o3g4-5r6a-7m8u-9u10-abcdefghijkl',
+    enrollment_date: '2024-04-01T09:00:00',
+    completion_date: '2024-06-30T16:45:00',
+    status: 'COMPLETED',
+    progress_percentage: 100,
+    final_grade: 87.25,
+    created_date: '2024-04-01T09:00:00',
+    created_by: 'student@sarafrika.com',
+    updated_date: '2024-06-30T16:45:00',
+    updated_by: 'system@sarafrika.com',
+    enrollment_category: 'Completed Program Enrollment',
+    is_active: false,
+    progress_display: '100.00% Complete',
+    enrollment_duration: '90 days',
+    status_summary: 'Successfully completed program with final grade of 87.25',
+  },
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the student UUID who is enrolled in the program.',
+      example: 's1t2u3d4-5e6n-7t8u-9u10-abcdefghijkl',
+    },
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the program UUID the student is enrolled in.',
+      example: 'p1r2o3g4-5r6a-7m8u-9u10-abcdefghijkl',
+    },
+    enrollment_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Timestamp when the student enrolled in the program.',
+      example: '2024-04-01T09:00:00Z',
+    },
+    completion_date: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description:
+        '**[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.',
+      example: '2024-06-30T16:45:00Z',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum23',
+    },
+    progress_percentage: {
+      type: 'number',
+      description: '**[OPTIONAL]** Percentage of program content completed by the student.',
+      example: 100,
+      maximum: 100,
+      minimum: 0,
+    },
+    final_grade: {
+      type: 'number',
+      description: '**[OPTIONAL]** Final grade achieved by the student in the program.',
+      example: 87.25,
+      maximum: 100,
+      minimum: 0,
+    },
+  },
+  required: ['program_uuid', 'status', 'student_uuid'],
 } as const;
 
-export const StatusEnum14WritableSchema = {
-  type: 'string',
-  description: 'not_started | in_progress | submitted | approved | rejected | suspended',
-  enum: ['not_started', 'in_progress', 'submitted', 'approved', 'rejected', 'suspended'],
+export const ApiResponseListCourseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const TypeEnumWritableSchema = {
-  type: 'string',
-  enum: [
-    'COURSE_ENROLLMENT_WELCOME',
-    'COURSE_COMPLETION_CERTIFICATE',
-    'LEARNING_MILESTONE_ACHIEVED',
-    'ASSIGNMENT_DUE_REMINDER',
-    'ASSIGNMENT_SUBMITTED_CONFIRMATION',
-    'ASSIGNMENT_GRADED',
-    'ASSIGNMENT_RETURNED_FOR_REVISION',
-    'ASSIGNMENT_DEADLINE_REMINDER',
-    'ASSESSMENT_COMPLETED',
-    'NEW_STUDENT_ENROLLMENT',
-    'NEW_ASSIGNMENT_SUBMISSION',
-    'CLASS_SCHEDULE_UPDATED',
-    'GRADING_REMINDER',
-    'COURSE_CONTENT_APPROVED',
-    'COURSE_CONTENT_REJECTED',
-    'PROGRAM_CONTENT_APPROVED',
-    'PROGRAM_CONTENT_REJECTED',
-    'COURSE_TRAINING_APPLICATION_SUBMITTED',
-    'COURSE_TRAINING_APPLICATION_APPROVED',
-    'COURSE_TRAINING_APPLICATION_REJECTED',
-    'COURSE_TRAINING_APPLICATION_REVOKED',
-    'PROGRAM_TRAINING_APPLICATION_SUBMITTED',
-    'PROGRAM_TRAINING_APPLICATION_APPROVED',
-    'PROGRAM_TRAINING_APPLICATION_REJECTED',
-    'PROGRAM_TRAINING_APPLICATION_REVOKED',
-    'TRAINING_RATE_UPDATE_SUBMITTED',
-    'TRAINING_RATE_UPDATE_APPROVED',
-    'TRAINING_RATE_UPDATE_REJECTED',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED',
-    'CLASS_MARKETPLACE_JOB_EXPIRED',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_HIRED',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED',
-    'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN',
-    'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_ORGANISATION',
-    'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_INSTRUCTOR',
-    'CLASS_ENROLLMENT_CONFIRMED',
-    'COURSE_ENROLLMENT_MILESTONE',
-    'COURSE_ENROLLMENT_NOTICE',
-    'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE',
-    'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE',
-    'UPCOMING_CLASS_REMINDER',
-    'COURSE_REVIEW_SUBMITTED',
-    'PROGRAM_REVIEW_SUBMITTED',
-    'CLASS_REVIEW_SUBMITTED',
-    'INSTRUCTOR_REVIEW_SUBMITTED',
-    'ACCOUNT_CREATED',
-    'PASSWORD_RESET_REQUEST',
-    'SECURITY_ALERT',
-    'ORDER_PAYMENT_RECEIPT',
-    'LEARNING_CERTIFICATE_ISSUED',
-    'PROFILE_DOCUMENT_VERIFIED',
-    'INSTRUCTOR_VERIFICATION_APPROVED',
-    'INSTRUCTOR_VERIFICATION_REVOKED',
-    'COURSE_CREATOR_VERIFICATION_APPROVED',
-    'COURSE_CREATOR_VERIFICATION_REVOKED',
-    'ORGANISATION_VERIFICATION_APPROVED',
-    'ORGANISATION_VERIFICATION_REVOKED',
-    'PROFILE_COMPLETION_REMINDER',
-    'ORGANISATION_INVITATION',
-    'GUARDIAN_CONSENT_REQUEST',
-    'GUARDIAN_LINK_INVITATION',
-    'GUARDIAN_LINK_ESTABLISHED',
-    'ORGANISATION_INVITATION_ACCEPTED',
-    'ORGANISATION_ANNOUNCEMENT',
-    'DOMAIN_APPROVAL_REQUESTED',
-    'DOMAIN_APPROVAL_GRANTED',
-    'DOMAIN_APPROVAL_DECLINED',
-    'WEEKLY_PROGRESS_SUMMARY',
-    'LEARNING_STREAK_ACHIEVEMENT',
-    'PEER_ACHIEVEMENT_CELEBRATION',
-  ],
+export const ApiResponsePagedDTOCertificateWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCertificateWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const CategoryEnumWritableSchema = {
-  type: 'string',
-  enum: [
-    'LEARNING_PROGRESS',
-    'ASSIGNMENTS_GRADING',
-    'COURSE_MANAGEMENT',
-    'SOCIAL_LEARNING',
-    'SYSTEM_ADMIN',
-  ],
+export const PagedDTOCertificateWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CertificateWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
 } as const;
 
-export const PriorityEnumWritableSchema = {
-  type: 'string',
-  enum: ['LOW', 'NORMAL', 'HIGH', 'CRITICAL'],
+export const ApiResponsePagedDTOProgramCourseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOProgramCourseWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const PresentationEnumWritableSchema = {
-  type: 'string',
-  enum: ['POPUP', 'INBOX'],
+export const PagedDTOProgramCourseWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ProgramCourseWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
 } as const;
 
-export const StatusEnum15WritableSchema = {
-  type: 'string',
-  enum: ['UNREAD', 'READ', 'ARCHIVED'],
+export const ApiResponsePagedDTOOrganisationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOOrganisationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const ShareScopeEnum2WritableSchema = {
-  type: ['string', 'null'],
+export const PagedDTOOrganisationWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListUserWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/UserWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListOrganisationDocumentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationDocumentWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListStudentGroupWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentGroupWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListSkillsFundTransactionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SkillsFundTransactionWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListSkillsFundSourceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SkillsFundSourceWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOOrganisationResourceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOOrganisationResourceWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOOrganisationResourceWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/OrganisationResourceWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOResourceBookingWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOResourceBookingWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOResourceBookingWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ResourceBookingWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ResourceBookingWritableSchema = {
+  type: 'object',
+  description: 'Time-slot reservation of an organisation resource',
+  properties: {
+    resource_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Resource booked',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation owning the resource',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum24',
+    },
+    quantity: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Units reserved (1 for venues)',
+      example: 1,
+    },
+    start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Reservation window start (UTC)',
+    },
+    end_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Reservation window end (UTC)',
+    },
+    source_type: {
+      $ref: '#/components/schemas/SourceTypeEnum',
+    },
+    job_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Marketplace job holding the reservation, when applicable',
+    },
+    class_definition_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Class definition backing the reservation, when applicable',
+    },
+    scheduled_instance_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Scheduled instance backing the reservation, when applicable',
+    },
+    released_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'When the booking was released, when applicable',
+    },
+    release_reason: {
+      type: ['string', 'null'],
+      description: 'Why the booking was released, when applicable',
+    },
+  },
+} as const;
+
+export const ApiResponseListResourceAvailabilityRuleWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ResourceAvailabilityRuleWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListNotificationDispatchWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/NotificationDispatchWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseInstructorStudentPageWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/InstructorStudentPageWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const InstructorStudentWritableSchema = {
+  type: 'object',
   description:
-    "**[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.",
-  enum: ['FULL', 'ACADEMICS', 'ATTENDANCE'],
-  example: 'FULL',
-  pattern: '(?i)FULL|ACADEMICS|ATTENDANCE',
+    "A student in one of the organisation's classes taught by the instructor; one row per student per class",
 } as const;
 
-export const StatusEnum16WritableSchema = {
-  type: 'string',
-  description: '**[OPTIONAL]** Current enrollment and attendance status.',
-  enum: ['ENROLLED', 'WAITLISTED', 'ATTENDED', 'ABSENT', 'CANCELLED'],
-  example: 'ENROLLED',
+export const InstructorStudentPageWritableSchema = {
+  type: 'object',
+  description: "A page of an instructor's students plus the classes to filter them by",
 } as const;
 
-export const EventTypeEnumWritableSchema = {
-  type: 'string',
-  description: 'CLICK or DISMISS; impressions are recorded by the server',
-  enum: ['CLICK', 'DISMISS'],
-  example: 'CLICK',
-  minLength: 1,
+export const ApiResponseListCompetitionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CompetitionWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const ModeEnumWritableSchema = {
-  type: 'string',
-  description: 'How the platform fee was configured',
-  enum: ['PERCENTAGE', 'FLAT'],
-  example: 'PERCENTAGE',
+export const ApiResponseListSavedAgeGroupWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SavedAgeGroupWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const ReleaseStrategyEnumWritableSchema = {
-  type: 'string',
+export const ApiResponseSessionBootstrapWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SessionBootstrapWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const SessionBootstrapWritableSchema = {
+  type: 'object',
+  description: 'Composite session bootstrap for the authenticated caller',
+  properties: {
+    user: {
+      $ref: '#/components/schemas/UserWritable',
+    },
+    profiles: {
+      $ref: '#/components/schemas/BootstrapRoleProfiles',
+    },
+    active_organisation: {
+      type: 'null',
+      $ref: '#/components/schemas/BootstrapActiveOrganisation',
+      description: 'Present only for organisation users with an affiliation',
+    },
+    wallet: {
+      type: 'null',
+      $ref: '#/components/schemas/WalletBalanceSummary',
+      description: 'Null when the wallet could not be read',
+    },
+    notifications: {
+      type: 'null',
+      $ref: '#/components/schemas/UnreadNotificationSummary',
+      description: 'Null when notification counts could not be read',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOInstructorWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOInstructorWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOInstructorWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOInstructorSkillWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOInstructorSkillWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOInstructorSkillWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorSkillWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListInstructorReviewWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorReviewWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOInstructorProfessionalMembershipWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOInstructorProfessionalMembershipWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOInstructorProfessionalMembershipWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorProfessionalMembershipWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOInstructorExperienceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOInstructorExperienceWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOInstructorExperienceWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorExperienceWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListInstructorEducationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorEducationWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListInstructorDocumentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorDocumentWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListAvailabilitySlotWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AvailabilitySlotWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOInstructorEducationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOInstructorEducationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOInstructorEducationWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorEducationWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOInstructorDocumentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOInstructorDocumentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOInstructorDocumentWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/InstructorDocumentWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseEnrollmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/EnrollmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOEnrollmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOEnrollmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOEnrollmentWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/EnrollmentWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseStudentEnrollmentOverviewWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/StudentEnrollmentOverviewWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOStudentClassEnrollmentSummaryWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentClassEnrollmentSummaryWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const StudentClassEnrollmentSummaryWritableSchema = {
+  type: 'object',
+  description: 'Overall class enrollment summary for a student, grouped by class definition',
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Class definition identifier',
+    },
+    class_title: {
+      type: 'string',
+      description: 'Class definition title',
+    },
+    latest_enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Most recent scheduled-instance enrollment identifier for this class',
+    },
+    scheduled_instance_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Number of scheduled-instance enrollments aggregated under this class',
+    },
+    latest_scheduled_instance_start_time: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Latest scheduled instance start time found for this class',
+    },
+    latest_activity_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Most recent class enrollment activity timestamp',
+    },
+  },
+  required: ['class_definition_uuid'],
+} as const;
+
+export const StudentEnrollmentOverviewWritableSchema = {
+  type: 'object',
+  description: 'Aggregated course and class enrollments for a student',
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Student identifier',
+    },
+    class_enrollments: {
+      $ref: '#/components/schemas/PagedDTOStudentClassEnrollmentSummaryWritable',
+      description: 'Paged overall class enrollments grouped by class definition',
+    },
+    course_enrollments: {
+      $ref: '#/components/schemas/PagedDTOStudentCourseEnrollmentSummary',
+      description: 'Paged overall course enrollments independent of scheduled instances',
+    },
+  },
+  required: ['student_uuid'],
+} as const;
+
+export const ApiResponseStudentCourseOverviewWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/StudentCourseOverviewWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOStudentCourseOverviewItemWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/StudentCourseOverviewItemWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const StudentCourseOverviewWritableSchema = {
+  type: 'object',
+  description: "Everything a learner's course list needs in one response.",
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Student identifier',
+    },
+    enrollments: {
+      $ref: '#/components/schemas/PagedDTOStudentCourseOverviewItemWritable',
+      description: 'Enrolled classes, most recently active first',
+    },
+  },
+  required: ['student_uuid'],
+} as const;
+
+export const StudentCourseOverviewItemWritableSchema = {
+  type: 'object',
   description:
-    '**[REQUIRED]** Strategy describing how this class schedule derives from the template.',
-  enum: ['INHERITED', 'CUSTOM', 'CLONE'],
-  example: 'CUSTOM',
+    'One class the learner is enrolled in, with its course, instructor, next session, course progress and outstanding assessments.',
+  properties: {
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Class definition identifier',
+    },
+    class_title: {
+      type: 'string',
+      description: 'Class title',
+    },
+    class_thumbnail_url: {
+      type: 'string',
+      description: 'Class thumbnail URL',
+    },
+    organisation_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Organisation running the class, if any',
+    },
+    latest_enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Most recent scheduled-instance enrolment for this class',
+    },
+    scheduled_instance_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Number of scheduled-instance enrolments under this class',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Course the class teaches',
+    },
+    course_name: {
+      type: 'string',
+      description: 'Course name',
+    },
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Training programme the class teaches, if any',
+    },
+    instructor_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: "Instructor of the class (default instructor, else the next session's)",
+    },
+    instructor_name: {
+      type: 'string',
+      description: 'Instructor display name',
+    },
+    next_session: {
+      type: 'null',
+      $ref: '#/components/schemas/StudentCourseOverviewSession',
+      description: 'Current or next session; null when nothing is left to attend',
+    },
+    course_enrollment_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: "Learner's course enrolment identifier",
+    },
+    course_enrollment_status: {
+      type: ['string', 'null'],
+      description: "Learner's course enrolment status",
+    },
+    progress_percentage: {
+      type: ['number', 'null'],
+      description: 'Course progress percentage',
+    },
+    pending_assignment_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Released class assignments the learner has not handed in',
+    },
+    pending_quiz_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Released class quizzes the learner has not submitted',
+    },
+    latest_activity_date: {
+      type: 'string',
+      format: 'date-time',
+      description: 'Most recent class enrolment activity',
+    },
+  },
+  required: ['class_definition_uuid'],
 } as const;
 
-export const StatusEnum18WritableSchema = {
-  type: 'string',
-  description: 'Current status of the booking',
-  enum: [
-    'payment_required',
-    'confirmed',
-    'cancelled',
-    'payment_failed',
-    'expired',
-    'accepted',
-    'declined',
-    'accepted_confirmed',
-  ],
+export const ApiResponsePagedDTOStudentClassEnrollmentSummaryWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOStudentClassEnrollmentSummaryWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const PaymentStatusEnumWritableSchema = {
-  type: 'string',
-  description: 'Payment status reported by the engine',
-  enum: ['succeeded', 'failed'],
-  minLength: 1,
-  pattern: '^(succeeded|failed)$',
+export const ApiResponsePagedDTOCourseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const StatusEnum19WritableSchema = {
-  type: 'string',
-  description: '**[REQUIRED]** Current status of the submission in the grading workflow.',
-  enum: ['DRAFT', 'SUBMITTED', 'IN_REVIEW', 'GRADED', 'RETURNED'],
-  example: 'GRADED',
+export const PagedDTOCourseWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
 } as const;
 
-export const AssignmentTypeEnumWritableSchema = {
-  type: 'string',
-  description: 'Type of assignment - global or organization-specific',
-  enum: ['global', 'organization'],
-  example: 'global',
-  minLength: 1,
+export const ApiResponsePagedDTOCourseVersionSnapshotWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseVersionSnapshotWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const StatusEnum20WritableSchema = {
-  type: 'string',
-  enum: ['VERIFIED', 'REJECTED'],
+export const PagedDTOCourseVersionSnapshotWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
 } as const;
 
-export const ActionEnumWritableSchema = {
-  type: 'string',
-  description: 'The decision to apply.',
-  enum: ['approved', 'rejected', 'revoked'],
+export const ApiResponseCoursePendingEditWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CoursePendingEditWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const DomainNameEnum2WritableSchema = {
-  type: 'string',
-  description: 'Domain/role to assign within the organisation',
-  enum: ['student', 'instructor', 'admin', 'organisation_user', 'course_creator'],
-  example: 'organisation_user',
-  minLength: 1,
-} as const;
-
-export const AccountStateEnumWritableSchema = {
-  type: 'string',
+export const CoursePendingEditWritableSchema = {
+  type: 'object',
   description:
-    'ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review',
-  enum: ['ACTIVE', 'PENDING_APPROVAL', 'SUSPENDED', 'REJECTED', 'NO_DOMAIN'],
+    'An edit to a published course that is awaiting admin review.\n\nThe live course is unaffected while the edit is pending: it stays published,\nkeeps accepting enrollments, and continues to serve its last-approved content.\nThe proposed content lives on the draft course referenced by `draft_course_uuid`.\n',
+  example: {
+    uuid: 'edit-1234-5678-90ab-cdef12345678',
+    course_uuid: 'course-1234-5678-90ab-cdef12345678',
+    draft_course_uuid: 'draft-1234-5678-90ab-cdef12345678',
+    status: 'pending',
+    submitted_by_uuid: 'user-1234-5678-90ab-cdef12345678',
+    submitted_at: '2026-07-17T09:00:00',
+    reviewed_by_uuid: null,
+    reviewed_at: null,
+    review_reason: null,
+  },
 } as const;
 
-export const StatusEnum21WritableSchema = {
-  type: 'string',
-  description: 'Hold lifecycle state; only FIRM counts as a scheduling clash',
-  enum: ['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'],
-  example: 'TENTATIVE',
+export const ApiResponsePagedDTOCourseTrainingRequirementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseTrainingRequirementWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const QuestionTypeEnum2WritableSchema = {
-  type: 'string',
-  enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
+export const PagedDTOCourseTrainingRequirementWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseTrainingRequirementWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
 } as const;
 
-export const StatusEnum22WritableSchema = {
-  type: 'string',
-  enum: ['in_progress', 'submitted', 'graded'],
+export const ApiResponsePagedDTOCourseTrainingApplicationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseTrainingApplicationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const StatusEnum23WritableSchema = {
-  type: 'string',
-  description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
-  enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
-  example: 'COMPLETED',
+export const PagedDTOCourseTrainingApplicationWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseTrainingApplicationWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
 } as const;
 
-export const EntryTypeEnumWritableSchema = {
-  type: 'string',
-  description: 'Entry kind',
-  enum: ['OPEN_HOURS', 'BLACKOUT', 'HOLD', 'CONFIRMED'],
-  example: 'HOLD',
+export const ApiResponseCourseTrainerDirectoryWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseTrainerDirectoryWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const StatusEnum24WritableSchema = {
-  type: 'string',
-  description: 'Booking lifecycle state',
-  enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],
-  example: 'HOLD',
+export const CourseTrainerDirectoryWritableSchema = {
+  type: 'object',
+  description: "The approved delivery list for a course, plus the creator's pending queue",
+  properties: {
+    trainers: {
+      type: 'array',
+      description: 'Trainers approved to deliver this course.',
+      items: {
+        $ref: '#/components/schemas/CourseTrainerSummaryWritable',
+      },
+    },
+    pending_count: {
+      type: ['integer', 'null'],
+      format: 'int64',
+      description:
+        '**[COURSE OWNER AND PLATFORM ADMIN ONLY]** Applications still awaiting a decision. Absent for every other caller.',
+      example: 2,
+    },
+  },
 } as const;
 
-export const SourceTypeEnumWritableSchema = {
-  type: 'string',
-  description: 'What created the booking',
-  enum: ['MARKETPLACE_JOB', 'CLASS_DEFINITION', 'MANUAL'],
-  example: 'MARKETPLACE_JOB',
+export const CourseTrainerSummaryWritableSchema = {
+  type: 'object',
+  description: 'An instructor or organisation approved to deliver a course',
+  example: {
+    applicant_type: 'organisation',
+    applicant_uuid: 'b7f3c1de-1f4a-4a24-9d55-9c1c2e5c0f11',
+    display_name: 'Westlands Training Institute',
+    location: 'Westlands',
+    approved_at: '2026-02-14T09:30:00',
+    active_class_count: 3,
+  },
+  properties: {
+    applicant_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Identifier of the approved instructor or organisation.',
+      example: 'b7f3c1de-1f4a-4a24-9d55-9c1c2e5c0f11',
+    },
+    display_name: {
+      type: 'string',
+      description: "The trainer's name as it should be shown.",
+      example: 'Westlands Training Institute',
+    },
+    location: {
+      type: ['string', 'null'],
+      description: 'Where the trainer operates, in words. Absent when they have not said.',
+      example: 'Westlands',
+    },
+    approved_at: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description:
+        'When the training application was approved. Absent on records approved before this was captured.',
+    },
+    active_class_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'How many active classes the trainer currently runs on this course.',
+      example: 3,
+    },
+    rate_card: {
+      type: 'null',
+      $ref: '#/components/schemas/CourseTrainingRateCard',
+      description:
+        '**[COURSE OWNER AND PLATFORM ADMIN ONLY]** What the trainer charges. Absent for every other caller.',
+    },
+  },
 } as const;
 
-export const EntryTypeEnum2WritableSchema = {
-  type: 'string',
+export const ApiResponsePagedDTOCourseRubricAssociationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseRubricAssociationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCourseRubricAssociationWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseRubricAssociationWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCourseReviewWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseReviewWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseRequirementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseRequirementWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCourseRequirementWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseRequirementWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseOrganisationCourseContentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/OrganisationCourseContentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const OrganisationCourseContentWritableSchema = {
+  type: 'object',
   description:
-    'Entry type: AVAILABILITY, BLOCKED, SCHEDULED_INSTANCE, JOB_HOLD (a class job the instructor was hired for holds this time; busy) or JOB_APPLICATION (a job the instructor applied to; not busy, shown to the instructor only)',
-  enum: ['AVAILABILITY', 'BLOCKED', 'SCHEDULED_INSTANCE', 'JOB_HOLD', 'JOB_APPLICATION'],
-  example: 'SCHEDULED_INSTANCE',
+    "Course content scoped to the caller. Outline only unless the caller's access carries full read rights.",
+  properties: {
+    access: {
+      $ref: '#/components/schemas/AccessEnum',
+    },
+    full_access: {
+      type: 'boolean',
+      description:
+        "True when the caller's access carries full read rights and lesson content is therefore included.",
+      example: false,
+    },
+    total_lessons: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Total number of lessons in the course.',
+      example: 12,
+    },
+    average_rating: {
+      type: 'number',
+      format: 'double',
+      description: 'Average learner rating (1-5), or null when there are no reviews.',
+      example: 4.6,
+    },
+    total_reviews: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Number of learner reviews.',
+      example: 37,
+    },
+    lessons: {
+      type: 'array',
+      description: 'Lessons. Outline only without full access, then with full content.',
+      items: {
+        $ref: '#/components/schemas/OrganisationCourseLessonWritable',
+      },
+    },
+    course: {
+      $ref: '#/components/schemas/PublicCourseProfile',
+      description:
+        'The course itself: title, blurb, objectives, prerequisites and what a trainer must supply. Present for every caller, so a course page can be rendered without a second, authenticated request. Carries no commercial terms.',
+    },
+  },
 } as const;
 
-export const AccessEnumWritableSchema = {
-  type: 'string',
+export const OrganisationCourseLessonWritableSchema = {
+  type: 'object',
+  description: 'Lesson outline (always) plus content (only when the caller has full read access).',
+  properties: {
+    lesson_number: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Ordering position of the lesson within the course.',
+      example: 1,
+    },
+    title: {
+      type: 'string',
+      description: 'Lesson title.',
+      example: 'Introduction to Object-Oriented Programming',
+    },
+    description: {
+      type: 'string',
+      description: 'Short lesson description.',
+      example: 'Classes, objects, inheritance, and polymorphism.',
+    },
+    learning_objectives: {
+      type: 'string',
+      description: 'What the learner will be able to do after the lesson.',
+    },
+    content_count: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        'Number of content items in the lesson. Shown even in the preview so schools can gauge depth.',
+      example: 4,
+    },
+    contents: {
+      type: 'array',
+      description: 'Full lesson content. Only present when the caller has full read access.',
+      items: {
+        $ref: '#/components/schemas/LessonContentWritable',
+      },
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOLessonWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOLessonWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOLessonWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LessonWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOLessonPracticeActivityWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOLessonPracticeActivityWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOLessonPracticeActivityWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LessonPracticeActivityWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListLessonContentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LessonContentWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseCourseGradeBookWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/CourseGradeBookWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ComponentDTOWritableSchema = {
+  type: 'object',
+  properties: {
+    assessment: {
+      $ref: '#/components/schemas/CourseAssessmentWritable',
+    },
+    aggregate_score: {
+      $ref: '#/components/schemas/CourseAssessmentScoreWritable',
+    },
+    configured_line_item_weight_percentage: {
+      type: 'number',
+    },
+    line_items: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LineItemEntryDTOWritable',
+      },
+    },
+  },
+} as const;
+
+export const CourseAssessmentScoreWritableSchema = {
+  type: 'object',
+  description: 'Course assessment score with grading information and instructor feedback',
+  example: {
+    uuid: 's1c2o3r4-5e6a-7s8s-9e10-abcdefghijkl',
+    enrollment_uuid: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    assessment_uuid: 'a1s2s3e4-5s6s-7m8e-9n10-abcdefghijkl',
+    score: 87.5,
+    max_score: 100,
+    percentage: 87.5,
+    graded_at: '2024-04-15T14:30:00',
+    graded_by_uuid: 'i1n2s3t4-5r6u-7c8t-9o10-abcdefghijkl',
+    comments:
+      'Excellent understanding of the core concepts. Strong analytical skills demonstrated throughout the assessment. Minor areas for improvement in theoretical applications.',
+    created_date: '2024-04-15T14:30:00',
+    created_by: 'instructor@sarafrika.com',
+    updated_date: '2024-04-15T14:30:00',
+    updated_by: 'instructor@sarafrika.com',
+    score_category: 'High Performance',
+    is_passing: true,
+    grade_display: '87.50 / 100.00 (87.50%)',
+    performance_level: 'Above Average',
+    feedback_summary: 'Detailed instructor feedback provided',
+  },
+  properties: {
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the enrollment UUID of the student being assessed.',
+      example: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    },
+    assessment_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the assessment UUID being scored.',
+      example: 'a1s2s3e4-5s6s-7m8e-9n10-abcdefghijkl',
+    },
+    score: {
+      type: 'number',
+      description: '**[OPTIONAL]** Score achieved by the student on this assessment.',
+      example: 87.5,
+      minimum: 0,
+    },
+    max_score: {
+      type: 'number',
+      description: '**[OPTIONAL]** Maximum possible score for this assessment.',
+      example: 100,
+      minimum: 0,
+    },
+    percentage: {
+      type: 'number',
+      description: '**[OPTIONAL]** Percentage score calculated from score and max_score.',
+      example: 87.5,
+      maximum: 100,
+      minimum: 0,
+    },
+    graded_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Timestamp when the assessment was graded by the instructor.',
+      example: '2024-04-15T14:30:00Z',
+    },
+    graded_by_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: '**[OPTIONAL]** Reference to the instructor UUID who graded this assessment.',
+      example: 'i1n2s3t4-5r6u-7c8t-9o10-abcdefghijkl',
+    },
+    comments: {
+      type: 'string',
+      description:
+        "**[OPTIONAL]** Instructor's comments and feedback on the assessment performance.",
+      example:
+        'Excellent understanding of the core concepts. Strong analytical skills demonstrated throughout the assessment. Minor areas for improvement in theoretical applications.',
+      maxLength: 5000,
+      minLength: 0,
+    },
+  },
+  required: ['assessment_uuid', 'enrollment_uuid'],
+} as const;
+
+export const CourseGradeBookWritableSchema = {
+  type: 'object',
   description:
-    'The footing the caller views this course on. Resolved server-side; never re-derived by the client.',
-  enum: [
-    'creator',
-    'admin',
-    'organisation',
-    'instructor',
-    'applicant',
-    'pending',
-    'prospect',
-    'student',
-  ],
-  example: 'prospect',
+    'Enrollment-gradebook view showing weighted components, line items, and aggregate grade',
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    final_grade: {
+      type: 'number',
+    },
+    pass_mark: {
+      type: 'number',
+      description: 'Final grade needed to pass; null means completing every required item passes',
+    },
+    result_status: {
+      $ref: '#/components/schemas/ResultStatusEnum',
+    },
+    graded_weight_percentage: {
+      type: 'number',
+    },
+    configured_weight_percentage: {
+      type: 'number',
+    },
+    components: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ComponentDTOWritable',
+      },
+    },
+  },
 } as const;
 
-export const AvailabilityEnumWritableSchema = {
-  type: 'string',
+export const LineItemEntryDTOWritableSchema = {
+  type: 'object',
+  properties: {
+    line_item: {
+      $ref: '#/components/schemas/CourseAssessmentLineItemWritable',
+    },
+    score: {
+      $ref: '#/components/schemas/CourseAssessmentLineItemScoreWritable',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseEnrollmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseEnrollmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseEnrollmentWritableSchema = {
+  type: 'object',
+  description: 'Student enrollment in a course with progress tracking and completion details',
+  example: {
+    uuid: 'e1n2r3o4-5l6l-7m8e-9n10-abcdefghijkl',
+    student_uuid: 's1t2u3d4-5e6n-7t8u-9u10-abcdefghijkl',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    enrollment_date: '2024-04-01T09:00:00',
+    completion_date: '2024-04-30T16:45:00',
+    status: 'COMPLETED',
+    progress_percentage: 100,
+    final_grade: 85.5,
+    created_date: '2024-04-01T09:00:00',
+    created_by: 'student@sarafrika.com',
+    updated_date: '2024-04-30T16:45:00',
+    updated_by: 'system@sarafrika.com',
+    enrollment_category: 'Completed Enrollment',
+    is_active: false,
+    progress_display: '100.00% Complete',
+    enrollment_duration: '29 days',
+    status_summary: 'Successfully completed with final grade of 85.50',
+  },
+  properties: {
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the student UUID who is enrolled in the course.',
+      example: 's1t2u3d4-5e6n-7t8u-9u10-abcdefghijkl',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the course UUID the student is enrolled in.',
+      example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    },
+    enrollment_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[OPTIONAL]** Timestamp when the student enrolled in the course.',
+      example: '2024-04-01T09:00:00Z',
+    },
+    completion_date: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description:
+        '**[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.',
+      example: '2024-04-30T16:45:00Z',
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum23',
+    },
+    progress_percentage: {
+      type: 'number',
+      description: '**[OPTIONAL]** Percentage of course content completed by the student.',
+      example: 100,
+      maximum: 100,
+      minimum: 0,
+    },
+    final_grade: {
+      type: 'number',
+      description: '**[OPTIONAL]** Final grade achieved by the student in the course.',
+      example: 85.5,
+      maximum: 100,
+      minimum: 0,
+    },
+  },
+  required: ['course_uuid', 'status', 'student_uuid'],
+} as const;
+
+export const PagedDTOCourseEnrollmentWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseEnrollmentWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCourseCategoryMappingWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCategoryMappingWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const CourseCategoryMappingWritableSchema = {
+  type: 'object',
+  description: 'Represents the many-to-many relationship between courses and categories',
+  example: {
+    uuid: 'm1a2p3p4-5i6n-7g8s-9a10-abcdefghijkl',
+    course_uuid: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    category_uuid: 'c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl',
+    course_name: 'Advanced Java Programming',
+    category_name: 'Programming',
+    created_date: '2024-04-01T12:00:00',
+    created_by: 'instructor@sarafrika.com',
+  },
+  properties: {
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the course UUID in this mapping.',
+      example: 'c1o2u3r4-5s6e-7d8a-9t10-abcdefghijkl',
+    },
+    category_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[REQUIRED]** Reference to the category UUID in this mapping.',
+      example: 'c1a2t3e4-5g6o-7r8y-9a10-abcdefghijkl',
+    },
+  },
+  required: ['category_uuid', 'course_uuid'],
+} as const;
+
+export const ApiResponsePagedDTOCourseAssessmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseAssessmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCourseAssessmentWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseAssessmentWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCourseAssessmentLineItemWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseAssessmentLineItemWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListLessonWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/LessonWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCourseCreatorWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorSkillWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorSkillWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCourseCreatorSkillWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorSkillWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCourseCreatorPortfolioItemWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorPortfolioItemWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorProfessionalMembershipWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorProfessionalMembershipWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCourseCreatorProfessionalMembershipWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorProfessionalMembershipWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorExperienceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorExperienceWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCourseCreatorExperienceWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorExperienceWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorEducationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorEducationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCourseCreatorEducationWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorEducationWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCourseCreatorDocumentDTOWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorDocumentDTOWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListCourseCreatorCompetencyWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorCompetencyWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOCourseCreatorCertificationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCourseCreatorCertificationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCourseCreatorCertificationWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorCertificationWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCourseCreatorAchievementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CourseCreatorAchievementWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOGradingLevelWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOGradingLevelWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOGradingLevelWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/GradingLevelWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListDifficultyLevelWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/DifficultyLevelWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOContentTypeWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOContentTypeWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOContentTypeWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ContentTypeWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListContentTypeWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ContentTypeWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOCategoryWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCategoryWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCategoryWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CategoryWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCategoryWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CategoryWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListCompetitionTeamWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CompetitionTeamWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOClassDefinitionResponseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOClassDefinitionResponseWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOClassDefinitionResponseWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassDefinitionResponseWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOScheduledInstanceWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOScheduledInstanceWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOScheduledInstanceWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ScheduledInstanceWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOClassReviewWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOClassReviewWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOClassReviewWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassReviewWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListClassQuizScheduleWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassQuizScheduleWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListClassAssignmentScheduleWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassAssignmentScheduleWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListClassDefinitionResponseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassDefinitionResponseWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOClassMarketplaceJobWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOClassMarketplaceJobWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOClassMarketplaceJobWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseClassMarketplaceJobEligibilityWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassMarketplaceJobEligibilityWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassMarketplaceJobEligibilityWritableSchema = {
+  type: 'object',
+  description: "Current instructor's eligibility to apply for a marketplace class job",
+} as const;
+
+export const ApiResponseJobCandidateListWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOClassMarketplaceJobApplicationWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOClassMarketplaceJobApplicationWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOClassMarketplaceJobApplicationWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobApplicationWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListClassMarketplaceJobApplicationEventWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobApplicationEventWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassMarketplaceJobApplicationEventWritableSchema = {
+  type: 'object',
+  description: "A step in a marketplace job application's history, newest first",
+} as const;
+
+export const ApiResponseJobMatchListWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/JobMatchListWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const JobMatchWritableSchema = {
+  type: 'object',
+  description: 'A marketplace job matched to the current instructor, with its fit',
+  properties: {
+    rate_basis: {
+      $ref: '#/components/schemas/RateBasisEnum2',
+    },
+    class_visibility: {
+      $ref: '#/components/schemas/ClassVisibilityEnum',
+    },
+    session_format: {
+      $ref: '#/components/schemas/SessionFormatEnum',
+    },
+    location_type: {
+      $ref: '#/components/schemas/LocationTypeEnum',
+    },
+  },
+} as const;
+
+export const JobMatchDetailsWritableSchema = {
+  type: 'object',
+} as const;
+
+export const JobMatchListWritableSchema = {
+  type: 'object',
+} as const;
+
+export const JobMatchSkillWritableSchema = {
+  type: 'object',
+  properties: {
+    min_proficiency: {
+      $ref: '#/components/schemas/ProficiencyLevelEnum',
+    },
+  },
+} as const;
+
+export const ApiResponseListClassMarketplaceJobEligibilityWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobEligibilityWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListClassBatchSummaryWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ClassBatchSummaryWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ClassBatchSummaryWritableSchema = {
+  type: 'object',
   description:
-    'How easy the class is to get into. FULL: no seats left (listed, but not counted in open_class_count or price_from, and sorted last). FEW_LEFT: at most max(5, 20% of capacity) seats left. OPEN: otherwise, or when capacity is unknown. Seat counts are never published.',
-  enum: ['OPEN', 'FEW_LEFT', 'FULL'],
-  example: 'OPEN',
+    'A class definition with its course title, instructor summary, enrolment count and seat capacity, as returned by the batch class lookup',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'Class definition UUID',
+    },
+    title: {
+      type: 'string',
+      description: 'Class title',
+    },
+    thumbnail_url: {
+      type: ['string', 'null'],
+      description: 'Public thumbnail URL',
+    },
+    course_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Course the class delivers',
+    },
+    course_title: {
+      type: ['string', 'null'],
+      description: 'Title of the course the class delivers',
+    },
+    program_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Training program the class delivers',
+    },
+    program_title: {
+      type: ['string', 'null'],
+      description: 'Title of the training program the class delivers',
+    },
+    organisation_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Organisation that owns the class',
+    },
+    default_instructor_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Default instructor',
+    },
+    instructor: {
+      type: 'null',
+      $ref: '#/components/schemas/ClassBatchInstructorSummary',
+      description: 'Directory summary of the default instructor',
+    },
+    is_active: {
+      type: 'boolean',
+      description: 'Whether the class is active',
+    },
+    class_visibility: {
+      $ref: '#/components/schemas/ClassVisibilityEnum2',
+    },
+    default_start_time: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'Default session start',
+    },
+    default_end_time: {
+      type: ['string', 'null'],
+      format: 'date-time',
+      description: 'Default session end',
+    },
+    sale_price: {
+      type: ['number', 'null'],
+      description: 'Public sale price per seat',
+    },
+    max_participants: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: 'Seat capacity of the class',
+    },
+    allow_waitlist: {
+      type: ['boolean', 'null'],
+      description: 'Whether a full class accepts a waitlist',
+    },
+    enrolled_count: {
+      type: ['integer', 'null'],
+      format: 'int64',
+      description:
+        "**[PARTIES ONLY]** Distinct actively-enrolled students; present only for the class's instructor, managers of its organisation and platform admins",
+    },
+    seats_remaining: {
+      type: ['integer', 'null'],
+      format: 'int64',
+      description:
+        '**[PARTIES ONLY]** Seats left (capacity minus enrolled, never below zero); present only alongside enrolled_count',
+    },
+  },
 } as const;
 
-export const ResultStatusEnumWritableSchema = {
-  type: 'string',
-  description: 'IN_PROGRESS until every required item is graded, then PASSED or FAILED',
-  enum: ['IN_PROGRESS', 'PASSED', 'FAILED'],
+export const ApiResponseClassAssessmentSchedulesWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ClassAssessmentSchedulesWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
 
-export const ClassVisibilityEnum2WritableSchema = {
-  type: ['string', 'null'],
-  description: 'Class visibility',
-  enum: ['PUBLIC', 'PRIVATE'],
+export const ClassAssessmentSchedulesWritableSchema = {
+  type: 'object',
+  description:
+    'Assignment and quiz schedules for several classes at once; each row carries its class_definition_uuid',
+  properties: {
+    assignment_schedules: {
+      type: 'array',
+      description: 'Assignment schedules of every visible requested class',
+      items: {
+        $ref: '#/components/schemas/ClassAssignmentScheduleWritable',
+      },
+    },
+    quiz_schedules: {
+      type: 'array',
+      description: 'Quiz schedules of every visible requested class',
+      items: {
+        $ref: '#/components/schemas/ClassQuizScheduleWritable',
+      },
+    },
+  },
 } as const;
 
-export const TypeEnum2WritableSchema = {
-  type: 'string',
-  description: 'Result type.',
-  enum: ['course', 'programme'],
-  example: 'course',
+export const ApiResponsePagedDTOCertificateTemplateWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCertificateTemplateWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCertificateTemplateWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CertificateTemplateWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListCertificateWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CertificateWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseApplyCatalogueResponseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/ApplyCatalogueResponseWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApplyCatalogueApplicationWritableSchema = {
+  type: 'object',
+  description: "The caller's training application for this course or programme.",
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+  },
+} as const;
+
+export const ApplyCatalogueItemWritableSchema = {
+  type: 'object',
+  description: 'A course or programme in the apply-to-train catalogue.',
+  properties: {
+    type: {
+      $ref: '#/components/schemas/TypeEnum2',
+    },
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    title: {
+      type: 'string',
+    },
+    code: {
+      type: 'string',
+    },
+    category_uuids: {
+      type: 'array',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+    },
+    category_names: {
+      type: 'array',
+      items: {
+        type: 'string',
+      },
+    },
+    creator_name: {
+      type: 'string',
+    },
+    thumbnail_url: {
+      type: 'string',
+    },
+    age_lower_limit: {
+      type: 'integer',
+      format: 'int32',
+      description: "A programme's is the band every member course accepts; null when unbounded",
+    },
+    age_upper_limit: {
+      type: 'integer',
+      format: 'int32',
+    },
+    lesson_count: {
+      type: 'integer',
+      format: 'int64',
+      description: "Active lessons; a programme's over its member courses",
+    },
+    requirement_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    course_count: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Member courses; null for a course',
+    },
+    matches_skills: {
+      type: 'boolean',
+      description: "Shares at least one skill with the caller's skills wallet",
+    },
+    my_application: {
+      $ref: '#/components/schemas/ApplyCatalogueApplicationWritable',
+      description: "The caller's application, or null when they have not applied",
+    },
+    minimum_training_fee: {
+      type: 'number',
+      description:
+        "The rate-card floor: a course's own minimum fee, a programme's highest across its courses",
+    },
+  },
+} as const;
+
+export const ApplyCatalogueResponseWritableSchema = {
+  type: 'object',
+  description: 'A page of the apply-to-train catalogue with facet counts.',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ApplyCatalogueItemWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+      description: "Paging metadata, the same shape as PagedDTO's.",
+    },
+    facets: {
+      $ref: '#/components/schemas/ApplyCatalogueFacets',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOAssignmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOAssignmentWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOAssignmentWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AssignmentWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListAssignmentSubmissionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AssignmentSubmissionWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListAssignmentSubmissionAttachmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AssignmentSubmissionAttachmentWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseListAssignmentAttachmentWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AssignmentAttachmentWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOAssignmentSubmissionWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOAssignmentSubmissionWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOAssignmentSubmissionWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AssignmentSubmissionWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOContentModerationHistoryWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOContentModerationHistoryWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ContentModerationHistoryWritableSchema = {
+  type: 'object',
+  description: 'Audit record of an admin moderation decision on a course or training program.',
+  example: {
+    uuid: 'mod-1234-5678-90ab-cdef12345678',
+    content_type: 'course',
+    content_uuid: 'course-1234-5678-90ab-cdef12345678',
+    action: 'rejected',
+    reason: 'Lesson 3 video is missing captions.',
+    moderator_uuid: 'user-1234-5678-90ab-cdef12345678',
+    created_date: '2026-07-13T09:00:00',
+    created_by: 'admin@example.com',
+  },
+  properties: {
+    action: {
+      $ref: '#/components/schemas/ActionEnum',
+    },
+  },
+} as const;
+
+export const PagedDTOContentModerationHistoryWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ContentModerationHistoryWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseCourseEditDiffWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOCoursePendingEditWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOCoursePendingEditWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOCoursePendingEditWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/CoursePendingEditWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const AcademicTierWritableSchema = {
+  type: 'object',
+  description: 'An ordered schooling level that student groups are filed under.',
+  properties: {
+    name: {
+      type: 'string',
+      description: 'Display name of the level, e.g. "Grade 7".',
+    },
+    tier_order: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Sort position. Gapped by tens so levels can be inserted without renumbering.',
+    },
+    education_system: {
+      type: 'string',
+      description: 'Curriculum the level belongs to, e.g. "KE".',
+    },
+    organisation_uuid: {
+      type: ['string', 'null'],
+      format: 'uuid',
+      description: 'Owning organisation, or null for the shared platform catalogue.',
+    },
+    active: {
+      type: 'boolean',
+      description: 'Whether the level is offered in pickers.',
+    },
+    description: {
+      type: ['string', 'null'],
+      description: 'Optional description.',
+    },
+  },
+} as const;
+
+export const ApiResponseListAcademicTierWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/AcademicTierWritable',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
 } as const;
