@@ -1,19 +1,17 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Trophy } from 'lucide-react';
-import { useSession } from 'next-auth/react';
-import { useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getErrorMessage } from '@/lib/error-utils';
 import { APPROVAL_QUERY_FRESHNESS, STALE_TIMES } from '@/lib/query-client';
 import { getSummaryOptions, listSkillsOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { ProficiencyLevelEnum } from '@/services/client/types.gen';
+import { useQuery } from '@tanstack/react-query';
+import { Trophy } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useMemo } from 'react';
 
 const PROFICIENCY: Record<ProficiencyLevelEnum, number> = {
   beginner: 25,
@@ -95,12 +93,13 @@ export function SkillsWalletAchievementMetrics() {
       {['skills', 'credentials', 'experience', 'verification', 'top-skill'].map(id => <Skeleton key={id} className='h-56 w-full' />)}
     </div>
   );
-  if (!enabled || summary.isError || skills.isError) return (
-    <EmptyState title='Unable to load achievement metrics' description='Please reload your wallet metrics.'
-      action={enabled ? <Button type='button' variant='outline' onClick={() => {
-        void Promise.all([summary.refetch(), skills.refetch()]);
-      }}>Try again</Button> : undefined} />
-  );
+
+  // if (!enabled || summary.isError || skills.isError) return (
+  //   <EmptyState title='Unable to load achievement metrics' description='Please reload your wallet metrics.'
+  //     action={enabled ? <Button type='button' variant='outline' onClick={() => {
+  //       void Promise.all([summary.refetch(), skills.refetch()]);
+  //     }}>Try again</Button> : undefined} />
+  // );
 
   return (
     <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4' aria-label='Achievement metrics'>

@@ -92,6 +92,8 @@ import { SkillsWalletEducationTab } from './SkillsWalletEducationTab';
 import { useSkillsWalletAchievements } from './useSkillsWalletAchievements';
 import { SKILL_PROFICIENCY, toWalletSkill } from './skill-proficiency';
 import { useWalletTab } from './use-wallet-tab';
+import { AddAchievementDialog } from './AddAchievementDialog';
+import { canAddWalletAchievement } from './achievement-access';
 
 type SkillsWalletRole = Extract<VerifiedSkillsRole, 'instructor' | 'course_creator'>;
 
@@ -848,6 +850,9 @@ function ProfileSkillsWalletPage({
   profileUuid,
 }: RoleSkillsWalletPageProps & { profileUuid: string }) {
   const profile = useUserProfile();
+  const canAddAchievement = canAddWalletAchievement(profile, role);
+  const [achievementOpen, setAchievementOpen] = useState(false);
+  const [editingAchievement, setEditingAchievement] = useState<AchievementRecord | null>(null);
   const roleProfile = role === 'instructor' ? profile?.instructor : profile?.courseCreator;
   const profileName =
     profile?.full_name ||
@@ -1089,6 +1094,15 @@ function ProfileSkillsWalletPage({
           <SectionTabPanel value='achievements'>
             {tab === 'achievements' ? (
               <SkillsWalletAchievementsTab
+                canAddAchievement={canAddAchievement}
+                onAddAchievement={() => {
+                  setEditingAchievement(null);
+                  setAchievementOpen(true);
+                }}
+                onEditAchievement={achievement => {
+                  setEditingAchievement(achievement);
+                  setAchievementOpen(true);
+                }}
                 achievements={data.achievements}
                 isLoading={achievementsQuery.isLoading}
                 failed={achievementsQuery.isError}
@@ -1122,6 +1136,15 @@ function ProfileSkillsWalletPage({
       />
 
       <Separator />
+
+      {achievementOpen && canAddAchievement && (
+        <AddAchievementDialog
+          open={achievementOpen}
+          onOpenChange={setAchievementOpen}
+          canAddAchievement={canAddAchievement}
+          achievement={editingAchievement}
+        />
+      )}
 
       <AddExperienceDialog
         role={role}

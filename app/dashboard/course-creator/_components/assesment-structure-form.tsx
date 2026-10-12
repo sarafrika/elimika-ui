@@ -1,8 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { RubricCombobox } from './rubric-combobox';
-import { CoursePassMarkForm } from './course-pass-mark-form';
 import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -41,11 +39,11 @@ import {
   addCourseAssessmentMutation,
   deleteCourseAssessmentMutation,
   deleteLineItemMutation,
+  getAssessmentRubricByUuidOptions,
   getCourseAssessmentsOptions,
   getCourseEvaluationPlanQueryKey,
   getLineItemsOptions,
   getLineItemsQueryKey,
-  getAssessmentRubricByUuidOptions,
   updateCourseAssessmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
@@ -57,6 +55,8 @@ import type {
 import { useRubricsData } from '../rubrics/rubric-chaining';
 import { ASSESSMENT_TYPES } from '../rubrics/rubric-manager';
 import { CATEGORY_META, LinkItemsModal, TaskItemType } from './assesment-link-items';
+import { CoursePassMarkForm } from './course-pass-mark-form';
+import { RubricCombobox } from './rubric-combobox';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -894,6 +894,12 @@ export const CourseAssessmentStructure = ({
             Add Assessment
           </Button>
         </div>
+
+
+        <div>
+          Put the input form here
+        </div>
+
 
         {/* Table — degrades independently (skeleton / error / empty are local) */}
         <AsyncSection

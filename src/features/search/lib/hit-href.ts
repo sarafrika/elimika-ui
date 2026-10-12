@@ -138,8 +138,7 @@ export function hitDestination(domain: PaletteAudience, hit: PaletteHit): HitDes
         case 'organisations':
           return href(url(`organisations/${uuid}`));
         case 'rubrics':
-          // The rubric manager opens searched for the rubric's title.
-          return href(withQuery(url('rubrics'), { q: hit.title }));
+          return href(url(`rubrics/${uuid}`));
       }
       return null;
 

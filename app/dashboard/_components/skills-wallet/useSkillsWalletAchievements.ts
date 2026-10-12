@@ -31,6 +31,7 @@ export function useSkillsWalletAchievements(enabled: boolean) {
   const achievements = useMemo<AchievementRecord[]>(
     () => query.isError ? [] : (query.data ?? []).map((item, index) => ({
       id: item.uuid ?? `achievement-${index}`,
+      uuid: item.uuid,
       name: item.title,
       description: item.description ?? '',
       achievement_type: item.achievement_type,

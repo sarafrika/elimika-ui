@@ -5,6 +5,7 @@ import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { withQ } from '@/lib/search/params';
 
 export type RubricScoringLevel = {
+  color_code?: string;
   level_order: number;
   uuid: string;
   rubric_uuid: string;
@@ -83,10 +84,10 @@ export type Rubric = {
   is_public: boolean;
   is_published: boolean;
   active: boolean;
-  status: 'draft' | 'published' | 'archived';
+  status: 'draft' | 'in_review' | 'published' | 'archived';
   usage_status: string;
   total_weight: number;
-  weight_unit: 'percentage' | 'points';
+  weight_unit: 'percentage' | 'points' | 'ratio';
   uses_custom_levels: boolean;
   max_score: number;
   min_passing_score: number;

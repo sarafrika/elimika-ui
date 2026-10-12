@@ -12,7 +12,7 @@ export default function RubricManagementLayout({ children }: RubricManagementLay
       <header className='flex flex-col items-start justify-between gap-4 md:flex-row md:items-center'>
         <div>
           <h1 className='text-3xl font-semibold tracking-tight'>Manage Rubrics</h1>
-          <p className='text-muted-foreground mt-2 max-w-2xl text-sm'>
+          <p className='text-muted-foreground mt-2 text-sm'>
             Define clear assessment criteria, provide consistent and objective grading, and deliver
             actionable feedback to students — all in one place.
           </p>
