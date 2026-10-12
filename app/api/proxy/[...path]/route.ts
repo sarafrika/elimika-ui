@@ -357,7 +357,8 @@ const getForwardHeaders = (request: NextRequest, session: AuthSession) => {
   }
 
   const incomingAuthorization = request.headers.get('authorization');
-  const accessToken = session?.user?.accessToken;
+  // A failed refresh leaves a dead token; sending it turns public endpoints into 401s.
+  const accessToken = session?.error ? undefined : session?.user?.accessToken;
   if (incomingAuthorization) {
     headers.set('authorization', incomingAuthorization);
   } else if (accessToken) {
