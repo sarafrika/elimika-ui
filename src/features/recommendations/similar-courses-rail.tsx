@@ -1,19 +1,18 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Sparkles } from 'lucide-react';
-import Link from 'next/link';
+import { IntentLink } from '@/components/data/intent-link';
+import { LazySection } from '@/components/data/lazy-section';
 import { surfaceTheme } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
-import { STALE_TIMES } from '@/lib/query-client';
+import { coursePrefetchQuery } from '@/lib/route-prefetch';
 import { cn } from '@/lib/utils';
-import { getSimilarCoursesOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { RecommendedCourse } from '@/services/client/types.gen';
 import { sendDiscoveryEvent } from '@/src/features/discovery/discovery-events';
+import { useSimilarCourses } from '@/src/features/recommendations/use-similar-courses';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 const SIMILAR_LIMIT = 6;
@@ -24,27 +23,31 @@ const SIMILAR_LIMIT = 6;
  * discovery event against the list's `recommendation_id`. The rail hides itself when
  * there is nothing similar, so it never leaves an empty box on the record.
  */
-export function SimilarCoursesRail({
-  courseUuid,
-  hrefFor,
-  className,
-  title = 'Similar courses',
-}: {
+type SimilarCoursesRailProps = {
   courseUuid: string | null | undefined;
   /** Where a similar course opens for this viewer's dashboard. */
   hrefFor: (courseUuid: string) => string;
   className?: string;
   title?: string;
-}) {
-  const query = useQuery({
-    ...getSimilarCoursesOptions({
-      path: { uuid: courseUuid ?? '' },
-      query: { limit: SIMILAR_LIMIT },
-    }),
-    enabled: Boolean(courseUuid),
-    staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
-  });
+};
+
+/** Sits below the course record, so its query waits until the reader scrolls near it. */
+export function SimilarCoursesRail(props: SimilarCoursesRailProps) {
+  if (!props.courseUuid) return null;
+  return (
+    <LazySection minHeight={160} className={props.className}>
+      <SimilarCoursesRailContent {...props} />
+    </LazySection>
+  );
+}
+
+function SimilarCoursesRailContent({
+  courseUuid,
+  hrefFor,
+  className,
+  title = 'Similar courses',
+}: SimilarCoursesRailProps) {
+  const query = useSimilarCourses(courseUuid, SIMILAR_LIMIT);
 
   const courses = (query.data?.data ?? []).filter(
     (course): course is RecommendedCourse & { course_uuid: string } => Boolean(course.course_uuid)
@@ -87,8 +90,9 @@ export function SimilarCoursesRail({
             return (
               <li key={course.course_uuid}>
                 <Card className='hover:border-primary/40 h-full gap-0 p-0 transition-colors'>
-                  <Link
+                  <IntentLink
                     href={hrefFor(course.course_uuid)}
+                    prefetchQuery={coursePrefetchQuery(course.course_uuid)}
                     className='flex h-full gap-3 p-3'
                     onClick={() =>
                       sendDiscoveryEvent({
@@ -113,7 +117,7 @@ export function SimilarCoursesRail({
                         <p className='text-muted-foreground line-clamp-2 text-xs'>{reason}</p>
                       ) : null}
                     </div>
-                  </Link>
+                  </IntentLink>
                 </Card>
               </li>
             );

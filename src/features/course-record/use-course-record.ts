@@ -24,25 +24,26 @@
  * `blocks/*` component, the call belongs here instead.
  */
 
-import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 import { useMemo } from 'react';
-
 import { useInstructor } from '@/context/instructor-context';
+import { courseFromListCache } from '@/lib/list-row-seed';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getClassDefinitionsForCourseOptions,
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
-  getCourseContentOptions,
   getCourseEnrollmentsOptions,
   getCourseReviewsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { CourseEnrollment } from '@/services/client/types.gen';
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { routeSegmentFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
+import { courseContentQueryOptions } from './course-content-query';
+import { resolveCourseRecordTab } from './record-tabs';
 import {
   type ClassDefinition,
   type Course,
@@ -51,6 +52,7 @@ import {
   type CourseAssessment,
   type CourseRecordContent,
   type CourseRecordSection,
+  type CourseRecordTabId,
   type CourseReview,
   type CourseStats,
   type CourseTrainingApplication,
@@ -58,7 +60,7 @@ import {
   courseCapability,
 } from './types';
 import { useCourseAccess } from './use-course-access';
-import { useCourseStats, useCourseTrainers, CourseTrainersEnvelope } from './use-course-metrics';
+import { CourseTrainersEnvelope, useCourseStats, useCourseTrainers } from './use-course-metrics';
 
 /** How many rows of a paged collection the record ever needs on screen at once. */
 const PAGE_SIZE = 100;
@@ -89,6 +91,11 @@ interface UseCourseRecordOptions {
   courseUuid: string | undefined;
   /** Set false to hold every query (e.g. while a route param is still resolving). */
   enabled?: boolean;
+  /**
+   * The tab the viewer asked for. Given, tab-only lists wait until their tab opens;
+   * omitted, every section loads up front as before.
+   */
+  tab?: CourseRecordTabId;
 }
 
 interface CourseRecord {
@@ -128,8 +135,14 @@ interface CourseRecord {
 export function useCourseRecord({
   courseUuid,
   enabled = true,
+  tab,
 }: UseCourseRecordOptions): CourseRecord {
   const on = enabled && Boolean(courseUuid);
+  const queryClient = useQueryClient();
+  const listSeed = useMemo(
+    () => courseFromListCache(queryClient, courseUuid),
+    [queryClient, courseUuid]
+  );
 
   /* ── blocking ───────────────────────────────────────────────────────── */
 
@@ -137,13 +150,14 @@ export function useCourseRecord({
     ...getCourseByUuidOptions({ path: { uuid: courseUuid ?? '' } }),
     enabled: on,
     staleTime: STALE_TIMES.entity,
+    placeholderData: listSeed,
   });
   const course = courseQuery.data?.data;
 
   /* ── access ─────────────────────────────────────────────────────────── */
 
   const contentQuery = useQuery({
-    ...getCourseContentOptions({ path: { courseUuid: courseUuid ?? '' } }),
+    ...courseContentQueryOptions(courseUuid ?? ''),
     enabled: on,
     staleTime: STALE_TIMES.entity,
   });
@@ -162,6 +176,33 @@ export function useCourseRecord({
   const seesScopedFigures = capability.kpi?.set === 'scoped';
   const seesCommercials = capability.showSales;
   const seesOwnApplication = capability.rail.includes('applicationStatus');
+  const seesOwnerDecisions = capability.rail.includes('ownerDecisions');
+
+  /*
+   * The open tab, resolved as the shell resolves it. Commercials drops out of the
+   * row once stats resolve without an `owner` block, so it is dropped here too.
+   */
+  const statsQuery = useCourseStats(courseUuid);
+  const statsSettled = !statsQuery.isLoading && !statsQuery.error;
+  const openTab =
+    tab === undefined
+      ? undefined
+      : resolveCourseRecordTab(
+          tab,
+          capability.tabs.filter(
+            id => id !== 'commercials' || !statsSettled || Boolean(statsQuery.data?.owner)
+          )
+        );
+  /** True when one of `tabs` is open, or when no tab was given (load everything). */
+  const opens = (...tabs: CourseRecordTabId[]) =>
+    tab === undefined || (openTab !== undefined && tabs.includes(openTab));
+  const wantsReviews = opens('reviews');
+  const wantsAssessments = opens('assessment');
+  const wantsRequirements = opens('overview');
+  const wantsTrainers = opens('delivery', 'commercials');
+  const wantsEnrollments = opens('commercials');
+  // The owner-decisions rail card is on screen whatever the tab.
+  const wantsApplications = seesOwnerDecisions || opens('commercials');
 
   /*
    * Who the viewer would have applied *as*.
@@ -185,7 +226,7 @@ export function useCourseRecord({
 
   const reviewsQuery = useQuery({
     ...getCourseReviewsOptions({ path: { courseUuid: courseUuid ?? '' } }),
-    enabled: on,
+    enabled: on && wantsReviews,
     staleTime: STALE_TIMES.entity,
   });
 
@@ -194,13 +235,13 @@ export function useCourseRecord({
       path: { courseUuid: courseUuid ?? '' },
       query: { pageable: { page: 0, size: PAGE_SIZE } },
     }),
-    enabled: on && seesAssessments,
+    enabled: on && seesAssessments && wantsAssessments,
     staleTime: STALE_TIMES.entity,
   });
 
   const requirementsQuery = useQuery({
     ...allCourseTrainingRequirementsOptions(courseUuid),
-    enabled: on,
+    enabled: on && wantsRequirements,
     staleTime: STALE_TIMES.entity,
   });
 
@@ -211,7 +252,7 @@ export function useCourseRecord({
         pageable: { page: 0, size: PAGE_SIZE },
       },
     }),
-    enabled: on && seesCommercials,
+    enabled: on && seesCommercials && wantsApplications,
     staleTime: STALE_TIMES.entity,
   });
 
@@ -256,12 +297,11 @@ export function useCourseRecord({
       path: { courseUuid: courseUuid ?? '' },
       query: { pageable: { page: 0, size: PAGE_SIZE } },
     }),
-    enabled: on && (seesCommercials || seesScopedFigures),
+    enabled: on && (seesCommercials || seesScopedFigures) && wantsEnrollments,
     staleTime: STALE_TIMES.live,
   });
 
-  const statsQuery = useCourseStats(courseUuid);
-  const trainersQuery = useCourseTrainers(courseUuid);
+  const trainersQuery = useCourseTrainers(courseUuid, wantsTrainers);
 
   /* ── shaping ────────────────────────────────────────────────────────── */
 
@@ -306,13 +346,13 @@ export function useCourseRecord({
     course: toSection(courseQuery, course),
     content: toSection(contentQuery, content),
     stats: toSection(statsQuery, statsQuery.data),
-    trainers: toSection(trainersQuery, trainersQuery.data),
+    trainers: toSection(trainersQuery, trainersQuery.data, !wantsTrainers),
     classes: toSection(classesQuery, classDefinitions),
-    reviews: toSection(reviewsQuery, reviews),
-    assessments: toSection(assessmentsQuery, assessments),
-    requirements: toSection(requirementsQuery, requirements),
-    enrollments: toSection(enrollmentsQuery, enrollments),
-    applications: toSection(applicationsQuery, applications),
+    reviews: toSection(reviewsQuery, reviews, !wantsReviews),
+    assessments: toSection(assessmentsQuery, assessments, !wantsAssessments),
+    requirements: toSection(requirementsQuery, requirements, !wantsRequirements),
+    enrollments: toSection(enrollmentsQuery, enrollments, !wantsEnrollments),
+    applications: toSection(applicationsQuery, applications, !wantsApplications),
     myApplication: toSection(myApplicationQuery, myApplication),
   } satisfies Record<CourseRecordSectionId, CourseRecordSection<unknown>>;
 
@@ -349,11 +389,16 @@ function filedAt(value: Date | string | null | undefined): number {
 
 type QueryLike = { isLoading: boolean; error: unknown; refetch: () => unknown };
 
-function toSection<T>(query: QueryLike, data: T | undefined): CourseRecordSection<T> {
+/** `deferred` (its tab is shut) reads as loading, so a hidden panel never claims empty. */
+function toSection<T>(
+  query: QueryLike,
+  data: T | undefined,
+  deferred = false
+): CourseRecordSection<T> {
   return {
     data,
     // `&& !data` so a background refetch keeps what is already on screen.
-    loading: query.isLoading && data === undefined,
+    loading: (query.isLoading || deferred) && data === undefined,
     error: query.error,
     refetch: () => {
       void query.refetch();

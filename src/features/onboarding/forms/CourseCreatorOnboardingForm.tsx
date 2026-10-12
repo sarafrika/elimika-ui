@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form } from '@/components/ui/form';
 import { getErrorMessage } from '@/lib/error-utils';
 import { createCourseCreator } from '@/services/client';
+import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-session-identity';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { CourseCreatorProfileFields } from '@/src/features/profile/forms/shared/components/CourseCreatorProfileFields';
@@ -25,6 +26,7 @@ import {
 
 export function CourseCreatorOnboardingForm() {
   const router = useRouter();
+  const refreshSessionIdentity = useRefreshSessionIdentity();
   const user = useUserProfile();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -87,6 +89,7 @@ export function CourseCreatorOnboardingForm() {
       }
 
       toast.success('Course Creator account created successfully!');
+      await refreshSessionIdentity();
       router.replace(buildDashboardSwitchPath('course_creator'));
     } catch (error) {
       toast.error(

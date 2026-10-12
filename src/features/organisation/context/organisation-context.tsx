@@ -4,7 +4,6 @@ import { queryOptions, type UseQueryOptions, useQuery } from '@tanstack/react-qu
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { createContext, type ReactNode, useContext, useEffect, useMemo, useState } from 'react';
-import CustomLoader from '@/components/custom-loader';
 import type { ApiResponse } from '@/services/client';
 import {
   getOrganisationByUuid,
@@ -17,20 +16,30 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 type OrganisationContextValue = Organisation | null;
 
 const OrganisationContext = createContext<OrganisationContextValue>(null);
+const OrganisationLoadingContext = createContext(false);
+const OrganisationIdContext = createContext<string | null>(null);
 
 export const useOrganisation = () => useContext(OrganisationContext);
+/** True while an org member's organisation is still resolving; children render meanwhile. */
+export const useOrganisationLoading = () => useContext(OrganisationLoadingContext);
+/** The org id known at first render (profile, session or cache), before the org row loads. */
+export const useOrganisationId = () => useContext(OrganisationIdContext);
 
 export default function OrganisationProvider({
   children,
   initialOrganisation,
+  initialUpdatedAt,
 }: {
   children: ReactNode;
+  /** Organisation read during the server render; seeds the query so children render at once. */
   initialOrganisation?: OrganisationContextValue;
+  initialUpdatedAt?: number;
 }) {
   const { data: session } = useSession();
   const userProfile = useUserProfile();
   const userDomain = useUserDomain();
   const router = useRouter();
+  const identity = session?.identity;
 
   const [storedOrgId, setStoredOrgId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
@@ -41,9 +50,9 @@ export default function OrganisationProvider({
     affiliations.find(org => org.active) ?? affiliations[0];
 
   const storageKey = useMemo(() => {
-    const identifier = userProfile?.uuid ?? userProfile?.email;
+    const identifier = userProfile?.uuid ?? identity?.uuid ?? userProfile?.email;
     return identifier ? `organisation:last:${identifier}` : null;
-  }, [userProfile?.uuid, userProfile?.email]);
+  }, [userProfile?.uuid, identity?.uuid, userProfile?.email]);
 
   useEffect(() => {
     if (hydrated) return;
@@ -58,11 +67,16 @@ export default function OrganisationProvider({
   }, [hydrated, storageKey]);
 
   const activeOrgId =
-    activeAffiliation?.organisation_uuid ?? initialOrganisation?.uuid ?? storedOrgId ?? null;
+    activeAffiliation?.organisation_uuid ??
+    initialOrganisation?.uuid ??
+    storedOrgId ??
+    identity?.organisationUuid ??
+    null;
 
+  const isOrgDomain = (domain: string) =>
+    domain === 'organisation' || domain === 'organisation_user';
   const hasOrgDomain =
-    userDomain.domains.includes('organisation') || userDomain.domains.includes('organisation_user');
-
+    userDomain.domains.some(isOrgDomain) || (identity?.domains ?? []).some(isOrgDomain);
   useEffect(() => {
     if (typeof window !== 'undefined' && storageKey && activeOrgId) {
       window.localStorage.setItem(storageKey, activeOrgId);
@@ -75,34 +89,36 @@ export default function OrganisationProvider({
     }
   }, [hasOrgDomain, hydrated, activeOrgId, userProfile?.isLoading, router]);
 
-  const { data, isLoading } = useQuery(
+  const seed =
+    initialOrganisation && initialOrganisation.uuid === activeOrgId
+      ? initialOrganisation
+      : undefined;
+
+  const { data, isPending } = useQuery(
     createQueryOptions(activeOrgId, {
-      enabled:
-        !initialOrganisation && hasOrgDomain && !!userProfile && !!session?.user && !!activeOrgId,
+      enabled: hasOrgDomain && hydrated && !!activeOrgId && (!!seed || !!session?.user),
+      initialData: seed,
+      initialDataUpdatedAt: seed ? initialUpdatedAt : undefined,
     })
   );
 
-  if (initialOrganisation) {
-    return (
-      <OrganisationContext.Provider value={initialOrganisation}>
-        {children}
-      </OrganisationContext.Provider>
-    );
-  }
-
-  // If no organisation is attached and user is not in an organisation domain, just render children without fetching
-  if ((!activeOrgId || !session?.user) && !hasOrgDomain) {
-    return <OrganisationContext.Provider value={null}>{children}</OrganisationContext.Provider>;
-  }
-
-  if (hasOrgDomain && !activeOrgId) {
-    return <CustomLoader />;
-  }
+  // Never block children on the org: pages gate their own queries on organisation?.uuid.
+  const value = data ?? seed ?? null;
+  const organisationId = useMemo(
+    () => value?.uuid ?? (hasOrgDomain ? activeOrgId : null),
+    [value?.uuid, hasOrgDomain, activeOrgId]
+  );
+  const loading =
+    hasOrgDomain &&
+    !value &&
+    (!hydrated || Boolean(userProfile?.isLoading) || (!!activeOrgId && isPending));
 
   return (
-    <OrganisationContext.Provider value={data ?? null}>
-      {isLoading ? <CustomLoader /> : children}
-    </OrganisationContext.Provider>
+    <OrganisationIdContext.Provider value={organisationId}>
+      <OrganisationLoadingContext.Provider value={loading}>
+        <OrganisationContext.Provider value={value}>{children}</OrganisationContext.Provider>
+      </OrganisationLoadingContext.Provider>
+    </OrganisationIdContext.Provider>
   );
 }
 

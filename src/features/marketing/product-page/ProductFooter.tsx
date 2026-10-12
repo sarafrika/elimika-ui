@@ -9,7 +9,7 @@ const SARAFRIKA_HOME = 'https://sarafrika.com';
 const EXPLORE_LINKS = [
   { label: 'Course catalogue', href: '/courses' },
   { label: 'Skills Wallet', href: '/skills-wallet' },
-  { label: 'Cart', href: '/cart' },
+  { label: 'Cart', href: '/dashboard/cart' },
 ] as const;
 
 const COMPANY_LINKS = [

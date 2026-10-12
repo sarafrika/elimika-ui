@@ -1,14 +1,14 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-
 import { GettingStarted, type GettingStartedStep } from '@/components/dashboard';
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { toNumber } from '@/lib/metrics';
 import {
   getClassDefinitionsForOrganisationOptions,
-  getTrainingBranchesByOrganisationOptions,
-  getUsersByOrganisationAndDomainOptions,
+  getOrganisationStatisticsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 
 /**
@@ -21,23 +21,9 @@ export function OverviewGettingStarted() {
   const organisationUuid = organisation?.uuid ?? '';
   const enabled = Boolean(organisationUuid);
 
-  const instructorsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'instructor' },
-    }),
-    enabled,
-  });
-  const studentsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'student' },
-    }),
-    enabled,
-  });
-  const branchesQuery = useQuery({
-    ...getTrainingBranchesByOrganisationOptions({
-      path: { uuid: organisationUuid },
-      query: { pageable: { page: 0, size: 1 } },
-    }),
+  // Same key as the KPI row, so the counts come from one shared statistics call.
+  const statsQuery = useQuery({
+    ...getOrganisationStatisticsOptions({ path: { uuid: organisationUuid } }),
     enabled,
   });
   const classesQuery = useQuery({
@@ -45,13 +31,10 @@ export function OverviewGettingStarted() {
     enabled,
   });
 
-  const instructorCount =
-    getTotalFromMetadata(extractPage(instructorsQuery.data).metadata) ||
-    extractPage(instructorsQuery.data).items.length;
-  const studentCount =
-    getTotalFromMetadata(extractPage(studentsQuery.data).metadata) ||
-    extractPage(studentsQuery.data).items.length;
-  const branchCount = getTotalFromMetadata(extractPage(branchesQuery.data).metadata);
+  const stats = statsQuery.data?.data;
+  const instructorCount = toNumber(stats?.total_instructors);
+  const studentCount = toNumber(stats?.total_students);
+  const branchCount = toNumber(stats?.total_branches);
   const classCount = (classesQuery.data?.data ?? []).length;
 
   const steps: GettingStartedStep[] = [
@@ -93,5 +76,16 @@ export function OverviewGettingStarted() {
     },
   ];
 
-  return <GettingStarted steps={steps} />;
+  const queries = [statsQuery, classesQuery];
+
+  // Steps are derived from counts, so wait for them instead of flashing every step undone.
+  return (
+    <AsyncSection
+      name='org-overview-getting-started'
+      loading={queries.some(query => query.isLoading)}
+      skeleton={<Skeleton className='h-72 w-full rounded-lg' />}
+    >
+      <GettingStarted steps={steps} />
+    </AsyncSection>
+  );
 }

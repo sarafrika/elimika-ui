@@ -39,6 +39,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Sheet,
   SheetContent,
@@ -71,7 +72,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { type ClassHubViewer, scheduleTotalDuration, sessionDuration } from './class-hub';
 
 /** The instructor record the class details query carries. */
@@ -106,6 +107,7 @@ export function ClassHeaderMedia({
         <video
           src={videoUrl}
           controls
+          preload='none'
           poster={imageUrl || undefined}
           className='h-full w-full object-cover'
         />
@@ -114,7 +116,8 @@ export function ClassHeaderMedia({
           src={imageUrl || undefined}
           alt=''
           fill
-          unoptimized
+          sizes='(max-width: 1024px) 100vw, 50vw'
+          unoptimized={!isAuthenticatedMediaUrl(imageUrl)}
           className='object-cover'
           fallback={tile}
         />
@@ -370,40 +373,47 @@ export function ClassSchedulePanel({
 /** "Meet your instructor", with the student's instructor review. */
 export function ClassInstructorCard({
   classData,
+  loading = false,
 }: {
   classData: CombinedClassDetailsData | undefined;
+  loading?: boolean;
 }) {
   const qc = useQueryClient();
   const userProfile = useUserProfile();
   const [showFullBio, setShowFullBio] = useState(false);
 
   const instructor = classInstructor(classData);
+  // The class definition names its instructor, so these start before the profile arrives.
+  const instructorUuid = instructor?.uuid ?? classData?.class?.default_instructor_uuid;
 
-  const { data: instructorClassResp } = useQuery({
+  const { data: instructorClassResp, isLoading: classCountLoading } = useQuery({
     ...getClassDefinitionsForInstructorOptions({
-      path: { instructorUuid: instructor?.uuid as string },
+      path: { instructorUuid: instructorUuid as string },
     }),
-    enabled: !!instructor?.uuid,
+    enabled: !!instructorUuid,
   });
   const instructorClassCount =
     instructorClassResp?.data?.filter(item => item.class_definition?.is_active).length ?? 0;
 
-  const { data: instructorReviewResp } = useQuery({
+  const { data: instructorReviewResp, isLoading: ratingLoading } = useQuery({
     ...getInstructorRatingSummaryOptions({
-      path: { instructorUuid: instructor?.uuid as string },
+      path: { instructorUuid: instructorUuid as string },
     }),
-    enabled: !!instructor?.uuid,
+    enabled: !!instructorUuid,
   });
   const instructorRating = instructorReviewResp?.data?.average_rating;
+  const statsLoading = !!instructorUuid && (classCountLoading || ratingLoading);
 
   const studentUuid = userProfile?.student?.uuid as string | undefined;
-  const courseUuid = classData?.course?.uuid as string;
-  const { courseEnrollmentMap } = useCourseEnrollmentsMap([courseUuid]);
+  const courseUuid = (classData?.course?.uuid ?? classData?.class?.course_uuid) as string;
+  const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
+  // The roster is only needed to find the viewer's enrolment once they open the feedback form.
+  const { courseEnrollmentMap } = useCourseEnrollmentsMap(
+    showFeedbackSheet && studentUuid ? [courseUuid] : []
+  );
   const enrollmentUuid = courseEnrollmentMap?.[courseUuid]?.enrollments?.find(
     enrollment => enrollment.student_uuid === studentUuid
   )?.uuid;
-
-  const [showFeedbackSheet, setShowFeedbackSheet] = useState(false);
   const [rating, setRating] = useState(0);
   const [clarityRating, setClarityRating] = useState(0);
   const [engagementRating, setEngagementRating] = useState(0);
@@ -413,7 +423,7 @@ export function ClassInstructorCard({
 
   const reviewInstructor = useMutation(submitInstructorReviewMutation());
   const handleSubmitFeedback = () => {
-    if (!classData?.class?.uuid || !instructor?.uuid || !studentUuid) {
+    if (!classData?.class?.uuid || !instructor?.uuid || !studentUuid || !enrollmentUuid) {
       toast.error('Class or student enrollment not found');
       return;
     }
@@ -422,7 +432,7 @@ export function ClassInstructorCard({
     reviewInstructor.mutate(
       {
         body: {
-          enrollment_uuid: enrollmentUuid as string,
+          enrollment_uuid: enrollmentUuid,
           instructor_uuid: instructorUuid,
           student_uuid: studentUuid,
           comments: feedbackComment,
@@ -484,14 +494,24 @@ export function ClassInstructorCard({
         </div>
 
         <div className='min-w-0 flex-1'>
-          <h4 className='text-foreground text-sm font-bold sm:text-base'>
-            {instructor?.full_name}
-          </h4>
-          <p className='text-muted-foreground mb-2 text-xs sm:text-sm'>
-            {instructor?.professional_headline}
-          </p>
+          {loading ? (
+            <div className='mb-3 space-y-2'>
+              <Skeleton className='h-4 w-40' />
+              <Skeleton className='h-3.5 w-56 max-w-full' />
+              <Skeleton className='h-3.5 w-full max-w-prose' />
+            </div>
+          ) : (
+            <>
+              <h4 className='text-foreground text-sm font-bold sm:text-base'>
+                {instructor?.full_name}
+              </h4>
+              <p className='text-muted-foreground mb-2 text-xs sm:text-sm'>
+                {instructor?.professional_headline}
+              </p>
+            </>
+          )}
 
-          {instructor?.bio ? (
+          {!loading && instructor?.bio ? (
             <div className='mb-3 max-w-prose'>
               <div
                 className={`text-muted-foreground text-xs leading-relaxed sm:text-sm ${
@@ -514,7 +534,11 @@ export function ClassInstructorCard({
             {stats.map(stat => (
               <div key={stat.label}>
                 <p className='text-foreground inline-flex items-center gap-1 text-sm font-black sm:text-base'>
-                  {stat.value ?? 0}
+                  {statsLoading && stat.label !== 'Students' ? (
+                    <Skeleton className='h-4 w-6' />
+                  ) : (
+                    (stat.value ?? 0)
+                  )}
                   {stat.label === 'Rating' ? (
                     <Star className='fill-warning text-warning size-4' aria-hidden />
                   ) : null}

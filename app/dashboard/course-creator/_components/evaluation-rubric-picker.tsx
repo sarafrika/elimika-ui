@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { SearchInput } from '@/components/search/search-input';
 import { useSearchErrors, useSearchQuery } from '@/hooks/use-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { withQ } from '@/lib/search/params';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -111,7 +110,6 @@ function RubricChoices({
     enabled: Boolean(creatorUuid),
     staleTime: STALE_TIMES.entity,
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   useSearchErrors(search.q, query.error);
   const failed = query.isError || Boolean(query.data?.error) || query.data?.success === false;

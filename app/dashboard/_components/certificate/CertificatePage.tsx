@@ -1,35 +1,15 @@
 'use client';
 
-import { PDFViewer } from '@react-pdf/renderer';
-import { CertificateData, CertificateDocument } from './CertificatePDF';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+import type { CertificateData } from './CertificatePDF';
+
+// @react-pdf/renderer is ~1.3 MB; it loads only when a certificate preview renders.
+const CertificateViewer = dynamic(() => import('./CertificateViewer'), {
+  ssr: false,
+  loading: () => <Skeleton className='m-6 h-[720px]' />,
+});
 
 export default function CertificatePage({ certData }: { certData: CertificateData }) {
-  return (
-    <div className='space-y-6 p-6'>
-      {/* Preview */}
-      <PDFViewer style={{ width: '100%', height: 720, border: 'none' }}>
-        <CertificateDocument {...certData} />
-      </PDFViewer>
-
-      {/* Actions */}
-      {/* <div className="flex gap-4">
-                <PDFDownloadLink
-                    document={<CertificateDocument {...certData} />}
-                    fileName={`${certData.studentName}_certificate.pdf`}
-                    className="rounded-md bg-primary px-4 py-2 text-primary-foreground"
-                >
-                    {({ loading }) =>
-                        loading ? "Preparing certificate..." : "Download PDF"
-                    }
-                </PDFDownloadLink>
-
-                <button
-                    onClick={() => downloadCertificatePdf(certData)}
-                    className="rounded-md border border-border px-4 py-2"
-                >
-                    Quick Download
-                </button>
-            </div> */}
-    </div>
-  );
+  return <CertificateViewer certData={certData} />;
 }

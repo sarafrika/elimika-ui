@@ -149,7 +149,7 @@ function AddSourceDialog({ organisationUuid }: { organisationUuid: string }) {
             <Button type='button' variant='outline' onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type='submit' disabled={add.isPending}>
+            <Button type='submit' disabled={!organisationUuid || add.isPending}>
               {add.isPending ? 'Adding…' : 'Add'}
             </Button>
           </DialogFooter>
@@ -263,7 +263,7 @@ function AddTransactionDialog({ organisationUuid }: { organisationUuid: string }
             <Button type='button' variant='outline' onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type='submit' disabled={add.isPending}>
+            <Button type='submit' disabled={!organisationUuid || add.isPending}>
               {add.isPending ? 'Saving…' : 'Record'}
             </Button>
           </DialogFooter>

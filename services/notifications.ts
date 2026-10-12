@@ -1,8 +1,10 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
-import { toNumber } from '@/lib/metrics';
-import { fetchClient } from '@/services/api/fetch-client';
-import { useMutation, useQuery, useQueryClient, type UseQueryOptions } from '@tanstack/react-query';
+
+import { type UseQueryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { z } from 'zod';
+import { toNumber } from '@/lib/metrics';
+import { STALE_TIMES } from '@/lib/query-client';
+import { fetchClient } from '@/services/api/fetch-client';
 
 const notificationMetadataSchema = z
   .object({
@@ -99,7 +101,7 @@ interface NotificationListResult {
   hasPrevious: boolean;
 }
 
-interface NotificationCounts {
+export interface NotificationCounts {
   unread_count: number;
   popup_count: number;
 }
@@ -112,7 +114,7 @@ const defaultListParams = {
 const notificationListQueryKey = (params: NotificationListParams = {}) =>
   ['notifications', 'list', normalizeListParams(params)] as const;
 
-const notificationCountsQueryKey = (domain?: string) =>
+export const notificationCountsQueryKey = (domain?: string) =>
   ['notifications', 'counts', domain ?? null] as const;
 
 function normalizeListParams(params: NotificationListParams = {}): NotificationListParams {
@@ -120,6 +122,18 @@ function normalizeListParams(params: NotificationListParams = {}): NotificationL
     ...defaultListParams,
     ...params,
   };
+}
+
+/** Error carrying the HTTP status so the default retry skips 4xx responses. */
+function notificationError(
+  response: { error?: unknown; response?: Response },
+  fallback: string
+): Error & { status?: number } {
+  const message = typeof response.error === 'string' ? response.error : fallback;
+  const error: Error & { status?: number } = new Error(message);
+  const status = response.response?.status;
+  if (typeof status === 'number') error.status = status;
+  return error;
 }
 
 async function fetchNotifications(
@@ -146,14 +160,12 @@ async function fetchNotifications(
   );
 
   if (response.error) {
-    throw new Error(
-      typeof response.error === 'string' ? response.error : 'Failed to fetch notifications'
-    );
+    throw notificationError(response, 'Failed to fetch notifications');
   }
 
   const parsed = notificationsResponseSchema.parse(response.data ?? {});
   if (parsed.success === false) {
-    throw new Error(parsed.message || 'Failed to fetch notifications');
+    throw notificationError(response, parsed.message || 'Failed to fetch notifications');
   }
 
   const items = parsed.data?.content ?? [];
@@ -186,14 +198,12 @@ async function fetchNotificationCounts(domain?: string): Promise<NotificationCou
   );
 
   if (response.error) {
-    throw new Error(
-      typeof response.error === 'string' ? response.error : 'Failed to fetch notification counts'
-    );
+    throw notificationError(response, 'Failed to fetch notification counts');
   }
 
   const parsed = notificationCountsResponseSchema.parse(response.data ?? {});
   if (parsed.success === false) {
-    throw new Error(parsed.message || 'Failed to fetch notification counts');
+    throw notificationError(response, parsed.message || 'Failed to fetch notification counts');
   }
 
   return parsed.data;
@@ -211,9 +221,7 @@ async function applyNotificationAction(uuid: string, action: 'read' | 'archive' 
   );
 
   if (response.error) {
-    throw new Error(
-      typeof response.error === 'string' ? response.error : 'Failed to update notification'
-    );
+    throw notificationError(response, 'Failed to update notification');
   }
 
   return notificationActionResponseSchema.parse(response.data ?? {});
@@ -230,13 +238,54 @@ async function markAllNotificationsRead(domain?: string) {
   );
 
   if (response.error) {
-    throw new Error(
-      typeof response.error === 'string' ? response.error : 'Failed to mark notifications read'
-    );
+    throw notificationError(response, 'Failed to mark notifications read');
   }
 
   return notificationActionResponseSchema.parse(response.data ?? {});
 }
+
+const MAX_BULK_POPUP_UUIDS = 200;
+
+async function markPopupsSeenInBulk(uuids: string[], domain?: string, drainAll = false) {
+  const response = await fetchClient.POST(
+    '/api/v1/notifications' as never,
+    {
+      params: {
+        query: {
+          action: 'popup_seen',
+          domain,
+          uuids: drainAll ? undefined : uuids.slice(0, MAX_BULK_POPUP_UUIDS),
+        },
+      },
+    } as never
+  );
+
+  if (response.error) {
+    throw notificationError(response, 'Failed to mark popups seen');
+  }
+
+  return notificationActionResponseSchema.parse(response.data ?? {});
+}
+
+// One bulk request: the backend's bulk popup_seen action is deployed, so no per-item fallback.
+async function markPopupsSeen({ uuids, domain, drainAll }: MarkPopupsSeenInput) {
+  if (uuids.length === 0 && !drainAll) return;
+  await markPopupsSeenInBulk(uuids, domain, drainAll);
+}
+
+interface MarkPopupsSeenInput {
+  uuids: string[];
+  domain?: string;
+  /** Stamp every unseen popup in the domain, not only `uuids` (bulk endpoint only). */
+  drainAll?: boolean;
+}
+
+const isPopupOrCountsKey = (queryKey: readonly unknown[]) => {
+  if (queryKey[0] !== 'notifications') return false;
+  if (queryKey[1] === 'counts') return true;
+  const params = queryKey[2] as NotificationListParams | undefined;
+  return queryKey[1] === 'list' && params?.presentation === 'POPUP';
+};
 
 export function useNotifications(
   params: NotificationListParams,
@@ -247,7 +296,8 @@ export function useNotifications(
   return useQuery({
     queryKey: notificationListQueryKey(normalizedParams),
     queryFn: () => fetchNotifications(normalizedParams),
-    refetchInterval: 30_000,
+    staleTime: STALE_TIMES.live,
+    refetchInterval: 60_000,
     ...options,
   });
 }
@@ -259,7 +309,8 @@ export function useNotificationCounts(
   return useQuery({
     queryKey: notificationCountsQueryKey(domain),
     queryFn: () => fetchNotificationCounts(domain),
-    refetchInterval: 30_000,
+    staleTime: STALE_TIMES.live,
+    refetchInterval: 60_000,
     ...options,
   });
 }
@@ -272,6 +323,17 @@ export function useNotificationAction() {
       applyNotificationAction(uuid, action),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}
+
+export function useMarkPopupsSeen() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: markPopupsSeen,
+    onSettled: () => {
+      queryClient.invalidateQueries({ predicate: query => isPopupOrCountsKey(query.queryKey) });
     },
   });
 }

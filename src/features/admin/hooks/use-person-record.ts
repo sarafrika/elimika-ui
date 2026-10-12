@@ -1,9 +1,10 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { extractEntity, extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { personFromListCache } from '@/lib/list-row-seed';
 import type {
   AdminUserActivityEvent,
   BookingResponse,
@@ -51,10 +52,16 @@ const SINGLE_PROFILE_PAGE = { page: 0, size: 1 };
 
 /** The person behind the record: name, contact, roles and affiliations. */
 export function usePersonRecord(userUuid: string) {
+  const queryClient = useQueryClient();
+  const listSeed = useMemo(
+    () => personFromListCache(queryClient, userUuid),
+    [queryClient, userUuid]
+  );
   const query = useQuery({
     ...getUserByUuidOptions({ path: { uuid: userUuid } }),
     ...listQuery,
     enabled: Boolean(userUuid),
+    placeholderData: listSeed,
   });
 
   const person = useMemo(() => extractEntity<User>(query.data), [query.data]);
@@ -338,7 +345,10 @@ export function useWalletHistory(userUuid: string, page = 0, enabled = true) {
     enabled: Boolean(userUuid) && enabled,
   });
 
-  const { items, metadata } = useMemo(() => extractPage<WalletTransaction>(query.data), [query.data]);
+  const { items, metadata } = useMemo(
+    () => extractPage<WalletTransaction>(query.data),
+    [query.data]
+  );
 
   const total = getTotalFromMetadata(metadata) || items.length;
   const latest = items[0];

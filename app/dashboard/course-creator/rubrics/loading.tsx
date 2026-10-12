@@ -1,11 +1,5 @@
-import { Skeleton } from '@/components/ui/skeleton';
+import { ListRouteSkeleton } from '@/app/dashboard/course-creator/_components/route-skeletons';
 
-export default function RubricsLoading() {
-  return (
-    <div className='space-y-4' aria-label='Loading rubrics'>
-      <Skeleton className='h-24 w-full' />
-      <Skeleton className='h-12 w-full' />
-      <Skeleton className='h-80 w-full' />
-    </div>
-  );
+export default function Loading() {
+  return <ListRouteSkeleton label='Loading rubrics' />;
 }

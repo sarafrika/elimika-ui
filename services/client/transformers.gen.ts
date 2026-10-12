@@ -396,6 +396,7 @@ import type {
   GetTrainingBranchesByOrganisation1Response,
   GetStudentScheduleResponse,
   GetScheduledInstanceResponse,
+  GetOrganisationTimetableResponse,
   GetInstructorTimeHoldsResponse,
   GetInstructorScheduleResponse,
   GetGuardiansResponse,
@@ -450,6 +451,7 @@ import type {
   ListRosterResponse,
   GetCalendarResponse,
   ListBookingsResponse,
+  GetResourceCalendarsResponse,
   ListSentResponse,
   ListInstructorStudentsResponse,
   ListObligationsResponse,
@@ -457,6 +459,7 @@ import type {
   GetMyOnboardingResponse,
   GetDomainOnboardingResponse,
   GetCountsResponse,
+  GetSessionBootstrapResponse,
   GetInvitationByTokenResponse,
   ListMyInvitationsResponse,
   GetInstructorRatingSummaryResponse,
@@ -477,6 +480,7 @@ import type {
   GetScheduledInstanceEnrollmentsForStudentResponse,
   GetEnrollmentOverviewForStudentResponse,
   GetCourseEnrollmentsForStudentResponse,
+  GetStudentCourseOverviewResponse,
   GetClassEnrollmentsForStudentResponse,
   SearchEnrollmentsResponse,
   GetWeeklyGrowthResponse,
@@ -509,6 +513,7 @@ import type {
   SearchTrainingApplicationsResponse,
   SearchCoursesResponse,
   GetPublishedCoursesResponse,
+  GetLessonsForCoursesResponse,
   GetCoursesByInstructorResponse,
   GetCoursesByCategoryResponse,
   GetActiveCoursesResponse,
@@ -534,6 +539,7 @@ import type {
   GetClassScheduleResponse,
   GetClassRatingSummaryResponse,
   GetEnrollmentsForClassResponse,
+  GetClassSchedulesResponse,
   GetClassDefinitionsForOrganisationResponse,
   GetInstructorPayablesForOrganisationResponse,
   GetJobEligibilityResponse,
@@ -544,6 +550,8 @@ import type {
   ListInstructorApplicationsResponse,
   GetClassDefinitionsForInstructorResponse,
   GetClassDefinitionsForCourseResponse,
+  GetClassesBatchResponse,
+  GetAssessmentSchedulesResponse,
   GetAllActiveClassDefinitionsResponse,
   SearchCertificateTemplatesResponse,
   GetStudentCertificatesResponse,
@@ -572,6 +580,7 @@ import type {
   EvaluateCourseRecommendationsResponse,
   GetProgramModerationHistoryResponse,
   ListPendingProgramsResponse,
+  SummaryResponse,
   GetPendingOrganisationsResponse,
   GetDashboardStatisticsResponse,
   GetDashboardActivityResponse,
@@ -1793,6 +1802,13 @@ const courseTrainingRequirementSchemaResponseTransformer = (data: any) => {
   return data;
 };
 
+const courseRatingSummarySchemaResponseTransformer = (data: any) => {
+  if (data.count) {
+    data.count = BigInt(data.count.toString());
+  }
+  return data;
+};
+
 const courseSchemaResponseTransformer = (data: any) => {
   if (data.training_requirements) {
     data.training_requirements = data.training_requirements.map((item: any) => {
@@ -1804,6 +1820,12 @@ const courseSchemaResponseTransformer = (data: any) => {
   }
   if (data.updated_date) {
     data.updated_date = new Date(data.updated_date);
+  }
+  if (data.lesson_count) {
+    data.lesson_count = BigInt(data.lesson_count.toString());
+  }
+  if (data.rating_summary) {
+    data.rating_summary = courseRatingSummarySchemaResponseTransformer(data.rating_summary);
   }
   return data;
 };
@@ -6795,6 +6817,35 @@ export const getScheduledInstanceResponseTransformer = async (
   return data;
 };
 
+const organisationTimetableEntrySchemaResponseTransformer = (data: any) => {
+  if (data.start_time) {
+    data.start_time = new Date(data.start_time);
+  }
+  if (data.end_time) {
+    data.end_time = new Date(data.end_time);
+  }
+  if (data.enrolled_count) {
+    data.enrolled_count = BigInt(data.enrolled_count.toString());
+  }
+  return data;
+};
+
+const apiResponseListOrganisationTimetableEntrySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return organisationTimetableEntrySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getOrganisationTimetableResponseTransformer = async (
+  data: any
+): Promise<GetOrganisationTimetableResponse> => {
+  data = apiResponseListOrganisationTimetableEntrySchemaResponseTransformer(data);
+  return data;
+};
+
 const instructorTimeHoldSchemaResponseTransformer = (data: any) => {
   if (data.start_time) {
     data.start_time = new Date(data.start_time);
@@ -7652,6 +7703,31 @@ export const listBookingsResponseTransformer = async (data: any): Promise<ListBo
   return data;
 };
 
+const organisationResourceCalendarSchemaResponseTransformer = (data: any) => {
+  if (data.entries) {
+    data.entries = data.entries.map((item: any) => {
+      return resourceCalendarEntrySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseListOrganisationResourceCalendarSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return organisationResourceCalendarSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getResourceCalendarsResponseTransformer = async (
+  data: any
+): Promise<GetResourceCalendarsResponse> => {
+  data = apiResponseListOrganisationResourceCalendarSchemaResponseTransformer(data);
+  return data;
+};
+
 const apiResponseListNotificationDispatchSchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = data.data.map((item: any) => {
@@ -7782,6 +7858,40 @@ const apiResponseNotificationCountsDtoSchemaResponseTransformer = (data: any) =>
 
 export const getCountsResponseTransformer = async (data: any): Promise<GetCountsResponse> => {
   data = apiResponseNotificationCountsDtoSchemaResponseTransformer(data);
+  return data;
+};
+
+const unreadNotificationSummarySchemaResponseTransformer = (data: any) => {
+  if (data.unread_count) {
+    data.unread_count = BigInt(data.unread_count.toString());
+  }
+  if (data.popup_count) {
+    data.popup_count = BigInt(data.popup_count.toString());
+  }
+  return data;
+};
+
+const sessionBootstrapSchemaResponseTransformer = (data: any) => {
+  if (data.user) {
+    data.user = userSchemaResponseTransformer(data.user);
+  }
+  if (data.notifications) {
+    data.notifications = unreadNotificationSummarySchemaResponseTransformer(data.notifications);
+  }
+  return data;
+};
+
+const apiResponseSessionBootstrapSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = sessionBootstrapSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getSessionBootstrapResponseTransformer = async (
+  data: any
+): Promise<GetSessionBootstrapResponse> => {
+  data = apiResponseSessionBootstrapSchemaResponseTransformer(data);
   return data;
 };
 
@@ -8190,6 +8300,59 @@ export const getCourseEnrollmentsForStudentResponseTransformer = async (
   data: any
 ): Promise<GetCourseEnrollmentsForStudentResponse> => {
   data = apiResponsePagedDtoStudentCourseEnrollmentSummarySchemaResponseTransformer(data);
+  return data;
+};
+
+const studentCourseOverviewSessionSchemaResponseTransformer = (data: any) => {
+  if (data.start_time) {
+    data.start_time = new Date(data.start_time);
+  }
+  if (data.end_time) {
+    data.end_time = new Date(data.end_time);
+  }
+  return data;
+};
+
+const studentCourseOverviewItemSchemaResponseTransformer = (data: any) => {
+  if (data.next_session) {
+    data.next_session = studentCourseOverviewSessionSchemaResponseTransformer(data.next_session);
+  }
+  if (data.latest_activity_date) {
+    data.latest_activity_date = new Date(data.latest_activity_date);
+  }
+  return data;
+};
+
+const pagedDtoStudentCourseOverviewItemSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => {
+      return studentCourseOverviewItemSchemaResponseTransformer(item);
+    });
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const studentCourseOverviewSchemaResponseTransformer = (data: any) => {
+  if (data.enrollments) {
+    data.enrollments = pagedDtoStudentCourseOverviewItemSchemaResponseTransformer(data.enrollments);
+  }
+  return data;
+};
+
+const apiResponseStudentCourseOverviewSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = studentCourseOverviewSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getStudentCourseOverviewResponseTransformer = async (
+  data: any
+): Promise<GetStudentCourseOverviewResponse> => {
+  data = apiResponseStudentCourseOverviewSchemaResponseTransformer(data);
   return data;
 };
 
@@ -8902,6 +9065,22 @@ export const getPublishedCoursesResponseTransformer = async (
   return data;
 };
 
+const apiResponseListLessonSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return lessonSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getLessonsForCoursesResponseTransformer = async (
+  data: any
+): Promise<GetLessonsForCoursesResponse> => {
+  data = apiResponseListLessonSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getCoursesByInstructorResponseTransformer = async (
   data: any
 ): Promise<GetCoursesByInstructorResponse> => {
@@ -9164,6 +9343,13 @@ export const getEnrollmentsForClassResponseTransformer = async (
   return data;
 };
 
+export const getClassSchedulesResponseTransformer = async (
+  data: any
+): Promise<GetClassSchedulesResponse> => {
+  data = apiResponseListScheduledInstanceSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getClassDefinitionsForOrganisationResponseTransformer = async (
   data: any
 ): Promise<GetClassDefinitionsForOrganisationResponse> => {
@@ -9365,6 +9551,66 @@ export const getClassDefinitionsForCourseResponseTransformer = async (
   data: any
 ): Promise<GetClassDefinitionsForCourseResponse> => {
   data = apiResponseListClassDefinitionResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+const classBatchSummarySchemaResponseTransformer = (data: any) => {
+  if (data.default_start_time) {
+    data.default_start_time = new Date(data.default_start_time);
+  }
+  if (data.default_end_time) {
+    data.default_end_time = new Date(data.default_end_time);
+  }
+  if (data.enrolled_count) {
+    data.enrolled_count = BigInt(data.enrolled_count.toString());
+  }
+  if (data.seats_remaining) {
+    data.seats_remaining = BigInt(data.seats_remaining.toString());
+  }
+  return data;
+};
+
+const apiResponseListClassBatchSummarySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => {
+      return classBatchSummarySchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+export const getClassesBatchResponseTransformer = async (
+  data: any
+): Promise<GetClassesBatchResponse> => {
+  data = apiResponseListClassBatchSummarySchemaResponseTransformer(data);
+  return data;
+};
+
+const classAssessmentSchedulesSchemaResponseTransformer = (data: any) => {
+  if (data.assignment_schedules) {
+    data.assignment_schedules = data.assignment_schedules.map((item: any) => {
+      return classAssignmentScheduleSchemaResponseTransformer(item);
+    });
+  }
+  if (data.quiz_schedules) {
+    data.quiz_schedules = data.quiz_schedules.map((item: any) => {
+      return classQuizScheduleSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseClassAssessmentSchedulesSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = classAssessmentSchedulesSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getAssessmentSchedulesResponseTransformer = async (
+  data: any
+): Promise<GetAssessmentSchedulesResponse> => {
+  data = apiResponseClassAssessmentSchedulesSchemaResponseTransformer(data);
   return data;
 };
 
@@ -9899,6 +10145,40 @@ export const listPendingProgramsResponseTransformer = async (
   data: any
 ): Promise<ListPendingProgramsResponse> => {
   data = apiResponsePagedDtoTrainingProgramSchemaResponseTransformer(data);
+  return data;
+};
+
+const rumSummaryRowSchemaResponseTransformer = (data: any) => {
+  if (data.samples) {
+    data.samples = BigInt(data.samples.toString());
+  }
+  return data;
+};
+
+const rumSummaryResponseSchemaResponseTransformer = (data: any) => {
+  if (data.from) {
+    data.from = new Date(data.from);
+  }
+  if (data.to) {
+    data.to = new Date(data.to);
+  }
+  if (data.rows) {
+    data.rows = data.rows.map((item: any) => {
+      return rumSummaryRowSchemaResponseTransformer(item);
+    });
+  }
+  return data;
+};
+
+const apiResponseRumSummaryResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = rumSummaryResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const summaryResponseTransformer = async (data: any): Promise<SummaryResponse> => {
+  data = apiResponseRumSummaryResponseSchemaResponseTransformer(data);
   return data;
 };
 

@@ -1,22 +1,28 @@
 'use client';
 
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
-import type { Course, CourseCreator, CourseEnrollment, TrainingProgram, User } from '@/services/client';
+import type {
+  Course,
+  CourseCreator,
+  CourseEnrollment,
+  TrainingProgram,
+  User,
+} from '@/services/client';
 import {
   getAllDifficultyLevelsOptions,
   getCourseCreatorByUuidOptions,
   getCourseEnrollmentsOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Play, Users } from 'lucide-react';
-import Image from 'next/image';
 
 interface CourseCardProps {
   course: Course | TrainingProgram;
@@ -24,6 +30,8 @@ interface CourseCardProps {
   handleEnroll: () => void;
   handleSearchInstructor: () => void;
   isStudentView: boolean;
+  /** Creator looked up by the list in one batch; when set, the card fetches no creator itself. */
+  creator?: { name?: string; imageUrl?: string | null };
 }
 
 export function CourseCard({
@@ -32,7 +40,9 @@ export function CourseCard({
   isStudentView,
   handleEnroll,
   handleSearchInstructor,
+  creator,
 }: CourseCardProps) {
+  const creatorsInline = creator !== undefined;
   const courseName = 'name' in course ? course.name : course.title;
   const courseCategories = 'category_names' in course ? course.category_names : undefined;
   const difficultyUuid = 'difficulty_uuid' in course ? course.difficulty_uuid : undefined;
@@ -56,18 +66,28 @@ export function CourseCard({
   // `extractPage` read either shape rather than asserting one.
   const { data: courseCreatorResponse } = useQuery({
     ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid ?? '' } }),
-    enabled: Boolean(course?.course_creator_uuid),
+    enabled: Boolean(course?.course_creator_uuid) && !creatorsInline,
   });
   const courseCreator = extractEntity<CourseCreator>(courseCreatorResponse);
 
   const { data: courseCreatorUserResponse } = useQuery({
     ...getUserByUuidOptions({ path: { uuid: courseCreator?.user_uuid ?? '' } }),
-    enabled: Boolean(courseCreator?.user_uuid),
+    enabled: Boolean(courseCreator?.user_uuid) && !creatorsInline,
   });
   const courseCreatorUser = extractEntity<User>(courseCreatorUserResponse);
 
-  const creatorName = courseCreatorUser?.full_name || courseCreator?.full_name || '';
-  const creatorImageUrl = courseCreatorUser?.profile_image_url ?? '';
+  const listedCreatorName =
+    'course_creator_name' in course ? course.course_creator_name : undefined;
+  const creatorName =
+    listedCreatorName ||
+    creator?.name ||
+    courseCreatorUser?.full_name ||
+    courseCreator?.full_name ||
+    '';
+  const creatorImageUrl =
+    toAuthenticatedMediaUrl(
+      creatorsInline ? creator?.imageUrl : courseCreatorUser?.profile_image_url
+    ) ?? '';
 
   const { data: enrollmentsResponse } = useQuery({
     ...getCourseEnrollmentsOptions({
@@ -110,18 +130,15 @@ export function CourseCard({
       <div className='relative'>
         {/* Course Image */}
         <div className='bg-muted relative flex h-48 w-full items-center justify-center overflow-hidden rounded-t-lg'>
-          {resolvedBannerUrl ? (
-            <Image
-              src={resolvedBannerUrl}
-              alt={courseName || 'banner'}
-              className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
-              width={400}
-              height={208}
-              unoptimized={isAuthenticatedMediaUrl(resolvedBannerUrl)}
-            />
-          ) : (
-            <BookOpen className='text-primary/40 h-16 w-16' />
-          )}
+          <ImageWithFallback
+            src={resolvedBannerUrl}
+            alt={courseName || 'banner'}
+            className='h-full w-full object-cover transition-transform duration-700 group-hover:scale-110'
+            width={400}
+            height={208}
+            sizes='(max-width: 640px) 100vw, 400px'
+            fallback={<BookOpen className='text-primary/40 h-16 w-16' />}
+          />
 
           {/* Video indicator */}
           {introVideoUrl && (

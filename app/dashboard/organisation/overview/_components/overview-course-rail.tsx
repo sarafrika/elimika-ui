@@ -1,11 +1,11 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-
-import { CourseRail, CourseRailSkeleton, type CourseRailItem } from '@/components/dashboard';
-import { useOrganisation } from '@/context/organisation-context';
-import type { ClassDefinition } from '@/services/client/types.gen';
+import { CourseRail, type CourseRailItem, CourseRailSkeleton } from '@/components/dashboard';
+import { AsyncSection } from '@/components/data/async-section';
+import { useOrganisationId } from '@/context/organisation-context';
 import { getClassDefinitionsForOrganisationOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { ClassDefinition } from '@/services/client/types.gen';
 
 const prettify = (value?: string | null) =>
   value
@@ -21,17 +21,12 @@ const prettify = (value?: string | null) =>
  * definitions endpoint and maps each definition into a presentational rail item.
  */
 export function OverviewCourseRail() {
-  const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
+  const organisationUuid = useOrganisationId() ?? '';
 
   const classesQuery = useQuery({
     ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
     enabled: Boolean(organisationUuid),
   });
-
-  if (classesQuery.isLoading) {
-    return <CourseRailSkeleton />;
-  }
 
   const definitions = (
     (classesQuery.data?.data ?? []) as Array<{ class_definition?: ClassDefinition }>
@@ -49,10 +44,15 @@ export function OverviewCourseRail() {
   }));
 
   return (
-    <CourseRail
-      title='Active classes'
-      items={items}
-      viewAllHref='/dashboard/organisation/classes'
-    />
+    <AsyncSection
+      name='org-overview-classes'
+      loading={classesQuery.isLoading}
+      error={classesQuery.error}
+      onRetry={() => classesQuery.refetch()}
+      skeleton={<CourseRailSkeleton />}
+      errorTitle='Couldn’t load active classes'
+    >
+      <CourseRail title='Active classes' items={items} viewAllHref='/dashboard/organisation/classes' />
+    </AsyncSection>
   );
 }

@@ -11,7 +11,7 @@ import {
   Users,
   XCircle,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { JobTimeLegend } from '@/components/instructor/job-time';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUserProfile } from '@/context/profile-context';
+import type { CalendarRangeView } from '@/lib/calendar-range';
 import { resolveDisplayZone } from '@/lib/date';
 import { jobTimeKind } from '@/lib/instructor-job-time';
 import {
@@ -56,11 +57,21 @@ const availabilitySettings = {
 interface AvailabilityManagerProps {
   availabilityData: AvailabilityData;
   onAvailabilityUpdate: (data: AvailabilityData) => void;
+  /** Told which date and view are on screen so the page fetches only that window. */
+  onVisibleRangeChange?: (focus: Date, view: CalendarRangeView) => void;
 }
+
+const TAB_RANGE_VIEWS: Record<string, CalendarRangeView> = {
+  daily: 'day',
+  weekly: 'week',
+  monthly: 'month',
+  yearly: 'year',
+};
 
 export default function AvailabilityManager({
   availabilityData,
   onAvailabilityUpdate,
+  onVisibleRangeChange,
 }: AvailabilityManagerProps) {
   const user = useUserProfile();
   const qc = useQueryClient();
@@ -84,6 +95,11 @@ export default function AvailabilityManager({
     });
 
   const [currentTab, setCurrentTab] = useState('weekly');
+  const [visibleDate, setVisibleDate] = useState(() => new Date());
+
+  useEffect(() => {
+    onVisibleRangeChange?.(visibleDate, TAB_RANGE_VIEWS[currentTab] ?? 'week');
+  }, [currentTab, onVisibleRangeChange, visibleDate]);
   const [isEditing, setIsEditing] = useState(false);
   const [quickAvailable, setQuickAvailable] = useState(false);
   const [workingHours, setWorkingHours] = useState(availabilitySettings?.workingHours);
@@ -380,6 +396,7 @@ export default function AvailabilityManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
+                onVisibleDateChange={setVisibleDate}
               />
             </TabsContent>
 
@@ -388,6 +405,7 @@ export default function AvailabilityManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
+                onVisibleDateChange={setVisibleDate}
               />
             </TabsContent>
 
@@ -396,6 +414,7 @@ export default function AvailabilityManager({
                 availabilityData={availabilityData}
                 onAvailabilityUpdate={onAvailabilityUpdate}
                 isEditing={isEditing}
+                onVisibleDateChange={setVisibleDate}
               />
             </TabsContent>
           </Tabs>

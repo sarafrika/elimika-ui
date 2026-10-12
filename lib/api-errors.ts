@@ -52,12 +52,12 @@ export function isSearchUnavailable(error: unknown): boolean {
 }
 
 /**
- * React Query `retry` for anything the user cannot fix by waiting a moment: client
- * errors (400, 403, 404) and an unavailable search index are never retried.
+ * Default React Query `retry`: client errors (4xx) and an unavailable search index are
+ * never retried; a network error or 5xx gets one retry.
  */
 export function retryUnlessClientOrSearchError(failureCount: number, error: unknown): boolean {
   if (isSearchUnavailable(error)) return false;
   const status = httpStatusOf(error);
   if (status !== undefined && status >= 400 && status < 500) return false;
-  return failureCount < 2;
+  return failureCount < 1;
 }

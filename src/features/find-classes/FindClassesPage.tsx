@@ -36,13 +36,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isSearchUnavailable } from '@/lib/api-errors';
 import { formatDate } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
 import { classifySearchError } from '@/lib/search/query';
 import { numberParam } from '@/lib/search-state';
 import type {
   ClassDefinition,
+  ClassDefinitionResponse,
   GetAllClassDefinitionsData,
   GetPublishedCoursesResponse,
 } from '@/services/client';
@@ -73,11 +74,14 @@ type ClassesQuery = GetAllClassDefinitionsData['query'] & {
 
 /** Where a learner enrols in a class of a course, per dashboard. */
 function enrolHref(domain: 'student' | 'parent', courseUuid: string, classUuid: string) {
-  const path =
-    domain === 'parent'
-      ? `all-courses/available-classes/${courseUuid}/enroll`
-      : `courses/available-classes/${courseUuid}/enroll`;
+  const path = `courses/available-classes/${courseUuid}/enroll`;
   return `${dashboardUrl(domain, path)}?id=${encodeURIComponent(classUuid)}`;
+}
+
+/** The course title the listing embeds on a row, once the API sends it. */
+function rowCourseTitle(item: ClassDefinitionResponse): string | undefined {
+  const value = 'course_title' in item ? item.course_title : undefined;
+  return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
 const LOCATION_LABEL = Object.fromEntries(
@@ -112,7 +116,6 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
     ...getAllClassDefinitionsOptions({ query }),
     placeholderData: keepPreviousData,
     staleTime: STALE_TIMES.live,
-    retry: retryUnlessClientOrSearchError,
   });
 
   // The plain listing (no q, no near) does not apply filters on the server: narrow the
@@ -123,7 +126,7 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
       (classes.data?.data?.content ?? []).flatMap(item => {
         const definition = item.class_definition;
         if (!definition?.uuid || !matchesClassFilters(definition, filters)) return [];
-        return [{ definition, band: item.distance_band }];
+        return [{ definition, band: item.distance_band, courseTitle: rowCourseTitle(item) }];
       }),
     [classes.data, filters]
   );
@@ -131,11 +134,26 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
   const totalPages = metadata?.totalPages ?? 1;
   const total = Number(metadata?.totalElements ?? rows.length);
 
-  const courseIds = useMemo(
-    () => rows.flatMap(row => (row.definition.course_uuid ? [row.definition.course_uuid] : [])),
-    [rows]
-  );
-  const courses = useCoursesByIds(filters.course ? [...courseIds, filters.course] : courseIds);
+  // Titles embedded by the listing win; only rows without one (and an unnamed course
+  // filter) fall back to the batched course lookup, which skips an empty id list.
+  const embeddedTitles = useMemo(() => {
+    const titles: Record<string, string> = {};
+    for (const row of rows) {
+      const courseUuid = row.definition.course_uuid;
+      if (courseUuid && row.courseTitle) titles[courseUuid] = row.courseTitle;
+    }
+    return titles;
+  }, [rows]);
+  const courseIds = useMemo(() => {
+    const ids = rows.flatMap(row =>
+      row.definition.course_uuid && !row.courseTitle ? [row.definition.course_uuid] : []
+    );
+    if (filters.course && !embeddedTitles[filters.course]) ids.push(filters.course);
+    return ids;
+  }, [rows, filters.course, embeddedTitles]);
+  const courses = useCoursesByIds(courseIds);
+  const courseLabel = (courseUuid: string) =>
+    embeddedTitles[courseUuid] ?? courses.courseMap[courseUuid]?.name;
 
   const unavailable = search.searchUnavailable || isSearchUnavailable(classes.error);
   const issue = unavailable ? 'unavailable' : classifySearchError(classes.error, search.q);
@@ -179,7 +197,7 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
               value={filters.course ?? ''}
               onChange={value => setFilter('course', value)}
               selectedLabel={
-                filters.course ? (courses.courseMap[filters.course]?.name ?? 'Selected course') : undefined
+                filters.course ? (courseLabel(filters.course) ?? 'Selected course') : undefined
               }
               queryOptions={q =>
                 getPublishedCoursesOptions({
@@ -299,15 +317,16 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
               {nearMe.active ? ', nearest first' : ''}
             </p>
             <ul className='space-y-3'>
-              {rows.map(({ definition, band }) => (
+              {rows.map(({ definition, band, courseTitle }) => (
                 <li key={definition.uuid}>
                   <ClassRow
                     definition={definition}
                     band={nearMe.active ? band : undefined}
                     courseName={
-                      definition.course_uuid
+                      courseTitle ??
+                      (definition.course_uuid
                         ? courses.courseMap[definition.course_uuid]?.name
-                        : undefined
+                        : undefined)
                     }
                     href={
                       definition.course_uuid && definition.uuid

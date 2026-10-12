@@ -161,6 +161,7 @@ export function ClassHero({
     'An introduction to the basic concepts of this course.';
   const plainCourseDescription = getPlainTextFromHtml(courseDescription);
   const courseImageUrl = selectedClass?.course?.thumbnail_url || selectedClass?.course?.banner_url;
+  const hasEnrollments = (selectedClass?.enrollments?.length ?? 0) > 0;
 
   return (
     <section className='border-border/70 bg-card/90 overflow-hidden rounded-lg border shadow-sm backdrop-blur'>
@@ -184,8 +185,8 @@ export function ClassHero({
             variant='outline'
             size='sm'
             onClick={onAddClasses}
-            disabled={selectedClass.enrollments.length > 0}
-            title={selectedClass.enrollments.length > 0 ? 'Classes with enrollments cannot be edited' : undefined}
+            disabled={hasEnrollments}
+            title={hasEnrollments ? 'Classes with enrollments cannot be edited' : undefined}
             className='inline-flex h-9 items-center justify-center gap-2 rounded-lg px-4 text-xs font-medium'
           >
             <Pen className='h-4 w-4' />

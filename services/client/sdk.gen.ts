@@ -766,6 +766,9 @@ import type {
   AddProgramCourseData,
   AddProgramCourseResponses,
   AddProgramCourseErrors,
+  IngestData,
+  IngestResponses,
+  IngestErrors,
   GetAllOrganisationsData,
   GetAllOrganisationsResponses,
   GetAllOrganisationsErrors,
@@ -1579,6 +1582,9 @@ import type {
   GetScheduledInstanceData,
   GetScheduledInstanceResponses,
   GetScheduledInstanceErrors,
+  GetOrganisationTimetableData,
+  GetOrganisationTimetableResponses,
+  GetOrganisationTimetableErrors,
   GetInstructorTimeHoldsData,
   GetInstructorTimeHoldsResponses,
   GetInstructorTimeHoldsErrors,
@@ -1785,6 +1791,9 @@ import type {
   ListBookingsData,
   ListBookingsResponses,
   ListBookingsErrors,
+  GetResourceCalendarsData,
+  GetResourceCalendarsResponses,
+  GetResourceCalendarsErrors,
   ListSentData,
   ListSentResponses,
   ListSentErrors,
@@ -1812,6 +1821,9 @@ import type {
   GetDocumentFileData,
   GetDocumentFileResponses,
   GetDocumentFileErrors,
+  GetSessionBootstrapData,
+  GetSessionBootstrapResponses,
+  GetSessionBootstrapErrors,
   GetInvitationByTokenData,
   GetInvitationByTokenResponses,
   GetInvitationByTokenErrors,
@@ -1890,6 +1902,9 @@ import type {
   GetCourseEnrollmentsForStudentData,
   GetCourseEnrollmentsForStudentResponses,
   GetCourseEnrollmentsForStudentErrors,
+  GetStudentCourseOverviewData,
+  GetStudentCourseOverviewResponses,
+  GetStudentCourseOverviewErrors,
   GetClassEnrollmentsForStudentData,
   GetClassEnrollmentsForStudentResponses,
   GetClassEnrollmentsForStudentErrors,
@@ -2016,6 +2031,9 @@ import type {
   GetCourseMediaData,
   GetCourseMediaResponses,
   GetCourseMediaErrors,
+  GetLessonsForCoursesData,
+  GetLessonsForCoursesResponses,
+  GetLessonsForCoursesErrors,
   GetCoursesByInstructorData,
   GetCoursesByInstructorResponses,
   GetCoursesByInstructorErrors,
@@ -2109,6 +2127,9 @@ import type {
   GetEnrollmentsForClassData,
   GetEnrollmentsForClassResponses,
   GetEnrollmentsForClassErrors,
+  GetClassSchedulesData,
+  GetClassSchedulesResponses,
+  GetClassSchedulesErrors,
   GetClassDefinitionsForOrganisationData,
   GetClassDefinitionsForOrganisationResponses,
   GetClassDefinitionsForOrganisationErrors,
@@ -2145,6 +2166,12 @@ import type {
   GetClassDefinitionsForCourseData,
   GetClassDefinitionsForCourseResponses,
   GetClassDefinitionsForCourseErrors,
+  GetClassesBatchData,
+  GetClassesBatchResponses,
+  GetClassesBatchErrors,
+  GetAssessmentSchedulesData,
+  GetAssessmentSchedulesResponses,
+  GetAssessmentSchedulesErrors,
   GetAllActiveClassDefinitionsData,
   GetAllActiveClassDefinitionsResponses,
   GetAllActiveClassDefinitionsErrors,
@@ -2256,6 +2283,9 @@ import type {
   ListPendingProgramsData,
   ListPendingProgramsResponses,
   ListPendingProgramsErrors,
+  SummaryData,
+  SummaryResponses,
+  SummaryErrors,
   IsOrganisationVerifiedData,
   IsOrganisationVerifiedResponses,
   IsOrganisationVerifiedErrors,
@@ -2738,6 +2768,7 @@ import {
   getTrainingBranchesByOrganisation1ResponseTransformer,
   getStudentScheduleResponseTransformer,
   getScheduledInstanceResponseTransformer,
+  getOrganisationTimetableResponseTransformer,
   getInstructorTimeHoldsResponseTransformer,
   getInstructorScheduleResponseTransformer,
   getGuardiansResponseTransformer,
@@ -2792,6 +2823,7 @@ import {
   listRosterResponseTransformer,
   getCalendarResponseTransformer,
   listBookingsResponseTransformer,
+  getResourceCalendarsResponseTransformer,
   listSentResponseTransformer,
   listInstructorStudentsResponseTransformer,
   listObligationsResponseTransformer,
@@ -2799,6 +2831,7 @@ import {
   getMyOnboardingResponseTransformer,
   getDomainOnboardingResponseTransformer,
   getCountsResponseTransformer,
+  getSessionBootstrapResponseTransformer,
   getInvitationByTokenResponseTransformer,
   listMyInvitationsResponseTransformer,
   getInstructorRatingSummaryResponseTransformer,
@@ -2819,6 +2852,7 @@ import {
   getScheduledInstanceEnrollmentsForStudentResponseTransformer,
   getEnrollmentOverviewForStudentResponseTransformer,
   getCourseEnrollmentsForStudentResponseTransformer,
+  getStudentCourseOverviewResponseTransformer,
   getClassEnrollmentsForStudentResponseTransformer,
   searchEnrollmentsResponseTransformer,
   getWeeklyGrowthResponseTransformer,
@@ -2851,6 +2885,7 @@ import {
   searchTrainingApplicationsResponseTransformer,
   searchCoursesResponseTransformer,
   getPublishedCoursesResponseTransformer,
+  getLessonsForCoursesResponseTransformer,
   getCoursesByInstructorResponseTransformer,
   getCoursesByCategoryResponseTransformer,
   getActiveCoursesResponseTransformer,
@@ -2876,6 +2911,7 @@ import {
   getClassScheduleResponseTransformer,
   getClassRatingSummaryResponseTransformer,
   getEnrollmentsForClassResponseTransformer,
+  getClassSchedulesResponseTransformer,
   getClassDefinitionsForOrganisationResponseTransformer,
   getInstructorPayablesForOrganisationResponseTransformer,
   getJobEligibilityResponseTransformer,
@@ -2886,6 +2922,8 @@ import {
   listInstructorApplicationsResponseTransformer,
   getClassDefinitionsForInstructorResponseTransformer,
   getClassDefinitionsForCourseResponseTransformer,
+  getClassesBatchResponseTransformer,
+  getAssessmentSchedulesResponseTransformer,
   getAllActiveClassDefinitionsResponseTransformer,
   searchCertificateTemplatesResponseTransformer,
   getStudentCertificatesResponseTransformer,
@@ -2914,6 +2952,7 @@ import {
   evaluateCourseRecommendationsResponseTransformer,
   getProgramModerationHistoryResponseTransformer,
   listPendingProgramsResponseTransformer,
+  summaryResponseTransformer,
   getPendingOrganisationsResponseTransformer,
   getDashboardStatisticsResponseTransformer,
   getDashboardActivityResponseTransformer,
@@ -10413,6 +10452,33 @@ export const addProgramCourse = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Ingest real-user performance samples
+ * Accepts up to 50 samples per batch. Anonymous callers are rate limited per IP.
+ */
+export const ingest = <ThrowOnError extends boolean = false>(
+  options: Options<IngestData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).post<IngestResponses, IngestErrors, ThrowOnError>({
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/perf/rum',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+};
+
+/**
  * Get all organisations
  */
 export const getAllOrganisations = <ThrowOnError extends boolean = false>(
@@ -11309,6 +11375,7 @@ export const listNotifications = <ThrowOnError extends boolean = false>(
 
 /**
  * Apply a bulk notification action
+ * read_all marks matching unread notifications read; popup_seen marks the given uuids (or every unseen POPUP for the domain when none are given) as popup seen, caller-owned only
  */
 export const applyBulkAction = <ThrowOnError extends boolean = false>(
   options: Options<ApplyBulkActionData, ThrowOnError>
@@ -18429,6 +18496,34 @@ export const getScheduledInstance = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Get the timetable of every class an organisation owns within a date range
+ * Non-cancelled sessions overlapping the inclusive date range, ordered by start time, each with its class title, instructor name and enrolled count, so an organisation calendar needs one request instead of one per class. The range may span at most 366 days.
+ */
+export const getOrganisationTimetable = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrganisationTimetableData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetOrganisationTimetableResponses,
+    GetOrganisationTimetableErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getOrganisationTimetableResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/timetable/organisations/{organisationUuid}',
+    ...options,
+  });
+};
+
+/**
  * Get marketplace time holds for a specific instructor within a date range
  * Tentative and firm claims raised by the instructor's marketplace job applications. Read separately from the schedule because a hold is not a session: it carries no enrolment, attendance or pay, and only a FIRM hold counts as a scheduling clash.
  */
@@ -20425,6 +20520,34 @@ export const listBookings = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * Merged calendar view of every active resource of the organisation
+ * The per-resource calendar for all active resources in one request, ordered by resource name. entry_types (comma-separated OPEN_HOURS, BLACKOUT, HOLD, CONFIRMED) optionally filters the entries. Same access rule and date-range cap as the single-resource calendar.
+ */
+export const getResourceCalendars = <ThrowOnError extends boolean = false>(
+  options: Options<GetResourceCalendarsData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetResourceCalendarsResponses,
+    GetResourceCalendarsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getResourceCalendarsResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/resources/calendar',
+    ...options,
+  });
+};
+
+/**
  * List an organisation's sent notifications
  * The organisation's outgoing broadcasts, newest first.
  */
@@ -20665,6 +20788,34 @@ export const getDocumentFile = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/me/profile/documents/{itemUuid}/file',
+    ...options,
+  });
+};
+
+/**
+ * Get the caller's session bootstrap
+ * Returns the caller's user record (as GET /users/me), role profile UUIDs, active organisation summary, wallet balance and unread notification counts per domain.
+ */
+export const getSessionBootstrap = <ThrowOnError extends boolean = false>(
+  options?: Options<GetSessionBootstrapData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<
+    GetSessionBootstrapResponses,
+    GetSessionBootstrapErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getSessionBootstrapResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/me/bootstrap',
     ...options,
   });
 };
@@ -20940,6 +21091,7 @@ export const listInstructorObligations = <ThrowOnError extends boolean = false>(
  *
  * **Common Skills Search Examples:**
  * - `instructorUuid=uuid` - All skills for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Skills for several instructors in one request
  * - `proficiencyLevel=EXPERT` - Expert level skills only
  * - `proficiencyLevel_in=ADVANCED,EXPERT` - Advanced or expert skills
  * - `proficiencyLevel_noteq=BEGINNER` - Non-beginner skills
@@ -21177,6 +21329,7 @@ export const listMyAgeGroupPresets = <ThrowOnError extends boolean = false>(
  *
  * **Common Experience Search Examples:**
  * - `instructorUuid=uuid` - All experience for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Experience for several instructors in one request
  * - `isCurrentPosition=true` - Current positions only
  * - `yearsOfExperience_gte=5` - 5+ years experience
  * - `startDate_gte=2020-01-01` - Started in 2020 or later
@@ -21547,6 +21700,34 @@ export const getCourseEnrollmentsForStudent = <ThrowOnError extends boolean = fa
       },
     ],
     url: '/api/v1/enrollment/student/{studentUuid}/courses',
+    ...options,
+  });
+};
+
+/**
+ * Get a student's course overview
+ * Enrolled classes with their course, instructor, current or next session, course progress and counts of released assignments and quizzes not yet submitted, in one response. Readable by the student, a guardian whose share covers academics, and platform administrators. Page size is capped at 50.
+ */
+export const getStudentCourseOverview = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentCourseOverviewData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetStudentCourseOverviewResponses,
+    GetStudentCourseOverviewErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getStudentCourseOverviewResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/enrollment/student/{studentUuid}/course-overview',
     ...options,
   });
 };
@@ -22060,7 +22241,7 @@ export const getStatusTransitions = <ThrowOnError extends boolean = false>(
 
 /**
  * Courses similar to a public course
- * Anyone, signed in or not. Not personal: co-enrolment neighbours (pairs shared by at least 5 learners, 10 when a minor is involved), the same categories, and "more like this" on the course text. Only public courses; 404 when the course itself is not public. Same item shape as the recommendations endpoint, with surface `similar`.
+ * Anyone, signed in or not. Not personal: co-enrolment neighbours (pairs shared by at least 5 learners, 10 when a minor is involved), the same categories, and "more like this" on the course text. Only public courses; empty when the course itself is not public, 404 when it does not exist. Same item shape as the recommendations endpoint, with surface `similar`.
  */
 export const getSimilarCourses = <ThrowOnError extends boolean = false>(
   options: Options<GetSimilarCoursesData, ThrowOnError>
@@ -22421,8 +22602,9 @@ export const getOrganisationCourseContent = <ThrowOnError extends boolean = fals
 
 /**
  * List the classes a visitor can still join on a public course
- * Readable without a token. Answers only for a publicly visible course (root, published,
- * active and admin-approved); any other course is a 404 for every caller.
+ * Readable without a token. Lists classes only for a publicly visible course (root, published,
+ * active and admin-approved); any other existing course answers an empty list, and an
+ * unknown course is a 404.
  *
  * Lists the course's classes that are active, `PUBLIC`, and whose registration window
  * and teaching period have not ended (a missing end date counts as open), cheapest
@@ -22542,6 +22724,12 @@ export const getCourseEnrollments = <ThrowOnError extends boolean = false>(
  *
  * Open to anonymous callers, who resolve to `prospect` and receive the same public
  * summary the catalogue already shows.
+ *
+ * A course the public catalogue does not show (a draft, unapproved, inactive or a
+ * shadow draft) has no public summary. A signed-in `prospect` then receives 200 with
+ * an empty payload — `course_uuid`, `access=prospect`, `full_access=false`,
+ * `total_lessons=0`, no lessons, no reviews and no `course` profile. An anonymous
+ * caller receives 404.
  *
  */
 export const getCourseContent = <ThrowOnError extends boolean = false>(
@@ -22904,6 +23092,34 @@ export const getCourseMedia = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/courses/media/{filePath}',
+    ...options,
+  });
+};
+
+/**
+ * List the lessons of several courses
+ * course_uuids is comma-separated or repeated, 1 to 100 entries. Each course is admitted by the same rule as GET /courses/{courseUuid}/lessons, and learners see only published, active lessons. Courses the caller may not read are omitted. Ordered by course then lesson number; group by course_uuid.
+ */
+export const getLessonsForCourses = <ThrowOnError extends boolean = false>(
+  options: Options<GetLessonsForCoursesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetLessonsForCoursesResponses,
+    GetLessonsForCoursesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getLessonsForCoursesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/courses/lessons',
     ...options,
   });
 };
@@ -23828,6 +24044,34 @@ export const getEnrollmentsForClass = <ThrowOnError extends boolean = false>(
 };
 
 /**
+ * List the scheduled sessions of several classes
+ * class_uuids is comma-separated or repeated, 1 to 100 entries. Returns every scheduled instance of those classes ordered by start time; group by class_definition_uuid. Unknown ids are omitted. Same access as GET /classes/{uuid}/schedule.
+ */
+export const getClassSchedules = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassSchedulesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassSchedulesResponses,
+    GetClassSchedulesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassSchedulesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/schedules',
+    ...options,
+  });
+};
+
+/**
  * Get class definitions for an organisation
  * The organisation's staff and platform admins see all of its classes; other callers see only its active PUBLIC classes and the ones they teach or are enrolled in. With q, only classes matching the text are returned, under the same visibility, ranked by relevance (typo-tolerant over title, course, program, organisation, branch, instructor, location and description) by the classes search index only; at most 100 classes are returned. There is no database fallback: when search or the index's reads are off, or the engine is down, a request with q answers 503 ("Search is unavailable").
  */
@@ -24154,6 +24398,62 @@ export const getClassDefinitionsForCourse = <ThrowOnError extends boolean = fals
       },
     ],
     url: '/api/v1/classes/course/{courseUuid}',
+    ...options,
+  });
+};
+
+/**
+ * Look up several classes by UUID in one request
+ * Returns the visible classes among uuids (comma-separated or repeated, at most 100), in request order, each with its course or program title, an instructor summary and its seat capacity (max_participants). Visibility is the class listing's; unknown or hidden ids are omitted. enrolled_count and seats_remaining are present only for the class's instructor, managers of its organisation and platform admins. Costs a fixed number of queries regardless of batch size.
+ */
+export const getClassesBatch = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassesBatchData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetClassesBatchResponses,
+    GetClassesBatchErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getClassesBatchResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/batch',
+    ...options,
+  });
+};
+
+/**
+ * List assignment and quiz schedules for several classes
+ * class_uuids is comma-separated or repeated, 1 to 100 entries. Classes the caller may not view (same rule as the per-class listings) are omitted. Costs a fixed number of queries per batch.
+ */
+export const getAssessmentSchedules = <ThrowOnError extends boolean = false>(
+  options: Options<GetAssessmentSchedulesData, ThrowOnError>
+) => {
+  return (options.client ?? _heyApiClient).get<
+    GetAssessmentSchedulesResponses,
+    GetAssessmentSchedulesErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getAssessmentSchedulesResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/classes/assessment-schedules',
     ...options,
   });
 };
@@ -25224,6 +25524,30 @@ export const listPendingPrograms = <ThrowOnError extends boolean = false>(
       },
     ],
     url: '/api/v1/admin/programs/pending',
+    ...options,
+  });
+};
+
+/**
+ * Real-user percentiles
+ * p50/p95/p99 per route template and metric for samples in [from, to). Defaults to the last 24 hours.
+ */
+export const summary = <ThrowOnError extends boolean = false>(
+  options?: Options<SummaryData, ThrowOnError>
+) => {
+  return (options?.client ?? _heyApiClient).get<SummaryResponses, SummaryErrors, ThrowOnError>({
+    responseTransformer: summaryResponseTransformer,
+    security: [
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+      {
+        scheme: 'bearer',
+        type: 'http',
+      },
+    ],
+    url: '/api/v1/admin/perf/rum/summary',
     ...options,
   });
 };

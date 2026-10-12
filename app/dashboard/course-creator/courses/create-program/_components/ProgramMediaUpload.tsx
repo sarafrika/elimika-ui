@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { toast } from 'sonner';
 import {
   MAX_VIDEO_SIZE_BYTES,
@@ -87,7 +87,7 @@ function MediaPicker({
               src={source}
               alt={`${media.label} preview`}
               fill
-              unoptimized
+              unoptimized={!isAuthenticatedMediaUrl(source)}
               sizes='(min-width: 768px) 33vw, 100vw'
               className='object-cover'
             />

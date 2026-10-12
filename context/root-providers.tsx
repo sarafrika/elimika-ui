@@ -1,35 +1,44 @@
 'use client';
 
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
+import { type ReactNode, useState } from 'react';
+import { RumReporter } from '@/components/perf/rum-reporter';
+import { AuthSessionProvider } from '@/context/auth-session-provider';
 import { TimeZoneProvider } from '@/context/timezone-context';
 import {
   CLIENT_QUERY_CACHE_BUSTER,
   CLIENT_QUERY_CACHE_MAX_AGE_MS,
   CLIENT_QUERY_CACHE_STORAGE_KEY,
   makeQueryClient,
+  STALE_TIMES,
 } from '@/lib/query-client';
+import { createQueryPersister, shouldPersistQuery } from '@/lib/query-persister';
+import { noteRenderedPathname } from '@/src/features/dashboard/lib/active-domain-storage';
 import { isVolatileGeneratedQuery } from '@/src/features/dashboard/workflow-query-invalidation';
-import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
-import { SessionProvider } from 'next-auth/react';
-import dynamic from 'next/dynamic';
-import { type ReactNode, useState } from 'react';
 
 const ReactQueryDevtools =
   process.env.NODE_ENV === 'development'
     ? dynamic(() =>
-      import('@tanstack/react-query-devtools').then(m => ({
-        default: m.ReactQueryDevtools,
-      }))
-    )
+        import('@tanstack/react-query-devtools').then(m => ({
+          default: m.ReactQueryDevtools,
+        }))
+      )
     : null;
 
 export function RootProviders({ children }: { children: ReactNode }) {
+  // The dashboard layout mounts its own provider seeded with the server session.
+  const pathname = usePathname() ?? '';
+  // Set in render so the new route's queries key on its own dashboard, not the last URL.
+  noteRenderedPathname(pathname || null);
+  const ownsSession = pathname !== '/dashboard' && !pathname.startsWith('/dashboard/');
   const [queryClient] = useState(makeQueryClient);
   const [persister] = useState(() =>
-    createSyncStoragePersister({
+    createQueryPersister({
+      queryClient,
       key: CLIENT_QUERY_CACHE_STORAGE_KEY,
       storage: typeof window === 'undefined' ? undefined : window.sessionStorage,
-      throttleTime: 1000,
     })
   );
 
@@ -40,19 +49,27 @@ export function RootProviders({ children }: { children: ReactNode }) {
         buster: CLIENT_QUERY_CACHE_BUSTER,
         maxAge: CLIENT_QUERY_CACHE_MAX_AGE_MS,
         persister,
+        dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
       }}
       onSuccess={() => {
-        // Workflow state changes on the server between visits, so its restored copy may be
-        // painted but never counted as fresh; every other entry keeps its own staleTime tier.
+        // Restored workflow state older than the live tier is painted but not counted as
+        // fresh; every other entry keeps its own staleTime tier.
+        const liveCutoff = Date.now() - STALE_TIMES.live;
         void queryClient.invalidateQueries({
-          predicate: query => isVolatileGeneratedQuery(query.queryKey),
+          predicate: query =>
+            isVolatileGeneratedQuery(query.queryKey) && query.state.dataUpdatedAt < liveCutoff,
           refetchType: 'none',
         });
       }}
     >
-      <SessionProvider>
+      {ownsSession ? (
+        <AuthSessionProvider>
+          <TimeZoneProvider>{children}</TimeZoneProvider>
+        </AuthSessionProvider>
+      ) : (
         <TimeZoneProvider>{children}</TimeZoneProvider>
-      </SessionProvider>
+      )}
+      <RumReporter />
       {ReactQueryDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </PersistQueryClientProvider>
   );

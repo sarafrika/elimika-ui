@@ -33,9 +33,3 @@ export const BUCKET_RULES: Partial<Record<Bucket, { restricted: boolean; purpose
         allowed: ["Marketplace Item", "Equipment"],
     },
 };
-
-
-
-/* =========================================================================
-   Mock data seed
-   ========================================================================= */

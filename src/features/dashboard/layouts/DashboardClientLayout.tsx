@@ -1,13 +1,16 @@
 'use client';
 
+import dynamic from 'next/dynamic';
+import { usePathname } from 'next/navigation';
+import { type ReactNode, useMemo } from 'react';
 import CustomLoader from '@/components/custom-loader';
+import { RumShellMark } from '@/components/perf/rum-reporter';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { BreadcrumbProvider } from '@/context/breadcrumb-provider';
 import { DashboardProviders } from '@/context/profile-providers';
 import type { UserDomain } from '@/lib/types';
 import { AppSidebar } from '@/src/features/dashboard/components/app-sidebar';
 import DashboardMainContent from '@/src/features/dashboard/components/dashboard-main-content';
-import { DomainSelection } from '@/src/features/dashboard/components/domain-selection';
 import {
   domainToDashboardViewMap,
   type KnownDomain,
@@ -19,8 +22,12 @@ import {
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { usePathname } from 'next/navigation';
-import { type ReactNode, useMemo } from 'react';
+
+// Only a domain-less first visit picks a dashboard, so the picker stays out of the shell chunk.
+const DomainSelection = dynamic(
+  () => import('@/src/features/dashboard/components/domain-selection').then(mod => mod.DomainSelection),
+  { loading: () => <CustomLoader /> }
+);
 
 export function DashboardClientLayout({
   children,
@@ -45,13 +52,19 @@ export function DashboardClientLayout({
     // <html> so portalled UI (dropdowns, sheets, toasts) is themed too.
     <div className='contents' data-dashboard-domain={themeDomain ?? undefined}>
       <DashboardProviders>
-        <DashboardLayoutContent>{children}</DashboardLayoutContent>
+        <DashboardLayoutContent initialDomain={initialDomain}>{children}</DashboardLayoutContent>
       </DashboardProviders>
     </div>
   );
 }
 
-function DashboardLayoutContent({ children }: { children: ReactNode }) {
+function DashboardLayoutContent({
+  children,
+  initialDomain,
+}: {
+  children: ReactNode;
+  initialDomain: UserDomain | null;
+}) {
   const profile = useUserProfile();
   const domain = useUserDomain();
   const pathname = usePathname();
@@ -67,7 +80,9 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
   // cookie-derived active domain is only a fallback for non-segment paths
   // (/dashboard root, /dashboard/add-profile, ...).
   const urlDomain = useMemo(() => domainFromPath(pathname) as KnownDomain | null, [pathname]);
-  const effectiveDomain = urlDomain ?? activeDomain;
+  // Until the profile resolves, the server-resolved domain paints the shell immediately.
+  const effectiveDomain =
+    urlDomain ?? activeDomain ?? (domain.isLoading ? (initialDomain as KnownDomain | null) : null);
 
   const normalizedAvailableViews = useMemo(() => {
     const views = userDomains
@@ -86,9 +101,8 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
     effectiveDomain === 'organization'
       ? ('organisation' as UserDomain)
       : (effectiveDomain as UserDomain);
-  const showLoader = profile?.isLoading || domain.isLoading || !profile;
-
-  if (showLoader) {
+  // The shell never waits on the profile; only a domain-less first load has nothing to draw.
+  if (!effectiveDomain && (profile?.isLoading || domain.isLoading || !profile)) {
     return <CustomLoader />;
   }
 
@@ -97,7 +111,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
       <DomainSelection
         domains={selectableDomains}
         onDomainSelect={nextDomain => domain.setActiveDomain(nextDomain)}
-        userName={profile.first_name}
+        userName={profile?.first_name}
       />
     );
   }
@@ -110,6 +124,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
       >
         <BreadcrumbProvider>
           <div className='flex h-screen w-full'>
+            <RumShellMark />
             <AppSidebar activeDomain={sidebarDomain} />
 
             <div className='flex min-w-0 flex-1 flex-col'>

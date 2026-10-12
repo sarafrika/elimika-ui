@@ -4,12 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { Building, GraduationCap, MapPin, Presentation, Users } from 'lucide-react';
 
 import { KpiCard, KpiCardSkeleton, type KpiCardVariant } from '@/components/dashboard';
-import { useOrganisation } from '@/context/organisation-context';
+import { useOrganisationId } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
+import { toNumber } from '@/lib/metrics';
 import {
-  getTrainingBranchesByOrganisationOptions,
-  getUsersByOrganisationAndDomainOptions,
-  getUsersByOrganisationOptions,
+  getOrganisationStatisticsOptions,
   listResourcesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 
@@ -18,37 +17,12 @@ import {
  * fetches org-scoped counts and hands them to the presentational {@link KpiCard}.
  */
 export function OverviewKpis() {
-  const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
+  const organisationUuid = useOrganisationId() ?? '';
   const enabled = Boolean(organisationUuid);
 
-  const membersQuery = useQuery({
-    ...getUsersByOrganisationOptions({
-      path: { uuid: organisationUuid },
-      query: { pageable: { page: 0, size: 1 } },
-    }),
-    enabled,
-  });
-
-  const studentsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'student' },
-    }),
-    enabled,
-  });
-
-  const instructorsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'instructor' },
-    }),
-    enabled,
-  });
-
-  const branchesQuery = useQuery({
-    ...getTrainingBranchesByOrganisationOptions({
-      path: { uuid: organisationUuid },
-      query: { pageable: { page: 0, size: 1 } },
-    }),
+  // One statistics call carries all four people/branch counts.
+  const statsQuery = useQuery({
+    ...getOrganisationStatisticsOptions({ path: { uuid: organisationUuid } }),
     enabled,
   });
 
@@ -60,8 +34,9 @@ export function OverviewKpis() {
     enabled,
   });
 
-  const studentsPage = extractPage(studentsQuery.data);
-  const instructorsPage = extractPage(instructorsQuery.data);
+  const stats = statsQuery.data?.data;
+  const statsLoading = statsQuery.isLoading;
+  const statsFailed = statsQuery.isError;
 
   const tiles: Array<{
     label: string;
@@ -71,42 +46,47 @@ export function OverviewKpis() {
     variant: KpiCardVariant;
     href: string;
     loading: boolean;
+    failed: boolean;
   }> = [
     {
       label: 'Total Members',
-      value: getTotalFromMetadata(extractPage(membersQuery.data).metadata),
+      value: toNumber(stats?.total_members),
       hint: 'Everyone in your organisation',
       icon: Users,
       variant: 'primary',
       href: '/dashboard/organisation/students',
-      loading: membersQuery.isLoading,
+      loading: statsLoading,
+      failed: statsFailed,
     },
     {
       label: 'Students',
-      value: getTotalFromMetadata(studentsPage.metadata) || studentsPage.items.length,
+      value: toNumber(stats?.total_students),
       hint: 'Enrolled learners',
       icon: GraduationCap,
       variant: 'green',
       href: '/dashboard/organisation/students',
-      loading: studentsQuery.isLoading,
+      loading: statsLoading,
+      failed: statsFailed,
     },
     {
       label: 'Instructors',
-      value: getTotalFromMetadata(instructorsPage.metadata) || instructorsPage.items.length,
+      value: toNumber(stats?.total_instructors),
       hint: 'Teaching staff',
       icon: Presentation,
       variant: 'indigo',
       href: '/dashboard/organisation/instructors',
-      loading: instructorsQuery.isLoading,
+      loading: statsLoading,
+      failed: statsFailed,
     },
     {
       label: 'Branches',
-      value: getTotalFromMetadata(extractPage(branchesQuery.data).metadata),
+      value: toNumber(stats?.total_branches),
       hint: 'Locations / campuses',
       icon: Building,
       variant: 'coral',
       href: '/dashboard/organisation/branches',
-      loading: branchesQuery.isLoading,
+      loading: statsLoading,
+      failed: statsFailed,
     },
     {
       label: 'Venues',
@@ -116,6 +96,7 @@ export function OverviewKpis() {
       variant: 'indigo',
       href: '/dashboard/organisation/venues',
       loading: venuesQuery.isLoading,
+      failed: venuesQuery.isError,
     },
   ];
 
@@ -128,7 +109,7 @@ export function OverviewKpis() {
           <KpiCard
             key={tile.label}
             title={tile.label}
-            value={tile.value.toLocaleString()}
+            value={tile.failed ? '—' : tile.value.toLocaleString()}
             hint={tile.hint}
             icon={<tile.icon className='h-5 w-5' />}
             variant={tile.variant}

@@ -22,7 +22,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
+import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,10 +38,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassesByIds, useCoursesByIds } from '@/hooks/use-batched-lookups';
-import { publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { extractEntity } from '@/lib/api-helpers';
+import { STALE_TIMES } from '@/lib/query-client';
 import type {
-  ApiResponseListCommerceCatalogueItem,
   ClassDefinition,
   CommerceCatalogueItem,
   Course,
@@ -49,10 +48,16 @@ import type {
   Instructor,
 } from '@/services/client';
 import {
+  getClassDefinitionOptions,
+  getClassDefinitionsForInstructorOptions,
+  getClassDefinitionsForOrganisationOptions,
+  getCourseByUuidOptions,
   getCourseCreatorByUuidOptions,
   getInstructorByUuidOptions,
   listCatalogItemsOptions,
+  searchCatalogueOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { publicCourseUrl } from '@/src/features/dashboard/lib/dashboard-url';
 
 type CatalogueScope = 'admin' | 'organization' | 'instructor' | 'course_creator';
 
@@ -68,6 +73,12 @@ type CatalogueRow = {
   variantCode: string | null | undefined;
   courseId: string | null | undefined;
   classId: string | null | undefined;
+  /** From the `/search` course snapshot; absent on class rows and admin's plain listing. */
+  courseName: string | null;
+  /** The catalogue item's own class title, when the API sends one. */
+  classTitle: string | null;
+  courseCreatorUuid: string | null;
+  creatorName: string | null;
   createdAt: string | Date | null | undefined;
   updatedAt: string | Date | null | undefined;
   detailsHref: string | null;
@@ -77,17 +88,28 @@ type CatalogueRow = {
 type CatalogueItemWithOrganisation = CommerceCatalogueItem & { organisation_uuid?: string | null };
 type CourseWithOrganisation = Course & { organisation_uuid?: string | null };
 
+/** The class fields the catalogue reads; satisfied by both full definitions and batch summaries. */
+type CatalogueClass = {
+  title?: string;
+  description?: string | null;
+  course_uuid?: string | null;
+  organisation_uuid?: string | null;
+  default_instructor_uuid?: string | null;
+};
+
 type TitleMaps = {
   courseTitleMap: Map<string, string>;
   classTitleMap: Map<string, string>;
   courseMap: Map<string, Course>;
-  classMap: Map<string, ClassDefinition>;
+  classMap: Map<string, CatalogueClass>;
 };
 
 type CatalogueDetailsQueryState = {
   isLoading: boolean;
-  data?: ApiResponseListCommerceCatalogueItem;
 };
+
+/** Non-admin scopes read one page of `/search`; it carries each course's snapshot. */
+const CATALOGUE_SEARCH_PAGE_SIZE = 200;
 
 const scopeCopy: Record<
   CatalogueScope,
@@ -158,6 +180,10 @@ const buildRows = (items: CommerceCatalogueItem[]): CatalogueRow[] =>
       variantCode: item.variant_code ?? null,
       courseId: item.course_uuid ?? null,
       classId: item.class_definition_uuid ?? null,
+      courseName: item.course?.name ?? null,
+      classTitle: item.class_definition_title?.trim() || null,
+      courseCreatorUuid: item.course?.creator_uuid ?? null,
+      creatorName: item.course?.creator_name ?? null,
       createdAt:
         (item as CommerceCatalogueItem & { created_date?: string | Date | null }).created_date ??
         null,
@@ -169,47 +195,53 @@ const buildRows = (items: CommerceCatalogueItem[]): CatalogueRow[] =>
     };
   });
 
-const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
-  const courseIds = useMemo(
-    () => Array.from(new Set(rows.map(row => row.courseId).filter(Boolean))) as string[],
-    [rows]
-  );
-  const classIds = useMemo(
-    () => Array.from(new Set(rows.map(row => row.classId).filter(Boolean))) as string[],
-    [rows]
-  );
+type ScopeMaps = {
+  courseMap: Map<string, Course>;
+  classMap: Map<string, ClassDefinition>;
+};
 
-  // Batched course lookup, and the classes on screen by id. `/classes` is a visibility-scoped
-  // listing now, not a lookup table: a page of it may not contain the ids we need.
+const toClassMap = (data: { class_definition?: ClassDefinition }[] | undefined) => {
+  const map = new Map<string, ClassDefinition>();
+  for (const item of data ?? []) {
+    const classDef = item?.class_definition;
+    if (classDef?.uuid) map.set(classDef.uuid, classDef);
+  }
+  return map;
+};
+
+/** Courses the snapshot can't answer for, and classes from ONE scope listing. */
+const useScopeMaps = (
+  rows: CatalogueRow[],
+  scope: CatalogueScope,
+  ids: {
+    instructorClassData?: { class_definition?: ClassDefinition }[];
+    organisationUuid?: string | null;
+  }
+): ScopeMaps => {
+  // The snapshot has no organisation uuid, so the organisation scope still needs the courses.
+  const courseIds = useMemo(() => {
+    const needed = rows
+      .filter(row => scope === 'organization' || !row.courseName)
+      .map(row => row.courseId)
+      .filter((id): id is string => !!id);
+    return Array.from(new Set(needed));
+  }, [rows, scope]);
   const { courseMap: courseLookup } = useCoursesByIds(courseIds);
-  const { classDefinitionMap } = useClassesByIds(classIds);
 
-  const classLookup = useMemo(
-    () => new Map<string, ClassDefinition>(Object.entries(classDefinitionMap)),
-    [classDefinitionMap]
-  );
+  const organisationUuid = ids.organisationUuid ?? '';
+  const organisationClassesQuery = useQuery({
+    ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
+    enabled: scope === 'organization' && !!organisationUuid,
+    staleTime: STALE_TIMES.entity,
+  });
+  const scopeClassData =
+    scope === 'instructor'
+      ? ids.instructorClassData
+      : scope === 'organization'
+        ? organisationClassesQuery.data?.data
+        : undefined;
 
-  const courseTitleMap = useMemo(() => {
-    const map = new Map<string, string>();
-    courseIds.forEach(courseId => {
-      const course = courseLookup[courseId];
-      if (course?.name && courseId) {
-        map.set(courseId, course.name);
-      }
-    });
-    return map;
-  }, [courseIds, courseLookup]);
-
-  const classTitleMap = useMemo(() => {
-    const map = new Map<string, string>();
-    classIds.forEach(classId => {
-      const classDef = classLookup.get(classId);
-      if (classDef?.title && classId) {
-        map.set(classId, classDef.title);
-      }
-    });
-    return map;
-  }, [classIds, classLookup]);
+  const classMap = useMemo(() => toClassMap(scopeClassData), [scopeClassData]);
 
   const courseMap = useMemo(() => {
     const map = new Map<string, Course>();
@@ -222,24 +254,78 @@ const useTitleMaps = (rows: CatalogueRow[]): TitleMaps => {
     return map;
   }, [courseIds, courseLookup]);
 
+  return { courseMap, classMap };
+};
+
+/**
+ * Titles for the rows on screen. Rows whose catalogue item names its class need no lookup;
+ * the rest (plus the selected row, for its details) are batched, never fetched per row.
+ */
+const useTitleMaps = (
+  rows: CatalogueRow[],
+  scopeMaps: ScopeMaps,
+  selectedClassId: string | null
+): TitleMaps => {
+  const missingClassIds = useMemo(() => {
+    const ids = rows
+      .filter(row => !row.classTitle || row.classId === selectedClassId)
+      .map(row => row.classId)
+      .filter((id): id is string => !!id && !scopeMaps.classMap.has(id));
+    return Array.from(new Set(ids));
+  }, [rows, scopeMaps.classMap, selectedClassId]);
+  const { classMap: batchedClassMap } = useClassesByIds(missingClassIds);
+
+  // The batch summary has no description, so only the selected class is read in full.
+  const selectedNeedsDetail = !!selectedClassId && !scopeMaps.classMap.has(selectedClassId);
+  const selectedClassQuery = useQuery({
+    ...getClassDefinitionOptions({ path: { uuid: selectedClassId ?? '' } }),
+    enabled: selectedNeedsDetail,
+    staleTime: STALE_TIMES.entity,
+  });
+  const selectedClassDetail = selectedNeedsDetail
+    ? selectedClassQuery.data?.data?.class_definition
+    : undefined;
+
   const classMap = useMemo(() => {
-    const map = new Map<string, ClassDefinition>();
-    classIds.forEach(classId => {
-      const classDef = classLookup.get(classId);
-      if (classDef && classId) {
-        map.set(classId, classDef);
-      }
+    const map = new Map<string, CatalogueClass>(scopeMaps.classMap);
+    for (const [classId, summary] of Object.entries(batchedClassMap)) {
+      map.set(classId, summary);
+    }
+    if (selectedClassId && selectedClassDetail) {
+      map.set(selectedClassId, { ...map.get(selectedClassId), ...selectedClassDetail });
+    }
+    return map;
+  }, [batchedClassMap, scopeMaps.classMap, selectedClassId, selectedClassDetail]);
+
+  const courseTitleMap = useMemo(() => {
+    const map = new Map<string, string>();
+    scopeMaps.courseMap.forEach((course, courseId) => {
+      if (course?.name) map.set(courseId, course.name);
     });
     return map;
-  }, [classIds, classLookup]);
+  }, [scopeMaps.courseMap]);
 
-  return { courseTitleMap, classTitleMap, courseMap, classMap };
+  const classTitleMap = useMemo(() => {
+    const map = new Map<string, string>();
+    classMap.forEach((classDef, classId) => {
+      if (classDef?.title) map.set(classId, classDef.title);
+    });
+    for (const row of rows) {
+      if (row.classId && row.classTitle) map.set(row.classId, row.classTitle);
+    }
+    return map;
+  }, [classMap, rows]);
+
+  return { courseTitleMap, classTitleMap, courseMap: scopeMaps.courseMap, classMap };
 };
 
 const attachTitles = (rows: CatalogueRow[], maps: TitleMaps): CatalogueRow[] =>
   rows.map(row => {
     if (row.classId && maps.classTitleMap.has(row.classId)) {
       return { ...row, displayTitle: maps.classTitleMap.get(row.classId) as string };
+    }
+    if (row.courseName) {
+      return { ...row, displayTitle: row.courseName };
     }
     if (row.courseId && maps.courseTitleMap.has(row.courseId)) {
       return { ...row, displayTitle: maps.courseTitleMap.get(row.courseId) as string };
@@ -262,7 +348,7 @@ export function CatalogueWorkspace({
 }) {
   const copy = scopeCopy[scope];
   const includeHidden = copy.includeHiddenByDefault;
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pickedId, setSelectedId] = useState<string | null>(null);
   const [displayLimit, setDisplayLimit] = useState(20);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const profile = useUserProfile();
@@ -270,11 +356,74 @@ export function CatalogueWorkspace({
 
   const fetchActiveOnly = scope === 'admin' ? false : !includeHidden;
 
-  const catalogueQuery = useQuery({
-    ...listCatalogItemsOptions({
-      query: { active_only: fetchActiveOnly },
-    }),
+  // The instructor's classes come first: the catalogue search is scoped to their ids.
+  const instructorUuid = profile?.instructor?.uuid ?? '';
+  const instructorClassesQuery = useQuery({
+    ...getClassDefinitionsForInstructorOptions({ path: { instructorUuid } }),
+    enabled: scope === 'instructor' && !!instructorUuid,
+    staleTime: STALE_TIMES.entity,
   });
+  const instructorClassData = instructorClassesQuery.data?.data;
+  const instructorClassIds = useMemo(() => {
+    const ids = (instructorClassData ?? [])
+      .map(item => item?.class_definition?.uuid)
+      .filter((id): id is string => !!id);
+    return Array.from(new Set(ids)).sort();
+  }, [instructorClassData]);
+  const isInstructorScope = scope === 'instructor';
+
+  // Admin reviews the whole unbounded listing; every other scope reads the paged search.
+  const listQuery = useQuery({
+    ...listCatalogItemsOptions({ query: { active_only: fetchActiveOnly } }),
+    enabled: scope === 'admin',
+    staleTime: STALE_TIMES.entity,
+  });
+  const activeParams: Record<string, string> = fetchActiveOnly ? { active: 'true' } : {};
+  const searchQuery = useQuery({
+    ...searchCatalogueOptions({
+      query: isInstructorScope
+        ? {
+            searchParams: {
+              ...activeParams,
+              class_definition_uuid_in: instructorClassIds.join(','),
+            },
+            pageable: {
+              page: 0,
+              size: Math.min(Math.max(instructorClassIds.length, 1), CATALOGUE_SEARCH_PAGE_SIZE),
+            },
+          }
+        : {
+            searchParams: activeParams,
+            pageable: { page: 0, size: CATALOGUE_SEARCH_PAGE_SIZE },
+          },
+    }),
+    enabled: isInstructorScope ? instructorClassIds.length > 0 : scope !== 'admin',
+    staleTime: STALE_TIMES.entity,
+  });
+  const catalogueQuery = scope === 'admin' ? listQuery : searchQuery;
+  // A disabled search is not loading, so the instructor list also waits on its classes.
+  const isListLoading =
+    catalogueQuery.isLoading || (isInstructorScope && instructorClassesQuery.isLoading);
+  const listQueryState = useMemo(() => ({ isLoading: isListLoading }), [isListLoading]);
+  const isRefreshing =
+    catalogueQuery.isFetching || (isInstructorScope && instructorClassesQuery.isFetching);
+  const handleRefresh = () => {
+    if (!isInstructorScope) {
+      catalogueQuery.refetch();
+      return;
+    }
+    instructorClassesQuery.refetch();
+    if (instructorClassIds.length > 0) searchQuery.refetch();
+  };
+
+  const catalogueItems = useMemo((): CommerceCatalogueItem[] => {
+    if (scope === 'admin') {
+      if (listQuery.error) return [];
+      return listQuery.data?.data ?? [];
+    }
+    if (searchQuery.error) return [];
+    return searchQuery.data?.data?.content ?? [];
+  }, [scope, listQuery.data, listQuery.error, searchQuery.data, searchQuery.error]);
 
   useEffect(() => {
     if (catalogueQuery.error) {
@@ -282,13 +431,7 @@ export function CatalogueWorkspace({
     }
   }, [catalogueQuery.error]);
 
-  const rows = useMemo(
-    () => buildRows((catalogueQuery.data?.data as CommerceCatalogueItem[]) ?? []),
-    [catalogueQuery.data]
-  );
-
-  const titleMaps = useTitleMaps(rows);
-  const rowsWithTitles = useMemo(() => attachTitles(rows, titleMaps), [rows, titleMaps]);
+  const rows = useMemo(() => buildRows(catalogueItems), [catalogueItems]);
 
   const activeOrgUuid = useMemo(() => {
     if (organisation?.uuid) return organisation.uuid;
@@ -302,24 +445,29 @@ export function CatalogueWorkspace({
     );
   }, [organisation?.uuid, profile?.organisation_affiliations, profile?.organizations]);
 
+  const scopeMaps = useScopeMaps(rows, scope, {
+    instructorClassData,
+    organisationUuid: activeOrgUuid,
+  });
+
   const getOrganisationUuidForRow = useMemo(() => {
     return (row: CatalogueRow) => {
       const itemOrg = (row.raw as CatalogueItemWithOrganisation).organisation_uuid;
       if (itemOrg) return itemOrg;
 
-      const classDef = row.classId ? titleMaps.classMap.get(row.classId) : undefined;
+      const classDef = row.classId ? scopeMaps.classMap.get(row.classId) : undefined;
       if (classDef?.organisation_uuid) {
         return classDef.organisation_uuid;
       }
 
-      const course = row.courseId ? titleMaps.courseMap.get(row.courseId) : undefined;
+      const course = row.courseId ? scopeMaps.courseMap.get(row.courseId) : undefined;
       const courseOrg = course ? (course as CourseWithOrganisation).organisation_uuid : undefined;
       if (courseOrg) {
         return courseOrg;
       }
 
       if (classDef?.course_uuid) {
-        const linkedCourse = titleMaps.courseMap.get(classDef.course_uuid);
+        const linkedCourse = scopeMaps.courseMap.get(classDef.course_uuid);
         const linkedOrg = linkedCourse
           ? (linkedCourse as CourseWithOrganisation).organisation_uuid
           : undefined;
@@ -330,7 +478,7 @@ export function CatalogueWorkspace({
 
       return null;
     };
-  }, [titleMaps.classMap, titleMaps.courseMap]);
+  }, [scopeMaps.classMap, scopeMaps.courseMap]);
 
   const filterRowsByScope = useMemo(() => {
     return (row: CatalogueRow) => {
@@ -346,25 +494,22 @@ export function CatalogueWorkspace({
         case 'instructor': {
           const instructorUuid = profile?.instructor?.uuid;
           if (!instructorUuid) return true;
-          const classDef = row.classId ? titleMaps.classMap.get(row.classId) : undefined;
+          const classDef = row.classId ? scopeMaps.classMap.get(row.classId) : undefined;
           const classMatches = classDef?.default_instructor_uuid === instructorUuid;
-          const course = row.courseId ? titleMaps.courseMap.get(row.courseId) : undefined;
-          const courseMatches = course?.course_creator_uuid === instructorUuid;
+          const courseCreatorUuid = row.courseId
+            ? (row.courseCreatorUuid ?? scopeMaps.courseMap.get(row.courseId)?.course_creator_uuid)
+            : undefined;
+          const courseMatches = courseCreatorUuid === instructorUuid;
           return classMatches || courseMatches;
         }
         case 'course_creator': {
           const creatorUuid = profile?.courseCreator?.uuid;
           if (!creatorUuid) return true;
-          const course = row.courseId ? titleMaps.courseMap.get(row.courseId) : undefined;
-          const directCourseMatch = course?.course_creator_uuid === creatorUuid;
-          const classCourseMatch = (() => {
-            if (!row.classId) return false;
-            const classDef = titleMaps.classMap.get(row.classId);
-            if (!classDef?.course_uuid) return false;
-            const linkedCourse = titleMaps.courseMap.get(classDef.course_uuid);
-            return linkedCourse?.course_creator_uuid === creatorUuid;
-          })();
-          return directCourseMatch || classCourseMatch;
+          // Scoped by the catalogue item's own course snapshot, so nothing is fetched to decide.
+          if (!row.courseId) return false;
+          const courseCreatorUuid =
+            row.courseCreatorUuid ?? scopeMaps.courseMap.get(row.courseId)?.course_creator_uuid;
+          return courseCreatorUuid === creatorUuid;
         }
         default:
           return true;
@@ -375,14 +520,14 @@ export function CatalogueWorkspace({
     activeOrgUuid,
     profile?.courseCreator?.uuid,
     profile?.instructor?.uuid,
-    titleMaps.classMap,
-    titleMaps.courseMap,
+    scopeMaps.classMap,
+    scopeMaps.courseMap,
     getOrganisationUuidForRow,
   ]);
 
   const scopedRows = useMemo(
-    () => rowsWithTitles.filter(filterRowsByScope),
-    [rowsWithTitles, filterRowsByScope]
+    () => rows.filter(filterRowsByScope),
+    [rows, filterRowsByScope]
   );
 
   const filteredRows = useMemo(() => {
@@ -397,22 +542,24 @@ export function CatalogueWorkspace({
     });
   }, [includeHidden, scopedRows]);
 
-  useEffect(() => {
-    if (filteredRows.length === 0) {
-      setSelectedId(null);
-      return;
-    }
-    if (!selectedId || !filteredRows.find(row => row.id === selectedId)) {
-      setSelectedId(filteredRows[0]?.id ?? null);
-    }
-  }, [filteredRows, selectedId]);
+  // Derived in render, so the first row's details (and their lookups) mount with the list.
+  const selectedId =
+    pickedId && filteredRows.some(row => row.id === pickedId)
+      ? pickedId
+      : (filteredRows[0]?.id ?? null);
 
-  const selectedRow = filteredRows.find(row => row.id === selectedId) ?? null;
+  const selectedBaseRow = filteredRows.find(row => row.id === selectedId) ?? null;
+  const visibleRows = useMemo(() => {
+    const rowsOnScreen = filteredRows.slice(0, displayLimit);
+    return selectedBaseRow && !rowsOnScreen.includes(selectedBaseRow)
+      ? [...rowsOnScreen, selectedBaseRow]
+      : rowsOnScreen;
+  }, [filteredRows, displayLimit, selectedBaseRow]);
 
-  const displayedRows = useMemo(
-    () => filteredRows.slice(0, displayLimit),
-    [filteredRows, displayLimit]
-  );
+  const titleMaps = useTitleMaps(visibleRows, scopeMaps, selectedBaseRow?.classId ?? null);
+  const titledRows = useMemo(() => attachTitles(visibleRows, titleMaps), [visibleRows, titleMaps]);
+  const displayedRows = useMemo(() => titledRows.slice(0, displayLimit), [titledRows, displayLimit]);
+  const selectedRow = titledRows.find(row => row.id === selectedId) ?? null;
   const hasMore = filteredRows.length > displayLimit;
   const remaining = filteredRows.length - displayLimit;
 
@@ -467,11 +614,11 @@ export function CatalogueWorkspace({
             <Button
               variant='outline'
               size='icon'
-              onClick={() => catalogueQuery.refetch()}
-              disabled={catalogueQuery.isFetching}
+              onClick={handleRefresh}
+              disabled={isRefreshing}
               className='shrink-0'
             >
-              <RefreshCw className={`h-4 w-4 ${catalogueQuery.isFetching ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
             </Button>
           </div>
           <div className='grid grid-cols-2 gap-2 sm:grid-cols-4'>
@@ -484,7 +631,7 @@ export function CatalogueWorkspace({
         <CardContent className='flex-1 overflow-hidden pt-0'>
           <ScrollArea className='h-full pr-3'>
             <div className='space-y-2 pb-3'>
-              {catalogueQuery.isLoading ? (
+              {isListLoading ? (
                 Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={`catalogue-skeleton-${index}`}
@@ -601,7 +748,7 @@ export function CatalogueWorkspace({
       {/* Desktop Details Panel */}
       <Card className='hidden min-h-0 flex-1 flex-col lg:flex'>
         <CatalogueDetailsContent
-          catalogueQuery={catalogueQuery}
+          catalogueQuery={listQueryState}
           selectedRow={selectedRow}
           titleMaps={titleMaps}
           handleCopy={handleCopy}
@@ -612,7 +759,7 @@ export function CatalogueWorkspace({
       <CatalogueDetailsSheet
         open={isSheetOpen && Boolean(selectedRow)}
         onOpenChange={setIsSheetOpen}
-        catalogueQuery={catalogueQuery}
+        catalogueQuery={listQueryState}
         selectedRow={selectedRow}
         titleMaps={titleMaps}
         handleCopy={handleCopy}
@@ -840,12 +987,12 @@ function CatalogueDetailsBody({
 
       {/* Description (if available) */}
       {(() => {
-        const linkedEntity = selectedRow.courseId
-          ? titleMaps.courseMap.get(selectedRow.courseId)
+        const description = selectedRow.courseId
+          ? (titleMaps.courseMap.get(selectedRow.courseId)?.description ??
+            selectedRow.raw.course?.description)
           : selectedRow.classId
-            ? titleMaps.classMap.get(selectedRow.classId)
-            : null;
-        const description = linkedEntity?.description;
+            ? titleMaps.classMap.get(selectedRow.classId)?.description
+            : undefined;
 
         return description ? (
           <div className='border-border/60 bg-muted/30 rounded-[16px] border p-5'>
@@ -873,7 +1020,11 @@ function CatalogueDetailsBody({
       />
 
       {/* Pricing - More Prominent */}
-      <CatalogueItemPricing selectedRow={selectedRow} courseMap={titleMaps.courseMap} />
+      <CatalogueItemPricing
+        key={selectedRow.id}
+        selectedRow={selectedRow}
+        courseMap={titleMaps.courseMap}
+      />
 
       {/* Key Information */}
       <div className='space-y-3'>
@@ -933,32 +1084,40 @@ function CatalogueItemCreatorInfo({
 }: {
   selectedRow: CatalogueRow;
   courseMap: Map<string, Course>;
-  classMap: Map<string, ClassDefinition>;
+  classMap: Map<string, CatalogueClass>;
 }) {
   const course = selectedRow.courseId ? courseMap.get(selectedRow.courseId) : null;
   const classDef = selectedRow.classId ? classMap.get(selectedRow.classId) : null;
 
-  const courseCreatorUuid = course?.course_creator_uuid;
+  const courseCreatorUuid = selectedRow.courseCreatorUuid ?? course?.course_creator_uuid;
   const instructorUuid = classDef?.default_instructor_uuid;
+  const snapshotCreatorName = selectedRow.creatorName;
+  // The signed-in instructor's own classes render from the loaded profile, not a refetch.
+  const ownInstructor = useUserProfile()?.instructor;
+  const isOwnInstructor = !!instructorUuid && instructorUuid === ownInstructor?.uuid;
 
+  // The snapshot already names the creator; fetch the profile only for rows without one.
   const { data: creatorData } = useQuery({
     ...getCourseCreatorByUuidOptions({
       path: { uuid: courseCreatorUuid ?? '' },
     }),
-    enabled: Boolean(courseCreatorUuid),
+    enabled: Boolean(courseCreatorUuid) && !snapshotCreatorName,
+    staleTime: STALE_TIMES.entity,
   });
 
   const { data: instructorData } = useQuery({
     ...getInstructorByUuidOptions({
       path: { uuid: instructorUuid ?? '' },
     }),
-    enabled: Boolean(instructorUuid),
+    enabled: Boolean(instructorUuid) && !isOwnInstructor,
+    staleTime: STALE_TIMES.entity,
   });
 
-  const creator = extractEntity<CourseCreator>(creatorData);
-  const instructor = extractEntity<Instructor>(instructorData);
+  const creator = snapshotCreatorName ? null : extractEntity<CourseCreator>(creatorData);
+  const creatorName = snapshotCreatorName ?? creator?.full_name;
+  const instructor = isOwnInstructor ? ownInstructor : extractEntity<Instructor>(instructorData);
 
-  if (!creator && !instructor) return null;
+  if (!creatorName && !instructor) return null;
 
   return (
     <div className='space-y-3'>
@@ -967,7 +1126,7 @@ function CatalogueItemCreatorInfo({
         People
       </p>
       <div className='grid gap-3 sm:grid-cols-2'>
-        {creator && (
+        {creatorName && (
           <div className='border-border/60 bg-card/80 rounded-[12px] border p-4'>
             <div className='flex items-center gap-3'>
               <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-full'>
@@ -978,9 +1137,9 @@ function CatalogueItemCreatorInfo({
                   Course Creator
                 </p>
                 <p className='text-foreground mt-1 truncate text-sm font-semibold'>
-                  {creator.full_name}
+                  {creatorName}
                 </p>
-                {creator.website && (
+                {creator?.website && (
                   <p className='text-muted-foreground truncate text-xs'>{creator.website}</p>
                 )}
               </div>
@@ -1020,6 +1179,7 @@ function CatalogueItemPricing({
   courseMap: Map<string, Course>;
 }) {
   const course = selectedRow.courseId ? courseMap.get(selectedRow.courseId) : null;
+  const [showShare, setShowShare] = useState(false);
 
   return (
     <div className='space-y-3'>
@@ -1038,34 +1198,83 @@ function CatalogueItemPricing({
         </p>
 
         {/* Revenue Share Information */}
-        {course &&
-          course.creator_share_percentage !== undefined &&
-          course.instructor_share_percentage !== undefined && (
-            <div className='mt-4 grid gap-3 sm:grid-cols-2'>
-              <div className='border-border/60 bg-card/60 rounded-[10px] border p-3'>
-                <div className='flex items-center gap-2'>
-                  <Percent className='text-primary h-3.5 w-3.5' />
-                  <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
-                    Creator Share
-                  </p>
-                </div>
-                <p className='text-foreground mt-1.5 text-lg font-bold'>
-                  {course.creator_share_percentage}%
-                </p>
-              </div>
-              <div className='border-border/60 bg-card/60 rounded-[10px] border p-3'>
-                <div className='flex items-center gap-2'>
-                  <TrendingUp className='text-primary h-3.5 w-3.5' />
-                  <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
-                    Instructor Share
-                  </p>
-                </div>
-                <p className='text-foreground mt-1.5 text-lg font-bold'>
-                  {course.instructor_share_percentage}%
-                </p>
-              </div>
-            </div>
-          )}
+        {course ? (
+          <RevenueShareTiles course={course} />
+        ) : selectedRow.courseId ? (
+          showShare ? (
+            <LazyRevenueShare courseId={selectedRow.courseId} />
+          ) : (
+            <Button
+              variant='link'
+              size='sm'
+              className='mt-3 h-auto px-0'
+              onClick={() => setShowShare(true)}
+            >
+              Show revenue share
+            </Button>
+          )
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/** Commercial terms are not in the catalogue snapshot, so they load only when asked for. */
+function LazyRevenueShare({ courseId }: { courseId: string }) {
+  const courseQuery = useQuery({
+    ...getCourseByUuidOptions({ path: { uuid: courseId } }),
+    enabled: Boolean(courseId),
+    staleTime: STALE_TIMES.entity,
+  });
+  const course = extractEntity<Course>(courseQuery.data);
+
+  return (
+    <AsyncSection
+      name='catalogue-revenue-share'
+      loading={courseQuery.isLoading && !courseQuery.data}
+      error={courseQuery.error}
+      empty={!course}
+      emptyTitle='No revenue share set'
+      onRetry={() => courseQuery.refetch()}
+      skeleton={<Skeleton className='mt-4 h-16 w-full' />}
+      className='mt-4'
+    >
+      {course ? <RevenueShareTiles course={course} /> : null}
+    </AsyncSection>
+  );
+}
+
+function RevenueShareTiles({ course }: { course: Course }) {
+  if (
+    course.creator_share_percentage === undefined ||
+    course.instructor_share_percentage === undefined
+  ) {
+    return null;
+  }
+
+  return (
+    <div className='mt-4 grid gap-3 sm:grid-cols-2'>
+      <div className='border-border/60 bg-card/60 rounded-[10px] border p-3'>
+        <div className='flex items-center gap-2'>
+          <Percent className='text-primary h-3.5 w-3.5' />
+          <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+            Creator Share
+          </p>
+        </div>
+        <p className='text-foreground mt-1.5 text-lg font-bold'>
+          {course.creator_share_percentage}%
+        </p>
+      </div>
+      <div className='border-border/60 bg-card/60 rounded-[10px] border p-3'>
+        <div className='flex items-center gap-2'>
+          <TrendingUp className='text-primary h-3.5 w-3.5' />
+          <p className='text-muted-foreground text-[10px] font-medium tracking-wider uppercase'>
+            Instructor Share
+          </p>
+        </div>
+        <p className='text-foreground mt-1.5 text-lg font-bold'>
+          {course.instructor_share_percentage}%
+        </p>
       </div>
     </div>
   );

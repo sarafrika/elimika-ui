@@ -43,7 +43,7 @@ import {
   type OfferingCounts,
   type OfferingCountState,
 } from '@/hooks/use-offering-counts';
-import { isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isSearchUnavailable } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   classifySearchError,
@@ -61,7 +61,7 @@ import {
   searchTrainingProgramsOptions,
   searchTrainingProgramsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { format, isValid } from 'date-fns';
 import {
@@ -111,8 +111,7 @@ function titleOf(offering: Offering) {
 }
 
 function previewHref(offering: Offering) {
-  const segment = offering.type === 'courses' ? 'preview' : 'programs';
-  return `/dashboard/course-creator/course-management/${segment}/${offering.item.uuid}`;
+  return `/dashboard/course-creator/${offering.type}/${offering.item.uuid}`;
 }
 
 function editHref(offering: Offering) {
@@ -193,13 +192,11 @@ export default function CourseCreatorCoursesContent() {
     ...courseOptions,
     enabled: !!creatorUuid,
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   const programsQuery = useQuery({
     ...programOptions,
     enabled: !!creatorUuid,
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
   const searchError = sentTerm ? (coursesQuery.error ?? programsQuery.error) : null;
   const searchIssue: SearchIssue =
@@ -794,7 +791,7 @@ function OfferingRow({
                 src={thumbnail}
                 alt=''
                 fill
-                unoptimized
+                unoptimized={!isAuthenticatedMediaUrl(thumbnail)}
                 sizes='64px'
                 className='object-cover'
                 onError={() => setFailedImage(thumbnail)}

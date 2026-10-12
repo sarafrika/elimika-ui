@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form } from '@/components/ui/form';
 import Spinner from '@/components/ui/spinner';
 import { createStudent } from '@/services/client';
+import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-session-identity';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { StudentGuardianFields } from '@/src/features/profile/forms/shared/components/StudentGuardianFields';
@@ -22,6 +23,7 @@ import {
 
 export function StudentOnboardingForm() {
   const router = useRouter();
+  const refreshSessionIdentity = useRefreshSessionIdentity();
   const user = useUserProfile();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,6 +64,7 @@ export function StudentOnboardingForm() {
       await user.invalidateQuery?.();
 
       toast.success('Student account created successfully!');
+      await refreshSessionIdentity();
       router.replace(buildDashboardSwitchPath('student'));
     } catch (_error) {
       toast.error('Failed to create student account. Please try again.');

@@ -30,7 +30,8 @@ import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
-import { localDate } from '@/lib/date';
+import { useStudentCourseOverview } from '@/hooks/use-student-course-overview';
+import { dateWindow } from '@/lib/date';
 import { AttachmentResourceList } from '../../../../components/assessment/AttachmentResourceList';
 import RichTextRenderer from '../../../../components/editors/richTextRenders';
 import {
@@ -62,7 +63,10 @@ import type {
   QuizAttempt,
   StudentSchedule,
 } from '../../../../services/client/types.gen';
-import { useStudentAssignmentData } from '../../../../src/features/dashboard/student-assessment/useStudentAssignmentData';
+import {
+  useAssignmentAttachments,
+  useStudentAssignmentData,
+} from '../../../../src/features/dashboard/student-assessment/useStudentAssignmentData';
 import { DonutChart } from '../../instructor/analytics/_components/charts/StatusBreakdown';
 import { toAttachmentResourceItems } from '../_components/student-assignment-workspace';
 
@@ -71,6 +75,8 @@ type StudentAnalyticsTab = 'Overview' | 'Enrollments' | 'Assessments';
 const TABS: StudentAnalyticsTab[] = ['Overview', 'Enrollments', 'Assessments'];
 
 const PAGEABLE = { page: 0, size: 100 };
+
+type ClassLabels = Pick<ClassDefinition, 'course_uuid' | 'program_uuid'> & { title?: string };
 
 function formatDateTime(value?: Date | string | null) {
   if (!value) {
@@ -314,20 +320,21 @@ export default function StudentAnalyticsDashboard() {
     enabled: !!studentUuid,
   });
 
+  const scheduleWindow = useMemo(() => dateWindow({ pastMonths: 24, futureMonths: 12 }), []);
   const scheduleQuery = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: studentUuid ?? '' },
-      query: {
-        start: localDate('2024-01-01'),
-        end: localDate('2030-12-31'),
-      },
+      query: { start: scheduleWindow.start, end: scheduleWindow.end },
     }),
     enabled: !!studentUuid,
   });
 
+  // The enrolled classes come from the course-overview composite; the platform-wide
+  // active-class listing is only the fallback when that endpoint is unavailable.
+  const courseOverview = useStudentCourseOverview(studentUuid);
   const activeClassDefinitionsQuery = useQuery({
     ...getAllActiveClassDefinitionsOptions({}),
-    enabled: !!studentUuid,
+    enabled: !!studentUuid && courseOverview.needsFallback,
   });
 
   const scheduleRows = scheduleQuery.data?.data ?? [];
@@ -342,7 +349,15 @@ export default function StudentAnalyticsDashboard() {
   );
 
   const classDefinitionMap = useMemo(() => {
-    const map = new Map<string, ClassDefinition>();
+    const map = new Map<string, ClassLabels>();
+    for (const item of courseOverview.items) {
+      map.set(item.class_definition_uuid, {
+        course_uuid: item.course_uuid,
+        program_uuid: item.program_uuid,
+        title: item.class_title,
+      });
+    }
+
     const entries = activeClassDefinitionsQuery.data?.data ?? [];
 
     for (const entry of entries) {
@@ -353,7 +368,7 @@ export default function StudentAnalyticsDashboard() {
     }
 
     return map;
-  }, [activeClassDefinitionsQuery.data]);
+  }, [activeClassDefinitionsQuery.data, courseOverview.items]);
 
   const courseIdsFromClasses = useMemo(
     () =>
@@ -798,6 +813,11 @@ export default function StudentAnalyticsDashboard() {
         return bTime - aTime;
       });
   }, [studentAssignmentRows]);
+
+  const { attachments: selectedAssignmentAttachments } = useAssignmentAttachments(
+    selectedSubmission?.assignment.uuid,
+    Boolean(selectedSubmission)
+  );
 
   const selectedSubmissionAttachmentsQuery = useQuery({
     ...getSubmissionAttachmentsOptions({
@@ -1538,7 +1558,7 @@ export default function StudentAnalyticsDashboard() {
                   <h3 className='text-foreground text-sm font-semibold'>Assignment Attachments</h3>
                   <div className='mt-3 space-y-3'>
                     <AttachmentResourceList
-                      attachments={selectedSubmission.attachments.map(attachment => ({
+                      attachments={selectedAssignmentAttachments.map(attachment => ({
                         ...attachment,
                         file_size_bytes:
                           typeof attachment.file_size_bytes === 'bigint'

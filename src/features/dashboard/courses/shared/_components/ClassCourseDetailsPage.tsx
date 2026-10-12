@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { AsyncSection } from '@/components/data/async-section';
+import { LazySection } from '@/components/data/lazy-section';
 import { type EntityFact, EntityHeaderCard } from '@/components/data-display/entity-header-card';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import {
@@ -23,6 +25,7 @@ import {
 } from '@/components/data-display/section-tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   useAssignmentsByLessonIds,
   useQuizzesByLessonIds,
@@ -30,13 +33,16 @@ import {
 } from '@/hooks/use-batched-lookups';
 import type { CombinedClassDetailsData } from '@/hooks/use-class-details';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
+import { STALE_TIMES } from '@/lib/query-client';
+import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import {
-  getAllCoursesOptions,
   getAllDifficultyLevelsOptions,
+  getClassRatingSummaryOptions,
   getClassReviewsOptions,
   getCourseAssessmentsOptions,
   getCourseCreatorByUuidOptions,
+  searchCoursesAndProgrammesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { LOCATION_TYPE_LABELS, SESSION_FORMAT_LABELS } from '@/src/features/catalogue/course-page';
@@ -48,7 +54,6 @@ import {
   ReviewsTab,
 } from '@/src/features/course-record';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { EnrollmentLoadingState } from '@/src/features/dashboard/courses/components/EnrollmentLoadingState';
 import StudentsAlsoBought from '@/src/features/dashboard/courses/shared/_components/StudentsAlsoBought';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { 
@@ -68,6 +73,7 @@ import {
   ClassHeaderMedia,
   ClassInstructorCard,
   ClassSchedulePanel,
+  classInstructor,
   DeleteClassButton,
   ShareLinkSheet,
   WriteReviewButton,
@@ -77,9 +83,11 @@ import {
 export default function ClassCourseDetailsPage({
   classData,
   viewer,
+  loading,
 }: {
   classData: CombinedClassDetailsData;
   viewer: ClassHubViewer;
+  loading?: ClassHubLoading;
 }) {
   const router = useRouter();
   const { activeDomain } = useUserDomain();
@@ -87,7 +95,10 @@ export default function ClassCourseDetailsPage({
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const course = classData.course;
-  const courseUuid = course?.uuid ?? '';
+  // The class definition already names the course, so course-scoped queries need not wait for it.
+  const courseUuid = course?.uuid ?? classData.class?.course_uuid ?? '';
+  const courseLoading = !course && !!loading?.related;
+  const instructorLoading = !classInstructor(classData) && !!loading?.related;
   const classId = classData.class?.uuid ?? '';
 
   /* ── data ──────────────────────────────────────────────────────────── */
@@ -102,23 +113,40 @@ export default function ClassCourseDetailsPage({
       path: { courseUuid },
       query: { pageable: {} },
     }),
-    enabled: !!courseUuid,
+    enabled: !!courseUuid && tab === 'assessment',
   });
   const assessmentScheme = assessmentsQuery.data?.data?.content ?? [];
 
-  const { data: creatorResponse, isLoading: creatorLoading } = useQuery({
+  const inlineCreatorName = course?.course_creator_name?.trim() ?? '';
+  const { data: creatorResponse, isLoading: creatorQueryLoading } = useQuery({
     ...getCourseCreatorByUuidOptions({ path: { uuid: course?.course_creator_uuid as string } }),
-    enabled: !!course?.course_creator_uuid,
+    enabled: !!course?.course_creator_uuid && !inlineCreatorName,
   });
+  const creatorLoading = courseLoading || creatorQueryLoading;
   // The generated type drops the response envelope; the payload sits under `data`.
   const creatorName =
-    (creatorResponse as unknown as { data?: { full_name?: string } } | undefined)?.data
-      ?.full_name ?? '';
+    inlineCreatorName ||
+    ((creatorResponse as unknown as { data?: { full_name?: string } } | undefined)?.data
+      ?.full_name ??
+      '');
+
+  // useClassDetails starts the summary in wave one; the reviews list waits for its tab.
+  const ratingSummaryQuery = useQuery({
+    ...getClassRatingSummaryOptions({ path: { uuid: classId } }),
+    enabled: !!classId,
+    staleTime: STALE_TIMES.entity,
+    refetchOnWindowFocus: false,
+  });
+  const ratingSummary = ratingSummaryQuery.data?.data;
+  const summaryRating = ratingSummary?.average_rating ?? null;
+  const summaryReviewCount =
+    ratingSummary?.review_count == null ? undefined : Number(ratingSummary.review_count);
+  const ratingPending = !!classId && ratingSummaryQuery.isLoading;
 
   const classReviewsQuery = useQuery({
     ...getClassReviewsOptions({ path: { uuid: classId }, query: { pageable: {} } }),
-    enabled: !!classId,
-    staleTime: 5 * 60 * 1000,
+    enabled: !!classId && tab === 'reviews',
+    staleTime: STALE_TIMES.entity,
     refetchOnWindowFocus: false,
   });
   const classReviews = useMemo(
@@ -126,9 +154,13 @@ export default function ClassCourseDetailsPage({
     [classReviewsQuery.data]
   );
   const blockReviews = useMemo(() => toBlockReviews(classReviews), [classReviews]);
-  const reviewerIds = useMemo(() => reviewerUuids(classReviews), [classReviews]);
+  const reviewerIds = useMemo(
+    () => (tab === 'reviews' ? reviewerUuids(classReviews) : NO_IDS),
+    [classReviews, tab]
+  );
   const { studentMap } = useStudentsByIds(reviewerIds);
-  const avgRating = averageRating(classReviews);
+  const avgRating = summaryRating ?? averageRating(classReviews);
+  const reviewCount = classReviewsQuery.data ? classReviews.length : summaryReviewCount;
 
   const { data: difficultyResponse, isLoading: difficultyLoading } = useQuery(
     getAllDifficultyLevelsOptions()
@@ -137,11 +169,11 @@ export default function ClassCourseDetailsPage({
     (difficultyResponse?.data ?? []).find(level => level.uuid === course?.difficulty_uuid)?.name ??
     null;
 
+  // Lesson bodies load only once the curriculum tab opens; the list is seeded by useClassDetails.
   const {
-    isLoading: lessonsLoading,
-    isFetching: lessonsFetching,
+    isLessonListLoading: lessonsLoading,
     lessons: lessonsWithContent,
-  } = useCourseLessonsWithContent({ courseUuid });
+  } = useCourseLessonsWithContent({ courseUuid, contentEnabled: tab === 'curriculum' });
 
   const curriculumLessons = useMemo(
     () => toCurriculumLessons(lessonsWithContent),
@@ -156,63 +188,32 @@ export default function ClassCourseDetailsPage({
   );
   const contentItemCount = useMemo(
     () =>
-      lessonsWithContent?.some(item => item.content)
+      lessonsWithContent?.length && lessonsWithContent.every(item => item.content)
         ? lessonsWithContent.reduce((sum, item) => sum + (item.content?.data?.length ?? 0), 0)
         : undefined,
     [lessonsWithContent]
   );
 
-  const { items: quizzes, isLoading: quizzesLoading } = useQuizzesByLessonIds(lessonUuids);
+  // Quiz and assignment searches wait for a tab that shows them, then stay on once seen.
+  const lessonAssessmentsTab = tab === 'assessment' || tab === 'curriculum';
+  const [lessonAssessmentsWanted, setLessonAssessmentsWanted] = useState(lessonAssessmentsTab);
+  if (lessonAssessmentsTab && !lessonAssessmentsWanted) setLessonAssessmentsWanted(true);
+  const assessmentLessonUuids = lessonAssessmentsWanted ? lessonUuids : NO_LESSONS;
+  const { items: quizzes, isLoading: quizzesLoading } =
+    useQuizzesByLessonIds(assessmentLessonUuids);
   const { items: assignments, isLoading: assignmentLoading } =
-    useAssignmentsByLessonIds(lessonUuids);
+    useAssignmentsByLessonIds(assessmentLessonUuids);
   const filteredAssignments = assignments.filter(item => lessonUuids.includes(item.lesson_uuid));
   const filteredQuizzes = quizzes.filter(item => lessonUuids.includes(item.lesson_uuid));
-
-  const { data: relatedCoursesResponse, isLoading: relatedCoursesLoading } = useQuery({
-    ...getAllCoursesOptions({ query: { pageable: { page: 0, size: 12 } } }),
-    enabled: !!course?.course_creator_uuid,
-  });
-  const relatedCourses = useMemo(
-    () =>
-      (relatedCoursesResponse?.data?.content ?? [])
-        .filter(
-          item =>
-            item.uuid &&
-            item.uuid !== course?.uuid &&
-            item.course_creator_uuid === course?.course_creator_uuid
-        )
-        .slice(0, 3),
-    [course?.course_creator_uuid, course?.uuid, relatedCoursesResponse?.data?.content]
-  );
 
   const [siteOrigin, setSiteOrigin] = useState('');
   useEffect(() => {
     setSiteOrigin(window.location.origin);
   }, []);
   const registrationLink =
-    siteOrigin && course?.uuid
-      ? `${siteOrigin}/dashboard/student/courses/available-classes/${course.uuid}/enroll?id=${classId}`
+    siteOrigin && courseUuid
+      ? `${siteOrigin}/dashboard/student/courses/available-classes/${courseUuid}/enroll?id=${classId}`
       : '';
-
-  const isEverythingReady = !(
-    creatorLoading ||
-    classReviewsQuery.isLoading ||
-    difficultyLoading ||
-    assignmentLoading ||
-    quizzesLoading ||
-    lessonsLoading ||
-    lessonsFetching ||
-    relatedCoursesLoading
-  );
-
-  if (!isEverythingReady) {
-    return (
-      <EnrollmentLoadingState
-        title='Loading your class details'
-        description='We are gathering lessons, tasks, quizzes, and course information so the full learning overview is ready when the page opens.'
-      />
-    );
-  }
 
   /* ── header ────────────────────────────────────────────────────────── */
 
@@ -220,33 +221,65 @@ export default function ClassCourseDetailsPage({
   const enrolledCount = new Set((classData.enrollments ?? []).map(item => item.student_uuid)).size;
   const sessionCount = classData.schedule?.length ?? 0;
   const assessmentCount = filteredAssignments.length + filteredQuizzes.length;
+  const assessmentCountLoading = lessonsLoading || quizzesLoading || assignmentLoading;
+  const factSkeleton = <Skeleton className='inline-block h-4 w-6 align-middle' />;
+  const scheduleLoading = !!loading?.schedule;
 
   const facts: EntityFact[] = [
     {
       key: 'schedule',
       icon: CalendarClock,
-      value: sessionCount,
-      label: `${sessionCount === 1 ? 'session' : 'sessions'} · ${scheduleTotalDuration(classData.schedule)}`,
+      value: scheduleLoading ? factSkeleton : sessionCount,
+      label: scheduleLoading
+        ? 'sessions'
+        : `${sessionCount === 1 ? 'session' : 'sessions'} · ${scheduleTotalDuration(classData.schedule)}`,
     },
-    { key: 'weeks', icon: Clock, value: scheduleWeekSpan(classData.schedule), label: 'weeks' },
-    { key: 'enrolled', icon: Users, value: enrolledCount, label: 'enrolled' },
-    { key: 'lessons', icon: BookOpen, value: curriculumLessons.length, label: 'lessons' },
-    { key: 'assessments', icon: FileCheck, value: assessmentCount, label: 'assessments' },
+    {
+      key: 'weeks',
+      icon: Clock,
+      value: scheduleLoading ? factSkeleton : scheduleWeekSpan(classData.schedule),
+      label: 'weeks',
+    },
+    {
+      key: 'enrolled',
+      icon: Users,
+      value: loading?.enrollments ? factSkeleton : enrolledCount,
+      label: 'enrolled',
+    },
+    {
+      key: 'lessons',
+      icon: BookOpen,
+      value: lessonsLoading ? factSkeleton : curriculumLessons.length,
+      label: 'lessons',
+    },
+    {
+      key: 'assessments',
+      icon: FileCheck,
+      value: !lessonAssessmentsWanted
+        ? undefined
+        : assessmentCountLoading
+          ? factSkeleton
+          : assessmentCount,
+      label: 'assessments',
+    },
   ];
-  if (avgRating !== null) {
+  if (ratingPending && avgRating === null) {
+    facts.push({ key: 'rating', icon: Star, value: factSkeleton, label: 'rating' });
+  } else if (avgRating !== null) {
+    const count = reviewCount ?? 0;
     facts.push({
       key: 'rating',
       icon: Star,
       value: avgRating.toFixed(1),
-      label: `from ${classReviews.length} ${classReviews.length === 1 ? 'review' : 'reviews'}`,
+      label: `from ${count} ${count === 1 ? 'review' : 'reviews'}`,
     });
   }
 
   const tabCounts: Partial<Record<ClassCourseTab, number>> = {
     curriculum: curriculumLessons.length,
-    assessment: assessmentScheme.length,
+    assessment: assessmentsQuery.data ? assessmentScheme.length : undefined,
     schedule: sessionCount,
-    reviews: classReviews.length,
+    reviews: reviewCount,
   };
   const tabs: SectionTab<ClassCourseTab>[] = CLASS_COURSE_TABS.map(id => ({
     id,
@@ -283,7 +316,11 @@ export default function ClassCourseDetailsPage({
         eyebrow='Class'
         badges={
           <>
-            {difficultyName ? <Badge variant='secondary'>{difficultyName}</Badge> : null}
+            {difficultyLoading || courseLoading ? (
+              <Skeleton className='h-5 w-16 rounded-full' />
+            ) : difficultyName ? (
+              <Badge variant='secondary'>{difficultyName}</Badge>
+            ) : null}
             {classData.class?.location_type ? (
               <Badge variant='outline'>
                 {enumLabel(LOCATION_TYPE_LABELS, classData.class.location_type)}
@@ -298,8 +335,20 @@ export default function ClassCourseDetailsPage({
         }
         context={
           <span className='text-muted-foreground'>
-            Course <b className='text-foreground font-semibold'>{course?.name}</b>
-            {creatorName ? <> · by {creatorName}</> : null}
+            Course{' '}
+            {courseLoading ? (
+              <Skeleton className='inline-block h-3.5 w-32 align-middle' />
+            ) : (
+              <b className='text-foreground font-semibold'>{course?.name}</b>
+            )}
+            {creatorLoading ? (
+              <>
+                {' · by '}
+                <Skeleton className='inline-block h-3.5 w-24 align-middle' />
+              </>
+            ) : creatorName ? (
+              <> · by {creatorName}</>
+            ) : null}
           </span>
         }
         facts={facts}
@@ -333,31 +382,38 @@ export default function ClassCourseDetailsPage({
       >
         <SectionTabPanel value='overview'>
           <div className='flex flex-col gap-[18px]'>
-            <OverviewTab
-              access={access}
-              description={course?.description}
-              objectives={courseBulletLines(course?.objectives)}
-              prerequisites={courseBulletLines(course?.prerequisites)}
-              requirements={requirementsQuery.data?.data?.content}
-              // A learner gains nothing from an empty "no requirements" note meant for providers.
-              hideRequirements={
-                requirementsQuery.isSuccess && !requirementsQuery.data?.data?.content?.length
-              }
-              requirementsAsync={{
-                loading: requirementsQuery.isLoading,
-                error: requirementsQuery.error,
-                onRetry: () => requirementsQuery.refetch(),
-              }}
-            />
-            <ClassInstructorCard classData={classData} />
-            {relatedCourses.length > 0 ? (
-              <section className='bg-card rounded-xl border px-5 py-[18px] shadow-sm'>
-                <StudentsAlsoBought
-                  courses={relatedCourses}
-                  activeDomain={activeDomain ?? null}
+            <AsyncSection
+              name='class-course-overview'
+              loading={courseLoading}
+              skeleton={<Skeleton className='h-64 w-full rounded-xl' />}
+            >
+              <OverviewTab
+                access={access}
+                description={course?.description}
+                objectives={courseBulletLines(course?.objectives)}
+                prerequisites={courseBulletLines(course?.prerequisites)}
+                requirements={requirementsQuery.data?.data?.content}
+                // A learner gains nothing from an empty "no requirements" note meant for providers.
+                hideRequirements={
+                  requirementsQuery.isSuccess && !requirementsQuery.data?.data?.content?.length
+                }
+                requirementsAsync={{
+                  loading: requirementsQuery.isLoading,
+                  error: requirementsQuery.error,
+                  onRetry: () => requirementsQuery.refetch(),
+                }}
+              />
+            </AsyncSection>
+            <ClassInstructorCard classData={classData} loading={instructorLoading} />
+            {course?.course_creator_uuid ? (
+              <LazySection skeleton={<div className='h-px' />}>
+                <RelatedCreatorCourses
+                  creatorUuid={course.course_creator_uuid}
+                  courseUuid={courseUuid}
                   creatorName={creatorName}
+                  activeDomain={activeDomain ?? null}
                 />
-              </section>
+              </LazySection>
             ) : null}
           </div>
         </SectionTabPanel>
@@ -367,6 +423,7 @@ export default function ClassCourseDetailsPage({
             access={access}
             lessons={curriculumLessons}
             contentItemCount={contentItemCount}
+            loading={lessonsLoading}
           />
         </SectionTabPanel>
 
@@ -378,10 +435,16 @@ export default function ClassCourseDetailsPage({
               error={assessmentsQuery.error}
               onRetry={() => assessmentsQuery.refetch()}
             />
-            <AssignmentQuizCounts
-              assignments={filteredAssignments.length}
-              quizzes={filteredQuizzes.length}
-            />
+            <AsyncSection
+              name='class-assignment-quiz-counts'
+              loading={assessmentCountLoading}
+              skeleton={<Skeleton className='h-24 w-full rounded-xl' />}
+            >
+              <AssignmentQuizCounts
+                assignments={filteredAssignments.length}
+                quizzes={filteredQuizzes.length}
+              />
+            </AsyncSection>
           </div>
         </SectionTabPanel>
 
@@ -422,5 +485,59 @@ export default function ClassCourseDetailsPage({
         shareDescription={`Check out this class: ${classData.class?.title ?? ''}`}
       />
     </main>
+  );
+}
+
+const NO_LESSONS: string[] = [];
+const NO_IDS: string[] = [];
+
+/** Which useClassDetails waves are still in flight once the class definition has landed. */
+export type ClassHubLoading = { related?: boolean; schedule?: boolean; enrollments?: boolean };
+
+/** Other courses by the same creator; mounted by LazySection so it loads near the viewport. */
+function RelatedCreatorCourses({
+  creatorUuid,
+  courseUuid,
+  creatorName,
+  activeDomain,
+}: {
+  creatorUuid: string;
+  courseUuid: string;
+  creatorName: string;
+  activeDomain: UserDomain | null;
+}) {
+  // The catalogue search returns rating and review counts inline, so no per-course review calls.
+  const { data: relatedCoursesResponse, isLoading: relatedCoursesLoading } = useQuery({
+    ...searchCoursesAndProgrammesOptions({
+      query: { show: 'courses', creator_uuid: creatorUuid, sort: 'newest', size: '4' },
+    }),
+    enabled: Boolean(creatorUuid),
+    staleTime: STALE_TIMES.reference,
+    refetchOnWindowFocus: false,
+  });
+  const relatedCourses = useMemo(
+    () =>
+      (relatedCoursesResponse?.data?.content ?? [])
+        .filter(item => item.uuid && item.uuid !== courseUuid)
+        .slice(0, 3),
+    [courseUuid, relatedCoursesResponse?.data?.content]
+  );
+
+  if (!relatedCoursesLoading && relatedCourses.length === 0) return null;
+
+  return (
+    <section className='bg-card rounded-xl border px-5 py-[18px] shadow-sm'>
+      <AsyncSection
+        name='class-related-courses'
+        loading={relatedCoursesLoading}
+        skeleton={<Skeleton className='h-48 w-full rounded-xl' />}
+      >
+        <StudentsAlsoBought
+          courses={relatedCourses}
+          activeDomain={activeDomain}
+          creatorName={creatorName}
+        />
+      </AsyncSection>
+    </section>
   );
 }

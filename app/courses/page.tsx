@@ -1,8 +1,10 @@
 import type { Metadata } from 'next';
 import { Suspense } from 'react';
-import { PublicCoursesPage } from '@/src/features/catalogue/components/PublicCoursesPage';
+import {
+  PublicCoursesPage,
+  type ServerCatalogue,
+} from '@/src/features/catalogue/components/PublicCoursesPage';
 import { listPublicCatalogueCourses } from '@/src/features/catalogue/server';
-import type { PublicCatalogueCourse } from '@/src/features/catalogue/types';
 import { createPageMetadata } from '@/src/lib/seo';
 
 export const metadata: Metadata = createPageMetadata({
@@ -14,22 +16,18 @@ export const metadata: Metadata = createPageMetadata({
 });
 
 /**
- * The public catalogue. The server renders the catalogue's first page (crawlable, and
- * the fallback when search is down); the client searches courses and programmes through
- * `/api/v1/catalogue/search`.
+ * The public catalogue. The server's first page streams in behind the shell (crawlable,
+ * and the fallback when search is down) while the client searches `/api/v1/catalogue/search`.
  */
-export default async function PublicCoursesRoute() {
-  let catalogue: PublicCatalogueCourse[] = [];
-  let hasError = false;
-  try {
-    catalogue = (await listPublicCatalogueCourses()).items;
-  } catch {
-    hasError = true;
-  }
+export default function PublicCoursesRoute() {
+  const cataloguePromise: Promise<ServerCatalogue> = listPublicCatalogueCourses().then(
+    result => ({ items: result.items, hasError: false }),
+    () => ({ items: [], hasError: true })
+  );
 
   return (
     <Suspense>
-      <PublicCoursesPage catalogue={catalogue} hasError={hasError} />
+      <PublicCoursesPage cataloguePromise={cataloguePromise} />
     </Suspense>
   );
 }

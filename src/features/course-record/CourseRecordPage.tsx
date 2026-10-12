@@ -56,6 +56,7 @@ import {
   type LessonContentPreviewItem,
   LessonContentViewerDialog,
 } from '@/components/content-preview/LessonContentPreview';
+import { useSectionTab } from '@/components/data-display/section-tabs';
 import { Button } from '@/components/ui/button';
 import { useStudentsByIds } from '@/hooks/use-batched-lookups';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
@@ -111,6 +112,7 @@ import { CourseRecordView } from './CourseRecordView';
 import {
   type ClassDefinition,
   COURSE_EXPORT_ACTION_LABEL,
+  COURSE_RECORD_TABS,
   type Course,
   type CourseAccess,
   type CourseRailCardId,
@@ -134,20 +136,14 @@ type CopyVars = Record<string, string | number | null | undefined>;
  * ────────────────────────────────────────────────────────────────────────── */
 
 /**
- * The class list a learner enrols through, per dashboard, as the legacy course
- * page reached it: `roleScopedDashboardPath(domain, '/dashboard/…/<uuid>')`.
- *
- * The sub-path is not the same on every dashboard — student, course-creator and
- * instructor keep theirs under `courses/`, parent and admin under `all-courses/`
- * — and a role with no such screen at all (organisation) is deliberately absent,
- * because a link to a 404 is not better than no link.
+ * The class list a learner enrols through, per dashboard: every learner catalogue lives under
+ * `courses/`. Roles with no such screen (organisation, admin) are absent rather than a 404 link.
  */
 const CLASSES_LIST_PATH: Partial<Record<RoleSegment, string>> = {
   student: '/dashboard/courses/available-classes',
   'course-creator': '/dashboard/courses/available-classes',
   instructor: '/dashboard/courses/available-classes',
-  parent: '/dashboard/all-courses/available-classes',
-  admin: '/dashboard/all-courses/available-classes',
+  parent: '/dashboard/courses/available-classes',
 };
 
 /** The creator's builder. `?id=` is the course, as every course list links it. */
@@ -210,7 +206,9 @@ export function CourseRecordPage({
   onShare,
   className,
 }: CourseRecordPageProps) {
-  const record = useCourseRecord({ courseUuid });
+  // The same `?tab=` the shell reads; every viewer's first tab is Overview.
+  const urlTab = useSectionTab(COURSE_RECORD_TABS, 'overview');
+  const record = useCourseRecord({ courseUuid, tab: urlTab.value });
   const { access, capability } = record;
 
   const course = record.course.data;
@@ -395,9 +393,15 @@ export function CourseRecordPage({
   );
 
   const priceLabel = formatCourseMoney(course?.price ?? undefined);
-  const averageRating = content?.average_rating ?? ratings.average;
-  const totalReviews = content?.total_reviews ?? ratings.total;
-  const enrolledCount = record.enrollments.data?.total ?? stats?.public?.learners_trained;
+  // Reviews and enrolments load with their tabs; stats carries the totals meanwhile.
+  const ratingAverage = reviews ? ratings.average : stats?.public?.average_rating;
+  const ratingTotal = reviews ? ratings.total : stats?.public?.total_reviews;
+  const averageRating = content?.average_rating ?? ratingAverage;
+  const totalReviews = content?.total_reviews ?? ratingTotal;
+  const enrolledCount =
+    record.enrollments.data?.total ??
+    stats?.owner?.total_enrollments ??
+    stats?.public?.learners_trained;
 
   /** Every `{token}` the capability map leaves for live data, resolved once. */
   const vars: CopyVars = {
@@ -429,8 +433,8 @@ export function CourseRecordPage({
     approvedTrainers: approvedTrainerCount,
     learners: stats?.public?.learners_trained,
     averageFill: stats?.public?.average_class_fill,
-    rating: ratings.average?.toFixed(1),
-    reviews: ratings.total || undefined,
+    rating: ratingAverage?.toFixed(1),
+    reviews: ratingTotal || undefined,
     pendingApplications: pendingApplications.length || undefined,
   };
 
@@ -661,9 +665,9 @@ export function CourseRecordPage({
 
   const tabCounts: Partial<Record<CourseRecordTabId, number>> = {
     curriculum: lessonCount,
-    delivery: trainers?.trainers?.filter(row => row.approved_at).length,
+    delivery: approvedTrainerCount,
     classes: record.classes.data?.length,
-    reviews: reviews?.length,
+    reviews: reviews?.length ?? stats?.public?.total_reviews,
   };
 
   /*

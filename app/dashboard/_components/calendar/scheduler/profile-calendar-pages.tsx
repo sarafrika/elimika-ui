@@ -4,37 +4,41 @@
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import useAmdinClassesWithDetails from '@/hooks/use-admin-classes';
-import { useInstructorsByIds, useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
+import {
+  useClassesByIds,
+  useCoursesByIds,
+  useInstructorsByIds,
+  useStudentsByIds,
+  useUsersByIds,
+} from '@/hooks/use-batched-lookups';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
-import { localDate } from '@/lib/date';
+import { type CalendarFetchRange, useCalendarFetchRange } from '@/lib/calendar-range';
+import { dayjs, localDate, resolveDisplayZone } from '@/lib/date';
 import {
   JOB_TIME_LABELS,
   type JobTimeKind,
   jobTimeKind,
   jobTimeTitle,
 } from '@/lib/instructor-job-time';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   getCalendarOptions,
-  getClassDefinitionOptions,
   getClassDefinitionsForOrganisationOptions,
-  getClassScheduleOptions,
-  getCourseByUuidOptions,
   getEnrollmentsForClassOptions,
-  getInstructorByUuidOptions,
   getInstructorCalendarOptions,
+  getOrganisationTimetableOptions,
   getStudentScheduleOptions,
-  getUserByUuidOptions,
-  listResourcesOptions
+  listResourcesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   ClassDefinition,
-  Course,
   InstructorCalendarEntry,
+  OrganisationTimetableEntry,
   Student,
   User,
 } from '@/services/client/types.gen';
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef } from 'react';
 import type {
   ClassWithScheduleInput,
   InstructorSummary,
@@ -43,7 +47,7 @@ import type {
 } from './calendar-utils';
 import {
   formatStatus,
-  mapClassDefinitionDetails,
+  mapClassBatchSummary,
   mapClassSchedule,
   mapStudentSchedule,
   toClassLookup,
@@ -58,15 +62,14 @@ import type { SchedulerEvent, SchedulerProfile } from './types';
  * previously the calendar drew class sessions only, so a room reserved by a marketplace job
  * looked free right up until someone double-booked it.
  */
-function useOrganisationResourceReservations(organisationUuid?: string) {
-  const range = useMemo(() => {
-    const start = new Date();
-    start.setMonth(start.getMonth() - 3);
-    const end = new Date();
-    end.setMonth(end.getMonth() + 9);
-    const asDate = (value: Date) => value.toISOString().slice(0, 10);
-    return { start_date: asDate(start), end_date: asDate(end) };
-  }, []);
+function useOrganisationResourceReservations(
+  organisationUuid: string | undefined,
+  visibleRange: CalendarFetchRange
+) {
+  const range = useMemo(
+    () => ({ start_date: visibleRange.start, end_date: visibleRange.end }),
+    [visibleRange.end, visibleRange.start]
+  );
 
   const resourcesQuery = useQuery({
     ...listResourcesOptions({
@@ -74,7 +77,7 @@ function useOrganisationResourceReservations(organisationUuid?: string) {
       query: { pageable: { page: 0, size: 100 }, active: true },
     }),
     enabled: !!organisationUuid,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.live,
   });
 
   const resources = useMemo(
@@ -89,7 +92,8 @@ function useOrganisationResourceReservations(organisationUuid?: string) {
         query: range,
       }),
       enabled: !!organisationUuid && !!resource.uuid,
-      staleTime: 5 * 60 * 1000,
+      staleTime: STALE_TIMES.live,
+      placeholderData: keepPreviousData,
     })),
   });
 
@@ -137,16 +141,15 @@ function useOrganisationResourceReservations(organisationUuid?: string) {
  * The merged availability feed is the only place blocked time reaches - an instructor who closes
  * a window on the availability page saw their scheduler still offering it as free.
  */
-function useInstructorMergedCalendar(instructorUuid?: string) {
-  // The endpoint walks the window a day at a time server side, so it is asked for the months an
-  // instructor schedules into rather than years of availability nobody can act on any more.
-  const range = useMemo(() => {
-    const start = new Date();
-    start.setMonth(start.getMonth() - 1);
-    const end = new Date();
-    end.setMonth(end.getMonth() + 6);
-    return { start_date: localDate(start), end_date: localDate(end) };
-  }, []);
+function useInstructorMergedCalendar(
+  instructorUuid: string | undefined,
+  visibleRange: CalendarFetchRange
+) {
+  // The endpoint walks the window a day at a time server side, so it is asked for what is on screen.
+  const range = useMemo(
+    () => ({ start_date: localDate(visibleRange.start), end_date: localDate(visibleRange.end) }),
+    [visibleRange.end, visibleRange.start]
+  );
 
   const calendarQuery = useQuery({
     ...getInstructorCalendarOptions({
@@ -154,8 +157,9 @@ function useInstructorMergedCalendar(instructorUuid?: string) {
       query: range,
     }),
     enabled: !!instructorUuid,
-    staleTime: 5 * 60 * 1000,
+    staleTime: STALE_TIMES.live,
     refetchOnWindowFocus: false,
+    placeholderData: keepPreviousData,
   });
 
   const entries = useMemo<InstructorCalendarEntry[]>(
@@ -184,7 +188,7 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
       enabled: !!uuid,
       // Somebody enrols or withdraws while the roster sits in the persisted cache, so the
       // stale window has to be the throttle rather than a dead refetchOnMount.
-      staleTime: 5 * 60 * 1000,
+      staleTime: STALE_TIMES.live,
       refetchOnWindowFocus: false,
       refetchOnReconnect: false,
     })),
@@ -222,10 +226,19 @@ function useClassStudentSummaries(classUuids: Array<string | null | undefined>) 
     return entries;
   }, [enrollmentQueries, normalizedClassUuids]);
 
-  const uniqueStudentUuids = useMemo(
-    () => Array.from(new Set(uniqueStudentEntries.map(entry => entry.studentUuid).filter(Boolean))),
-    [uniqueStudentEntries]
+  // Wait for every roster before searching (a growing id set re-fires the lookups); a failing
+  // roster counts as settled after its first failure, and the last settled set bridges the gap.
+  const rostersSettled = enrollmentQueries.every(
+    query => !query.isPending || query.failureCount > 0
   );
+  const lastSettledUuidsRef = useRef<string[]>([]);
+  const uniqueStudentUuids = useMemo(() => {
+    if (!rostersSettled) return lastSettledUuidsRef.current;
+    return Array.from(new Set(uniqueStudentEntries.map(entry => entry.studentUuid).filter(Boolean)));
+  }, [rostersSettled, uniqueStudentEntries]);
+  useEffect(() => {
+    if (rostersSettled) lastSettledUuidsRef.current = uniqueStudentUuids;
+  }, [rostersSettled, uniqueStudentUuids]);
 
   const { studentMap: batchedStudents, isLoading: studentsLoading } =
     useStudentsByIds(uniqueStudentUuids);
@@ -405,6 +418,7 @@ function InstructorCalendarPage() {
   const profile = useUserProfile();
   const instructorUuid = profile?.instructor?.uuid;
   const instructorClassesQuery = useInstructorClassesWithSchedules(instructorUuid);
+  const [range, setVisibleRange] = useCalendarFetchRange();
 
   const classData = useMemo(
     () =>
@@ -460,7 +474,7 @@ function InstructorCalendarPage() {
     [studentData.students]
   );
 
-  const mergedCalendar = useInstructorMergedCalendar(instructorUuid);
+  const mergedCalendar = useInstructorMergedCalendar(instructorUuid, range);
 
   const events = useMemo(() => {
     const classEvents = classData
@@ -606,34 +620,29 @@ function InstructorCalendarPage() {
     students: studentData.students,
   };
 
-  return <SchedulerCalendarView profile='instructor' data={data} />;
+  return (
+    <SchedulerCalendarView
+      profile='instructor'
+      data={data}
+      onVisibleRangeChange={setVisibleRange}
+    />
+  );
 }
 
 function StudentCalendarPage() {
   const profile = useUserProfile();
   const studentUuid = profile?.student?.uuid;
 
-  const today = new Date();
-  const startDate = new Date(today);
-  startDate.setFullYear(today.getFullYear() - 1);
-
-  const endDate = new Date(today);
-  endDate.setFullYear(today.getFullYear() + 2);
-
-  const rangeStart = startDate.toISOString().split('T')[0];
-  const rangeEnd = endDate.toISOString().split('T')[0];
+  const [range, setVisibleRange] = useCalendarFetchRange();
 
   const studentScheduleQuery = useQuery({
     ...getStudentScheduleOptions({
       path: { studentUuid: studentUuid ?? '' },
-      query: {
-        start: rangeStart as unknown as Date,
-        end: rangeEnd as unknown as Date,
-      },
+      query: { start: localDate(range.start), end: localDate(range.end) },
     }),
     enabled: !!studentUuid,
-    // staleTime: 5 * 60 * 1000,
-    // refetchOnWindowFocus: false,
+    staleTime: STALE_TIMES.live,
+    placeholderData: keepPreviousData,
   });
 
   // -----------------------------
@@ -652,74 +661,51 @@ function StudentCalendarPage() {
     [studentScheduleQuery.data]
   );
 
-  const studentClassDefinitionQueries = useQueries({
-    queries: studentClassDefinitionUuids.map(uuid => ({
-      ...getClassDefinitionOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      // staleTime: 5 * 60 * 1000,
-    })),
-  });
-
-  const studentClassDefinitions = useMemo(
-    () =>
-      studentClassDefinitionQueries.flatMap(query => {
-        const classDefinition = query.data?.data?.class_definition;
-        return classDefinition?.uuid ? [classDefinition] : [];
-      }),
-    [studentClassDefinitionQueries]
-  );
-
-  // -----------------------------
-  // COURSES
-  // -----------------------------
-
-  const studentCourseUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          studentClassDefinitions.map(cd => cd.course_uuid).filter((uuid): uuid is string => !!uuid)
-        )
-      ),
-    [studentClassDefinitions]
-  );
-
-  const studentCourseQueries = useQueries({
-    queries: studentCourseUuids.map(uuid => ({
-      ...getCourseByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      // staleTime: 5 * 60 * 1000,
-    })),
-  });
-
-  const studentCourseLookup = useMemo(() => {
-    const map = new Map<string, Course>();
-
-    studentCourseQueries.forEach(query => {
-      const course = query.data?.data;
-      if (course?.uuid) {
-        map.set(course.uuid, course);
-      }
-    });
-
-    return map;
-  }, [studentCourseQueries]);
+  // One /classes/batch call carries titles, course names and instructor names for every class.
+  const { items: studentClassSummaries, isLoading: studentClassesLoading } =
+    useClassesByIds(studentClassDefinitionUuids);
 
   const studentClassData = useMemo(
-    () =>
-      studentClassDefinitions.map(cd =>
-        mapClassDefinitionDetails(
-          cd,
-          cd.course_uuid ? studentCourseLookup.get(cd.course_uuid) : null
-        )
-      ),
-    [studentClassDefinitions, studentCourseLookup]
+    () => studentClassSummaries.map(mapClassBatchSummary),
+    [studentClassSummaries]
   );
+
+  const studentClassLookup = useMemo(() => toClassLookup(studentClassData), [studentClassData]);
+
+  const batchInstructorNames = useMemo(() => {
+    const names = new Map<string, string>();
+    for (const summary of studentClassSummaries) {
+      const instructor = summary.instructor;
+      if (instructor?.uuid && instructor.display_name) {
+        names.set(instructor.uuid, instructor.display_name);
+      }
+    }
+    return names;
+  }, [studentClassSummaries]);
 
   // -----------------------------
   // STUDENTS
   // -----------------------------
 
-  const studentData = useClassStudentSummaries(studentClassData.map(cd => cd.uuid ?? undefined));
+  // The rail lists the focused day's classmates only, so rosters load for that day's classes.
+  const focusDayClassUuids = useMemo(() => {
+    const zone = resolveDisplayZone(range.zone);
+    return Array.from(
+      new Set(
+        (studentScheduleQuery.data?.data ?? [])
+          .filter(
+            item =>
+              item.start_time &&
+              dayjs(new Date(item.start_time as unknown as string))
+                .tz(zone)
+                .format('YYYY-MM-DD') === range.focus
+          )
+          .map(item => item.class_definition_uuid)
+      )
+    );
+  }, [range.focus, range.zone, studentScheduleQuery.data]);
+
+  const studentData = useClassStudentSummaries(focusDayClassUuids);
 
   // -----------------------------
   // INSTRUCTORS (FIXED)
@@ -737,66 +723,26 @@ function StudentCalendarPage() {
     [studentScheduleQuery.data]
   );
 
-  const instructorQueries = useQueries({
-    queries: instructorUuids.map(uuid => ({
-      ...getInstructorByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      // staleTime: 5 * 60 * 1000,
-    })),
-  });
+  const { instructorMap: studentInstructorMap, isLoading: studentInstructorsLoading } =
+    useInstructorsByIds(instructorUuids);
 
-  // ✅ FIXED: correct data shape
-  const instructorUserUuids = useMemo(
+  const instructorSummaries = useMemo(
     () =>
-      instructorQueries.map(q => q.data?.data?.user_uuid).filter((uuid): uuid is string => !!uuid),
-    [instructorQueries]
+      instructorUuids.flatMap<InstructorSummary>(uuid => {
+        const instructor = studentInstructorMap[uuid];
+        const batchName = batchInstructorNames.get(uuid);
+        if (!instructor?.uuid && !batchName) return [];
+
+        return [
+          {
+            uuid,
+            fullName: instructor?.full_name || batchName || 'Instructor pending',
+            subtitle: instructor?.professional_headline || 'Instructor',
+          },
+        ];
+      }),
+    [instructorUuids, studentInstructorMap, batchInstructorNames]
   );
-
-  const instructorProfileQueries = useQueries({
-    queries: instructorUserUuids.map(uuid => ({
-      ...getUserByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      // staleTime: 5 * 60 * 1000,
-    })),
-  });
-
-  // ✅ FIXED: no index coupling
-  const instructorProfilesByUuid = useMemo(() => {
-    const map = new Map<string, User>();
-
-    instructorProfileQueries.forEach(query => {
-      const user = query.data?.data;
-      if (user?.uuid) {
-        map.set(user.uuid, user);
-      }
-    });
-
-    return map;
-  }, [instructorProfileQueries]);
-
-  // ✅ FIXED: clean summary mapping
-  const instructorSummaries = useMemo(() => {
-    const map = new Map<string, InstructorSummary>();
-
-    instructorQueries.forEach(query => {
-      const instructor = query.data?.data;
-      if (!instructor?.uuid) return;
-
-      const user = instructor.user_uuid
-        ? instructorProfilesByUuid.get(instructor.user_uuid)
-        : undefined;
-
-      map.set(instructor.uuid, {
-        uuid: instructor.uuid,
-        fullName:
-          instructor.full_name || user?.full_name || user?.display_name || 'Instructor pending',
-        avatarUrl: user?.profile_image_url,
-        subtitle: instructor.professional_headline || user?.email || 'Attached to class data',
-      });
-    });
-
-    return Array.from(map.values());
-  }, [instructorQueries, instructorProfilesByUuid]);
 
   // -----------------------------
   // EVENTS
@@ -807,7 +753,7 @@ function StudentCalendarPage() {
       (studentScheduleQuery.data?.data ?? [])
         .map(item => {
           const classDetails = item.class_definition_uuid
-            ? (toClassLookup(studentClassData).get(item.class_definition_uuid) ?? null)
+            ? (studentClassLookup.get(item.class_definition_uuid) ?? null)
             : null;
 
           const instructorDetails = instructorSummaries.find(
@@ -822,7 +768,7 @@ function StudentCalendarPage() {
         .filter(Boolean)
         .filter(event => event.status !== 'Cancelled')
         .sort((a, b) => a.startTime.getTime() - b.startTime.getTime()),
-    [studentScheduleQuery.data, studentClassData, instructorSummaries]
+    [studentScheduleQuery.data, studentClassLookup, instructorSummaries]
   );
 
   const data: SchedulerCalendarData = {
@@ -833,29 +779,26 @@ function StudentCalendarPage() {
     students: studentData.students,
     isLoading:
       studentScheduleQuery.isLoading ||
-      studentClassDefinitionQueries.some(q => q.isLoading) ||
-      studentCourseQueries.some(q => q.isLoading) ||
-      instructorQueries.some(q => q.isLoading) ||
-      studentData.isLoading,
+      studentClassesLoading ||
+      studentInstructorsLoading,
   };
 
-  return <SchedulerCalendarView profile='student' data={data} />;
+  return (
+    <SchedulerCalendarView profile='student' data={data} onVisibleRangeChange={setVisibleRange} />
+  );
 }
 
 function OrganizationCalendarPage() {
   const organisation = useOrganisation();
   const organizationUuid = organisation?.uuid;
+  const [range, setVisibleRange] = useCalendarFetchRange();
 
   const organizationClassesQuery = useQuery({
     ...getClassDefinitionsForOrganisationOptions({
       path: { organisationUuid: organizationUuid ?? '' },
     }),
     enabled: !!organizationUuid,
-    // Classes appear and change hands through assignment decisions taken elsewhere, so a
-    // mount must re-ask instead of replaying the rehydrated list.
-    // staleTime: 5 * 60 * 1000,
-    // refetchOnWindowFocus: false,
-    // refetchOnReconnect: false,
+    staleTime: STALE_TIMES.live,
   });
 
   const classData = useMemo(
@@ -866,57 +809,37 @@ function OrganizationCalendarPage() {
     [organizationClassesQuery.data]
   );
 
-  const uniqueCourseUuids = useMemo(() => {
-    const set = new Set<string>();
-    classData.forEach(cls => {
-      if (cls.course_uuid) set.add(cls.course_uuid);
-    });
-    return Array.from(set);
-  }, [classData]);
-
-  const courseQueries = useQueries({
-    queries: uniqueCourseUuids.map(uuid => ({
-      ...getCourseByUuidOptions({ path: { uuid } }),
-      enabled: !!uuid,
-      // Moderation can approve or pull a course between visits.
-      // staleTime: 5 * 60 * 1000,
-      // refetchOnWindowFocus: false,
-      // refetchOnReconnect: false,
-    })),
+  // One range request for every class the organisation owns, instead of a schedule page per class.
+  const timetableQuery = useQuery({
+    ...getOrganisationTimetableOptions({
+      path: { organisationUuid: organizationUuid ?? '' },
+      query: { start: localDate(range.start), end: localDate(range.end) },
+    }),
+    enabled: !!organizationUuid,
+    staleTime: STALE_TIMES.live,
+    placeholderData: keepPreviousData,
   });
 
-  const courseDataArray = useMemo(
-    () => courseQueries.map(query => query.data?.data ?? null),
-    [courseQueries]
-  );
-
-  const courseMap = useMemo(() => {
-    const map = new Map<string, Course>();
-    uniqueCourseUuids.forEach((uuid, index) => {
-      const course = courseDataArray[index];
-      if (course) map.set(uuid, course);
-    });
+  const sessionsByClass = useMemo(() => {
+    const map = new Map<string, OrganisationTimetableEntry[]>();
+    for (const entry of timetableQuery.data?.data ?? []) {
+      if (!entry.class_definition_uuid) continue;
+      const sessions = map.get(entry.class_definition_uuid) ?? [];
+      sessions.push(entry);
+      map.set(entry.class_definition_uuid, sessions);
+    }
     return map;
-  }, [courseDataArray, uniqueCourseUuids]);
+  }, [timetableQuery.data]);
 
-  const scheduleQueries = useQueries({
-    queries: classData.map(cls => ({
-      ...getClassScheduleOptions({
-        path: { uuid: cls.uuid ?? '' },
-        query: { pageable: { page: 0, size: 1000 } },
-      }),
-      enabled: !!cls.uuid,
-      // staleTime: 5 * 60 * 1000,
-      // refetchOnWindowFocus: false,
-      // refetchOnMount: false,
-      // refetchOnReconnect: false,
-    })),
-  });
-
-  const scheduleData = useMemo(
-    () => scheduleQueries.map(query => query.data?.data?.content ?? []),
-    [scheduleQueries]
+  const uniqueCourseUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(classData.map(cls => cls.course_uuid).filter((uuid): uuid is string => !!uuid))
+      ),
+    [classData]
   );
+
+  const { courseMap } = useCoursesByIds(uniqueCourseUuids);
 
   const uniqueInstructorUuids = useMemo(
     () =>
@@ -924,15 +847,14 @@ function OrganizationCalendarPage() {
         new Set(
           [
             ...classData.map(cls => cls.default_instructor_uuid),
-            ...scheduleData.flatMap(schedule => schedule.map(item => item.instructor_uuid)),
+            ...(timetableQuery.data?.data ?? []).map(entry => entry.instructor_uuid),
           ].filter((uuid): uuid is string => Boolean(uuid))
         )
       ),
-    [classData, scheduleData]
+    [classData, timetableQuery.data]
   );
 
-  const { instructorMap, isLoading: instructorsLoading } =
-    useInstructorsByIds(uniqueInstructorUuids);
+  const { instructorMap } = useInstructorsByIds(uniqueInstructorUuids);
   const instructorUserUuids = useMemo(
     () =>
       Object.values(instructorMap)
@@ -941,8 +863,7 @@ function OrganizationCalendarPage() {
         .filter((uuid): uuid is string => Boolean(uuid)),
     [instructorMap]
   );
-  const { userMap: instructorUsers, isLoading: instructorUsersLoading } =
-    useUsersByIds(instructorUserUuids);
+  const { userMap: instructorUsers } = useUsersByIds(instructorUserUuids);
 
   const instructorSummaries = useMemo<InstructorSummary[]>(
     () =>
@@ -966,22 +887,43 @@ function OrganizationCalendarPage() {
     [instructorSummaries]
   );
 
-  const classesWithCourseAndInstructor = useMemo(() => {
-    return classData.map((cls, i) => ({
-      ...cls,
-      course: cls.course_uuid ? (courseMap.get(cls.course_uuid) ?? null) : null,
-      instructor: cls.default_instructor_uuid
-        ? (instructorMap[cls.default_instructor_uuid] ?? null)
-        : null,
-      schedule: scheduleData[i] ?? null,
-    }));
-  }, [classData, courseMap, instructorMap, scheduleData]);
-
-  const resourceReservations = useOrganisationResourceReservations(organizationUuid);
-
-  const studentData = useClassStudentSummaries(
-    classData.map(classDef => classDef.uuid ?? undefined)
+  const classesWithCourseAndInstructor = useMemo(
+    () =>
+      classData.map(cls => ({
+        ...cls,
+        course: cls.course_uuid ? (courseMap[cls.course_uuid] ?? null) : null,
+        instructor: cls.default_instructor_uuid
+          ? (instructorMap[cls.default_instructor_uuid] ?? null)
+          : null,
+        schedule: cls.uuid
+          ? (sessionsByClass.get(cls.uuid) ?? []).map(entry => ({ ...entry, title: entry.class_title }))
+          : [],
+      })),
+    [classData, courseMap, instructorMap, sessionsByClass]
   );
+
+  const resourceReservations = useOrganisationResourceReservations(organizationUuid, range);
+
+  // Rosters load for the focused day's classes only (what the rail lists); other cards show
+  // the timetable's enrolled_count. The day is keyed in the grid's zone, as the rail does.
+  const focusDayClassUuids = useMemo(() => {
+    const zone = resolveDisplayZone(range.zone);
+    return Array.from(
+      new Set(
+        (timetableQuery.data?.data ?? [])
+          .filter(
+            entry =>
+              entry.start_time &&
+              dayjs(new Date(entry.start_time as unknown as string))
+                .tz(zone)
+                .format('YYYY-MM-DD') === range.focus
+          )
+          .map(entry => entry.class_definition_uuid)
+      )
+    );
+  }, [range.focus, range.zone, timetableQuery.data]);
+
+  const studentData = useClassStudentSummaries(focusDayClassUuids);
 
   const studentInitialsByClass = useMemo(
     () => toStudentInitialsByClass(studentData.students),
@@ -1014,18 +956,19 @@ function OrganizationCalendarPage() {
     allInstructors: instructorSummaries,
     events,
     instructors: instructorSummaries,
-    isLoading:
-      organizationClassesQuery.isLoading ||
-      courseQueries.some(query => query.isLoading) ||
-      instructorsLoading ||
-      instructorUsersLoading ||
-      scheduleQueries.some(query => query.isLoading) ||
-      resourceReservations.isLoading ||
-      studentData.isLoading,
+    // Only the first load of the sessions holds the grid; names, rosters and reservations
+    // fill in as they land so stepping through weeks never blanks it.
+    isLoading: organizationClassesQuery.isLoading || timetableQuery.isLoading,
     students: studentData.students,
   };
 
-  return <SchedulerCalendarView profile='organization' data={data} />;
+  return (
+    <SchedulerCalendarView
+      profile='organization'
+      data={data}
+      onVisibleRangeChange={setVisibleRange}
+    />
+  );
 }
 
 export function SchedulerCalendarPage({ profile }: { profile: SchedulerProfile }) {

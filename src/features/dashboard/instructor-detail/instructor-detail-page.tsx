@@ -453,33 +453,15 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
     staleTime: STALE_TIMES.entity,
     retry: false,
   });
-  const educationQuery = useQuery({
-    ...getInstructorEducationOptions(pathOptions),
-    enabled: hasInstructor,
-    staleTime: STALE_TIMES.entity,
-    retry: false,
-  });
-  const membershipsQuery = useQuery({
-    ...getInstructorMembershipsOptions({ ...pathOptions, query: PAGEABLE }),
-    enabled: hasInstructor,
-    staleTime: STALE_TIMES.entity,
-    retry: false,
-  });
-  const experienceQuery = useQuery({
-    ...getInstructorExperienceOptions({ ...pathOptions, query: PAGEABLE }),
-    enabled: hasInstructor,
-    staleTime: STALE_TIMES.entity,
-    retry: false,
-  });
   const documentsQuery = useQuery({
     ...getInstructorDocumentsOptions(pathOptions),
-    enabled: hasInstructor,
+    enabled: hasInstructor && tab === 'documents',
     staleTime: STALE_TIMES.entity,
     retry: false,
   });
   const reviewsQuery = useQuery({
     ...getInstructorReviewsOptions(pathOptions),
-    enabled: hasInstructor,
+    enabled: hasInstructor && tab === 'reviews',
     staleTime: STALE_TIMES.entity,
     retry: false,
   });
@@ -501,6 +483,28 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
     retry: false,
   });
   const classesQuery = isOrganisation ? organisationClassesQuery : instructorClassesQuery;
+  // Header and Credentials-tile reads wait for the first wave so it stays within 6 connections.
+  const firstWaveDone =
+    classesQuery.isFetched && !ratingQuery.isLoading && !skillsQuery.isLoading;
+  const educationQuery = useQuery({
+    ...getInstructorEducationOptions(pathOptions),
+    enabled: hasInstructor && (tab === 'credentials' || firstWaveDone),
+    staleTime: STALE_TIMES.entity,
+    retry: false,
+  });
+  const membershipsQuery = useQuery({
+    ...getInstructorMembershipsOptions({ ...pathOptions, query: PAGEABLE }),
+    enabled: hasInstructor && (tab === 'credentials' || firstWaveDone),
+    staleTime: STALE_TIMES.entity,
+    retry: false,
+  });
+  // Course creators have no org summary, so the employer badge needs current experience.
+  const experienceQuery = useQuery({
+    ...getInstructorExperienceOptions({ ...pathOptions, query: PAGEABLE }),
+    enabled: hasInstructor && (tab === 'history' || (!isOrganisation && firstWaveDone)),
+    staleTime: STALE_TIMES.entity,
+    retry: false,
+  });
   const enrolmentCountsQuery = useQuery({
     ...getClassEnrolmentCountsOptions({ path: { organisationUuid } }),
     enabled: Boolean(organisationUuid),
@@ -521,6 +525,9 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
   const documents = extractList<InstructorDocument>(withoutError(documentsQuery.data));
   const reviews = extractList<InstructorReview>(withoutError(reviewsQuery.data));
   const rating = withoutError(ratingQuery.data)?.data;
+  const credentialsLoaded = educationQuery.isSuccess && membershipsQuery.isSuccess;
+  const credentialsPending =
+    hasInstructor && (educationQuery.isPending || membershipsQuery.isPending);
 
   const enrolmentCounts = extractList<ClassEnrolmentCountDto>(enrolmentCountsQuery.data);
   const enrolledByClass = useMemo(() => {
@@ -570,6 +577,10 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
   const employerName = isOrganisation ? organisation?.name : currentExperience?.organisation_name;
   const qualificationName = summary?.highest_qualification ?? qualification?.qualification;
   const topSkill = summary?.top_skill ?? primarySkill?.skill_name;
+  const headerFactsPending =
+    hasInstructor &&
+    ((!isOrganisation && experienceQuery.isPending) ||
+      (!summary?.highest_qualification && educationQuery.isPending));
   const bio = stripHtml(instructor?.bio);
 
   const ratingValue = rating?.average_rating ?? summary?.average_rating;
@@ -633,8 +644,12 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
 
   const tabCounts: Partial<Record<InstructorTab, number | null>> = {
     classes: classesQuery.isLoading ? null : assignedClasses.length,
-    reviews: reviewsQuery.isLoading ? null : reviews.length,
-    documents: documentsQuery.isLoading ? null : documents.length,
+    reviews: reviewsQuery.isSuccess
+      ? reviews.length
+      : rating?.review_count == null
+        ? null
+        : toNumber(rating.review_count),
+    documents: documentsQuery.isSuccess ? documents.length : null,
   };
   const tabs: SectionTab<InstructorTab>[] = config.tabs.map(id => ({
     id,
@@ -669,8 +684,9 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
         }
         description={headline}
         context={
-          employerName || qualificationName || topSkill ? (
+          employerName || qualificationName || topSkill || headerFactsPending ? (
             <div className='flex flex-wrap items-center gap-2'>
+              {headerFactsPending ? <Skeleton className='h-5 w-28 rounded-md' /> : null}
               {employerName ? (
                 <Badge variant='outline' className='rounded-md'>
                   <BriefcaseBusiness className='mr-1 size-3.5' />
@@ -746,8 +762,20 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
         />
         <MetricTile
           label='Credentials'
-          value={formatCount(education.length + memberships.length + documents.length, '0')}
-          hint={`${formatCount(documents.length, '0')} documents`}
+          value={
+            credentialsLoaded ? (
+              formatCount(education.length + memberships.length, '0')
+            ) : credentialsPending ? (
+              <Skeleton className='h-6 w-10' />
+            ) : (
+              '-'
+            )
+          }
+          hint={
+            documentsQuery.isSuccess
+              ? `${formatCount(documents.length, '0')} documents`
+              : 'education and memberships'
+          }
           icon={FileCheck}
           tone='success'
         />

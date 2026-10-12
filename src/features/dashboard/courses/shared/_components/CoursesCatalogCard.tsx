@@ -44,10 +44,12 @@ export function CoursesCatalogCard({ card, type }: CoursesCatalogCardProps) {
               {card.units} units
             </span>
           )}
-          <span className='flex items-center gap-1.5'>
-            <Users className='h-3.5 w-3.5 shrink-0' />
-            {card.enrollmentCount ?? 0} {type === 'general' ? 'students' : 'classes'}
-          </span>
+          {typeof card.enrollmentCount === 'number' && (
+            <span className='flex items-center gap-1.5'>
+              <Users className='h-3.5 w-3.5 shrink-0' />
+              {card.enrollmentCount} {type === 'general' ? 'students' : 'classes'}
+            </span>
+          )}
         </>
       }
     >

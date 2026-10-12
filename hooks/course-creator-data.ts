@@ -1,5 +1,6 @@
 'use client';
 
+import { useQuery } from '@tanstack/react-query';
 import {
   calculateCourseAnalytics,
   calculateMonetizationSummary,
@@ -7,12 +8,18 @@ import {
 } from '@/lib/course-creator/utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
-  emptyCourseCreatorDashboardData,
   type CourseCreatorDashboardData,
+  emptyCourseCreatorDashboardData,
 } from '@/lib/types/course-creator';
-import { searchCourses, type Course, type CourseCreator } from '@/services/client';
-import { useQuery } from '@tanstack/react-query';
+import { type Course, type CourseCreator, searchCourses } from '@/services/client';
 import { useUserProfile } from '../context/profile-context';
+
+/** First-load state of the creator's course list, for sections derived from it. */
+export type CourseCreatorCoursesStatus = {
+  loading: boolean;
+  error: unknown;
+  refetch: () => unknown;
+};
 
 /**
  * Course-creator dashboard data. The user record, domains and course-creator
@@ -45,15 +52,21 @@ export function useCourseCreatorDashboardData() {
   });
 
   const loading = Boolean(user?.isLoading) || coursesQuery.isLoading;
+  const coursesStatus: CourseCreatorCoursesStatus = {
+    loading,
+    error: coursesQuery.error,
+    refetch: coursesQuery.refetch,
+  };
 
   if (!userUuid) {
-    return { data: emptyCourseCreatorDashboardData, loading };
+    return { data: emptyCourseCreatorDashboardData, loading, coursesStatus };
   }
 
   if (!hasCourseCreatorDomain) {
     return {
       data: { ...emptyCourseCreatorDashboardData, userUuid },
       loading,
+      coursesStatus,
     };
   }
 
@@ -78,5 +91,5 @@ export function useCourseCreatorDashboardData() {
     },
   };
 
-  return { data, loading };
+  return { data, loading, coursesStatus };
 }

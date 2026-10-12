@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
+import { useCourseCreatorsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { useSearchIssue } from '@/hooks/use-search-query';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
@@ -58,7 +58,6 @@ export default function AllCoursesPage() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const { data, isLoading } = coursesQuery;
 
@@ -69,7 +68,6 @@ export default function AllCoursesPage() {
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const { data: programsData } = programsQuery;
   const searchIssue = useSearchIssue(search, coursesQuery.error, programsQuery.error);
@@ -110,6 +108,29 @@ export default function AllCoursesPage() {
   );
 
   const [activeTab, setActiveTab] = useState<'courses' | 'programs'>('courses');
+
+  // Creators for the visible tab in two batched lookups, not two requests per card.
+  const visibleCreatorIds = useMemo(
+    () =>
+      (activeTab === 'courses' ? filteredCourses : filteredPrograms)
+        .map(item => item.course_creator_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid)),
+    [activeTab, filteredCourses, filteredPrograms]
+  );
+  const { courseCreatorMap } = useCourseCreatorsByIds(visibleCreatorIds);
+  const creatorUserIds = useMemo(
+    () =>
+      Object.values(courseCreatorMap)
+        .map(creator => creator.user_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid)),
+    [courseCreatorMap]
+  );
+  const { userMap: creatorUserMap } = useUsersByIds(creatorUserIds);
+  const creatorFor = (creatorUuid?: string) => {
+    const creator = creatorUuid ? courseCreatorMap[creatorUuid] : undefined;
+    const user = creator?.user_uuid ? creatorUserMap[creator.user_uuid] : undefined;
+    return { name: user?.full_name || creator?.full_name, imageUrl: user?.profile_image_url };
+  };
 
   // The same term searches both tabs, so switching keeps it.
   const handleTabChange = (value: string) => {
@@ -208,11 +229,12 @@ export default function AllCoursesPage() {
                   key={course.uuid}
                   course={course}
                   isStudentView={true}
+                  creator={creatorFor(course.course_creator_uuid)}
                   handleEnroll={() =>
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/all-courses/available-classes/${course.uuid}`
+                        `/dashboard/courses/available-classes/${course.uuid}`
                       )
                     )
                   }
@@ -220,13 +242,13 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/all-courses/instructor?courseId=${course.uuid}`
+                        `/dashboard/courses/instructor?courseId=${course.uuid}`
                       )
                     )
                   }
                   handleClick={() =>
                     router.push(
-                      roleScopedDashboardPath(activeDomain, `/dashboard/all-courses/${course.uuid}`)
+                      roleScopedDashboardPath(activeDomain, `/dashboard/courses/${course.uuid}`)
                     )
                   }
                 />
@@ -272,11 +294,12 @@ export default function AllCoursesPage() {
                   key={program.uuid}
                   course={program}
                   isStudentView={true}
+                  creator={creatorFor(program.course_creator_uuid)}
                   handleEnroll={() =>
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/all-courses/available-programs/${program.uuid}`
+                        `/dashboard/courses/available-programs/${program.uuid}`
                       )
                     )
                   }
@@ -284,7 +307,7 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/all-courses/instructor?courseId=${program.uuid}`
+                        `/dashboard/courses/instructor?courseId=${program.uuid}`
                       )
                     )
                   }
@@ -292,7 +315,7 @@ export default function AllCoursesPage() {
                     router.push(
                       roleScopedDashboardPath(
                         activeDomain,
-                        `/dashboard/all-courses/available-programs/${program.uuid}`
+                        `/dashboard/courses/available-programs/${program.uuid}`
                       )
                     )
                   }

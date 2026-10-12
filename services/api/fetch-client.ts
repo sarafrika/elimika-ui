@@ -1,5 +1,6 @@
 import createClient, { type Middleware } from 'openapi-fetch';
 import { getAuthToken } from '@/services/auth/get-token';
+import { redirectIfSessionExpired } from '@/services/auth/session-expired';
 import {
   ACTING_DOMAIN_HEADER,
   readActingDomain,
@@ -27,6 +28,9 @@ const authMiddleware: Middleware = {
       }
     }
     return request;
+  },
+  onResponse({ response }) {
+    redirectIfSessionExpired(response);
   },
 };
 

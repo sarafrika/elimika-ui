@@ -25,7 +25,7 @@ const ProgramsPage = () => {
   };
 
   const handlePreview = (programUuid: string) => {
-    router.push(`/dashboard/course-creator/course-management/programs/${programUuid}`);
+    router.push(`/dashboard/course-creator/programs/${programUuid}`);
   };
 
   return (

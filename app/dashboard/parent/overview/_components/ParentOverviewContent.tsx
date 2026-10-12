@@ -178,7 +178,7 @@ export function ParentOverviewContent() {
             key={activeStudent.student_uuid}
             studentUuid={activeStudent.student_uuid}
             title={`Suggested courses for ${snapshot.student_name ?? activeStudent.student_name ?? 'this learner'}`}
-            courseHref={uuid => `/dashboard/parent/all-courses/${uuid}`}
+            courseHref={uuid => `/dashboard/parent/courses/${uuid}`}
           />
         ) : null}
       </>

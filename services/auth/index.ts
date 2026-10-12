@@ -1,7 +1,7 @@
-import { clearPrivateBffCacheForUser } from '@/lib/api/private-bff-cache';
 import NextAuth, { type NextAuthConfig } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import Keycloak from 'next-auth/providers/keycloak';
+import { clearPrivateBffCacheForUser } from '@/lib/api/private-bff-cache';
 
 /**
  * Decode JWT token to extract claims
@@ -80,13 +80,64 @@ function getTokenCacheUserId(token: unknown): string | undefined {
   return getFirstString(typedToken.id, typedToken.email);
 }
 
+// Lets the client start the organisation fetch alongside `/me` instead of after it.
+function activeOrganisationUuid(
+  affiliations: { active?: boolean; organisation_uuid?: string }[] | null | undefined
+): string | null {
+  const affiliation = affiliations?.find(a => a.active) ?? affiliations?.[0];
+  return affiliation?.organisation_uuid ?? null;
+}
+
+// Stamp who the caller is into the token so server guards need no `/me` per navigation.
+// A failed lookup keeps what the token held; the guards then fall back to the API.
+async function stampIdentity(token: JWT): Promise<JWT> {
+  if (typeof token.accessToken !== 'string' || token.error) return token;
+  try {
+    // Imported lazily: the generated client imports this module for its auth hook.
+    const { fetchCurrentUser } = await import('@/services/user/current-user');
+    const user = await fetchCurrentUser(token.accessToken, AbortSignal.timeout(3_000));
+    if (!user?.uuid) return token;
+    const rawDomains: unknown[] = Array.isArray(user.user_domain)
+      ? user.user_domain
+      : [user.user_domain];
+    return {
+      ...token,
+      identity: {
+        uuid: user.uuid,
+        domains: rawDomains.filter((d): d is string => typeof d === 'string' && d.length > 0),
+        hasOrganisationAffiliation: (user.organisation_affiliations?.length ?? 0) > 0,
+        organisationUuid: activeOrganisationUuid(user.organisation_affiliations),
+      },
+    };
+  } catch {
+    return token;
+  }
+}
+
+type TokenPatch = Partial<JWT>;
+type RefreshEntry = { promise: Promise<TokenPatch>; reuseUntil: number };
+
+const REFRESH_FAILED: TokenPatch = { error: 'RefreshAccessTokenError' };
+const REFRESH_EARLY_MS = 60_000;
+const FAILED_REFRESH_MEMORY_MS = 5 * 60_000;
+const TRANSIENT_FAILURE_MEMORY_MS = 10_000;
+const REFRESH_TIMEOUT_MS = 10_000;
+// Keycloak outage or timeout: keep the current token and retry shortly, never end the session.
+const REFRESH_DEFERRED: TokenPatch = {};
+
+// One map per process, shared by proxy.ts and route handlers; needs both on the Node runtime.
+const refreshesKey = Symbol.for('elimika.auth.refreshes');
+const refreshes: Map<string, RefreshEntry> =
+  ((globalThis as Record<symbol, unknown>)[refreshesKey] as
+    | Map<string, RefreshEntry>
+    | undefined) ??
+  ((globalThis as Record<symbol, unknown>)[refreshesKey] = new Map<string, RefreshEntry>());
+
 /**
- * Swap the refresh token for a fresh access token. Without this an admin session dies
- * quietly after an hour: the expired token is still sent and every call returns 401.
- * On failure the session carries `RefreshAccessTokenError` so the UI can ask for a new
- * sign-in instead of showing empty pages.
+ * Swap the refresh token for a fresh access token. A rejected refresh token marks the
+ * session `RefreshAccessTokenError`; network errors and 5xx keep the current token.
  */
-async function refreshAccessToken(token: JWT): Promise<JWT> {
+async function refreshAccessToken(token: JWT): Promise<TokenPatch> {
   try {
     const issuer = process.env.KEYCLOAK_ISSUER;
     const clientId = process.env.KEYCLOAK_CLIENT_ID;
@@ -94,7 +145,7 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     const refreshToken = token.refreshToken;
 
     if (!issuer || !clientId || !clientSecret || typeof refreshToken !== 'string') {
-      return { ...token, error: 'RefreshAccessTokenError' };
+      return REFRESH_FAILED;
     }
 
     const response = await fetch(`${issuer}/protocol/openid-connect/token`, {
@@ -106,9 +157,14 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
         client_secret: clientSecret,
         refresh_token: refreshToken,
       }),
+      signal: AbortSignal.timeout(REFRESH_TIMEOUT_MS),
     });
 
-    const refreshed = (await response.json()) as {
+    if (!response.ok && response.status !== 400 && response.status !== 401) {
+      return REFRESH_DEFERRED;
+    }
+
+    const refreshed = (await response.json().catch(() => ({}))) as {
       access_token?: string;
       refresh_token?: string;
       expires_in?: number;
@@ -116,13 +172,12 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
     };
 
     if (!response.ok || !refreshed.access_token) {
-      return { ...token, error: 'RefreshAccessTokenError' };
+      return REFRESH_FAILED;
     }
 
     const decoded = decodeJWT(refreshed.access_token);
 
     return {
-      ...token,
       accessToken: refreshed.access_token,
       refreshToken: refreshed.refresh_token ?? refreshToken,
       accessTokenExpires: Date.now() + (refreshed.expires_in ?? 300) * 1000,
@@ -134,8 +189,48 @@ async function refreshAccessToken(token: JWT): Promise<JWT> {
       error: undefined,
     };
   } catch {
-    return { ...token, error: 'RefreshAccessTokenError' };
+    return REFRESH_DEFERRED;
   }
+}
+
+function pruneRefreshes(now: number) {
+  for (const [key, entry] of refreshes) {
+    if (entry.reuseUntil <= now) refreshes.delete(key);
+  }
+}
+
+/**
+ * Refresh at most once per refresh token: concurrent and later callers still holding
+ * the old cookie reuse the same result, so Keycloak sees one call and a rotated
+ * refresh token is never replayed. Failures are remembered too, so they are not retried.
+ */
+async function refreshOnce(token: JWT): Promise<JWT> {
+  const key = token.refreshToken;
+  if (typeof key !== 'string') return { ...token, ...REFRESH_FAILED };
+
+  const now = Date.now();
+  pruneRefreshes(now);
+
+  let entry = refreshes.get(key);
+  if (!entry) {
+    // Identity is re-stamped inside the shared promise so one refresh costs one `/me`.
+    const promise = refreshAccessToken(token).then(async patch =>
+      patch.accessToken
+        ? { ...patch, identity: (await stampIdentity({ ...token, ...patch })).identity }
+        : patch
+    );
+    const pending: RefreshEntry = { promise, reuseUntil: Number.POSITIVE_INFINITY };
+    entry = pending;
+    refreshes.set(key, pending);
+    void promise.then(patch => {
+      pending.reuseUntil =
+        typeof patch.accessTokenExpires === 'number'
+          ? patch.accessTokenExpires - REFRESH_EARLY_MS
+          : Date.now() + (patch.error ? FAILED_REFRESH_MEMORY_MS : TRANSIENT_FAILURE_MEMORY_MS);
+    });
+  }
+
+  return { ...token, ...(await entry.promise) };
 }
 
 const config: NextAuthConfig = {
@@ -157,14 +252,14 @@ const config: NextAuthConfig = {
   ],
   callbacks: {
     async jwt({ token, account, user, session, trigger }) {
-      if (trigger === 'update') {
+      if (trigger === 'update' && session) {
         session.user = user;
       }
 
       // Initial sign in
       if (account && user) {
         const decodedToken = decodeJWT(account.access_token!);
-        return {
+        return stampIdentity({
           ...token,
           id: account.providerAccountId,
           accessToken: account.access_token,
@@ -177,16 +272,22 @@ const config: NextAuthConfig = {
           resource_access: decodedToken.resource_access,
           organisation: decodedToken.organisation,
           'organisation-slug': decodedToken['organisation-slug'],
-        };
+        });
+      }
+
+      // A failed refresh was already reported once; drop the session instead of retrying.
+      if (token.error) {
+        return null;
       }
 
       // Refresh a minute early so a call in flight never carries an expired token.
       const expiresAt = token.accessTokenExpires as number | undefined;
-      if (typeof expiresAt === 'number' && Date.now() < expiresAt - 60_000) {
-        return token;
+      if (typeof expiresAt === 'number' && Date.now() < expiresAt - REFRESH_EARLY_MS) {
+        // Onboarding and role changes call `update()`; re-read identity so guards see the new domain.
+        return trigger === 'update' ? stampIdentity(token) : token;
       }
 
-      return refreshAccessToken(token);
+      return refreshOnce(token);
     },
     async session({ session, token }) {
       if (session.user) {
@@ -206,6 +307,10 @@ const config: NextAuthConfig = {
         organisation: token.organisation,
         'organisation-slug': token['organisation-slug'],
       };
+
+      if (token.identity) {
+        session.identity = token.identity;
+      }
 
       // Include error state if token refresh failed
       if (token.error) {

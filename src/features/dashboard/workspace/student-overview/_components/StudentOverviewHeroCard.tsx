@@ -1,10 +1,12 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@radix-ui/react-avatar';
 import { UseQueryOptions, useQuery } from '@tanstack/react-query';
 import { ArrowUpRight, Download, QrCode, Wallet } from 'lucide-react';
 import { useState } from 'react';
+import { AsyncSection } from '@/components/data/async-section';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useProfileShareUrl } from '../../../../../../app/dashboard/_components/skills-wallet/use-profile-share-url';
 import { socialShareActions } from '../../../../../../app/dashboard/instructor/classes/overview/[id]/page';
 import { LinkShareCard } from '../../../../../../components/shared/link-share-card';
@@ -18,7 +20,7 @@ import { ApiResponseWallet } from '../../../../../../services/client';
 import { getWalletOptions } from '../../../../../../services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '../../../../../lib/media-url';
 import { formatBalance } from '../../../components/dashboard-top-bar';
-import { StudentOverviewData } from '../useStudentOverviewData';
+import { useStudentSkillSummary } from '../useStudentSkillSummary';
 
 type ProfileType =
   | (Partial<UserProfileType> & {
@@ -30,7 +32,6 @@ type ProfileType =
 
 interface StudentOverviewHeroCardProps {
   profile: ProfileType;
-  data: StudentOverviewData;
 }
 
 function ProgressRing({
@@ -86,7 +87,8 @@ function ProgressRing({
   );
 }
 
-export function StudentOverviewHeroCard({ profile, data }: StudentOverviewHeroCardProps) {
+export function StudentOverviewHeroCard({ profile }: StudentOverviewHeroCardProps) {
+  const skills = useStudentSkillSummary();
   const [shareOpen, setShareOpen] = useState(false);
   const userName = profile?.full_name!
   const skillsWalletShareLink = useProfileShareUrl(profile?.uuid, 'student');
@@ -147,7 +149,7 @@ export function StudentOverviewHeroCard({ profile, data }: StudentOverviewHeroCa
                 Level 1 · Prep
               </Badge>
               <Badge className='bg-primary-foreground/15 hover:bg-primary-foreground/20 text-primary-foreground border-0'>
-                {data?.verifiedSkills} Portfolio Entries
+                {skills.data.verifiedSkills} Portfolio Entries
               </Badge>
             </div>
             <div className='mt-5 flex flex-wrap gap-2'>
@@ -167,7 +169,16 @@ export function StudentOverviewHeroCard({ profile, data }: StudentOverviewHeroCa
             </div>
           </div>
           <div className='hidden sm:block'>
-            <ProgressRing value={data?.skillsProgress} />
+            <AsyncSection
+              name='student-overview-skill-level'
+              loading={skills.isLoading}
+              error={skills.error}
+              onRetry={skills.refetch}
+              errorTitle='Couldn’t load your skill level'
+              skeleton={<Skeleton className='bg-primary-foreground/20 size-[132px] rounded-full' />}
+            >
+              <ProgressRing value={skills.data.skillsProgress} />
+            </AsyncSection>
           </div>
         </CardContent>
       </Card>

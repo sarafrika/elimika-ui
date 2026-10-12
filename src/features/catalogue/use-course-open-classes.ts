@@ -1,7 +1,6 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { client } from '@/services/client/client.gen';
 import {
@@ -48,6 +47,5 @@ export function useCourseOpenClasses(courseUuid: string | undefined) {
     queryFn: ({ signal }) => fetchCourseOpenClasses(courseUuid ?? '', signal),
     enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.live,
-    retry: retryUnlessClientOrSearchError,
   });
 }

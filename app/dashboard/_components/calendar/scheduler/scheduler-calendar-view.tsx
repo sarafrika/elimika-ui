@@ -55,6 +55,8 @@ import type {
 type Props = {
   profile: SchedulerProfile;
   data: SchedulerCalendarData;
+  /** Told which date and view are on screen so the page can fetch only that window. */
+  onVisibleRangeChange?: (focus: Date, view: SchedulerView, zone?: string) => void;
 };
 
 type FilterSelection =
@@ -66,7 +68,7 @@ const normalizeText = (value?: string | null) => value?.trim().toLowerCase() ?? 
 const isEquipmentEvent = (event: SchedulerEvent) =>
   normalizeText(event.locationType) === 'equipment_pool';
 
-export function SchedulerCalendarView({ profile, data }: Props) {
+export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: Props) {
   const router = useRouter();
   const { activeDomain } = useUserDomain();
   const { zone: preferredTimeZone } = useTimeZone();
@@ -77,6 +79,7 @@ export function SchedulerCalendarView({ profile, data }: Props) {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<SchedulerView>('week');
+
   const [showAllInstructors, setShowAllInstructors] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState<FilterSelection>({ id: 'all', kind: 'all' });
@@ -84,6 +87,9 @@ export function SchedulerCalendarView({ profile, data }: Props) {
     ...createDefaultPreferences(),
     timezone: activeCalendarTimeZone,
   }));
+  useEffect(() => {
+    onVisibleRangeChange?.(currentDate, view, preferences.timezone);
+  }, [currentDate, onVisibleRangeChange, preferences.timezone, view]);
   const preferencesRestored = useRef(false);
   const timezonePinned = useRef(false);
 

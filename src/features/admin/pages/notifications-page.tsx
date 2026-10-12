@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
 import { SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
@@ -20,6 +21,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { absoluteDateTime, relativeTimeFromNow } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { NotificationDto, Organisation } from '@/services/client';
+import { normalizeLegacyActionUrl } from '@/src/features/dashboard/lib/legacy-action-url';
 import { ConfirmDialog } from '../components/confirm-dialog';
 import { FormSheet } from '../components/form-sheet';
 import { NoteField, noteToPlainText } from '../components/note-field';
@@ -214,12 +216,12 @@ export function AdminNotificationsPage() {
                       <p className='text-muted-foreground text-sm'>{notification.body}</p>
                     ) : null}
                     {notification.action_url ? (
-                      <a
-                        href={notification.action_url}
+                      <Link
+                        href={normalizeLegacyActionUrl(notification.action_url, 'admin')}
                         className='text-primary inline-block text-xs font-medium hover:underline'
                       >
                         Open what this is about
-                      </a>
+                      </Link>
                     ) : null}
                   </div>
 

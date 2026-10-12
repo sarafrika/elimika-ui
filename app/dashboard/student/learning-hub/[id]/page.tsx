@@ -71,24 +71,37 @@ export default function StudentClassCoursePage({ params }: Props) {
   const resolvedParams = React.use(params);
   const { id: classId } = resolvedParams;
 
-  const { data: classData, isLoading, isError } = useClassDetails(classId);
+  const {
+    data: classData,
+    isClassLoading,
+    isRelatedLoading,
+    isScheduleLoading,
+    isEnrollmentsLoading,
+    isError,
+  } = useClassDetails(classId, { prefetchCourseCreator: true });
 
-  if (isLoading) {
+  if (isClassLoading) {
     return <ClassDetailsSkeleton />;
   }
 
-  if (isError || !classData) {
+  if (isError || !classData.class) {
     return <PageNotFound />;
   }
 
-  if (classData?.course?.uuid) {
-    return <ClassCourseDetailsPage classData={classData} viewer='student' />;
+  const loading = {
+    related: isRelatedLoading,
+    schedule: isScheduleLoading,
+    enrollments: isEnrollmentsLoading,
+  };
+
+  if (classData.class.course_uuid) {
+    return <ClassCourseDetailsPage classData={classData} viewer='student' loading={loading} />;
   }
 
-  if (classData?.program?.uuid) {
+  if (classData.class.program_uuid) {
     return (
       <ClassProgramDetailsPage
-        programId={classData.program.uuid}
+        programId={classData.class.program_uuid}
         classData={classData}
         viewer='student'
       />

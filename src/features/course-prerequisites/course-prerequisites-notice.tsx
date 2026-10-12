@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import { ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import { getCoursePrerequisitesOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -29,7 +28,6 @@ export function CoursePrerequisitesNotice({
     ...getCoursePrerequisitesOptions({ path: { uuid: courseUuid ?? '' } }),
     enabled: Boolean(courseUuid),
     staleTime: STALE_TIMES.entity,
-    retry: retryUnlessClientOrSearchError,
   });
 
   if (!courseUuid) return null;

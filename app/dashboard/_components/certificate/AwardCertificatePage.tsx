@@ -31,7 +31,7 @@ import { toAuthenticatedMediaUrl } from '../../../../src/lib/media-url';
 import { getPreferredScheduleInstance } from '../../instructor/classes/_components/new-class-page.utils';
 import { TrainingSchedule } from '../../instructor/classes/class-training/[id]/_components/ClassTrainingPage';
 import CertificatePage from './CertificatePage';
-import { CertificateData } from './CertificatePDF';
+import type { CertificateData } from './CertificatePDF';
 
 function getStudentAttendanceState(entry: RosterEntry | null | undefined) {
   if (entry?.enrollment?.is_attendance_marked) {
@@ -130,9 +130,10 @@ const AwardCertificatesPage = () => {
 
   const { data: courseEnrollmentsResp } = useQuery({
     ...getCourseEnrollmentsOptions({
-      path: { courseUuid: course?.uuid ?? '' },
+      path: { courseUuid: course?.uuid as string },
       query: { pageable: {} },
     }),
+    enabled: !!course?.uuid,
   });
 
   const enrollmentUuid =
@@ -141,7 +142,7 @@ const AwardCertificatesPage = () => {
     )?.uuid ?? '';
 
   const studentUuid =
-    selectedStudent?.student?.uuid ?? selectedStudent?.enrollment?.student_uuid ?? '';
+    selectedStudent?.student?.data?.uuid ?? selectedStudent?.enrollment?.student_uuid ?? '';
 
   const courseUuid = course?.uuid ?? classData?.course_uuid ?? '';
   const enrollmentGradeBookQuery = useQuery({
@@ -480,7 +481,7 @@ const AwardCertificatesPage = () => {
 
                 return (
                   <button
-                    key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                    key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.data?.uuid}
                     type='button'
                     onClick={() => {
                       setSelectedEnrollmentId(entry.enrollment?.uuid ?? '');

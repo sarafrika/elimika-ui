@@ -2,9 +2,10 @@
 
 import { Search } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { Button } from '@/components/ui/button';
 import { useCallback, useState } from 'react';
-import { GlobalSearchSheet, useGlobalSearchShortcut } from './global-search-sheet';
+import { Button } from '@/components/ui/button';
+import { useGlobalSearchShortcut } from '../hooks/use-global-search-shortcut';
+import { LazyGlobalSearchSheet } from './global-search-sheet-lazy';
 import { GlobalSearchTrigger } from './global-search-trigger';
 
 /**
@@ -41,7 +42,7 @@ function PublicSearchPalette() {
       >
         <Search className='size-4' />
       </Button>
-      <GlobalSearchSheet open={open} onOpenChange={setOpen} domain='public' />
+      <LazyGlobalSearchSheet open={open} onOpenChange={setOpen} domain='public' />
     </>
   );
 }

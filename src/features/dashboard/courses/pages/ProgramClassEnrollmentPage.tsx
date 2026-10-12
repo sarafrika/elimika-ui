@@ -130,12 +130,7 @@ export default function ProgramClassEnrollmentPage({
   const [requirementsChecked, setRequirementsChecked] = useState<Record<string, boolean>>({});
 
   // ── Data fetching ──────────────────────────────────────────────────────
-  const { classes = [], loading } = useProgramBundledClassInfo(
-    programId,
-    undefined,
-    undefined,
-    student
-  );
+  const { classes = [], loading } = useProgramBundledClassInfo(programId, student, classId);
   const { difficultyMap } = useDifficultyLevels()
 
   const { data: classEnrollmentsResponse } = useQuery({

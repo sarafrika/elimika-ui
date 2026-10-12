@@ -36,6 +36,7 @@ import {
   uploadOrganisationDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { DocumentTypeOption } from '@/services/client/types.gen';
+import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-session-identity';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
   OrganisationCountryField,
@@ -421,6 +422,7 @@ function ValidationDocumentsStep({
 
 export function OrganizationOnboardingForm() {
   const router = useRouter();
+  const refreshSessionIdentity = useRefreshSessionIdentity();
   const user = useUserProfile();
   const queryClient = useQueryClient();
   const [capturedDocuments, setCapturedDocuments] = useState<CapturedValidationDocuments>({});
@@ -543,6 +545,7 @@ export function OrganizationOnboardingForm() {
         );
       }
 
+      await refreshSessionIdentity();
       router.replace(buildDashboardSwitchPath('organisation_user'));
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to register organization. Please try again.'));

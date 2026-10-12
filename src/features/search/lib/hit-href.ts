@@ -196,9 +196,9 @@ export function hitDestination(domain: PaletteAudience, hit: PaletteHit): HitDes
     case 'parent':
       switch (type) {
         case 'courses':
-          return href(url(`all-courses/${uuid}`));
+          return href(url(`courses/${uuid}`));
         case 'programs':
-          return href(url(`all-courses/available-programs/${uuid}`));
+          return href(url(`courses/available-programs/${uuid}`));
         case 'marketplace_jobs':
           return href(withQuery(url('opportunities'), { job: uuid }));
         case 'instructors':
@@ -263,7 +263,7 @@ export function seeAllHref(domain: PaletteAudience, type: SearchType, q: string)
         case 'courses':
           return url('courses');
         case 'programs':
-          return url('all-courses');
+          return url('courses');
         case 'marketplace_jobs':
           return url('opportunities');
         case 'rubrics':
@@ -273,7 +273,7 @@ export function seeAllHref(domain: PaletteAudience, type: SearchType, q: string)
     case 'instructor':
       switch (type) {
         case 'courses':
-          return url('learning');
+          return url('courses');
         case 'marketplace_jobs':
           return url('opportunities');
       }
@@ -293,7 +293,7 @@ export function seeAllHref(domain: PaletteAudience, type: SearchType, q: string)
         case 'courses':
           return url('courses');
         case 'programs':
-          return url('all-courses');
+          return url('courses');
         case 'marketplace_jobs':
           return url('opportunities');
       }
@@ -302,7 +302,7 @@ export function seeAllHref(domain: PaletteAudience, type: SearchType, q: string)
       switch (type) {
         case 'courses':
         case 'programs':
-          return url('all-courses');
+          return url('courses');
         case 'marketplace_jobs':
           return url('opportunities');
       }
@@ -337,13 +337,13 @@ export function quickLinks(domain: PaletteAudience): { label: string; href: stri
     case 'instructor':
       return [
         home,
-        { label: 'Courses', href: dashboardUrl(domain, 'learning') },
+        { label: 'Courses', href: dashboardUrl(domain, 'courses') },
         { label: 'Find work', href: dashboardUrl(domain, 'opportunities') },
       ];
     case 'parent':
       return [
         home,
-        { label: 'All courses', href: dashboardUrl(domain, 'all-courses') },
+        { label: 'All courses', href: dashboardUrl(domain, 'courses') },
         { label: 'Opportunities', href: dashboardUrl(domain, 'opportunities') },
       ];
     default:

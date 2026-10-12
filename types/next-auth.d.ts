@@ -41,8 +41,20 @@ declare module 'next-auth' {
       /** Organisation slug identifier */
       'organisation-slug'?: string;
     };
+    /** Identity stamped from `/me` at sign-in, refresh and `update()`. */
+    identity?: SessionIdentity;
     /** Error state for token refresh failures */
     error?: 'RefreshAccessTokenError';
+  }
+
+  /** Enough of the user record for server guards to route without a `/me` round trip. */
+  interface SessionIdentity {
+    uuid: string;
+    /** Raw `user_domain` values; normalise before use. */
+    domains: string[];
+    hasOrganisationAffiliation: boolean;
+    /** Active (else first) affiliation's organisation, so the org fetch needs no `/me` first. */
+    organisationUuid?: string | null;
   }
 }
 
@@ -80,6 +92,8 @@ declare module 'next-auth/jwt' {
     organisation?: string[];
     /** Organisation slug identifier */
     'organisation-slug'?: string;
+    /** Identity stamped from `/me`; absent on tokens issued before it existed. */
+    identity?: import('next-auth').SessionIdentity;
     /** Error state for token operations */
     error?: 'RefreshAccessTokenError';
   }

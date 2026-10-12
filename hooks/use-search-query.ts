@@ -81,8 +81,8 @@ export function useSearchQuery({
 
 /**
  * Report the errors of the queries that carried `q`. A 503 (or "Search is unavailable")
- * marks search unavailable for 60 seconds; the queries are expected to use
- * `retryUnlessClientOrSearchError`, so the 503 itself is never retried.
+ * marks search unavailable for 60 seconds; the default query `retry`
+ * (`retryUnlessClientOrSearchError`) never retries the 503 itself.
  */
 export function useSearchErrors(q: string | undefined, ...errors: unknown[]) {
   const unavailable = Boolean(q) && errors.some(error => isSearchUnavailable(error));

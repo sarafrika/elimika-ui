@@ -26,7 +26,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Progress } from '@/components/ui/progress';
 import { formatRate } from '@/lib/rate-card';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   BookOpen,
@@ -43,7 +43,7 @@ import {
   UserPlus,
   Users
 } from 'lucide-react';
-import Image from 'next/image';
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -217,19 +217,18 @@ export function LiveClassCard({
             <div>
               {/* IMAGE */}
               <div className='bg-muted relative hidden h-[120px] w-full overflow-hidden rounded-md lg:flex lg:w-[180px] lg:min-w-[180px]'>
-                {imageUrl ? (
-                  <Image
-                    src={imageUrl}
-                    alt={liveClass.title}
-                    fill
-                    className='object-cover'
-                    unoptimized={isAuthenticatedMediaUrl(imageUrl)}
-                  />
-                ) : (
-                  <div className='bg-primary/10 text-primary flex h-full w-full items-center justify-center'>
-                    <BookOpen className='size-10' />
-                  </div>
-                )}
+                <ImageWithFallback
+                  src={imageUrl}
+                  alt={liveClass.title}
+                  fill
+                  sizes='180px'
+                  className='object-cover'
+                  fallback={
+                    <div className='bg-primary/10 text-primary flex h-full w-full items-center justify-center'>
+                      <BookOpen className='size-10' />
+                    </div>
+                  }
+                />
               </div>
             </div>
 

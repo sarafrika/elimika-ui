@@ -262,7 +262,7 @@ export default function ProgramEditor({
     }
   };
   const openProgram = (uuid: string) =>
-    router.push(`/dashboard/course-creator/course-management/programs/${uuid}`);
+    router.push(`/dashboard/course-creator/programs/${uuid}`);
   const onPublish = async () => {
     if (
       !savedForPublication ||

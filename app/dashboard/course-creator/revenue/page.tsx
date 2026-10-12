@@ -34,7 +34,7 @@ import { useCourseCreator } from '../../../../context/course-creator-context';
 import {
   getCourseEnrollmentsOptions,
   getWalletOptions,
-  listTransactionsOptions,
+  listTransactions1Options,
   transferMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 
@@ -151,11 +151,12 @@ const RevenuePage = () => {
   });
 
   const { data: listTransactions } = useQuery({
-    ...listTransactionsOptions({
+    // Wallet ledger (not the org skills-fund route); sorted and paged client-side below.
+    ...listTransactions1Options({
       path: { userUuid: userUuid as string },
       query: {
         currency_code: walletData?.data?.currency_code,
-        pageable: { page, size, sort: ['created_date,desc'] },
+        pageable: { size: 100 },
       },
     }),
     enabled: !!userUuid && !!walletData?.data?.currency_code,

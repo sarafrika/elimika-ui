@@ -78,7 +78,7 @@ export function MarketingTopNav({ wide = false }: { wide?: boolean }) {
           </div>
 
           <Link
-            href='/cart'
+            href='/dashboard/cart'
             className='focus-visible:ring-primary/50 rounded-full focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
           >
             <Button

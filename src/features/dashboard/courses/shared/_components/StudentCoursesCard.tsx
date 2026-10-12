@@ -1,7 +1,5 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   BookOpen,
   CalendarDays,
@@ -13,6 +11,8 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { CourseCatalogCardLayout } from './CourseCatalogCardLayout';
 import type { CoursesCatalogCardData } from './courses-data';
 
@@ -62,18 +62,24 @@ export function StudentCoursesCard({ card }: StudentCoursesCardProps) {
               {card.units} units
             </span>
           )}
-          <span className='flex items-center gap-1.5'>
-            <Users className='h-3.5 w-3.5 shrink-0' />
-            {card.enrollmentCount ?? 0} learners
-          </span>
-          <span className='flex items-center gap-1.5'>
-            <CalendarDays className='h-3.5 w-3.5 shrink-0' />
-            {card.activeClasses ?? 0} classes
-          </span>
-          <span className='flex items-center gap-1.5'>
-            <UserCheck className='h-3.5 w-3.5 shrink-0' />
-            {card.instructorCount ?? 0} instructors
-          </span>
+          {typeof card.enrollmentCount === 'number' && (
+            <span className='flex items-center gap-1.5'>
+              <Users className='h-3.5 w-3.5 shrink-0' />
+              {card.enrollmentCount} learners
+            </span>
+          )}
+          {typeof card.activeClasses === 'number' && (
+            <span className='flex items-center gap-1.5'>
+              <CalendarDays className='h-3.5 w-3.5 shrink-0' />
+              {card.activeClasses} classes
+            </span>
+          )}
+          {typeof card.instructorCount === 'number' && (
+            <span className='flex items-center gap-1.5'>
+              <UserCheck className='h-3.5 w-3.5 shrink-0' />
+              {card.instructorCount} instructors
+            </span>
+          )}
         </>
       }
     >

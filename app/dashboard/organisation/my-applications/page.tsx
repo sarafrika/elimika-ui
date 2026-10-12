@@ -38,7 +38,7 @@ import {
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity } from '@/lib/api-helpers';
-import { APPROVAL_QUERY_FRESHNESS } from '@/lib/query-client';
+import { APPROVAL_QUERY_FRESHNESS, STALE_TIMES } from '@/lib/query-client';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import type { Course } from '@/services/client';
@@ -132,7 +132,7 @@ export default function MyApplicationsPage() {
     }),
     enabled: Boolean(organisationUuid),
     ...APPROVAL_QUERY_FRESHNESS,
-    staleTime: 0,
+    staleTime: STALE_TIMES.live,
   });
   const applications = applicationsQuery.data?.data?.content ?? [];
 

@@ -1,26 +1,30 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import { prefetchCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { toNumber } from '@/lib/metrics';
+import { STALE_TIMES } from '@/lib/query-client';
+import { withOnData } from '@/lib/query-on-data';
 import { classifySearchError, type SearchIssue, toSearchTerm } from '@/lib/search/query';
 import type {
   ContentModerationHistory,
   Course,
   CourseAssessment,
+  CourseCreator,
   CourseEditDiff,
   CourseRequirement,
   CourseStats,
-  CourseCreator,
+  GetCourseEditDiffResponse,
   Lesson,
 } from '@/services/client';
 import {
   getCourseAssessmentsOptions,
   getCourseByUuidOptions,
   getCourseCreatorByUuidOptions,
-  getCourseEditDiffOptions,
+  getCourseEditDiffQueryKey,
   getCourseLessonsOptions,
   getCourseModerationHistoryOptions,
   getCourseRequirementsOptions,
@@ -29,6 +33,7 @@ import {
   listPendingCoursesOptions,
   searchCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { getCourseEditDiff } from '@/services/client/sdk.gen';
 import { listQuery, queueQuery } from '../lib/admin-queries';
 
 export const COURSE_PAGE_SIZE = 20;
@@ -79,15 +84,25 @@ export function useCourses(filters: CourseFilters): CoursesResult {
     [filterParams, term]
   );
   const sorted = { page: pageIndex, size: COURSE_PAGE_SIZE, sort: ['lastModifiedDate,desc'] };
+  const queryClient = useQueryClient();
+  // Rows carry only a creator uuid; the names lookup starts as soon as the rows land.
+  const prefetchCreators = (data: unknown) =>
+    prefetchCourseCreatorsByIds(
+      queryClient,
+      extractPage<Course>(data).items.map(course => course.course_creator_uuid)
+    );
 
   // With a term the index ranks by relevance, so no sort is sent.
   const primary = useQuery({
-    ...searchCoursesOptions({
-      query: {
-        searchParams,
-        pageable: term ? { page: pageIndex, size: COURSE_PAGE_SIZE } : sorted,
-      },
-    }),
+    ...withOnData(
+      searchCoursesOptions({
+        query: {
+          searchParams,
+          pageable: term ? { page: pageIndex, size: COURSE_PAGE_SIZE } : sorted,
+        },
+      }),
+      prefetchCreators
+    ),
     ...listQuery,
   });
 
@@ -96,7 +111,10 @@ export function useCourses(filters: CourseFilters): CoursesResult {
 
   // The index is down: the list still answers without the term.
   const fallback = useQuery({
-    ...searchCoursesOptions({ query: { searchParams: filterParams, pageable: sorted } }),
+    ...withOnData(
+      searchCoursesOptions({ query: { searchParams: filterParams, pageable: sorted } }),
+      prefetchCreators
+    ),
     ...listQuery,
     enabled: unavailable,
   });
@@ -174,15 +192,22 @@ export function useCourseCreator(uuid?: string) {
  * so it is reported as empty rather than as a failure.
  */
 export function useCourseEditDiff(uuid: string, enabled = true) {
+  // The 404 is cached as empty; staleTime spares tab switches, invalidation still refetches.
   const query = useQuery({
-    ...getCourseEditDiffOptions({ path: { uuid } }),
-    ...queueQuery,
+    queryKey: getCourseEditDiffQueryKey({ path: { uuid } }),
+    queryFn: async ({ signal }): Promise<GetCourseEditDiffResponse | null> => {
+      const { data, error, response } = await getCourseEditDiff({ path: { uuid }, signal });
+      if (response?.status === 404) return null;
+      if (error) throw error;
+      return data ?? null;
+    },
     enabled: Boolean(uuid) && enabled,
+    staleTime: STALE_TIMES.entity,
     retry: false,
   });
 
   const diff = useMemo(() => extractEntity<CourseEditDiff>(query.data), [query.data]);
-  const isMissing = isNotFound(query.error) || (!query.isLoading && !diff);
+  const isMissing = !query.isLoading && !query.error && !diff;
 
   return {
     diff,
@@ -269,12 +294,4 @@ export function useCourseStats(uuid: string, enabled = false) {
 
   const stats = useMemo(() => extractEntity<CourseStats>(query.data), [query.data]);
   return { stats, query };
-}
-
-/** A 404 from the diff endpoint means no edit is waiting. */
-function isNotFound(error: unknown): boolean {
-  if (!error || typeof error !== 'object') return false;
-  const record = error as { status?: unknown; response?: { status?: unknown } };
-  const status = record.status ?? record.response?.status;
-  return status === 404;
 }

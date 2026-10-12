@@ -1,9 +1,11 @@
 'use client';
 
 import { AlertTriangle, Inbox } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { type ReactNode, useEffect, useId, useRef } from 'react';
 import { Button } from '@/components/ui/button';
+import { sectionAbandoned, sectionData, sectionError, sectionStart } from '@/lib/perf/rum';
 import { cn } from '@/lib/utils';
+import { SectionErrorBoundary } from './section-error-boundary';
 
 /**
  * Graceful-degradation primitive. Wrap each data-dependent region of a page in an
@@ -17,6 +19,8 @@ import { cn } from '@/lib/utils';
  *   </AsyncSection>
  */
 export type AsyncSectionProps = {
+  /** RUM label for this section's load timing; defaults to a slug of the custom titles. */
+  name?: string;
   /** True only while first load is in flight (pass `isLoading && !data` to keep stale data visible). */
   loading?: boolean;
   /** Any truthy value renders the error state (pass the query error). */
@@ -37,6 +41,7 @@ export type AsyncSectionProps = {
 };
 
 export function AsyncSection({
+  name,
   loading,
   error,
   empty,
@@ -49,6 +54,12 @@ export function AsyncSection({
   className,
   children,
 }: AsyncSectionProps) {
+  useSectionTiming(
+    name ?? deriveSectionName(emptyTitle, errorTitle),
+    Boolean(loading),
+    Boolean(error)
+  );
+
   if (error) {
     return (
       <SectionError title={errorTitle} error={error} onRetry={onRetry} className={className} />
@@ -66,7 +77,51 @@ export function AsyncSection({
       </>
     );
   }
-  return <>{children}</>;
+  return (
+    <SectionErrorBoundary onRetry={onRetry} className={className}>
+      {children}
+    </SectionErrorBoundary>
+  );
+}
+
+const DEFAULT_TITLES = new Set(['Couldn’t load this section', 'Nothing here yet']);
+
+function deriveSectionName(emptyTitle: string, errorTitle: string) {
+  const title = [emptyTitle, errorTitle].find(value => !DEFAULT_TITLES.has(value));
+  const slug = title
+    ?.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 64);
+  return slug || 'section';
+}
+
+/** Reports first-load timing (start, data arrival or error) for one section instance to RUM. */
+function useSectionTiming(name: string, loading: boolean, failed: boolean) {
+  const id = useId();
+  const state = useRef<'idle' | 'loading' | 'done'>('idle');
+
+  useEffect(() => {
+    if (state.current === 'done') return;
+    if (state.current === 'idle') {
+      sectionStart(id, name);
+      state.current = 'loading';
+    }
+    if (failed) {
+      sectionError(id);
+      state.current = 'done';
+    } else if (!loading) {
+      sectionData(id);
+      state.current = 'done';
+    }
+  }, [id, name, loading, failed]);
+
+  useEffect(
+    () => () => {
+      if (state.current === 'loading') sectionAbandoned(id);
+    },
+    [id]
+  );
 }
 
 export function SectionError({

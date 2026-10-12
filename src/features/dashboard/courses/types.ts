@@ -1,32 +1,54 @@
 import type {
   BookingResponse,
   ClassDefinition,
+  ClassRatingSummary,
   CommerceCatalogueItem,
   Course,
   Instructor,
-  InstructorReview,
   InstructorSkill,
   ScheduledInstance,
   StudentSchedule,
   TrainingProgram,
   User,
 } from '@/services/client/types.gen';
-export type BundledClass = ClassDefinition & {
-  course: Course | null;
-  instructor: Instructor | null;
-  schedule: ScheduledInstance[];
-  enrollments: StudentSchedule[];
-  catalogue: CommerceCatalogueItem | null;
+// Cards only read the name and id; listings fill it from the batch class summary.
+export type CardInstructor = {
+  uuid?: string;
+  full_name?: string | null;
+  name?: string | null;
+  data?: { full_name?: string | null };
 };
 
-export type ProgramBundledClass = ClassDefinition & {
-  course: Course[] | null;
-  program: TrainingProgram | null;
-  instructor: Instructor | null;
+type ScheduleFields = {
   schedule: ScheduledInstance[];
-  enrollments: StudentSchedule[];
-  catalogue: CommerceCatalogueItem | null;
+  // False on listings: the card loads the schedule itself when it needs dates.
+  scheduleLoaded: boolean;
+  sessionCount?: number | null;
 };
+
+export type BundledClass = ClassDefinition &
+  ScheduleFields & {
+    course: Course | null;
+    instructor: CardInstructor | null;
+    enrollments: StudentSchedule[];
+    catalogue: CommerceCatalogueItem | null;
+    classRating?: ClassRatingSummary | null;
+    // From the batch class endpoint; null when the viewer is not a party to the class.
+    enrolledCount?: number | null;
+    isStudentEnrolled?: boolean;
+  };
+
+export type ProgramBundledClass = ClassDefinition &
+  ScheduleFields & {
+    course: Course[] | null;
+    program: TrainingProgram | null;
+    instructor: CardInstructor | null;
+    enrollments: StudentSchedule[];
+    catalogue: CommerceCatalogueItem | null;
+    // From the batch class endpoint; null when the viewer is not a party to the class.
+    enrolledCount?: number | null;
+    isStudentEnrolled?: boolean;
+  };
 
 export type SearchInstructor = Instructor & {
   gender?: User['gender'] | null;
@@ -43,9 +65,11 @@ export type SearchInstructor = Instructor & {
   courses?: string[];
   rating?: number;
   review_count?: number;
-  reviews?: InstructorReview[] | undefined | null;
   /** `rating` and `review_count` came with the list, so no card needs to fetch them. */
   ratings_inline?: boolean;
+  /** Profile and skills came from the list's batched lookups, so no card fetches them again. */
+  profile_inline?: boolean;
+  skills_inline?: boolean;
   location?: {
     city?: string;
   } | null;

@@ -375,16 +375,16 @@ export default function CheckoutPage() {
   // directly instead, so send anyone who reaches this URL back to it.
   useEffect(() => {
     if (!paymentRequired) {
-      router.replace('/cart');
+      router.replace('/dashboard/cart');
     }
   }, [paymentRequired, router]);
 
   // Redirect if no cart. Skip while an M-Pesa payment is in-flight or settled — clearing the cart
-  // on success would otherwise bounce the learner to /cart instead of the confirmation screen.
+  // on success would otherwise bounce the learner to the cart instead of the confirmation screen.
   useEffect(() => {
     if (mpesaStatus !== 'idle') return;
     if (!cartId && !cartQuery.isLoading) {
-      router.push('/cart');
+      router.push('/dashboard/cart');
     }
   }, [cartId, cartQuery.isLoading, router, mpesaStatus]);
 
@@ -501,7 +501,7 @@ export default function CheckoutPage() {
               <p className='text-muted-foreground mt-1 text-sm'>Complete your purchase</p>
             </div>
             <Link
-              href='/cart'
+              href='/dashboard/cart'
               className='text-primary inline-flex items-center gap-2 text-sm hover:underline'
             >
               <ArrowLeft className='h-4 w-4' />
@@ -568,7 +568,7 @@ export default function CheckoutPage() {
             <p className='text-muted-foreground mt-1 text-sm'>Complete your purchase</p>
           </div>
           <Link
-            href='/cart'
+            href='/dashboard/cart'
             className='text-primary inline-flex items-center gap-2 text-sm hover:underline'
           >
             <ArrowLeft className='h-4 w-4' />

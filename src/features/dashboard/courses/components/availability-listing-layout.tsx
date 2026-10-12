@@ -25,10 +25,11 @@ import {
   Wallet
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { useOrganisationsByIds } from '../../../../../hooks/use-batched-lookups';
+import { useClassSchedule } from '../../../../../hooks/use-class-schedule';
 import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
-import { ClassSessionTemplate } from '../../../../../services/client';
+import type { ClassSessionTemplate, Organisation } from '../../../../../services/client';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
+import { useUserDomain } from '../../context/user-domain-context';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import { ClassDetailSheet } from '../shared/_components/ClassDetailsSheet';
 import { VideoPreviewModal } from '@/components/ui/video-preview-modal';
@@ -39,6 +40,10 @@ type Props = {
   onEnroll: (cls: BundledClass) => void;
   onViewCourse: (cls: BundledClass) => void;
   onViewClass: (cls: BundledClass) => void;
+  // Looked up once by the listing page for every card, never per card.
+  organisation?: Organisation | null;
+  // Above-the-fold cards load their thumbnail eagerly.
+  priority?: boolean;
 };
 
 // type SessionTemplate = {
@@ -148,8 +153,17 @@ const formatScheduleDate = (date: Date | string) =>
     minute: '2-digit',
   });
 
-export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onViewClass }: Props) {
+export default function AvailabilityClassCard({
+  cls,
+  onEnroll,
+  onViewCourse,
+  onViewClass,
+  organisation = null,
+  priority = false,
+}: Props) {
   const profile = useUserProfile();
+  const { activeDomain } = useUserDomain();
+  const isStudentDomain = activeDomain === 'student';
   const student = profile?.student;
 
   const [detail, setDetail] = useState<BundledClass | null>(null);
@@ -160,16 +174,14 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   const [isClassEnded, setIsClassEnded] = useState(false);
   const [canEnrollClass, setCanEnrollClass] = useState(false);
 
-  // ORGANISATION DETAILS
+  // Listings carry no ratings; the block is hidden rather than showing a false zero.
+  const hasRating = cls.classRating != null;
   const rating = Math.round(cls?.classRating?.average_rating ?? 0);
 
-  const { organisationMap } = useOrganisationsByIds([cls?.organisation_uuid!]);
-  const organisation =
-    (cls?.organisation_uuid && organisationMap[cls.organisation_uuid]) || null;
-
-  // CLASS LESSONS
+  // CLASS LESSONS: only the lesson list is shown, so no content (one shared, deduped call).
   const { isLoading: lessonsLoading, lessons: lessonsWithContent } = useCourseLessonsWithContent({
     courseUuid: cls.course_uuid as string,
+    contentEnabled: false,
   });
 
   const courseLessons = useMemo(
@@ -179,8 +191,26 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
   const promotionalVideoUrl = toAuthenticatedMediaUrl(cls.promotional_video_url);
 
-  // CLASS SCHEDULES
-  const schedules = cls.schedule ?? [];
+  // CLASS SCHEDULES: learner listings batch undated classes' schedules; any other card loads its
+  // own only when Class Info opens.
+  const ownSchedule = useClassSchedule(cls.uuid, !cls.scheduleLoaded && detail !== null);
+  // Staff read session progress from the class DTO instead of fetching the schedule.
+  const dtoSessionCount =
+    !isStudentDomain && cls.scheduled_session_count != null
+      ? Number(cls.scheduled_session_count)
+      : undefined;
+  const dtoEnded =
+    dtoSessionCount !== undefined &&
+    dtoSessionCount > 0 &&
+    Number(cls.completed_session_count ?? 0) >= dtoSessionCount;
+  const scheduleKnown = cls.scheduleLoaded || ownSchedule.isLoaded;
+  const sessionsKnown = scheduleKnown || dtoSessionCount !== undefined;
+  const schedules = cls.scheduleLoaded ? cls.schedule : ownSchedule.schedule;
+  const sessionCount = cls.scheduleLoaded
+    ? cls.sessionCount
+    : ownSchedule.isLoaded
+      ? ownSchedule.sessionCount
+      : dtoSessionCount;
   const sortedSchedules = [...schedules].sort(
     (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
   );
@@ -188,8 +218,13 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   const firstSchedule = sortedSchedules[0];
   const lastSchedule = sortedSchedules[sortedSchedules.length - 1];
 
-  const startsAt = firstSchedule?.start_time;
-  const endsAt = lastSchedule?.end_time;
+  const startsAt: Date | string | undefined =
+    firstSchedule?.start_time ?? cls.academic_period_start_date ?? undefined;
+  const endsAt: Date | string | undefined =
+    lastSchedule?.end_time ?? cls.academic_period_end_date ?? undefined;
+  // Unknown until a date or a loaded schedule says otherwise; never assume "not ended".
+  const endStateKnown =
+    !!endsAt || scheduleKnown || ownSchedule.isError || dtoSessionCount !== undefined;
   const registrationStart = cls?.registration_period_start_date;
   const registrationEnd = cls?.registration_period_end_date
 
@@ -198,7 +233,12 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
   const uniqueStudentUuids = [
     ...new Set(enrollments.map(({ student_uuid }: { student_uuid: string }) => student_uuid)),
   ];
-  const isStudentEnrolled = student ? uniqueStudentUuids.includes(student?.uuid) : false;
+  const isStudentEnrolled =
+    cls.isStudentEnrolled === true ||
+    (student ? uniqueStudentUuids.includes(student?.uuid) : false);
+  // The batch count is only sent to parties to the class; otherwise fall back to loaded enrolments.
+  const seatsTaken: number | string =
+    cls.enrolledCount ?? (enrollments.length > 0 ? uniqueStudentUuids.length : '—');
 
   // REGISTRATION PERIOD, CLASS ENDED BLOCK
   useEffect(() => {
@@ -227,14 +267,16 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
       );
 
     const classEnded =
-      classEndDate !== null &&
-      now >= classEndDate;
+      dtoEnded ||
+      (classEndDate !== null &&
+        now >= classEndDate);
 
     setIsRegistrationPeriodUndefined(noRegistrationPeriod);
     setIsRegistrationOngoing(registrationOngoing);
     setIsClassEnded(classEnded);
 
     setCanEnrollClass(
+      endStateKnown &&
       !classEnded &&
       (registrationOngoing || noRegistrationPeriod)
     );
@@ -242,6 +284,8 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
     registrationStart,
     registrationEnd,
     endsAt,
+    endStateKnown,
+    dtoEnded,
   ]);
 
   useEffect(() => {
@@ -278,6 +322,8 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
               <img
                 src={toAuthenticatedMediaUrl(cls.thumbnail_url) as string}
                 alt={cls.name || cls.title}
+                loading={priority ? 'eager' : 'lazy'}
+                fetchPriority={priority ? 'high' : 'auto'}
                 className='h-12 w-12 rounded-full object-cover'
               />
             ) : (
@@ -303,7 +349,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
                 {organisation && <span>{organisation.name}</span>}
                 <span>{cls.instructor?.data?.full_name ?? ''}</span>
                 <span>{cls.level_of_study ?? 'Certificate'}</span>
-                <div className="flex flex-row items-center gap-1.5">
+                {hasRating ? <div className="flex flex-row items-center gap-1.5">
                   <span className="flex items-center text-warning">
                     {rating > 0 ? (
                       Array.from({ length: rating }).map((_, index) => (
@@ -318,7 +364,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
                   </span>
 
                   <span className="h-3.5">{rating}</span>
-                </div>
+                </div> : null}
               </div>
 
             </div>
@@ -365,7 +411,7 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
           <div className='mb-2 flex flex-wrap gap-2'>
             <Badge variant='outline' className='bg-primary/5 text-primary gap-1'>
               <Calendar className='h-3 w-3' />
-              {cls.schedule.length} sessions
+              {sessionsKnown ? `${sessionCount ?? schedules.length} sessions` : 'Schedule in Class Info'}
             </Badge>
 
             <Badge variant='outline' className='bg-primary/5 text-primary gap-1'>
@@ -387,18 +433,10 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
           <div className='text-muted-foreground grid gap-2 text-xs md:grid-cols-3'>
             <div className="inline-flex items-center gap-1.5">
               <Calendar className="h-3.5 w-3.5" />
-              {cls.academic_period_start_date && cls.academic_period_end_date
-                ? `${format(
-                  new Date(cls.academic_period_start_date),
-                  'MMM d, yyyy'
-                )} - ${format(
-                  new Date(cls.academic_period_end_date),
-                  'MMM d, yyyy'
-                )}`
-                : `${format(startsAt, 'MMM d, yyyy')} - ${format(
-                  endsAt,
-                  'MMM d, yyyy'
-                )}`}
+              {formatPeriod(
+                cls.academic_period_start_date ?? startsAt,
+                cls.academic_period_end_date ?? endsAt
+              )}
             </div>
 
 
@@ -409,17 +447,17 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
 
             <div className='inline-flex items-center gap-1.5'>
               <Users className='h-3.5 w-3.5' />
-              {uniqueStudentUuids.length ?? 0} / {cls.max_participants ?? 0} seats
+              {seatsTaken} / {cls.max_participants ?? 0} seats
             </div>
 
             <div className='inline-flex items-center gap-1.5'>
               <Calendar className='h-3.5 w-3.5' />
-              Starts {startsAt ? formatScheduleDate(startsAt) : 'Not available'}
+              Starts {startsAt ? formatScheduleDate(startsAt) : scheduleKnown ? 'Not available' : 'See Class Info'}
             </div>
 
             <div className='inline-flex items-center gap-1.5'>
               <Calendar className='h-3.5 w-3.5' />
-              Ends {endsAt ? formatScheduleDate(endsAt) : 'Not available'}
+              Ends {endsAt ? formatScheduleDate(endsAt) : scheduleKnown ? 'Not available' : 'See Class Info'}
             </div>
 
             <div className='inline-flex items-center gap-1.5'>
@@ -506,7 +544,8 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
         organisation={organisation}
         startsAt={startsAt}
         endsAt={endsAt}
-        uniqueStudentUuids={uniqueStudentUuids as string[]}
+        seatsTaken={seatsTaken}
+        sessionCount={sessionsKnown ? (sessionCount ?? schedules.length) : 'Loading…'}
         courseLessons={courseLessons}
         onClose={() => setDetail(null)}
         onEnroll={onEnroll}
@@ -516,6 +555,15 @@ export default function AvailabilityClassCard({ cls, onEnroll, onViewCourse, onV
       />
     </div>
   );
+}
+
+function formatPeriod(start?: Date | string | null, end?: Date | string | null) {
+  const from = start ? new Date(start) : null;
+  const to = end ? new Date(end) : null;
+  const valid = (d: Date | null): d is Date => d !== null && !Number.isNaN(d.getTime());
+  if (!valid(from) && !valid(to)) return 'Dates in Class Info';
+  const label = (d: Date | null) => (valid(d) ? format(d, 'MMM d, yyyy') : 'TBC');
+  return `${label(from)} - ${label(to)}`;
 }
 
 function formatTimeInZone(date: string, arg1: { fallback: string; }) {

@@ -1,25 +1,20 @@
 'use client';
 
-import { Popover, PopoverTrigger } from '@/components/ui/popover';
+import { useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import useBundledClassInfo from '@/hooks/use-course-classes';
+import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { SearchUnavailable } from '@/components/search/search-unavailable';
-import { isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isSearchUnavailable } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
-import {
-  getAllClassDefinitionsOptions,
-  listCatalogItemsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { getAllClassDefinitionsOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useNearMe } from '@/src/features/near-me/near-me';
 import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import AvailabilityClassCard from '@/src/features/dashboard/courses/components/availability-listing-layout';
-import { useDateRangeFilter } from '@/src/features/dashboard/courses/hooks/use-date-range-filter';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { ArrowLeft, BookOpen, CalendarRange } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { DateRange } from 'react-day-picker';
 import { Button } from '../../../../../components/ui/button';
 import {
   Sheet,
@@ -53,47 +48,14 @@ export default function AvailableClassesPage({
   const [courseDetailsOpen, setCourseDetailsOpen] = useState(false);
   const [classDetailsOpen, setClassDetailsOpen] = useState(false);
 
-  const [range, setRange] = useState<DateRange | undefined>({
-    from: new Date(new Date().setMonth(new Date().getMonth() - 3)),
-    to: new Date(new Date().setMonth(new Date().getMonth() + 12)),
-  });
-
-  const {
-    startDateInput,
-    endDateInput,
-    setStartDateInput,
-    setEndDateInput,
-    appliedStart,
-    appliedEnd,
-    dateError,
-    applyDates,
-    clearDates,
-  } = useDateRangeFilter();
-
-  // Catalogue membership decides whether a class is listed at all, so once the
-  // ten-minute window lapses the cached copy paints but is still re-asked.
-  const { data: catalogues } = useQuery({
-    ...listCatalogItemsOptions(),
-    staleTime: 1000 * 60 * 10,
-    refetchOnWindowFocus: false,
-  });
-
-  const { classes = [], loading } = useBundledClassInfo(
-    courseId,
-    appliedStart ?? undefined,
-    appliedEnd ?? undefined,
-    student
-  );
+  const { classes = [], loading } = useBundledClassInfo(courseId, student);
+  // Same args as each card, so the cards join this wave-1 lesson request via one query key.
+  useCourseLessonsWithContent({ courseUuid: courseId, contentEnabled: false });
 
   const course = classes[0]?.course;
 
-  const filteredClasses = classes.filter(
-    cls =>
-      cls.is_active &&
-      catalogues?.data?.some(
-        cat => cat.class_definition_uuid === cls.uuid
-      )
-  );
+  // Catalogue membership (scoped to this course by the hook) decides whether a class is listed.
+  const filteredClasses = classes.filter(cls => cls.is_active && cls.catalogue !== null);
 
   // Near me: one index query for classes around the chosen point (IN_PERSON and HYBRID
   // only, nearest first), intersected with this course's classes. `near` stays in
@@ -105,7 +67,6 @@ export default function AvailableClassesPage({
     }),
     enabled: nearMe.active,
     staleTime: STALE_TIMES.live,
-    retry: retryUnlessClientOrSearchError,
   });
   const nearUnavailable = nearMe.active && isSearchUnavailable(nearQuery.error);
   const nearBands = useMemo(() => {
@@ -126,6 +87,18 @@ export default function AvailableClassesPage({
         )
     : filteredClasses;
   const listLoading = loading || (nearMe.active && nearQuery.isLoading);
+
+  // One organisation lookup for every card on screen instead of one per card.
+  const organisationKey = [
+    ...new Set(listedClasses.map(cls => cls.organisation_uuid).filter((id): id is string => !!id)),
+  ]
+    .sort()
+    .join(',');
+  const organisationIds = useMemo(
+    () => (organisationKey ? organisationKey.split(',') : []),
+    [organisationKey]
+  );
+  const { organisationMap } = useOrganisationsByIds(organisationIds);
 
   const instructorFilteredClasses = filteredClasses.filter(
     cls => cls.default_instructor_uuid === instructor?.uuid
@@ -179,38 +152,6 @@ export default function AvailableClassesPage({
             </SheetContent>
           </Sheet>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant='outline' size='sm' className='gap-2'>
-                <CalendarRange className='h-4 w-4' />
-
-                {range?.from && range?.to
-                  ? `${format(range.from, 'dd MMM')} - ${format(range.to, 'dd MMM')}`
-                  : 'Select dates'}
-              </Button>
-            </PopoverTrigger>
-
-            {/* <PopoverContent className='w-auto p-0' align='end'>
-              <Calendar
-                mode='range'
-                numberOfMonths={12}
-                selected={range}
-                defaultMonth={range?.from}
-                onSelect={value => {
-                  setRange(value);
-
-                  if (value?.from) {
-                    setStartDateInput(format(value.from, 'yyyy-MM-dd'));
-                  }
-
-                  if (value?.to) {
-                    setEndDateInput(format(value.to, 'yyyy-MM-dd'));
-                    applyDates();
-                  }
-                }}
-              />
-            </PopoverContent> */}
-          </Popover>
         </div>
       </div>
 
@@ -251,13 +192,17 @@ export default function AvailableClassesPage({
             </div>
           ))
         ) : listedClasses.length > 0 ? (
-          listedClasses.map(item => (
+          listedClasses.map((item, index) => (
             <div key={item.uuid} className='space-y-2'>
               {nearMe.active ? (
                 <DistanceBandBadge band={nearBands.get(item.uuid as string)?.band} />
               ) : null}
               <AvailabilityClassCard
                 cls={item}
+                priority={index < 4}
+                organisation={
+                  item.organisation_uuid ? (organisationMap[item.organisation_uuid] ?? null) : null
+                }
                 onViewCourse={() => setCourseDetailsOpen(true)}
                 onViewClass={() => setClassDetailsOpen(true)}
                 onEnroll={selectedClass => {

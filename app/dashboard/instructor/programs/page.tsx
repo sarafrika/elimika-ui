@@ -24,14 +24,14 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useInstructor } from '@/context/instructor-context';
+import { useProgramsByIds } from '@/hooks/use-batched-lookups';
 import { formatCourseDate } from '@/lib/format-course-date';
 import {
   deleteTrainingProgramMutation,
   getAllCategoriesOptions,
-  searchTrainingProgramsOptions,
-  searchTrainingProgramsQueryKey,
+  searchProgramTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Category, SearchTrainingProgramsResponse } from '@/services/client/types.gen';
+import type { Category, TrainingProgram } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   BadgeCheck,
@@ -45,7 +45,7 @@ import {
   TrashIcon,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   AddProgramCourseDialog,
@@ -55,9 +55,7 @@ import {
   ProgramRequirementDialog,
 } from '../../course-creator/_components/program-management-form';
 
-type ProgramListItem = NonNullable<
-  NonNullable<SearchTrainingProgramsResponse['data']>['content']
->[number];
+type ProgramListItem = TrainingProgram;
 
 export default function ClassesPage() {
   const queryClient = useQueryClient();
@@ -99,15 +97,38 @@ export default function ClassesPage() {
 
   const { data: categories } = useQuery(getAllCategoriesOptions({ query: { pageable: {} } }));
 
-  // GET INSTRUCTOR'S PROGRAMS
-  const { data, isLoading, isFetching } = useQuery(
-    searchTrainingProgramsOptions({
-      query: { searchParams: { instructorUuid: instructor?.uuid }, pageable: { page, size } },
-    })
-  );
+  // Programs search has no instructor filter: list approved applications, then batch by uuid_in.
+  const instructorUuid = instructor?.uuid;
+  const applicationsQuery = useQuery({
+    ...searchProgramTrainingApplicationsOptions({
+      query: {
+        searchParams: {
+          applicant_uuid_eq: instructorUuid as string,
+          applicant_type_eq: 'instructor',
+          status_eq: 'approved',
+        },
+        pageable: { page, size },
+      },
+    }),
+    enabled: Boolean(instructorUuid),
+  });
 
-  const programs: ProgramListItem[] = data?.data?.content ?? [];
-  const paginationMetadata = data?.data?.metadata;
+  const programIds = useMemo(
+    () =>
+      (applicationsQuery.data?.data?.content ?? [])
+        .map(application => application.program_uuid)
+        .filter((uuid): uuid is string => Boolean(uuid)),
+    [applicationsQuery.data]
+  );
+  const { programMap, isLoading: isLoadingPrograms } = useProgramsByIds(programIds);
+
+  const programs: ProgramListItem[] = useMemo(
+    () => programIds.map(uuid => programMap[uuid]).filter(Boolean),
+    [programIds, programMap]
+  );
+  const paginationMetadata = applicationsQuery.data?.data?.metadata;
+  const isLoading = !instructorUuid || applicationsQuery.isLoading || isLoadingPrograms;
+  const isFetching = applicationsQuery.isFetching || isLoadingPrograms;
   const categoryOptions: Category[] = categories?.data?.content ?? [];
 
   // DELETE PROGRAM
@@ -130,13 +151,9 @@ export default function ClassesPage() {
         {
           onSuccess: () => {
             toast.success('Training program deleted successfully');
+            queryClient.invalidateQueries({ queryKey: [{ _id: 'searchTrainingPrograms' }] });
             queryClient.invalidateQueries({
-              queryKey: searchTrainingProgramsQueryKey({
-                query: {
-                  pageable: { page, size },
-                  searchParams: { instructorUuid: instructor?.uuid },
-                },
-              }),
+              queryKey: [{ _id: 'searchProgramTrainingApplications' }],
             });
             setDeleteModalOpen(false);
             setProgramToDeleteId(null);

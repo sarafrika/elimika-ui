@@ -126,7 +126,7 @@ function MenuItemWithAccordion({
         </>
       ) : (
         <SidebarMenuButton isActive={item.isActive} asChild tooltip={item.title}>
-          <Link href={roleScopedDashboardPath(activeDomain, item.url!)}>
+          <Link href={roleScopedDashboardPath(activeDomain, item.url!)} prefetch={false}>
             {item.icon && <item.icon />}
             <span>{item.title}</span>
           </Link>

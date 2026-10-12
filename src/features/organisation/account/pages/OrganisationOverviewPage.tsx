@@ -290,11 +290,6 @@ export default function OrganisationOverviewPage() {
       <Section
         title='Administrators'
         description='People who manage this organisation'
-        action={
-          <Button asChild size='sm' variant='outline'>
-            <Link href={roleScopedDashboardPath(activeDomain, '/dashboard/account/admin')}>Manage</Link>
-          </Button>
-        }
       >
         {adminsQuery.isLoading ? (
           <div className='space-y-2'>

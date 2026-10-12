@@ -1,17 +1,27 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { AlertTriangle, Bell, BellRing, ClipboardCheck, Info, Send, ShieldAlert } from 'lucide-react';
-
-import { AlertPanel, type AlertItem, type AlertSeverity } from '@/components/dashboard';
-import { useOrganisation } from '@/context/organisation-context';
-import { extractPage } from '@/lib/api-helpers';
+import {
+  AlertTriangle,
+  Bell,
+  BellRing,
+  ClipboardCheck,
+  Info,
+  Send,
+  ShieldAlert,
+} from 'lucide-react';
+import { type AlertItem, AlertPanel, type AlertSeverity } from '@/components/dashboard';
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useOrganisation, useOrganisationId } from '@/context/organisation-context';
+import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import type { NotificationDto } from '@/services/client';
 import {
   listNotificationsOptions,
   listSentOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { normalizeLegacyActionUrl } from '@/src/features/dashboard/lib/legacy-action-url';
 
 type TrainingApplicationLike = { status?: string | null };
 
@@ -39,8 +49,9 @@ const iconFor = (n: NotificationDto) => {
  */
 export function OverviewAlerts() {
   const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
-  const isUnverified = Boolean(organisationUuid) && organisation?.admin_verified !== true;
+  const organisationUuid = useOrganisationId() ?? '';
+  // Verification needs the fetched row; the id alone would flash an unverified alert.
+  const isUnverified = Boolean(organisation) && organisation?.admin_verified !== true;
   const awaitingReview = isUnverified && Boolean(organisation?.verification_requested_at);
 
   const applicationsQuery = useQuery({
@@ -49,8 +60,9 @@ export function OverviewAlerts() {
         searchParams: {
           applicant_uuid_eq: organisationUuid,
           applicant_type_eq: 'organisation',
+          status_eq: 'pending',
         },
-        pageable: { page: 0, size: 100 },
+        pageable: { page: 0, size: 1 },
       },
     }),
     enabled: Boolean(organisationUuid),
@@ -66,10 +78,11 @@ export function OverviewAlerts() {
     enabled: Boolean(organisationUuid),
   });
 
-  const applications = (applicationsQuery.data?.data?.content ?? []) as TrainingApplicationLike[];
-  const pendingApplications = applications.filter(application =>
-    isPending(application.status)
-  ).length;
+  // The search filters to pending server-side; the page total is the count.
+  const applicationsPage = extractPage<TrainingApplicationLike>(applicationsQuery.data);
+  const pendingApplications =
+    getTotalFromMetadata(applicationsPage.metadata) ||
+    applicationsPage.items.filter(application => isPending(application.status)).length;
 
   const alerts: AlertItem[] = [];
 
@@ -115,16 +128,31 @@ export function OverviewAlerts() {
   }
 
   for (const n of extractPage<NotificationDto>(notificationsQuery.data).items) {
+    const actionUrl = normalizeLegacyActionUrl(n.action_url, 'organisation');
     alerts.push({
       id: n.uuid ?? n.notification_id ?? `${n.title}-${n.created_at}`,
       severity: severityFor(n),
       title: n.title ?? 'Notification',
       description: n.body ?? '',
       icon: iconFor(n),
-      actionLabel: n.action_url ? 'View' : undefined,
-      href: n.action_url ?? undefined,
+      actionLabel: actionUrl ? 'View' : undefined,
+      href: actionUrl || undefined,
     });
   }
 
-  return <AlertPanel alerts={alerts} />;
+  const queries = [applicationsQuery, notificationsQuery, sentQuery];
+
+  // Each source adds its own alerts; the panel only fails when every source failed.
+  return (
+    <AsyncSection
+      name='org-overview-alerts'
+      loading={queries.some(query => query.isLoading)}
+      error={queries.every(query => query.error) ? notificationsQuery.error : undefined}
+      onRetry={() => queries.forEach(query => query.refetch())}
+      skeleton={<Skeleton className='h-72 w-full rounded-lg' />}
+      errorTitle='Couldn’t load alerts'
+    >
+      <AlertPanel alerts={alerts} />
+    </AsyncSection>
+  );
 }

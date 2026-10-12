@@ -49,7 +49,6 @@ import {
 } from '@/hooks/use-batched-lookups';
 import { useSearchIssue } from '@/hooks/use-search-query';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { formatDate, formatDateOnly } from '@/lib/date';
 import { formatRate, RATE_BASES } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
@@ -255,7 +254,6 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
       },
     }),
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const searchIssue = useSearchIssue(search, jobsQuery.error);
 
@@ -434,7 +432,6 @@ export function JobMarketplacePage({ role }: { role: JobMarketplaceRole }) {
   const linkedJobQuery = useQuery({
     ...getJobOptions({ path: { jobUuid: selectedJobUuid ?? '' } }),
     enabled: Boolean(selectedJobUuid) && !listedSelection && !jobsLoading,
-    retry: retryUnlessClientOrSearchError,
   });
   const selectedJob = listedSelection ?? linkedJobQuery.data?.data ?? null;
 

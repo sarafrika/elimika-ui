@@ -2,16 +2,25 @@ import { NextRequest, NextResponse } from 'next/server';
 import type { Session } from 'next-auth';
 import {
   buildPrivateBffCacheKey,
-  clearPrivateBffCacheForUser,
   deletePrivateBffCacheEntry,
   getPrivateBffCacheEntry,
   getPrivateBffCacheTtlMs,
+  invalidatePrivateBffCacheForWrite,
   isPrivateBffCacheBypassed,
   PRIVATE_BFF_CACHE_MAX_BODY_BYTES,
   type PrivateBffCacheEntry,
   refreshPrivateBffCacheEntry,
   storePrivateBffCacheEntry,
 } from '@/lib/api/private-bff-cache';
+import { getApiHedgeDispatcher, getApiReadDispatcher } from '@/lib/server/api-dispatcher';
+import { hedgedRead } from '@/lib/server/hedged-read';
+import {
+  etagMatches,
+  getPublicFileCache,
+  isPublicFileCacheable,
+  type PublicFileEntry,
+  publicFileCacheKey,
+} from '@/lib/server/public-file-cache';
 import { getServerApiBaseUrl } from '@/services/api/base-url';
 import { auth } from '@/services/auth';
 import { ACTING_DOMAIN_HEADER } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -21,6 +30,70 @@ export const revalidate = 0;
 
 type AuthSession = Session | null;
 type CacheState = 'BYPASS' | 'HIT' | 'MISS' | 'STALE';
+
+// Wall-clock budget for body-less requests only: with a streamed body it would
+// also cover the upload, so those rely on the dispatcher's per-phase timeouts.
+const UPSTREAM_TIMEOUT_MS = 20_000;
+// Socket, GOAWAY and stream-reset codes cover an h2 session torn down mid-read.
+const UNDICI_TIMEOUT_CODES = new Set([
+  'UND_ERR_HEADERS_TIMEOUT',
+  'UND_ERR_BODY_TIMEOUT',
+  'UND_ERR_CONNECT_TIMEOUT',
+  'UND_ERR_SOCKET',
+  'UND_ERR_INFO',
+  'ERR_HTTP2_STREAM_ERROR',
+]);
+
+class UpstreamTimeoutError extends Error {}
+
+function isUpstreamTimeout(error: unknown) {
+  if (error instanceof UpstreamTimeoutError) {
+    return true;
+  }
+  const cause =
+    error instanceof Error ? (error.cause as { code?: unknown } | undefined) : undefined;
+  return typeof cause?.code === 'string' && UNDICI_TIMEOUT_CODES.has(cause.code);
+}
+
+async function fetchUpstream(
+  url: URL,
+  init: RequestInit & { duplex?: 'half' },
+  clientSignal?: AbortSignal
+) {
+  if (init.body) {
+    return fetch(url, clientSignal ? { ...init, signal: clientSignal } : init);
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(new UpstreamTimeoutError('Upstream API timed out')),
+    UPSTREAM_TIMEOUT_MS
+  );
+  const signal = clientSignal
+    ? AbortSignal.any([controller.signal, clientSignal])
+    : controller.signal;
+
+  // Reads ride the multiplexed h2 dispatcher; Node's fetch accepts an undici dispatcher.
+  const dispatcher = getApiReadDispatcher();
+  const readInit: RequestInit & { dispatcher?: ReturnType<typeof getApiReadDispatcher> } = dispatcher
+    ? { ...init, dispatcher }
+    : { ...init };
+
+  // Hedges and retries go over a separate h1 pool, so one stalled h2 session cannot hold both.
+  const alternateInit: RequestInit & { dispatcher: ReturnType<typeof getApiHedgeDispatcher> } = {
+    ...init,
+    dispatcher: getApiHedgeDispatcher(),
+  };
+
+  try {
+    // The wall budget and client abort cover the hedge and the retry as well.
+    return await hedgedRead(url, readInit, { signal, alternateInit });
+  } catch (error) {
+    throw controller.signal.aborted ? controller.signal.reason : error;
+  } finally {
+    clearTimeout(timer);
+  }
+}
 
 const HOP_BY_HOP_HEADERS = new Set([
   'connection',
@@ -38,6 +111,66 @@ const sanitizeHeaders = (headers: Headers) => {
     headers.delete(header);
   }
 };
+
+// Next copies middleware response headers (session cookies) into req.headers, so
+// requests forward only these names. Not exported: route.ts exports are type-checked.
+const FORWARD_HEADER_ALLOWLIST = {
+  authenticated: [
+    'accept',
+    'accept-language',
+    'content-type',
+    'if-none-match',
+    'if-modified-since',
+    'if-match',
+    'range',
+    'if-range',
+    'user-agent',
+    'x-request-id',
+    'x-forwarded-for',
+    ACTING_DOMAIN_HEADER,
+  ],
+  publicFile: [
+    'accept',
+    'accept-language',
+    'if-none-match',
+    'if-modified-since',
+    'range',
+    'if-range',
+    'user-agent',
+  ],
+} as const;
+
+const NEVER_FORWARDED_HEADERS = new Set(['authorization', 'cookie', 'host', 'rsc', 'set-cookie']);
+const NEVER_FORWARDED_PREFIXES = ['x-middleware-', 'next-'];
+
+function isNeverForwarded(name: string) {
+  const lower = name.toLowerCase();
+  return (
+    NEVER_FORWARDED_HEADERS.has(lower) ||
+    HOP_BY_HOP_HEADERS.has(lower) ||
+    NEVER_FORWARDED_PREFIXES.some(prefix => lower.startsWith(prefix))
+  );
+}
+
+function pickForwardHeaders(source: Headers, allowed: readonly string[]) {
+  const headers = new Headers();
+  for (const name of allowed) {
+    const value = source.get(name);
+    if (value !== null && !isNeverForwarded(name)) {
+      headers.set(name, value);
+    }
+  }
+  return headers;
+}
+
+function stripUpstreamSessionHeaders(headers: Headers) {
+  headers.delete('set-cookie');
+  for (const name of Array.from(headers.keys())) {
+    if (name.toLowerCase().startsWith('x-middleware-')) {
+      headers.delete(name);
+    }
+  }
+}
 
 function appendVary(headers: Headers, values: string[]) {
   const existing = headers.get('vary');
@@ -61,10 +194,112 @@ function appendVary(headers: Headers, values: string[]) {
 
 function applyPrivateResponseHeaders(headers: Headers, cacheState: CacheState) {
   sanitizeHeaders(headers);
+  stripUpstreamSessionHeaders(headers);
   headers.set('cache-control', 'private, no-store');
   headers.set('x-bff-cache', cacheState);
   appendVary(headers, ['Authorization', 'Cookie', ACTING_DOMAIN_HEADER]);
   return headers;
+}
+
+const PUBLIC_FILES_PREFIX = '/api/v1/files/';
+const PUBLIC_FILE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+const PUBLIC_FILE_MISSING_CACHE_CONTROL = 'public, max-age=300';
+
+// Files are permitAll upstream except profile_documents, so the check runs on the
+// normalised upstream path to stop dot-segments from smuggling a private path through.
+function isPublicFileRead(request: NextRequest, upstreamUrl: URL) {
+  if (request.method !== 'GET' && request.method !== 'HEAD') {
+    return false;
+  }
+
+  const basePath = new URL(getServerApiBaseUrl()).pathname.replace(/\/$/, '');
+  const pathname = upstreamUrl.pathname.slice(basePath.length);
+  if (!pathname.startsWith(PUBLIC_FILES_PREFIX)) {
+    return false;
+  }
+
+  try {
+    return !decodeURIComponent(pathname).toLowerCase().includes('profile_documents');
+  } catch {
+    return false;
+  }
+}
+
+function getPublicFileCacheControl(status: number) {
+  if (status === 200 || status === 206 || status === 304) {
+    return PUBLIC_FILE_CACHE_CONTROL;
+  }
+  return status === 404 ? PUBLIC_FILE_MISSING_CACHE_CONTROL : 'no-store';
+}
+
+function dropVary(headers: Headers, values: string[]) {
+  const drop = new Set(values.map(value => value.toLowerCase()));
+  const kept = (headers.get('vary') ?? '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(value => value && !drop.has(value.toLowerCase()));
+  if (kept.length > 0) {
+    headers.set('vary', kept.join(', '));
+  } else {
+    headers.delete('vary');
+  }
+}
+
+const PUBLIC_FILE_CONDITIONAL_HEADERS = ['if-none-match', 'if-modified-since', 'range', 'if-range'];
+
+function buildPublicFileEntryResponse(request: NextRequest, entry: PublicFileEntry, hit: boolean) {
+  const headers = new Headers();
+  headers.set('cache-control', getPublicFileCacheControl(entry.status));
+  headers.set('x-bff-cache', hit ? 'PUBLIC-HIT' : 'PUBLIC');
+  if (entry.etag) headers.set('etag', entry.etag);
+  if (entry.lastModified) headers.set('last-modified', entry.lastModified);
+  if (entry.status === 200 && etagMatches(request.headers.get('if-none-match'), entry.etag)) {
+    return new NextResponse(null, { status: 304, headers });
+  }
+  if (entry.contentType) headers.set('content-type', entry.contentType);
+  if (entry.contentDisposition) headers.set('content-disposition', entry.contentDisposition);
+  headers.set('content-length', String(entry.body.byteLength));
+  return new NextResponse(entry.body.byteLength > 0 ? entry.body : null, {
+    status: entry.status,
+    headers,
+  });
+}
+
+async function proxyPublicFile(request: NextRequest, upstreamUrl: URL) {
+  const headers = pickForwardHeaders(request.headers, FORWARD_HEADER_ALLOWLIST.publicFile);
+
+  let upstreamResponse: Response;
+  if (isPublicFileCacheable(request.method, request.headers)) {
+    // One shared whole-file fetch per key: drop the caller's conditionals, answer them here.
+    const sharedHeaders = new Headers(headers);
+    for (const name of PUBLIC_FILE_CONDITIONAL_HEADERS) sharedHeaders.delete(name);
+    const loaded = await getPublicFileCache().load(publicFileCacheKey(upstreamUrl), () =>
+      fetchUpstream(upstreamUrl, { method: 'GET', headers: sharedHeaders, redirect: 'manual' })
+    );
+    if ('entry' in loaded) {
+      return buildPublicFileEntryResponse(request, loaded.entry, loaded.hit);
+    }
+    upstreamResponse = loaded.response;
+  } else {
+    upstreamResponse = await fetchUpstream(
+      upstreamUrl,
+      { method: request.method, headers, redirect: 'manual' },
+      request.signal
+    );
+  }
+  const responseHeaders = new Headers(upstreamResponse.headers);
+  sanitizeHeaders(responseHeaders);
+  stripUpstreamSessionHeaders(responseHeaders);
+  responseHeaders.delete('pragma');
+  responseHeaders.delete('expires');
+  dropVary(responseHeaders, ['Authorization', 'Cookie', ACTING_DOMAIN_HEADER]);
+  responseHeaders.set('cache-control', getPublicFileCacheControl(upstreamResponse.status));
+  responseHeaders.set('x-bff-cache', 'PUBLIC');
+
+  return new NextResponse(upstreamResponse.body, {
+    status: upstreamResponse.status,
+    headers: responseHeaders,
+  });
 }
 
 function getCacheUserId(session: AuthSession) {
@@ -115,17 +350,18 @@ const buildUpstreamUrl = (request: NextRequest, path: string[]) => {
 };
 
 const getForwardHeaders = (request: NextRequest, session: AuthSession) => {
-  const headers = new Headers(request.headers);
+  const headers = pickForwardHeaders(request.headers, FORWARD_HEADER_ALLOWLIST.authenticated);
+  const contentLength = request.headers.get('content-length');
+  if (contentLength && request.method !== 'GET' && request.method !== 'HEAD') {
+    headers.set('content-length', contentLength);
+  }
 
-  headers.delete('host');
-  headers.delete('cookie');
-  sanitizeHeaders(headers);
-
-  if (!headers.get('authorization')) {
-    const accessToken = session?.user?.accessToken;
-    if (accessToken) {
-      headers.set('authorization', `Bearer ${accessToken}`);
-    }
+  const incomingAuthorization = request.headers.get('authorization');
+  const accessToken = session?.user?.accessToken;
+  if (incomingAuthorization) {
+    headers.set('authorization', incomingAuthorization);
+  } else if (accessToken) {
+    headers.set('authorization', `Bearer ${accessToken}`);
   }
 
   return headers;
@@ -161,7 +397,7 @@ async function refreshCachedGet(
   cacheUserId: string,
   cacheKey: string
 ) {
-  const upstreamResponse = await fetch(upstreamUrl, {
+  const upstreamResponse = await fetchUpstream(upstreamUrl, {
     headers: new Headers(headers),
     method: 'GET',
     redirect: 'manual',
@@ -184,9 +420,13 @@ async function refreshCachedGet(
 
 const proxyRequest = async (request: NextRequest, path: string[]) => {
   try {
+    const upstreamUrl = buildUpstreamUrl(request, path);
+    if (isPublicFileRead(request, upstreamUrl)) {
+      return await proxyPublicFile(request, upstreamUrl);
+    }
+
     const session = await auth();
     const cacheUserId = getCacheUserId(session);
-    const upstreamUrl = buildUpstreamUrl(request, path);
     const headers = getForwardHeaders(request, session);
     // Decision queues and platform counts are read fresh every time: a cached answer
     // would show one admin work that another has already cleared.
@@ -228,7 +468,7 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
       init.duplex = 'half';
     }
 
-    const upstreamResponse = await fetch(upstreamUrl, init);
+    const upstreamResponse = await fetchUpstream(upstreamUrl, init, request.signal);
     const responseHeaders = new Headers(upstreamResponse.headers);
     sanitizeHeaders(responseHeaders);
 
@@ -243,7 +483,7 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
     }
 
     if (isMutatingRequest && cacheUserId) {
-      clearPrivateBffCacheForUser(cacheUserId);
+      invalidatePrivateBffCacheForWrite(cacheUserId, upstreamUrl);
     }
 
     return new NextResponse(upstreamResponse.body, {
@@ -251,8 +491,13 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
       headers: applyPrivateResponseHeaders(responseHeaders, 'BYPASS'),
     });
   } catch (error) {
+    // The browser already went away; nobody reads this, so keep it out of 5xx counts.
+    if (request.signal.aborted) {
+      return new NextResponse(null, { status: 499 });
+    }
     const message = error instanceof Error ? error.message : 'Proxy request failed';
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    const status = isUpstreamTimeout(error) ? 504 : 500;
+    return NextResponse.json({ success: false, message }, { status });
   }
 };
 

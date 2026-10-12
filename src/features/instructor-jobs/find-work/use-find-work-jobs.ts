@@ -9,7 +9,6 @@ import {
   useOrganisationsByIds,
   useProgramsByIds,
 } from '@/hooks/use-batched-lookups';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   listJobsInfiniteOptions,
@@ -71,7 +70,6 @@ export function useFindWorkJobs(
     enabled,
     staleTime: STALE_TIMES.live,
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
       const metadata = lastPage.data?.metadata;

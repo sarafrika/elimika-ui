@@ -252,21 +252,6 @@ export default {
         //   icon: School,
         // },
         // {
-        //   title: 'Contacts',
-        //   url: '/dashboard/contacts',
-        //   icon: Users,
-        // },
-        // {
-        //   title: 'Communities',
-        //   url: '/dashboard/communities',
-        //   icon: Users,
-        // },
-        // {
-        //   title: 'Library',
-        //   url: '/dashboard/library',
-        //   icon: LucideBookUser,
-        // },
-        // {
         //   title: 'Assignment',
         //   url: '/dashboard/assignment',
         //   icon: FileText,
@@ -488,11 +473,6 @@ export default {
         //   icon: BookOpen,
         // },
         // {
-        //   title: 'Library',
-        //   url: '/dashboard/library',
-        //   icon: Library,
-        // },
-        // {
         //   title: 'Credentials Vault',
         //   url: '/dashboard/credentials',
         //   icon: Award, // changed (certification/badges)
@@ -660,7 +640,7 @@ export default {
       items: [
         {
           title: 'Home - All courses',
-          url: '/dashboard/all-courses',
+          url: '/dashboard/courses',
           icon: School,
         },
         {

@@ -7,7 +7,6 @@ import { useRef, useState } from 'react';
 import { type Path, useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-import CustomLoader from '@/components/custom-loader';
 import ImageSelector, { type ImageType } from '@/components/image-selector';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -24,8 +23,12 @@ import { PhoneInput } from '@/components/ui/phone-input';
 import { asRecord, getFieldErrorMessage } from '@/lib/error-utils';
 import { profilePicSvg } from '@/lib/utils';
 import { type Organisation, type User, updateOrganisation, updateUser } from '@/services/client';
+import { DashboardPageSkeleton } from '@/src/features/dashboard/components/dashboard-page-skeleton';
 import { useOrganisationAccountBreadcrumb } from '@/src/features/organisation/account/hooks/useOrganisationAccountBreadcrumb';
-import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
+import {
+  useOrganisation,
+  useOrganisationLoading,
+} from '@/src/features/organisation/context/organisation-context';
 import {
   OrganisationCountryField,
   OrganisationIdentityFields,
@@ -72,6 +75,8 @@ export default function TrainingCenterForm() {
   );
 
   const userProfile = useUserProfile();
+  const organisation = useOrganisation();
+  const organisationLoading = useOrganisationLoading();
 
   const domainBadges = (
     Array.isArray(userProfile?.user_domain)
@@ -86,8 +91,8 @@ export default function TrainingCenterForm() {
       .join(' ')
   );
 
-  if (userProfile?.isLoading) {
-    return <CustomLoader />;
+  if (userProfile?.isLoading || organisationLoading) {
+    return <DashboardPageSkeleton />;
   }
 
   return (
@@ -97,7 +102,8 @@ export default function TrainingCenterForm() {
       description='Keep your organisation details current so learners and partners know who they are working with.'
       badges={domainBadges}
     >
-      <TrainingCentreFormBody />
+      {/* Keyed so defaults re-seed once the organisation lands; never edit an empty record. */}
+      <TrainingCentreFormBody key={organisation?.uuid ?? 'no-organisation'} />
     </ProfileFormShell>
   );
 }
@@ -158,8 +164,9 @@ function TrainingCentreFormBody() {
             longitude: normalizeCoordinateValue(orgData.longitude),
           };
 
+          if (!organisation?.uuid) return;
           const updateResponse = await updateOrganisation({
-            path: { uuid: organisation?.uuid! },
+            path: { uuid: organisation.uuid },
             body: body as Organisation,
           });
 
@@ -277,7 +284,10 @@ function TrainingCentreFormBody() {
           title='Location & presence'
           description='Let learners know where to find you and how to stay connected.'
           footer={
-            <Button type='submit' disabled={!isEditing || isSaving || isConfirming}>
+            <Button
+              type='submit'
+              disabled={!organisation?.uuid || !isEditing || isSaving || isConfirming}
+            >
               {isSaving || isConfirming ? (
                 <span className='flex items-center gap-2'>
                   <Loader2 className='h-4 w-4 animate-spin' />

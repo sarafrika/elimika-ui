@@ -1,20 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useUserProfile } from '@/context/profile-context';
-import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
-import { cn } from '@/lib/utils';
-import { getCourseCreatorByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
-import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
-import {
-  formatDurationFromParts,
-  getCardPresentation,
-  type CoursesCatalogCardData,
-} from '@/src/features/dashboard/courses/shared/_components/courses-data';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useQueries } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
   Award,
@@ -32,6 +19,27 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useUserProfile } from '@/context/profile-context';
+import { useCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
+import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
+import { logger } from '@/lib/logger';
+import { STALE_TIMES } from '@/lib/query-client';
+import { coursePrefetchQuery } from '@/lib/route-prefetch';
+import { cn } from '@/lib/utils';
+import type { StudentClassEnrollmentSummary } from '@/services/client';
+import {
+  getClassSchedulesOptions,
+  searchEnrollmentsOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
+import {
+  type CoursesCatalogCardData,
+  formatDurationFromParts,
+  getCardPresentation,
+} from '@/src/features/dashboard/courses/shared/_components/courses-data';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 type CourseStatus = 'in_progress' | 'completed' | 'not_started';
 
@@ -41,6 +49,17 @@ type EnrolledCourseCard = CoursesCatalogCardData & {
 };
 
 type FilterTab = 'all' | 'in_progress' | 'completed';
+
+// Cards need only the class, the course and the student's own enrolment summaries.
+const MY_COURSES_SECTIONS = [] as const;
+
+// latest_enrollment_status is the most recently changed session row, so CANCELLED needs a recheck.
+const isCancelledLatest = (row: StudentClassEnrollmentSummary | null | undefined) =>
+  row?.latest_enrollment_status === 'CANCELLED';
+
+// Backend cap on class_uuids per /classes/schedules call; the recheck fits in one call.
+const MAX_RECHECK_CLASSES = 100;
+const RECHECK_PAGE_SIZE = 500;
 
 function FilterPill({
   label,
@@ -127,7 +146,7 @@ function RecommendedItem({
   );
 }
 
-/** Mocked milestone item */
+/** Milestone item */
 function MilestoneItem({
   title,
   subtitle,
@@ -176,11 +195,80 @@ function MilestoneItem({
 export function StudentMyCoursesPage() {
   const user = useUserProfile();
   const student = user?.student;
-  const { classDefinitions, loading } = useStudentClassDefinitions(student ?? undefined);
+  const { classDefinitions, loading } = useStudentClassDefinitions(student ?? undefined, {
+    include: MY_COURSES_SECTIONS,
+  });
+
+  // Classes whose latest session row is CANCELLED may still hold live sessions.
+  const recheckClassIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const item of classDefinitions) {
+      for (const row of item.studentEnrollments ?? []) {
+        if (isCancelledLatest(row) && row.class_definition_uuid) ids.add(row.class_definition_uuid);
+      }
+    }
+    const sorted = Array.from(ids).sort();
+    if (sorted.length > MAX_RECHECK_CLASSES) {
+      logger.warn('My courses: cancelled-latest recheck truncated', { count: sorted.length });
+    }
+    return sorted.slice(0, MAX_RECHECK_CLASSES);
+  }, [classDefinitions]);
+
+  const recheckEnabled = recheckClassIds.length > 0 && Boolean(student?.uuid);
+  const recheckEnrollmentsQuery = useQuery({
+    ...searchEnrollmentsOptions({
+      query: {
+        searchParams: {
+          student_uuid: student?.uuid ?? '',
+          class_definition_uuid_in: recheckClassIds.join(','),
+        },
+        pageable: { page: 0, size: RECHECK_PAGE_SIZE },
+      },
+    }),
+    enabled: recheckEnabled,
+    staleTime: STALE_TIMES.live,
+  });
+  const recheckSchedulesQuery = useQuery({
+    ...getClassSchedulesOptions({ query: { class_uuids: recheckClassIds } }),
+    enabled: recheckEnabled,
+    staleTime: STALE_TIMES.live,
+  });
+
+  // Classes in the recheck set where the learner still holds a non-CANCELLED session row.
+  const liveRecheckClassIds = useMemo(() => {
+    const instanceClass = new Map<string, string>();
+    for (const instance of recheckSchedulesQuery.data?.data ?? []) {
+      if (instance.uuid && instance.class_definition_uuid) {
+        instanceClass.set(instance.uuid, instance.class_definition_uuid);
+      }
+    }
+    const page = recheckEnrollmentsQuery.data?.data;
+    if ((page?.metadata?.totalPages ?? 1) > 1) {
+      logger.warn('My courses: enrolment recheck truncated', { pages: page?.metadata?.totalPages });
+    }
+    const live = new Set<string>();
+    for (const enrollment of page?.content ?? []) {
+      if (enrollment.student_uuid !== student?.uuid || enrollment.status === 'CANCELLED') continue;
+      const classId = instanceClass.get(enrollment.scheduled_instance_uuid);
+      if (classId) live.add(classId);
+    }
+    return live;
+  }, [recheckEnrollmentsQuery.data, recheckSchedulesQuery.data, student?.uuid]);
 
   const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('Auto-Suggested');
+
+  // courses/search already carries course_creator_name; only nameless courses need a lookup.
+  const inlineCreatorNames = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of classDefinitions) {
+      const uuid = item.course?.course_creator_uuid;
+      const name = item.course?.course_creator_name?.trim();
+      if (uuid && name && !map.has(uuid)) map.set(uuid, name);
+    }
+    return map;
+  }, [classDefinitions]);
 
   const creatorIds = useMemo(
     () =>
@@ -188,29 +276,21 @@ export function StudentMyCoursesPage() {
         new Set(
           classDefinitions
             .map(item => item.course?.course_creator_uuid)
-            .filter((value): value is string => Boolean(value))
+            .filter((value): value is string => Boolean(value) && !inlineCreatorNames.has(value))
         )
       ),
-    [classDefinitions]
+    [classDefinitions, inlineCreatorNames]
   );
 
-  const creatorQueries = useQueries({
-    queries: creatorIds.map(uuid => ({
-      ...getCourseCreatorByUuidOptions({ path: { uuid } }),
-      enabled: Boolean(uuid),
-      refetchOnWindowFocus: false,
-    })),
-  });
+  const { courseCreatorMap, isLoading: creatorsLoading } = useCourseCreatorsByIds(creatorIds);
 
   const creatorMap = useMemo(() => {
-    const map = new Map<string, string>();
-    creatorQueries.forEach((query, index) => {
-      const uuid = creatorIds[index];
-      const name = query.data?.data?.full_name;
-      if (uuid && name) map.set(uuid, name);
-    });
+    const map = new Map(inlineCreatorNames);
+    for (const [uuid, creator] of Object.entries(courseCreatorMap)) {
+      if (creator?.full_name && !map.has(uuid)) map.set(uuid, creator.full_name);
+    }
     return map;
-  }, [creatorIds, creatorQueries]);
+  }, [inlineCreatorNames, courseCreatorMap]);
 
   const enrolledCourseCards = useMemo<EnrolledCourseCard[]>(() => {
     const cards = new Map<string, EnrolledCourseCard>();
@@ -219,8 +299,16 @@ export function StudentMyCoursesPage() {
       const course = item.course;
       const classDetails = item.classDetails;
       const classId = item.uuid;
-      const activeEnrollment = item?.classEnrollments?.find(
-        enrollment => enrollment.status !== 'CANCELLED'
+      // One summary row per class; a CANCELLED latest row counts only if the recheck finds a live one.
+      const enrolledClasses = item.studentEnrollments ?? [];
+      const activeEnrollment = enrolledClasses.find(
+        row =>
+          row != null &&
+          (!isCancelledLatest(row) || liveRecheckClassIds.has(row.class_definition_uuid))
+      );
+      const sessionCount = enrolledClasses.reduce(
+        (total, row) => total + (row.scheduled_instance_count ?? 0),
+        0
       );
 
       if (!course?.uuid || !activeEnrollment) return;
@@ -228,11 +316,8 @@ export function StudentMyCoursesPage() {
       const presentation = getCardPresentation(index);
       if (cards.has(course.uuid)) return;
 
-      const scheduleCount = item.schedules?.length ?? item?.classEnrollments.length;
-      const enrolledClasses = item.classEnrollments.filter(s => s.student_uuid === student?.uuid);
-
-      // Derive status from enrollment data
-      const enrollmentStatus = activeEnrollment?.status ?? '';
+      const scheduleCount =
+        item.studentEnrollments?.[0]?.scheduled_instance_count ?? sessionCount;
 
       const rawProgress = item?.classDetails?.class_progress_percentage ?? 0;
 
@@ -254,15 +339,13 @@ export function StudentMyCoursesPage() {
         secondaryMeta:
           classDetails?.title ??
           course.category_names?.[0] ??
-          (scheduleCount === 1 ? '1 enrolled class' : `${scheduleCount} enrolled classes`),
+          (scheduleCount === 1 ? '1 session' : `${scheduleCount} sessions`),
         ctaLabel: isCompleted ? 'View Certificate' : 'Continue',
         ctaKind: 'link',
         showInstructorCta: false,
         detailsHref: roleScopedDashboardPath('student', `/dashboard/courses/${course.uuid}`),
-        certificateHref: roleScopedDashboardPath(
-          'student',
-          `/dashboard/credentials/certificate?csid=${student?.uuid}&ccid=${course?.uuid}&clid=${classDetails?.uuid}`
-        ),
+        detailsPrefetchQuery: coursePrefetchQuery(course.uuid),
+        certificateHref: roleScopedDashboardPath('student', '/dashboard/skills-wallet?tab=credentials'),
         // enrollHref: roleScopedDashboardPath('student', `/dashboard/learning-hub/classes/${classId}`),
         enrollHref: roleScopedDashboardPath('student', `/dashboard/learning-hub/classes`),
         instructorHref: roleScopedDashboardPath(
@@ -275,7 +358,7 @@ export function StudentMyCoursesPage() {
         sortTitle: course.name,
         status,
         enrolledClasses,
-        enrollmentCount: enrolledClasses?.length,
+        enrollmentCount: sessionCount,
 
         // temporary defaults
         rating: 0,
@@ -287,7 +370,7 @@ export function StudentMyCoursesPage() {
     });
 
     return Array.from(cards.values()).sort((a, b) => a.sortTitle.localeCompare(b.sortTitle));
-  }, [classDefinitions, creatorMap]);
+  }, [classDefinitions, creatorMap, liveRecheckClassIds]);
 
   const inProgressCards = useMemo(
     () => enrolledCourseCards.filter(c => c.status === 'in_progress'),
@@ -314,7 +397,9 @@ export function StudentMyCoursesPage() {
     return cards;
   }, [activeTab, enrolledCourseCards, inProgressCards, completedCards, searchQuery]);
 
-  const isLoading = loading || creatorQueries.some(query => query.isLoading || query.isFetching);
+  const recheckLoading =
+    recheckEnabled && (recheckEnrollmentsQuery.isLoading || recheckSchedulesQuery.isLoading);
+  const isLoading = loading || creatorsLoading || recheckLoading;
 
   const studentName = student?.full_name ?? 'Student';
 
@@ -563,13 +648,6 @@ export function StudentMyCoursesPage() {
               <>
                 <div className='space-y-3'>
                   {learningMilestonesData.map(item => {
-                    const attendedClasses = item.enrolledClasses?.filter(c => c.did_attend).length;
-
-                    const totalClasses = item.enrolledClasses?.length ?? 0;
-
-                    const progress =
-                      totalClasses > 0 ? Math.round((attendedClasses / totalClasses) * 100) : 0;
-
                     const isCompleted = item.status === 'completed';
 
                     return (
@@ -602,17 +680,6 @@ export function StudentMyCoursesPage() {
                           <p className='text-muted-foreground mt-0.5 truncate text-xs'>
                             {item.secondaryMeta}
                           </p>
-
-                          {/* EXTRA CONTEXT */}
-                          {/* <div className="mt-1 flex flex-col gap-1 text-[11px] text-muted-foreground">
-                            <span className="truncate">
-                              Course: {item.title}
-                            </span>
-
-                            <span className="truncate">
-                              Progress: {progress}% · {attendedClasses}/{totalClasses} classes attended
-                            </span>
-                          </div> */}
                         </div>
                       </div>
                     );

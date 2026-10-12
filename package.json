@@ -9,7 +9,8 @@
     "emails:export": "tsx emails/export.tsx",
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "biome lint . && node scripts/check-brand-colors.mjs && node scripts/check-dashboard-links.mjs && node scripts/check-query-freshness.mjs && node scripts/check-notification-coverage.mjs && node scripts/check-admin-boundary.mjs",
+    "lint": "node scripts/perf/lint-guardrails.mjs && node scripts/check-brand-colors.mjs && node scripts/check-dashboard-links.mjs && node scripts/check-query-freshness.mjs && node scripts/check-notification-coverage.mjs && node scripts/check-admin-boundary.mjs",
+    "lint:guardrails": "node scripts/perf/lint-guardrails.mjs",
     "lint:palette": "node scripts/check-brand-colors.mjs",
     "lint:links": "node scripts/check-dashboard-links.mjs",
     "lint:freshness": "node scripts/check-query-freshness.mjs",
@@ -18,10 +19,11 @@
     "format": "prettier --write \"./**/*.{ts,tsx,js,jsx,json,css,yaml,yml}\"",
     "format:file": "prettier --write",
     "lint:admin": "node scripts/check-admin-boundary.mjs",
-    "typecheck:ratchet": "node scripts/perf/ts-error-ratchet.mjs",
+    "typecheck:ratchet": "next typegen && node scripts/perf/ts-error-ratchet.mjs",
     "test": "tsx --import ./scripts/test/stub-server-only.mjs --test \"{app,components,lib,src}/**/*.test.ts\"",
     "test:admin": "tsx --import ./scripts/test/stub-server-only.mjs --test $(find src/features/admin -name '*.test.ts')",
     "perf:admin": "node scripts/perf/admin-budgets.mjs",
+    "perf:gate": "node scripts/perf/route-gate.mjs",
     "verify:admin": "node scripts/verify/admin-smoke.mjs"
   },
   "dependencies": {
@@ -95,6 +97,7 @@
     "sonner": "^2.0.1",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
+    "undici": "7.29.1",
     "zod": "3.25.76",
     "zustand": "^5.0.7"
   },

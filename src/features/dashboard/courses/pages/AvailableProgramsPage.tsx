@@ -2,17 +2,14 @@
 
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useStudent } from '@/context/student-context';
+import { useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import useProgramBundledClassInfo from '@/hooks/use-program-classes';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import AvailabilityClassCard from '@/src/features/dashboard/courses/components/availability-listing-layout';
-import { useDateRangeFilter } from '@/src/features/dashboard/courses/hooks/use-date-range-filter';
-import { format } from 'date-fns';
-import { ArrowLeft, BookOpen, CalendarRange } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
-import { DateRange } from 'react-day-picker';
+import { useMemo, useState } from 'react';
 import { Button } from '../../../../../components/ui/button';
-import { Popover, PopoverTrigger } from '../../../../../components/ui/popover';
 import {
   Sheet,
   SheetContent,
@@ -44,29 +41,9 @@ export default function AvailableProgramsPage({
   const [courseDetailsOpen, setCourseDetailsOpen] = useState(false);
   const [classDetailsOpen, setClassDetailsOpen] = useState(false);
 
-  const [range, setRange] = useState<DateRange | undefined>({
-    from: new Date(new Date().setMonth(new Date().getMonth() - 3)),
-    to: new Date(new Date().setMonth(new Date().getMonth() + 12)),
-  });
 
-  const {
-    startDateInput,
-    endDateInput,
-    setStartDateInput,
-    setEndDateInput,
-    appliedStart,
-    appliedEnd,
-    dateError,
-    applyDates,
-    clearDates,
-  } = useDateRangeFilter();
 
-  const { classes = [], loading } = useProgramBundledClassInfo(
-    programId,
-    appliedStart ?? undefined,
-    appliedEnd ?? undefined,
-    student
-  );
+  const { classes = [], loading } = useProgramBundledClassInfo(programId, student);
 
   function toggle(id: string) {
     setSelected(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]));
@@ -78,6 +55,18 @@ export default function AvailableProgramsPage({
       ...cls,
       course: cls.course?.[0] ?? null,
     }));
+
+  // One organisation lookup for every card on screen instead of one per card.
+  const organisationKey = [
+    ...new Set(cardClasses.map(cls => cls.organisation_uuid).filter((id): id is string => !!id)),
+  ]
+    .sort()
+    .join(',');
+  const organisationIds = useMemo(
+    () => (organisationKey ? organisationKey.split(',') : []),
+    [organisationKey]
+  );
+  const { organisationMap } = useOrganisationsByIds(organisationIds);
 
   return (
     <div className='space-y-4 p-4'>
@@ -121,38 +110,6 @@ export default function AvailableProgramsPage({
             </SheetContent>
           </Sheet>
 
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant='outline' size='sm' className='gap-2'>
-                <CalendarRange className='h-4 w-4' />
-
-                {range?.from && range?.to
-                  ? `${format(range.from, 'dd MMM')} - ${format(range.to, 'dd MMM')}`
-                  : 'Select dates'}
-              </Button>
-            </PopoverTrigger>
-
-            {/* <PopoverContent className='w-auto p-0' align='end'>
-              <Calendar
-                mode='range'
-                numberOfMonths={12}
-                selected={range}
-                defaultMonth={range?.from}
-                onSelect={value => {
-                  setRange(value);
-
-                  if (value?.from) {
-                    setStartDateInput(format(value.from, 'yyyy-MM-dd'));
-                  }
-
-                  if (value?.to) {
-                    setEndDateInput(format(value.to, 'yyyy-MM-dd'));
-                    applyDates();
-                  }
-                }}
-              />
-            </PopoverContent> */}
-          </Popover>
         </div>
       </div>
 
@@ -175,6 +132,9 @@ export default function AvailableProgramsPage({
             <AvailabilityClassCard
               key={item.uuid}
               cls={item}
+              organisation={
+                item.organisation_uuid ? (organisationMap[item.organisation_uuid] ?? null) : null
+              }
               onViewCourse={() => setCourseDetailsOpen(true)}
               onViewClass={() => setClassDetailsOpen(true)}
               onEnroll={selectedClass => {

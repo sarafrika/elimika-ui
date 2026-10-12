@@ -17,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isForbidden } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
@@ -100,7 +100,6 @@ export function BestMatches() {
       query: { limit: 20, ...(radiusKm ? { radius_km: radiusKm } : {}) },
     }),
     staleTime: STALE_TIMES.live,
-    retry: retryUnlessClientOrSearchError,
   });
 
   const list = query.data?.data;

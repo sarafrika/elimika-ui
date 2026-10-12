@@ -100,6 +100,7 @@ export function AdminOverviewPage() {
 
         <SectionBoundary
           label='the decision queues'
+          name='admin-overview-queues'
           loading={statisticsQuery.isLoading && !statistics}
           error={statisticsQuery.error}
           onRetry={() => statisticsQuery.refetch()}
@@ -150,6 +151,7 @@ export function AdminOverviewPage() {
 
         <SectionBoundary
           label='the platform counts'
+          name='admin-overview-counts'
           loading={statisticsQuery.isLoading && !statistics}
           error={statisticsQuery.error}
           onRetry={() => statisticsQuery.refetch()}
@@ -216,6 +218,7 @@ export function AdminOverviewPage() {
 
           <SectionBoundary
             label='platform health'
+            name='admin-overview-health'
             loading={statisticsQuery.isLoading && !statistics}
             error={statisticsQuery.error}
             onRetry={() => statisticsQuery.refetch()}
@@ -271,6 +274,7 @@ function ActivitySection({
     <div className='lg:col-span-2'>
       <SectionBoundary
         label='recent activity'
+        name='admin-overview-activity'
         loading={isLoading}
         error={error}
         onRetry={onRetry}

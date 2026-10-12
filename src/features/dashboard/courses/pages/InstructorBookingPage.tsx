@@ -50,12 +50,13 @@ const InstructorBookingDashboard: React.FC<Props> = ({ classes }) => {
     error: instructorsError,
   } = useSearchTrainingInstructors({ near: nearMe.params, ratings: 'lazy' });
 
-  const { data: applications } = useQuery(
-    listTrainingApplicationsOptions({
+  const { data: applications } = useQuery({
+    ...listTrainingApplicationsOptions({
       path: { courseUuid: courseId as string },
       query: { pageable: {}, status: 'approved' },
-    })
-  );
+    }),
+    enabled: !!courseId,
+  });
 
   const approvedInstructorUuids =
     applications?.data?.content

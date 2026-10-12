@@ -15,6 +15,7 @@ export type PrivateBffCacheEntry = {
   byteSize: number;
   createdAt: number;
   expiresAt: number;
+  family: string;
   freshUntil: number;
   headers: [string, string][];
   key: string;
@@ -82,6 +83,23 @@ const REFERENCE_PATH_PATTERNS = [
   '/levels',
 ];
 
+/** Reference families no user write elsewhere can change; only their own writes (or admin) clear them. */
+const REFERENCE_FAMILIES = new Set([
+  'academic-tiers',
+  'age-groups',
+  'config',
+  'currencies',
+  'document-types',
+  'skills',
+  'system-rules',
+]);
+
+/** Writes whose effect stays inside their own family, so the rest of the user's cache survives. */
+const SELF_CONTAINED_WRITE_FAMILIES = new Set(['notifications']);
+
+/** POSTs that only compute an answer and change nothing upstream. */
+const READ_ONLY_WRITE_PATTERNS = ['/check-conflict'];
+
 const PRIVATE_HEADER_BLOCKLIST = new Set(['content-encoding', 'content-length', 'set-cookie']);
 
 function byteLength(value: string) {
@@ -136,6 +154,13 @@ export function buildPrivateBffCacheKey(
   actingDomain: string | null = null
 ) {
   return `${userId}:GET:${actingDomain ?? '-'}:${upstreamUrl.pathname}${upstreamUrl.search}`;
+}
+
+/** First resource segment after the API version, e.g. `courses` for /api/v1/courses/{uuid}. */
+export function getPrivateBffCacheFamily(upstreamUrl: URL) {
+  const segments = upstreamUrl.pathname.toLowerCase().split('/').filter(Boolean);
+  const versionIndex = segments.findIndex(segment => /^v\d+$/.test(segment));
+  return segments[versionIndex + 1] ?? segments[0] ?? '';
 }
 
 /** True when a response must not be served from this cache at all. */
@@ -195,6 +220,7 @@ export function storePrivateBffCacheEntry(options: StoreCacheOptions) {
     byteSize: bodyBytes,
     createdAt: now,
     expiresAt: now + HARD_EXPIRY_MS,
+    family: getPrivateBffCacheFamily(new URL(options.url)),
     freshUntil: now + options.ttlMs,
     headers: serializeHeaders(options.headers),
     key: options.key,
@@ -217,6 +243,38 @@ export function deletePrivateBffCacheEntry(key: string) {
 export function clearPrivateBffCacheForUser(userId: string) {
   for (const [key, entry] of cache) {
     if (entry.userId === userId) {
+      deleteEntry(key);
+    }
+  }
+}
+
+/**
+ * Drops only the entries a write can have changed: its own family, plus every non-reference
+ * family unless the write is self-contained. Admin writes clear everything.
+ */
+export function invalidatePrivateBffCacheForWrite(userId: string, upstreamUrl: URL) {
+  const pathname = upstreamUrl.pathname.toLowerCase();
+  if (READ_ONLY_WRITE_PATTERNS.some(pattern => pathname.includes(pattern))) {
+    return;
+  }
+
+  const family = getPrivateBffCacheFamily(upstreamUrl);
+  if (family === 'admin') {
+    clearPrivateBffCacheForUser(userId);
+    return;
+  }
+
+  const selfContained = SELF_CONTAINED_WRITE_FAMILIES.has(family);
+  for (const [key, entry] of cache) {
+    if (entry.userId !== userId) {
+      continue;
+    }
+    const affected =
+      entry.family === family ||
+      (!selfContained &&
+        !REFERENCE_FAMILIES.has(entry.family) &&
+        !SELF_CONTAINED_WRITE_FAMILIES.has(entry.family));
+    if (affected) {
       deleteEntry(key);
     }
   }

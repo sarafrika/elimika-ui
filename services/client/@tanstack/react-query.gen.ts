@@ -256,6 +256,7 @@ import {
   addProgramRequirement,
   getProgramCourses,
   addProgramCourse,
+  ingest,
   getAllOrganisations,
   createOrganisation,
   getTrainingBranchesByOrganisation,
@@ -527,6 +528,7 @@ import {
   getStudentSchedule,
   cancelScheduledClass,
   getScheduledInstance,
+  getOrganisationTimetable,
   getInstructorTimeHolds,
   getInstructorSchedule,
   getGuardians,
@@ -596,6 +598,7 @@ import {
   getSummary2,
   getCalendar,
   listBookings,
+  getResourceCalendars,
   listSent,
   listInstructorStudents,
   listObligations,
@@ -605,6 +608,7 @@ import {
   getDomainOnboarding,
   getCounts,
   getDocumentFile,
+  getSessionBootstrap,
   getInvitationByToken,
   listMyInvitations,
   getInstructorRatingSummary,
@@ -631,6 +635,7 @@ import {
   getScheduledInstanceEnrollmentsForStudent,
   getEnrollmentOverviewForStudent,
   getCourseEnrollmentsForStudent,
+  getStudentCourseOverview,
   getClassEnrollmentsForStudent,
   searchEnrollments,
   getWeeklyGrowth,
@@ -673,6 +678,7 @@ import {
   getCourseRecommendations,
   getPublishedCourses,
   getCourseMedia,
+  getLessonsForCourses,
   getCoursesByInstructor,
   getCourseContentMedia,
   getCoursesByCategory,
@@ -704,6 +710,7 @@ import {
   getClassSchedule,
   getClassRatingSummary,
   getEnrollmentsForClass,
+  getClassSchedules,
   getClassDefinitionsForOrganisation,
   getInstructorPayablesForOrganisation,
   getClassMedia,
@@ -716,6 +723,8 @@ import {
   listInstructorApplications,
   getClassDefinitionsForInstructor,
   getClassDefinitionsForCourse,
+  getClassesBatch,
+  getAssessmentSchedules,
   getAllActiveClassDefinitions,
   verifyCertificate,
   searchCertificateTemplates,
@@ -753,6 +762,7 @@ import {
   getProgramModerationHistory,
   getProgramApprovalStatus,
   listPendingPrograms,
+  summary,
   isOrganisationVerified,
   getPendingOrganisations,
   listTestableEmails,
@@ -1433,6 +1443,9 @@ import type {
   AddProgramCourseData,
   AddProgramCourseError,
   AddProgramCourseResponse,
+  IngestData,
+  IngestError,
+  IngestResponse,
   GetAllOrganisationsData,
   GetAllOrganisationsError,
   GetAllOrganisationsResponse,
@@ -2128,6 +2141,9 @@ import type {
   CancelScheduledClassError,
   CancelScheduledClassResponse,
   GetScheduledInstanceData,
+  GetOrganisationTimetableData,
+  GetOrganisationTimetableError,
+  GetOrganisationTimetableResponse,
   GetInstructorTimeHoldsData,
   GetInstructorTimeHoldsError,
   GetInstructorTimeHoldsResponse,
@@ -2266,6 +2282,7 @@ import type {
   ListBookingsData,
   ListBookingsError,
   ListBookingsResponse,
+  GetResourceCalendarsData,
   ListSentData,
   ListInstructorStudentsData,
   ListInstructorStudentsError,
@@ -2281,6 +2298,7 @@ import type {
   GetDomainOnboardingData,
   GetCountsData,
   GetDocumentFileData,
+  GetSessionBootstrapData,
   GetInvitationByTokenData,
   ListMyInvitationsData,
   GetInstructorRatingSummaryData,
@@ -2333,6 +2351,9 @@ import type {
   GetCourseEnrollmentsForStudentData,
   GetCourseEnrollmentsForStudentError,
   GetCourseEnrollmentsForStudentResponse,
+  GetStudentCourseOverviewData,
+  GetStudentCourseOverviewError,
+  GetStudentCourseOverviewResponse,
   GetClassEnrollmentsForStudentData,
   GetClassEnrollmentsForStudentError,
   GetClassEnrollmentsForStudentResponse,
@@ -2403,6 +2424,7 @@ import type {
   GetPublishedCoursesError,
   GetPublishedCoursesResponse,
   GetCourseMediaData,
+  GetLessonsForCoursesData,
   GetCoursesByInstructorData,
   GetCoursesByInstructorError,
   GetCoursesByInstructorResponse,
@@ -2466,6 +2488,7 @@ import type {
   GetClassScheduleResponse,
   GetClassRatingSummaryData,
   GetEnrollmentsForClassData,
+  GetClassSchedulesData,
   GetClassDefinitionsForOrganisationData,
   GetInstructorPayablesForOrganisationData,
   GetClassMediaData,
@@ -2482,6 +2505,8 @@ import type {
   ListInstructorApplicationsResponse,
   GetClassDefinitionsForInstructorData,
   GetClassDefinitionsForCourseData,
+  GetClassesBatchData,
+  GetAssessmentSchedulesData,
   GetAllActiveClassDefinitionsData,
   VerifyCertificateData,
   SearchCertificateTemplatesData,
@@ -2543,6 +2568,7 @@ import type {
   ListPendingProgramsData,
   ListPendingProgramsError,
   ListPendingProgramsResponse,
+  SummaryData,
   IsOrganisationVerifiedData,
   GetPendingOrganisationsData,
   GetPendingOrganisationsError,
@@ -11118,6 +11144,47 @@ export const addProgramCourseMutation = (
   return mutationOptions;
 };
 
+export const ingestQueryKey = (options: Options<IngestData>) => createQueryKey('ingest', options);
+
+/**
+ * Ingest real-user performance samples
+ * Accepts up to 50 samples per batch. Anonymous callers are rate limited per IP.
+ */
+export const ingestOptions = (options: Options<IngestData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await ingest({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: ingestQueryKey(options),
+  });
+};
+
+/**
+ * Ingest real-user performance samples
+ * Accepts up to 50 samples per batch. Anonymous callers are rate limited per IP.
+ */
+export const ingestMutation = (
+  options?: Partial<Options<IngestData>>
+): UseMutationOptions<IngestResponse, IngestError, Options<IngestData>> => {
+  const mutationOptions: UseMutationOptions<IngestResponse, IngestError, Options<IngestData>> = {
+    mutationFn: async localOptions => {
+      const { data } = await ingest({
+        ...options,
+        ...localOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getAllOrganisationsQueryKey = (options: Options<GetAllOrganisationsData>) =>
   createQueryKey('getAllOrganisations', options);
 
@@ -12499,6 +12566,7 @@ export const applyBulkActionQueryKey = (options: Options<ApplyBulkActionData>) =
 
 /**
  * Apply a bulk notification action
+ * read_all marks matching unread notifications read; popup_seen marks the given uuids (or every unseen POPUP for the domain when none are given) as popup seen, caller-owned only
  */
 export const applyBulkActionOptions = (options: Options<ApplyBulkActionData>) => {
   return queryOptions({
@@ -12517,6 +12585,7 @@ export const applyBulkActionOptions = (options: Options<ApplyBulkActionData>) =>
 
 /**
  * Apply a bulk notification action
+ * read_all marks matching unread notifications read; popup_seen marks the given uuids (or every unseen POPUP for the domain when none are given) as popup seen, caller-owned only
  */
 export const applyBulkActionMutation = (
   options?: Partial<Options<ApplyBulkActionData>>
@@ -23593,6 +23662,78 @@ export const getScheduledInstanceOptions = (options: Options<GetScheduledInstanc
   });
 };
 
+export const getOrganisationTimetableQueryKey = (options: Options<GetOrganisationTimetableData>) =>
+  createQueryKey('getOrganisationTimetable', options);
+
+/**
+ * Get the timetable of every class an organisation owns within a date range
+ * Non-cancelled sessions overlapping the inclusive date range, ordered by start time, each with its class title, instructor name and enrolled count, so an organisation calendar needs one request instead of one per class. The range may span at most 366 days.
+ */
+export const getOrganisationTimetableOptions = (options: Options<GetOrganisationTimetableData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganisationTimetable({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrganisationTimetableQueryKey(options),
+  });
+};
+
+export const getOrganisationTimetableInfiniteQueryKey = (
+  options: Options<GetOrganisationTimetableData>
+): QueryKey<Options<GetOrganisationTimetableData>> =>
+  createQueryKey('getOrganisationTimetable', options, true);
+
+/**
+ * Get the timetable of every class an organisation owns within a date range
+ * Non-cancelled sessions overlapping the inclusive date range, ordered by start time, each with its class title, instructor name and enrolled count, so an organisation calendar needs one request instead of one per class. The range may span at most 366 days.
+ */
+export const getOrganisationTimetableInfiniteOptions = (
+  options: Options<GetOrganisationTimetableData>
+) => {
+  return infiniteQueryOptions<
+    GetOrganisationTimetableResponse,
+    GetOrganisationTimetableError,
+    InfiniteData<GetOrganisationTimetableResponse>,
+    QueryKey<Options<GetOrganisationTimetableData>>,
+    | Date
+    | Pick<
+        QueryKey<Options<GetOrganisationTimetableData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetOrganisationTimetableData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  start: pageParam,
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getOrganisationTimetable({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getOrganisationTimetableInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getInstructorTimeHoldsQueryKey = (options: Options<GetInstructorTimeHoldsData>) =>
   createQueryKey('getInstructorTimeHolds', options);
 
@@ -26921,6 +27062,28 @@ export const listBookingsInfiniteOptions = (options: Options<ListBookingsData>) 
   );
 };
 
+export const getResourceCalendarsQueryKey = (options: Options<GetResourceCalendarsData>) =>
+  createQueryKey('getResourceCalendars', options);
+
+/**
+ * Merged calendar view of every active resource of the organisation
+ * The per-resource calendar for all active resources in one request, ordered by resource name. entry_types (comma-separated OPEN_HOURS, BLACKOUT, HOLD, CONFIRMED) optionally filters the entries. Same access rule and date-range cap as the single-resource calendar.
+ */
+export const getResourceCalendarsOptions = (options: Options<GetResourceCalendarsData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getResourceCalendars({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getResourceCalendarsQueryKey(options),
+  });
+};
+
 export const listSentQueryKey = (options: Options<ListSentData>) =>
   createQueryKey('listSent', options);
 
@@ -27265,6 +27428,28 @@ export const getDocumentFileOptions = (options: Options<GetDocumentFileData>) =>
       return data;
     },
     queryKey: getDocumentFileQueryKey(options),
+  });
+};
+
+export const getSessionBootstrapQueryKey = (options?: Options<GetSessionBootstrapData>) =>
+  createQueryKey('getSessionBootstrap', options);
+
+/**
+ * Get the caller's session bootstrap
+ * Returns the caller's user record (as GET /users/me), role profile UUIDs, active organisation summary, wallet balance and unread notification counts per domain.
+ */
+export const getSessionBootstrapOptions = (options?: Options<GetSessionBootstrapData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSessionBootstrap({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSessionBootstrapQueryKey(options),
   });
 };
 
@@ -27645,6 +27830,7 @@ export const searchSkillsQueryKey = (options: Options<SearchSkillsData>) =>
  *
  * **Common Skills Search Examples:**
  * - `instructorUuid=uuid` - All skills for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Skills for several instructors in one request
  * - `proficiencyLevel=EXPERT` - Expert level skills only
  * - `proficiencyLevel_in=ADVANCED,EXPERT` - Advanced or expert skills
  * - `proficiencyLevel_noteq=BEGINNER` - Non-beginner skills
@@ -27685,6 +27871,7 @@ export const searchSkillsInfiniteQueryKey = (
  *
  * **Common Skills Search Examples:**
  * - `instructorUuid=uuid` - All skills for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Skills for several instructors in one request
  * - `proficiencyLevel=EXPERT` - Expert level skills only
  * - `proficiencyLevel_in=ADVANCED,EXPERT` - Advanced or expert skills
  * - `proficiencyLevel_noteq=BEGINNER` - Non-beginner skills
@@ -28085,6 +28272,7 @@ export const searchExperienceQueryKey = (options: Options<SearchExperienceData>)
  *
  * **Common Experience Search Examples:**
  * - `instructorUuid=uuid` - All experience for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Experience for several instructors in one request
  * - `isCurrentPosition=true` - Current positions only
  * - `yearsOfExperience_gte=5` - 5+ years experience
  * - `startDate_gte=2020-01-01` - Started in 2020 or later
@@ -28128,6 +28316,7 @@ export const searchExperienceInfiniteQueryKey = (
  *
  * **Common Experience Search Examples:**
  * - `instructorUuid=uuid` - All experience for specific instructor
+ * - `instructor_uuid_in=uuid1,uuid2` - Experience for several instructors in one request
  * - `isCurrentPosition=true` - Current positions only
  * - `yearsOfExperience_gte=5` - 5+ years experience
  * - `startDate_gte=2020-01-01` - Started in 2020 or later
@@ -28743,6 +28932,78 @@ export const getCourseEnrollmentsForStudentInfiniteOptions = (
   );
 };
 
+export const getStudentCourseOverviewQueryKey = (options: Options<GetStudentCourseOverviewData>) =>
+  createQueryKey('getStudentCourseOverview', options);
+
+/**
+ * Get a student's course overview
+ * Enrolled classes with their course, instructor, current or next session, course progress and counts of released assignments and quizzes not yet submitted, in one response. Readable by the student, a guardian whose share covers academics, and platform administrators. Page size is capped at 50.
+ */
+export const getStudentCourseOverviewOptions = (options: Options<GetStudentCourseOverviewData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentCourseOverview({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentCourseOverviewQueryKey(options),
+  });
+};
+
+export const getStudentCourseOverviewInfiniteQueryKey = (
+  options: Options<GetStudentCourseOverviewData>
+): QueryKey<Options<GetStudentCourseOverviewData>> =>
+  createQueryKey('getStudentCourseOverview', options, true);
+
+/**
+ * Get a student's course overview
+ * Enrolled classes with their course, instructor, current or next session, course progress and counts of released assignments and quizzes not yet submitted, in one response. Readable by the student, a guardian whose share covers academics, and platform administrators. Page size is capped at 50.
+ */
+export const getStudentCourseOverviewInfiniteOptions = (
+  options: Options<GetStudentCourseOverviewData>
+) => {
+  return infiniteQueryOptions<
+    GetStudentCourseOverviewResponse,
+    GetStudentCourseOverviewError,
+    InfiniteData<GetStudentCourseOverviewResponse>,
+    QueryKey<Options<GetStudentCourseOverviewData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetStudentCourseOverviewData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetStudentCourseOverviewData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getStudentCourseOverview({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getStudentCourseOverviewInfiniteQueryKey(options),
+    }
+  );
+};
+
 export const getClassEnrollmentsForStudentQueryKey = (
   options: Options<GetClassEnrollmentsForStudentData>
 ) => createQueryKey('getClassEnrollmentsForStudent', options);
@@ -29344,7 +29605,7 @@ export const getSimilarCoursesQueryKey = (options: Options<GetSimilarCoursesData
 
 /**
  * Courses similar to a public course
- * Anyone, signed in or not. Not personal: co-enrolment neighbours (pairs shared by at least 5 learners, 10 when a minor is involved), the same categories, and "more like this" on the course text. Only public courses; 404 when the course itself is not public. Same item shape as the recommendations endpoint, with surface `similar`.
+ * Anyone, signed in or not. Not personal: co-enrolment neighbours (pairs shared by at least 5 learners, 10 when a minor is involved), the same categories, and "more like this" on the course text. Only public courses; empty when the course itself is not public, 404 when it does not exist. Same item shape as the recommendations endpoint, with surface `similar`.
  */
 export const getSimilarCoursesOptions = (options: Options<GetSimilarCoursesData>) => {
   return queryOptions({
@@ -29812,8 +30073,9 @@ export const getCourseOpenClassesQueryKey = (options: Options<GetCourseOpenClass
 
 /**
  * List the classes a visitor can still join on a public course
- * Readable without a token. Answers only for a publicly visible course (root, published,
- * active and admin-approved); any other course is a 404 for every caller.
+ * Readable without a token. Lists classes only for a publicly visible course (root, published,
+ * active and admin-approved); any other existing course answers an empty list, and an
+ * unknown course is a 404.
  *
  * Lists the course's classes that are active, `PUBLIC`, and whose registration window
  * and teaching period have not ended (a missing end date counts as open), cheapest
@@ -29976,6 +30238,12 @@ export const getCourseContentQueryKey = (options: Options<GetCourseContentData>)
  *
  * Open to anonymous callers, who resolve to `prospect` and receive the same public
  * summary the catalogue already shows.
+ *
+ * A course the public catalogue does not show (a draft, unapproved, inactive or a
+ * shadow draft) has no public summary. A signed-in `prospect` then receives 200 with
+ * an empty payload — `course_uuid`, `access=prospect`, `full_access=false`,
+ * `total_lessons=0`, no lessons, no reviews and no `course` profile. An anonymous
+ * caller receives 404.
  *
  */
 export const getCourseContentOptions = (options: Options<GetCourseContentData>) => {
@@ -30533,6 +30801,28 @@ export const getCourseMediaOptions = (options: Options<GetCourseMediaData>) => {
       return data;
     },
     queryKey: getCourseMediaQueryKey(options),
+  });
+};
+
+export const getLessonsForCoursesQueryKey = (options: Options<GetLessonsForCoursesData>) =>
+  createQueryKey('getLessonsForCourses', options);
+
+/**
+ * List the lessons of several courses
+ * course_uuids is comma-separated or repeated, 1 to 100 entries. Each course is admitted by the same rule as GET /courses/{courseUuid}/lessons, and learners see only published, active lessons. Courses the caller may not read are omitted. Ordered by course then lesson number; group by course_uuid.
+ */
+export const getLessonsForCoursesOptions = (options: Options<GetLessonsForCoursesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getLessonsForCourses({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getLessonsForCoursesQueryKey(options),
   });
 };
 
@@ -32120,6 +32410,28 @@ export const getEnrollmentsForClassOptions = (options: Options<GetEnrollmentsFor
   });
 };
 
+export const getClassSchedulesQueryKey = (options: Options<GetClassSchedulesData>) =>
+  createQueryKey('getClassSchedules', options);
+
+/**
+ * List the scheduled sessions of several classes
+ * class_uuids is comma-separated or repeated, 1 to 100 entries. Returns every scheduled instance of those classes ordered by start time; group by class_definition_uuid. Unknown ids are omitted. Same access as GET /classes/{uuid}/schedule.
+ */
+export const getClassSchedulesOptions = (options: Options<GetClassSchedulesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassSchedules({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassSchedulesQueryKey(options),
+  });
+};
+
 export const getClassDefinitionsForOrganisationQueryKey = (
   options: Options<GetClassDefinitionsForOrganisationData>
 ) => createQueryKey('getClassDefinitionsForOrganisation', options);
@@ -32486,6 +32798,50 @@ export const getClassDefinitionsForCourseOptions = (
       return data;
     },
     queryKey: getClassDefinitionsForCourseQueryKey(options),
+  });
+};
+
+export const getClassesBatchQueryKey = (options: Options<GetClassesBatchData>) =>
+  createQueryKey('getClassesBatch', options);
+
+/**
+ * Look up several classes by UUID in one request
+ * Returns the visible classes among uuids (comma-separated or repeated, at most 100), in request order, each with its course or program title, an instructor summary and its seat capacity (max_participants). Visibility is the class listing's; unknown or hidden ids are omitted. enrolled_count and seats_remaining are present only for the class's instructor, managers of its organisation and platform admins. Costs a fixed number of queries regardless of batch size.
+ */
+export const getClassesBatchOptions = (options: Options<GetClassesBatchData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassesBatch({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassesBatchQueryKey(options),
+  });
+};
+
+export const getAssessmentSchedulesQueryKey = (options: Options<GetAssessmentSchedulesData>) =>
+  createQueryKey('getAssessmentSchedules', options);
+
+/**
+ * List assignment and quiz schedules for several classes
+ * class_uuids is comma-separated or repeated, 1 to 100 entries. Classes the caller may not view (same rule as the per-class listings) are omitted. Costs a fixed number of queries per batch.
+ */
+export const getAssessmentSchedulesOptions = (options: Options<GetAssessmentSchedulesData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getAssessmentSchedules({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getAssessmentSchedulesQueryKey(options),
   });
 };
 
@@ -33982,6 +34338,28 @@ export const listPendingProgramsInfiniteOptions = (options: Options<ListPendingP
       queryKey: listPendingProgramsInfiniteQueryKey(options),
     }
   );
+};
+
+export const summaryQueryKey = (options?: Options<SummaryData>) =>
+  createQueryKey('summary', options);
+
+/**
+ * Real-user percentiles
+ * p50/p95/p99 per route template and metric for samples in [from, to). Defaults to the last 24 hours.
+ */
+export const summaryOptions = (options?: Options<SummaryData>) => {
+  return queryOptions({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await summary({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: summaryQueryKey(options),
+  });
 };
 
 export const isOrganisationVerifiedQueryKey = (options: Options<IsOrganisationVerifiedData>) =>

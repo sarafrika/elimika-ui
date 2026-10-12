@@ -1,26 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { AsyncSection } from '@/components/data/async-section';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useUserProfile } from '@/context/profile-context';
-import { usePaymentMode } from '@/hooks/use-payment-mode';
-import { getErrorMessage } from '@/lib/error-utils';
-import type { CartItemResponse } from '@/services/client';
-import {
-  completeCheckoutMutation,
-  getCartOptions,
-  getCartQueryKey,
-  removeItemMutation,
-} from '@/services/client/@tanstack/react-query.gen';
-import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useCartStore } from '@/store/cart-store';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   ArrowLeft,
   ArrowRight,
@@ -34,6 +15,25 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { AsyncSection } from '@/components/data/async-section';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useUserProfile } from '@/context/profile-context';
+import { usePaymentMode } from '@/hooks/use-payment-mode';
+import { useSavedCart } from '@/hooks/use-saved-cart';
+import { getErrorMessage } from '@/lib/error-utils';
+import type { CartItemResponse } from '@/services/client';
+import {
+  completeCheckoutMutation,
+  getCartQueryKey,
+  removeItemMutation,
+} from '@/services/client/@tanstack/react-query.gen';
+import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useCartStore } from '@/store/cart-store';
 import { useUserDomain } from '../../../context/user-domain-context';
 
 const DEFAULT_CURRENCY = 'KES';
@@ -64,19 +64,7 @@ export default function CartPage() {
   const canUseStudentCart = activeDomain === 'student' && Boolean(profile?.student?.uuid);
   const dashboardFallbackHref = roleScopedDashboardPath(activeDomain, '/dashboard/overview');
 
-  const cartOptions =
-    canUseStudentCart && cartId
-      ? getCartOptions({ path: { cartId } })
-      : {
-          queryKey: ['getCart', 'disabled'],
-          queryFn: async () => null,
-          enabled: false,
-        };
-  const cartQuery = useQuery({
-    ...cartOptions,
-    enabled: canUseStudentCart && !!cartId,
-    retry: 1,
-  });
+  const cartQuery = useSavedCart({ enabled: canUseStudentCart });
 
   const cart = cartQuery?.data?.data ?? null;
   const cartItems = useMemo(() => cart?.items ?? [], [cart?.items]);

@@ -1,13 +1,14 @@
 'use client';
 
-import type { Course } from '@/services/client';
-import { getCourseByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
-import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQueries } from '@tanstack/react-query';
 import { Book } from 'lucide-react';
-import Image from 'next/image';
-import Link from 'next/link';
 import { useMemo } from 'react';
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
+import { IntentLink } from '@/components/data/intent-link';
+import { coursePrefetchQuery } from '@/lib/route-prefetch';
+import type { Course } from '@/services/client';
+import { getCourseByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { Card, CardHeader, CardTitle } from '../../../../../components/ui/card';
 import { Skeleton } from '../../../../../components/ui/skeleton';
 import { useBranchClasses } from './use-branch-classes';
@@ -71,31 +72,31 @@ export default function BranchCourses({
   return (
     <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3'>
       {courses.map(course => (
-        <Link
+        <IntentLink
           key={course.uuid}
           href={`/dashboard/organisation/courses/${course.uuid}`}
+          prefetchQuery={coursePrefetchQuery(course.uuid)}
           className='group'
         >
           <Card className='hover:border-primary/50 h-full gap-0 overflow-hidden py-0 transition-colors'>
-            {course.thumbnail_url && course.thumbnail_url.length > 0 ? (
-              <Image
-                width={320}
-                height={160}
-                alt={course.name}
-                src={toAuthenticatedMediaUrl(course.thumbnail_url) || course.thumbnail_url}
-                className='h-32 w-full object-cover'
-                unoptimized={isAuthenticatedMediaUrl(toAuthenticatedMediaUrl(course.thumbnail_url))}
-              />
-            ) : (
-              <div className='bg-muted flex h-32 items-center justify-center'>
-                <Book className='text-muted-foreground h-10 w-10' />
-              </div>
-            )}
+            <ImageWithFallback
+              width={320}
+              height={160}
+              alt={course.name}
+              src={toAuthenticatedMediaUrl(course.thumbnail_url) || course.thumbnail_url}
+              sizes='(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw'
+              className='h-32 w-full object-cover'
+              fallback={
+                <div className='bg-muted flex h-32 items-center justify-center'>
+                  <Book className='text-muted-foreground h-10 w-10' />
+                </div>
+              }
+            />
             <CardHeader className='py-4'>
               <CardTitle className='text-base group-hover:underline'>{course.name}</CardTitle>
             </CardHeader>
           </Card>
-        </Link>
+        </IntentLink>
       ))}
     </div>
   );

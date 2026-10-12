@@ -1,20 +1,6 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useStudent } from '@/context/student-context';
-import useStudentClassDefinitions from '@/hooks/use-student-class-definition';
-import { cn } from '@/lib/utils';
-import {
-  getEnrollmentsForClassOptions,
-  getQuizByUuidOptions,
-  getQuizSchedulesOptions,
-} from '@/services/client/@tanstack/react-query.gen';
-import type { ClassQuizSchedule, Enrollment, Quiz, QuizAttempt } from '@/services/client/types.gen';
-import { useQueries } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   ArrowRight,
   CalendarDays,
@@ -29,7 +15,17 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { Student } from '../../../../services/api/schema';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useStudent } from '@/context/student-context';
+import { useClassesByIds, useQuizzesByIds } from '@/hooks/use-batched-lookups';
+import { useClassAssessmentSchedules } from '@/hooks/use-class-assessment-schedules';
+import { cn } from '@/lib/utils';
+import { getClassEnrollmentsForStudentOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { ClassQuizSchedule, Quiz, QuizAttempt } from '@/services/client/types.gen';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -40,28 +36,7 @@ type ClassMeta = {
   enrollmentUuid?: string;
 };
 
-type StudentClassDefinitionRow = ReturnType<
-  typeof useStudentClassDefinitions
->['classDefinitions'][number];
-
-type ResolvedClassDetails = {
-  class_definition?: { title?: string; uuid?: string };
-  course_name?: string;
-  name?: string;
-  title?: string;
-  uuid?: string;
-};
-
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-function getClassTitle(classDetails?: ResolvedClassDetails) {
-  return (
-    classDetails?.class_definition?.title ||
-    classDetails?.title ||
-    classDetails?.name ||
-    'Untitled class'
-  );
-}
 
 function formatDate(value?: string | Date | null) {
   if (!value) return 'No deadline';
@@ -276,68 +251,61 @@ export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean 
 
   const [searchValue, setSearchValue] = useState('');
 
-  const { classDefinitions, loading: classDefinitionsLoading } = useStudentClassDefinitions(
-    student as Student
-  );
-
-  const classItems = useMemo(
-    () =>
-      (classDefinitions ?? [])
-        .map((classDefinition: StudentClassDefinitionRow) => {
-          const classDetails = classDefinition.classDetails as ResolvedClassDetails | undefined;
-          return {
-            classTitle: getClassTitle(classDetails),
-            classUuid:
-              classDefinition.uuid || classDetails?.uuid || classDetails?.class_definition?.uuid,
-            courseTitle:
-              classDefinition.course?.name || classDetails?.course_name || 'Untitled course',
-          };
-        })
-        .filter(
-          (
-            classItem
-          ): classItem is { classTitle: string; classUuid: string; courseTitle: string } =>
-            Boolean(classItem.classUuid)
-        ),
-    [classDefinitions]
-  );
-
-  const classEnrollmentQueries = useQueries({
-    queries: classItems.map(classItem => ({
-      ...getEnrollmentsForClassOptions({ path: { uuid: classItem.classUuid } }),
-      enabled: !!classItem.classUuid,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
+  // Same options as useStudentClassDefinitions so the enrolment list shares its cache entry.
+  const enrollmentsQuery = useQuery({
+    ...getClassEnrollmentsForStudentOptions({
+      path: { studentUuid: student?.uuid as string },
+      query: { pageable: {} },
+    }),
+    enabled: !!student?.uuid,
   });
 
-  const classMetaList = useMemo<ClassMeta[]>(
-    () =>
-      classItems.map((classItem, index) => {
-        const enrollments = classEnrollmentQueries[index]?.data?.data ?? [];
-        const matchingEnrollment =
-          enrollments.find((e: Enrollment) => e.student_uuid === student?.uuid) ?? null;
-        return { ...classItem, enrollmentUuid: matchingEnrollment?.uuid };
-      }),
-    [classEnrollmentQueries, classItems, student?.uuid]
+  const enrollmentRows = useMemo(
+    () => enrollmentsQuery.data?.data?.content ?? [],
+    [enrollmentsQuery.data]
   );
 
-  const quizScheduleQueries = useQueries({
-    queries: classMetaList.map(classMeta => ({
-      ...getQuizSchedulesOptions({ path: { classUuid: classMeta.classUuid } }),
-      enabled: !!classMeta.classUuid,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
-  });
+  const classUuids = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          enrollmentRows
+            .map(row => row.class_definition_uuid)
+            .filter((id): id is string => Boolean(id))
+        )
+      ),
+    [enrollmentRows]
+  );
+
+  const { classMap, isLoading: classesLoading } = useClassesByIds(classUuids);
+  const { quizSchedules, isLoading: schedulesLoading } = useClassAssessmentSchedules(classUuids);
+
+  const classMetaById = useMemo(() => {
+    const map = new Map<string, ClassMeta>();
+    for (const row of enrollmentRows) {
+      const classUuid = row.class_definition_uuid;
+      if (!classUuid || map.has(classUuid)) continue;
+      const summary = classMap[classUuid];
+      const classTitle = row.class_title || summary?.title || 'Untitled class';
+      map.set(classUuid, {
+        classUuid,
+        classTitle,
+        courseTitle: summary?.course_title || classTitle,
+        enrollmentUuid: row.latest_enrollment_uuid,
+      });
+    }
+    return map;
+  }, [classMap, enrollmentRows]);
 
   const scheduleRows = useMemo(
     () =>
-      classMetaList.flatMap((classMeta, index) => {
-        const schedules = quizScheduleQueries[index]?.data?.data ?? [];
-        return schedules.map((schedule: ClassQuizSchedule) => ({ classMeta, schedule }));
+      quizSchedules.flatMap(schedule => {
+        const classMeta = schedule.class_definition_uuid
+          ? classMetaById.get(schedule.class_definition_uuid)
+          : undefined;
+        return classMeta ? [{ classMeta, schedule }] : [];
       }),
-    [classMetaList, quizScheduleQueries]
+    [classMetaById, quizSchedules]
   );
 
   const quizUuids = useMemo(
@@ -352,58 +320,15 @@ export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean 
     [scheduleRows]
   );
 
-  const quizDetailQueries = useQueries({
-    queries: quizUuids.map(quizUuid => ({
-      ...getQuizByUuidOptions({ path: { uuid: quizUuid } }),
-      enabled: !!quizUuid,
-      staleTime: 5 * 60 * 1000,
-      refetchOnWindowFocus: false,
-    })),
-  });
-
-  // const quizAttemptQueries = useQueries({
-  //   queries: quizUuids.map(quizUuid => ({
-  //     ...getQuizAttemptsOptions({ path: { quizUuid }, query: { pageable: {} } }),
-  //     enabled: !!quizUuid,
-  //     staleTime: 60 * 1000,
-  //     refetchOnWindowFocus: false,
-  //   })),
-  // });
-
-  const quizMap = useMemo(() => {
-    const map = new Map<string, Quiz>();
-    quizUuids.forEach((quizUuid, index) => {
-      const quiz = quizDetailQueries[index]?.data?.data;
-      if (quiz) map.set(quizUuid, quiz);
-    });
-    return map;
-  }, [quizDetailQueries, quizUuids]);
-
-  // const attemptMap = useMemo(() => {
-  //   const map = new Map<string, QuizAttempt[]>();
-  //   quizUuids.forEach((quizUuid, index) => {
-  //     const attempts = quizAttemptQueries[index]?.data?.data?.content ?? [];
-  //     map.set(quizUuid, attempts);
-  //   });
-  //   return map;
-  // }, [quizAttemptQueries, quizUuids]);
+  // One quizzes/search call; quizzes the student cannot read are simply absent.
+  const { quizMap, isLoading: quizzesLoading } = useQuizzesByIds(quizUuids);
 
   const quizRows = useMemo(
     () =>
       scheduleRows.map(({ classMeta, schedule }) => {
         const quizUuid = schedule.quiz_uuid as string | undefined;
-        const quiz = quizUuid ? quizMap.get(quizUuid) : undefined;
-
-        // const attempts =
-        //   quizUuid && classMeta.enrollmentUuid
-        //     ? (attemptMap.get(quizUuid) ?? []).filter(
-        //         (attempt: QuizAttempt) => attempt.enrollment_uuid === classMeta.enrollmentUuid
-        //       )
-        //     : quizUuid
-        //       ? (attemptMap.get(quizUuid) ?? [])
-        //       : [];
+        const quiz: Quiz | undefined = quizUuid ? quizMap[quizUuid] : undefined;
         const attempts: QuizAttempt[] = [];
-
         return { classMeta, attempts, quiz, schedule };
       }),
     [quizMap, scheduleRows]
@@ -432,11 +357,7 @@ export function StudentQuizWorkspace({ embedded = false }: { embedded?: boolean 
   }, [quizRows]);
 
   const isLoading =
-    classDefinitionsLoading ||
-    classEnrollmentQueries.some(q => q.isLoading) ||
-    quizScheduleQueries.some(q => q.isLoading) ||
-    quizDetailQueries.some(q => q.isLoading);
-  // || quizAttemptQueries.some(q => q.isLoading);
+    enrollmentsQuery.isLoading || classesLoading || schedulesLoading || quizzesLoading;
 
   // ─── Render ───────────────────────────────────────────────────────────────
 

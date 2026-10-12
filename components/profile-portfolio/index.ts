@@ -1,3 +1,3 @@
 export { getPortfolioContent } from './data';
 export type * from './data';
-export { SharedPortfolioShell, SharedProjectDetailsView } from './PortfolioViews';
+export { SharedPortfolioShell } from './PortfolioViews';

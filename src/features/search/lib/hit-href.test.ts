@@ -39,7 +39,7 @@ test('learners open jobs in the opportunities sheet', () => {
   );
   assert.equal(
     hrefOf(hitDestination('parent', { type: 'courses', uuid: 'c1' })),
-    '/dashboard/parent/all-courses/c1'
+    '/dashboard/parent/courses/c1'
   );
 });
 

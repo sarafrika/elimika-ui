@@ -3,6 +3,6 @@
   register_diagnostic(
     span = $form,
     message = "form.watch() re-renders the whole form on every keystroke. Use useWatch({ control, name }) in a small subscriber component (components/form/watched-value.tsx).",
-    severity = "warn"
+    severity = "error"
   )
 }

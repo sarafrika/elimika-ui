@@ -1,14 +1,14 @@
 'use client';
 
-import { useMemo } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import relativeTime from 'dayjs/plugin/relativeTime';
 import { BookOpen, UserPlus, Wallet } from 'lucide-react';
-
+import { useMemo } from 'react';
 import { ActivityFeed, ActivityFeedSkeleton, type ActivityItem } from '@/components/dashboard';
-import { useOrganisation } from '@/context/organisation-context';
+import { AsyncSection } from '@/components/data/async-section';
+import { useOrganisationId } from '@/context/organisation-context';
 import { useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { getActivityFeedOptions } from '@/services/client/@tanstack/react-query.gen';
 
@@ -24,7 +24,7 @@ const CURRENCY_PREFIXES: Record<string, string> = {
 const fullName = (first?: string, last?: string) =>
   [first, last].filter(Boolean).join(' ').trim();
 
-const formatAmount = (amount?: number, currencyCode?: string) => {
+const formatAmount = (amount?: number | null, currencyCode?: string | null) => {
   const prefix = currencyCode
     ? (CURRENCY_PREFIXES[currencyCode] ?? `${currencyCode} `)
     : '';
@@ -37,8 +37,7 @@ const formatAmount = (amount?: number, currencyCode?: string) => {
  * batched directory lookups. Renders the feed's own empty state when nothing has happened yet.
  */
 export function OverviewActivityFeed() {
-  const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
+  const organisationUuid = useOrganisationId() ?? '';
 
   const feedQuery = useQuery({
     ...getActivityFeedOptions({ path: { organisationUuid }, query: { limit: 20 } }),
@@ -114,9 +113,16 @@ export function OverviewActivityFeed() {
     [events, studentMap, userMap]
   );
 
-  if (feedQuery.isLoading) {
-    return <ActivityFeedSkeleton />;
-  }
-
-  return <ActivityFeed items={items} />;
+  return (
+    <AsyncSection
+      name='org-overview-activity'
+      loading={feedQuery.isLoading}
+      error={feedQuery.error}
+      onRetry={() => feedQuery.refetch()}
+      skeleton={<ActivityFeedSkeleton />}
+      errorTitle='Couldn’t load recent activity'
+    >
+      <ActivityFeed items={items} />
+    </AsyncSection>
+  );
 }

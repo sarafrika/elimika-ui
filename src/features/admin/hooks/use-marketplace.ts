@@ -1,10 +1,16 @@
 'use client';
 
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
+import {
+  prefetchCoursesByIds,
+  prefetchOrganisationsByIds,
+  prefetchProgramsByIds,
+} from '@/hooks/use-batched-lookups';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { toNumber } from '@/lib/metrics';
+import { withOnData } from '@/lib/query-on-data';
 import type { ClassMarketplaceJob, ClassMarketplaceJobApplication } from '@/services/client';
 import {
   getJobOptions,
@@ -52,19 +58,38 @@ interface JobFilters {
 /** Server-paged marketplace jobs. Newest first, or by relevance with `q`. */
 export function useMarketplaceJobs(filters: JobFilters) {
   const page = filters.page ?? 0;
+  const queryClient = useQueryClient();
 
   const query = useQuery({
-    ...listJobsOptions({
-      query: {
-        organisation_uuid: filters.organisationUuid || undefined,
-        course_uuid: filters.courseUuid || undefined,
-        program_uuid: filters.programUuid || undefined,
-        branch_uuid: filters.branchUuid || undefined,
-        status: filters.status || undefined,
-        ...(filters.q ? { q: filters.q } : {}),
-        pageable: { page, size: JOBS_PAGE_SIZE },
-      },
-    }),
+    ...withOnData(
+      listJobsOptions({
+        query: {
+          organisation_uuid: filters.organisationUuid || undefined,
+          course_uuid: filters.courseUuid || undefined,
+          program_uuid: filters.programUuid || undefined,
+          branch_uuid: filters.branchUuid || undefined,
+          status: filters.status || undefined,
+          ...(filters.q ? { q: filters.q } : {}),
+          pageable: { page, size: JOBS_PAGE_SIZE },
+        },
+      }),
+      // The page names each job's organisation, course and program; start those lookups now.
+      data => {
+        const { items } = extractPage<ClassMarketplaceJob>(data);
+        prefetchOrganisationsByIds(
+          queryClient,
+          items.map(job => job.organisation_uuid)
+        );
+        prefetchCoursesByIds(
+          queryClient,
+          items.map(job => job.course_uuid)
+        );
+        prefetchProgramsByIds(
+          queryClient,
+          items.map(job => job.program_uuid)
+        );
+      }
+    ),
     ...listQuery,
     placeholderData: keepPreviousData,
   });

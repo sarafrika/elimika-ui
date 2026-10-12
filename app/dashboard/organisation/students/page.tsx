@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Eye, Mail, MapPin, MoreHorizontal, Plus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -32,7 +32,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
-import { useStudentsByIds, useStudentsByUserIds, useUsersByIds } from '@/hooks/use-batched-lookups';
+import {
+  LOOKUP_CHUNK_SIZE,
+  prefetchUsersByIds,
+  useStudentsByIds,
+  useStudentsByUserIds,
+  useUsersByIds,
+} from '@/hooks/use-batched-lookups';
 import { extractList, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatCount, toNumber } from '@/lib/metrics';
@@ -45,7 +51,9 @@ import type {
 import {
   getStudentSummariesOptions,
   getUsersByOrganisationAndDomainOptions,
+  getUsersByOrganisationAndDomainQueryKey,
   listRosterOptions,
+  listRosterQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
@@ -110,11 +118,13 @@ export default function StudentsPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
 
+  const rosterArgs = {
+    path: { organisationUuid },
+    query: { pageable: { page: 0, size: 100 } },
+  };
+  const orgStudentsArgs = { path: { uuid: organisationUuid, domainName: 'student' } };
   const rosterQuery = useQuery({
-    ...listRosterOptions({
-      path: { organisationUuid },
-      query: { pageable: { page: 0, size: 100 } },
-    }),
+    ...listRosterOptions(rosterArgs),
     enabled: Boolean(organisationUuid),
   });
   const summariesQuery = useQuery({
@@ -122,16 +132,19 @@ export default function StudentsPage() {
     enabled: Boolean(organisationUuid),
   });
 
-  // Branch each student is affiliated to (this org's student affiliation), keyed by user uuid.
+  // The org's student users: full User rows (names, email, avatar) plus each one's branch.
   const orgStudentsQuery = useQuery({
-    ...getUsersByOrganisationAndDomainOptions({
-      path: { uuid: organisationUuid, domainName: 'student' },
-    }),
+    ...getUsersByOrganisationAndDomainOptions(orgStudentsArgs),
     enabled: Boolean(organisationUuid),
   });
+  const orgUserByUuid = useMemo(() => {
+    const map: Record<string, User> = {};
+    for (const u of extractList<User>(orgStudentsQuery.data)) if (u.uuid) map[u.uuid] = u;
+    return map;
+  }, [orgStudentsQuery.data]);
   const branchByUserUuid = useMemo(() => {
     const map = new Map<string, string>();
-    for (const u of extractList<User>(orgStudentsQuery.data)) {
+    for (const u of Object.values(orgUserByUuid)) {
       if (!u.uuid) continue;
       const affiliation = (u.organisation_affiliations ?? []).find(
         a => a.organisation_uuid === organisationUuid
@@ -139,7 +152,7 @@ export default function StudentsPage() {
       if (affiliation?.branch_name) map.set(u.uuid, affiliation.branch_name);
     }
     return map;
-  }, [orgStudentsQuery.data, organisationUuid]);
+  }, [orgUserByUuid, organisationUuid]);
 
   const summaries = useMemo(
     () => extractList<StudentEnrolmentSummaryDto>(summariesQuery.data),
@@ -179,23 +192,55 @@ export default function StudentsPage() {
       ).sort((a, b) => a.localeCompare(b)),
     [summaries]
   );
-  const summaryStudentProfilesQuery = useStudentsByIds(summaryStudentUuids);
+  // Roster entries are keyed by user uuid, so their names load straight off the roster.
+  const rosterUserUuidSet = useMemo(() => new Set(rosterUserUuids), [rosterUserUuids]);
+  const rosterUsers = useUsersByIds(rosterUserUuids);
+
+  // Summary-only students need their profile first; its user lookup starts as profiles land,
+  // reading roster and org users from the cache so it never waits for a render.
+  const queryClient = useQueryClient();
+  const rosterSettled = rosterQuery.isSuccess || rosterQuery.isError;
+  const orgStudentsSettled = orgStudentsQuery.isSuccess || orgStudentsQuery.isError;
+  const summaryStudentProfilesQuery = useStudentsByIds(summaryStudentUuids, profiles => {
+    if (summaryStudentUuids.length > LOOKUP_CHUNK_SIZE) return;
+    const cachedRoster = queryClient.getQueryData(listRosterQueryKey(rosterArgs));
+    const cachedOrgUsers = queryClient.getQueryData(
+      getUsersByOrganisationAndDomainQueryKey(orgStudentsArgs)
+    );
+    if (!cachedRoster || !cachedOrgUsers) return;
+    const known = new Set<string>();
+    for (const entry of extractPage<StudentGroupRosterEntry>(cachedRoster).items) {
+      if (entry.student_uuid) known.add(entry.student_uuid);
+    }
+    for (const user of extractList<User>(cachedOrgUsers)) if (user.uuid) known.add(user.uuid);
+    prefetchUsersByIds(
+      queryClient,
+      profiles.map(profile => profile.user_uuid).filter(uuid => !!uuid && !known.has(uuid))
+    );
+  });
   const studentProfileByUuid = useMemo(
     () => new Map<string, Student>(Object.entries(summaryStudentProfilesQuery.studentMap)),
     [summaryStudentProfilesQuery.studentMap]
   );
-  const profileUserUuids = useMemo(
+  // Held until roster and org users settle, so the id set matches the onData prefetch's.
+  const summaryUserUuids = useMemo(
     () =>
-      Array.from(
-        new Set(
-          [...studentProfileByUserUuid.values(), ...studentProfileByUuid.values()]
+      rosterSettled && orgStudentsSettled
+        ? [...studentProfileByUuid.values()]
             .map(profile => profile.user_uuid)
-            .filter((uuid): uuid is string => !!uuid)
-        )
-      ).sort((a, b) => a.localeCompare(b)),
-    [studentProfileByUserUuid, studentProfileByUuid]
+            .filter(
+              (uuid): uuid is string =>
+                !!uuid && !rosterUserUuidSet.has(uuid) && !orgUserByUuid[uuid]
+            )
+        : [],
+    [rosterSettled, orgStudentsSettled, studentProfileByUuid, rosterUserUuidSet, orgUserByUuid]
   );
-  const { userMap, isLoading: usersLoading } = useUsersByIds(profileUserUuids);
+  const summaryUsers = useUsersByIds(summaryUserUuids);
+  const userMap = useMemo(
+    () => ({ ...summaryUsers.userMap, ...orgUserByUuid, ...rosterUsers.userMap }),
+    [summaryUsers.userMap, orgUserByUuid, rosterUsers.userMap]
+  );
+  const usersLoading = rosterUsers.isLoading || summaryUsers.isLoading;
 
   const students = useMemo(() => {
     const rows: StudentRow[] = [];

@@ -19,15 +19,17 @@ type EnrollmentMap = Record<
 const refetchWhenInvalidated = (query: { state: { isInvalidated: boolean } }) =>
   query.state.isInvalidated;
 
-export function useCourseEnrollmentsMap(courseUuids: string[]) {
-  // Consumers only need the enrollment COUNT — read it from the page
-  // metadata of a size-1 request instead of downloading up to 10,000 rows
-  // per course.
+export function useCourseEnrollmentsMap(
+  courseUuids: string[],
+  { countOnly = false }: { countOnly?: boolean } = {}
+) {
+  // Count-only callers read metadata.totalElements from a size-1 page; callers
+  // that search the roster (class hub, submissions) still need the full page.
   const enrollmentQueries = useQueries({
     queries: courseUuids.map(uuid => ({
       ...getCourseEnrollmentsOptions({
         path: { courseUuid: uuid },
-        query: { pageable: { page: 0 } },
+        query: { pageable: countOnly ? { page: 0, size: 1 } : { page: 0 } },
       }),
       enabled: !!uuid,
       // The enrolment workflow and the cache-restore predicate both invalidate this key, so gate the

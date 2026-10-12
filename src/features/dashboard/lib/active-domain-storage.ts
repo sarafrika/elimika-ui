@@ -34,6 +34,21 @@ export function normalizeStoredUserDomain(domain: unknown): UserDomain | null {
  */
 export const ACTING_DOMAIN_HEADER = 'X-Acting-Domain';
 
+/** Header value a query pins when it was rendered off-dashboard; the fetch hook drops it. */
+export const ACTING_DOMAIN_NONE = 'none';
+
+let renderedPathname: string | null = null;
+
+/** Recorded during render, before `window.location` catches up with a client navigation. */
+export function noteRenderedPathname(pathname: string | null) {
+  renderedPathname = pathname;
+}
+
+/** The dashboard the UI is rendering right now, which is what query caching keys on. */
+export function readRenderedActingDomain(): UserDomain | null {
+  return readActingDomain(renderedPathname ?? undefined);
+}
+
 /**
  * The dashboard the browser is currently on, for {@link ACTING_DOMAIN_HEADER}.
  *
@@ -47,10 +62,10 @@ export const ACTING_DOMAIN_HEADER = 'X-Acting-Domain';
  * no dashboard to be capped to; omitting the header is how a caller says so, and
  * the server then behaves exactly as it did before acting domains existed.
  */
-export function readActingDomain(): UserDomain | null {
+export function readActingDomain(path?: string): UserDomain | null {
   if (typeof window === 'undefined') return null;
 
-  const pathname = window.location.pathname;
+  const pathname = path ?? window.location.pathname;
   if (!isInternalDashboardPath(pathname)) return null;
 
   const fromPath = domainFromPath(pathname);

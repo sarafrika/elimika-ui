@@ -3,7 +3,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { extractPage } from '@/lib/api-helpers';
 import type { ClassMarketplaceJob } from '@/services/client';
 import { listJobsOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -26,7 +25,6 @@ export function useOrganisationJobs(organisationUuid: string, branchUuid?: strin
     }),
     enabled: Boolean(organisationUuid),
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const jobs = useMemo(() => extractPage<ClassMarketplaceJob>(query.data).items, [query.data]);
   return { jobs, query };

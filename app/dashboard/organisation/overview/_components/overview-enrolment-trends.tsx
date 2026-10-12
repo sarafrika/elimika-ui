@@ -1,9 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-
-import { EnrollmentTrendsChart } from '@/components/dashboard';
-import { useOrganisation } from '@/context/organisation-context';
+import { EnrollmentTrendsChart } from '@/components/dashboard/charts-lazy';
+import { AsyncSection } from '@/components/data/async-section';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useOrganisationId } from '@/context/organisation-context';
 import { getEnrolmentTrendsOptions } from '@/services/client/@tanstack/react-query.gen';
 
 /**
@@ -12,8 +13,7 @@ import { getEnrolmentTrendsOptions } from '@/services/client/@tanstack/react-que
  * chart's graceful empty state when there is no enrolment history yet.
  */
 export function OverviewEnrolmentTrends() {
-  const organisation = useOrganisation();
-  const organisationUuid = organisation?.uuid ?? '';
+  const organisationUuid = useOrganisationId() ?? '';
 
   const trendsQuery = useQuery({
     ...getEnrolmentTrendsOptions({
@@ -29,9 +29,18 @@ export function OverviewEnrolmentTrends() {
   }));
 
   return (
-    <EnrollmentTrendsChart
-      data={data}
-      series={[{ key: 'enrolments', name: 'Enrolments', color: 'var(--color-chart-1)' }]}
-    />
+    <AsyncSection
+      name='org-overview-enrolment-trends'
+      loading={trendsQuery.isLoading}
+      error={trendsQuery.error}
+      onRetry={() => trendsQuery.refetch()}
+      skeleton={<Skeleton className='h-64 w-full rounded-lg' />}
+      errorTitle='Couldn’t load enrolment trends'
+    >
+      <EnrollmentTrendsChart
+        data={data}
+        series={[{ key: 'enrolments', name: 'Enrolments', color: 'var(--color-chart-1)' }]}
+      />
+    </AsyncSection>
   );
 }

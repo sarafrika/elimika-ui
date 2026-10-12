@@ -1,7 +1,7 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { isForbidden, retryUnlessClientOrSearchError } from '@/lib/api-errors';
+import { isForbidden } from '@/lib/api-errors';
 import { PracticeActivityList } from '@/app/dashboard/course-creator/_components/practice-activity-management';
 import { getPreferredScheduleInstance } from '@/app/dashboard/instructor/classes/_components/new-class-page.utils';
 import ConfirmModal from '@/components/custom-modals/confirm-modal';
@@ -32,6 +32,13 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
 import { useTimeZone } from '@/context/timezone-context';
+import {
+  useAssignmentsByIds,
+  useAssignmentsByLessonIds,
+  useQuizzesByIds,
+  useQuizzesByLessonIds,
+  uniqueByUuid,
+} from '@/hooks/use-batched-lookups';
 import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { useClassLessonContent } from '@/hooks/use-class-lesson-content';
 import {
@@ -50,8 +57,6 @@ import {
   deleteAssignmentScheduleMutation,
   deleteQuizScheduleMutation,
   endScheduledInstanceMutation,
-  getAllAssignmentsOptions,
-  getAllQuizzesOptions,
   getAssignmentAttachmentsOptions,
   getAssignmentSchedulesOptions,
   getAssignmentSchedulesQueryKey,
@@ -1750,7 +1755,7 @@ function RosterPanel({
               return (
                 <button
                   type='button'
-                  key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.uuid}
+                  key={entry.enrollment?.uuid ?? entry.user?.uuid ?? entry.student?.data?.uuid}
                   onClick={() => onSelectStudent(entry)}
                   className={`w-full rounded-md border p-2.5 text-left transition-colors ${isSelected
                     ? 'border-primary/30 bg-primary/8'
@@ -2560,6 +2565,7 @@ export default function ClassTrainingPage({
     searchParams.get('enrollment') ? 'evaluation' : 'students'
   );
   // const [activeLefTab, setActiveLeftTab] = useState<'students' | 'lessons' | 'evaluation'>('students');
+  const [isClassWorkSheetOpen, setIsClassWorkSheetOpen] = useState(false);
 
   const classData = data.class;
   const course = data.course ?? data?.pCourses?.[0] ?? null;
@@ -2830,43 +2836,64 @@ export default function ClassTrainingPage({
     );
   };
 
+  // Grading data renders only in the Class work sheet and the evaluation tab; tasks add the
+  // Assessment tab. Neither is on screen at first paint, so both wait until opened.
+  const isGradingOpen = isClassWorkSheetOpen || activeLefTab === 'evaluation';
+  const isAssessmentOpen = isGradingOpen || activeTab === 'assessment';
+
   const { data: courseRubricsData } = useQuery({
     ...getCourseRubricsOptions({
       path: { courseUuid: activeLessonCourseUuid as string },
       query: { pageable: { page: 0, size: 50 } },
     }),
-    enabled: !!activeLessonCourseUuid,
+    enabled: !!activeLessonCourseUuid && isGradingOpen,
   });
   const { data: courseAssessmentsData } = useQuery({
     ...getCourseAssessmentsOptions({
       path: { courseUuid: activeLessonCourseUuid as string },
       query: { pageable: { page: 0, size: 50 } },
     }),
-    enabled: !!activeLessonCourseUuid,
-  });
-  const { data: allAssignments } = useQuery({
-    ...getAllAssignmentsOptions({ query: { pageable: { page: 0, size: 100 } } }),
-    enabled: !!classId,
-  });
-  const { data: allQuizzes } = useQuery({
-    ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 100 } } }),
-    enabled: !!classId,
+    enabled: !!activeLessonCourseUuid && isGradingOpen,
   });
   const { data: assignmentSchedules } = useQuery({
     ...getAssignmentSchedulesOptions({ path: { classUuid: classId } }),
-    enabled: !!classId,
+    enabled: !!classId && isAssessmentOpen,
   });
   const { data: quizSchedules } = useQuery({
     ...getQuizSchedulesOptions({ path: { classUuid: classId } }),
-    enabled: !!classId,
+    enabled: !!classId && isAssessmentOpen,
   });
 
   const rubricAssociations: CourseRubricAssociation[] = courseRubricsData?.data?.content ?? [];
   const courseAssessments: CourseAssessment[] = courseAssessmentsData?.data?.content ?? [];
-  const assignmentOptions: Assignment[] = allAssignments?.data?.content ?? [];
-  const quizOptions: Quiz[] = allQuizzes?.data?.content ?? [];
   const assignmentScheduleItems: AssignmentScheduleItem[] = assignmentSchedules?.data ?? [];
   const quizScheduleItems: QuizScheduleItem[] = quizSchedules?.data ?? [];
+
+  // Scoped lookups: the active lesson's items plus whatever this class has scheduled.
+  const activeLessonUuids = useMemo(
+    () => (isAssessmentOpen && activeLesson?.uuid ? [activeLesson.uuid] : []),
+    [activeLesson?.uuid, isAssessmentOpen]
+  );
+  const scheduledAssignmentUuids = useMemo(
+    () => (assignmentSchedules?.data ?? []).map(item => item.assignment_uuid).filter(Boolean),
+    [assignmentSchedules]
+  );
+  const scheduledQuizUuids = useMemo(
+    () => (quizSchedules?.data ?? []).map(item => item.quiz_uuid).filter(Boolean),
+    [quizSchedules]
+  );
+  const { items: activeLessonAssignmentItems } = useAssignmentsByLessonIds(activeLessonUuids);
+  const { items: activeLessonQuizItems } = useQuizzesByLessonIds(activeLessonUuids);
+  const { assignmentMap: scheduledAssignmentMap } = useAssignmentsByIds(scheduledAssignmentUuids);
+  const { quizMap: scheduledQuizMap } = useQuizzesByIds(scheduledQuizUuids);
+  const assignmentOptions: Assignment[] = useMemo(
+    () => uniqueByUuid([...activeLessonAssignmentItems, ...Object.values(scheduledAssignmentMap)]),
+    [activeLessonAssignmentItems, scheduledAssignmentMap]
+  );
+  const quizOptions: Quiz[] = useMemo(
+    () => uniqueByUuid([...activeLessonQuizItems, ...Object.values(scheduledQuizMap)]),
+    [activeLessonQuizItems, scheduledQuizMap]
+  );
 
   const rubricUuids = useMemo(
     () =>
@@ -2884,9 +2911,7 @@ export default function ClassTrainingPage({
   const rubricMatrixQueries = useQueries({
     queries: rubricUuids.map(rubricUuid => ({
       ...getRubricMatrixOptions({ path: { rubricUuid } }),
-      enabled: !!rubricUuid,
-      // A rubric its author has not shared answers 403; that will not change on retry.
-      retry: retryUnlessClientOrSearchError,
+      enabled: !!rubricUuid && isGradingOpen,
     })),
   });
   const notSharedRubricUuids = useMemo(
@@ -2989,6 +3014,7 @@ export default function ClassTrainingPage({
       path: { courseUuid: course?.uuid as string },
       query: { pageable: {} },
     }),
+    enabled: !!course?.uuid && !!selectedStudent?.student?.data?.uuid,
   });
   const studentEnrollments = courseEnrollmentResp?.data?.content ?? [];
 
@@ -3496,7 +3522,7 @@ export default function ClassTrainingPage({
             </SheetContent>
           </Sheet>
 
-          <Sheet>
+          <Sheet open={isClassWorkSheetOpen} onOpenChange={setIsClassWorkSheetOpen}>
             <SheetTrigger asChild>
               <Button
                 variant='ghost'

@@ -29,6 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { normalizeLegacyActionUrl } from '@/src/features/dashboard/lib/legacy-action-url';
 import {
   Dialog,
   DialogContent,
@@ -336,12 +337,8 @@ function ComposeNotificationDialog() {
             <Button type='button' variant='ghost' onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type='submit' className='gap-2' disabled={sendM.isPending}>
-              {sendM.isPending ? (
-                <Spinner className='h-4 w-4' />
-              ) : (
-                <Send className='h-4 w-4' />
-              )}
+            <Button type='submit' className='gap-2' disabled={!organisationUuid || sendM.isPending}>
+              {sendM.isPending ? <Spinner className='h-4 w-4' /> : <Send className='h-4 w-4' />}
               {schedule ? 'Schedule' : 'Send now'}
             </Button>
           </DialogFooter>
@@ -352,6 +349,7 @@ function ComposeNotificationDialog() {
 }
 
 function NotificationCard({ n }: { n: NotificationDto }) {
+  const actionUrl = normalizeLegacyActionUrl(n.action_url, 'organisation');
   const Icon = iconFor(n);
   const unread = !n.read_at;
   const when = n.occurred_at ?? n.created_at;
@@ -383,9 +381,9 @@ function NotificationCard({ n }: { n: NotificationDto }) {
             <span className='text-muted-foreground text-[11px]'>
               {when ? dayjs(when).fromNow() : '—'}
             </span>
-            {n.action_url && (
+            {actionUrl && (
               <Button asChild variant='outline' size='sm' className='h-7 text-[11px]'>
-                <Link href={n.action_url}>View details</Link>
+                <Link href={actionUrl}>View details</Link>
               </Button>
             )}
           </div>

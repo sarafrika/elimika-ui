@@ -19,7 +19,7 @@ import { SESSION_FORMAT_LABELS } from '@/src/features/catalogue/course-page';
 import { FeedbackSheet } from '@/src/features/dashboard/courses/components/feedback-sheet';
 import { enumLabel } from '@/src/features/dashboard/courses/shared/_components/class-hub';
 import { useUserProfile } from '../../../../../context/profile-context';
-import { useClassesByIds } from '../../../../../hooks/use-batched-lookups';
+import { useClassDefinitionsByIds } from '../../../../../hooks/use-batched-lookups';
 import { ClassDefinition } from '../../../../../services/client';
 import { submitClassReviewMutation } from '../../../../../services/client/@tanstack/react-query.gen';
 import { formatSessionSchedule } from '../../../../../src/features/dashboard/courses/components/availability-listing-layout';
@@ -82,7 +82,7 @@ export function LessonHubMyClassesTab({ learningHubData }: LessonHubMyClassesTab
     () => Array.from(new Set(rows.map(r => r.class_definition_uuid).filter(Boolean))),
     [rows]
   );
-  const { classDefinitionMap } = useClassesByIds(classDefinitionUuids);
+  const { classDefinitionMap } = useClassDefinitionsByIds(classDefinitionUuids);
 
   const totals = {
     all: learningHubData.classEnrollmentCount || rows.length,

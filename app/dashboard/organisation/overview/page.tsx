@@ -1,14 +1,19 @@
+import { LazySection } from '@/components/data/lazy-section';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { OrgPage, orgStack } from '../_components/org-page';
 import { OverviewActivityFeed } from './_components/overview-activity-feed';
-import { OverviewFundUtilisation } from './_components/overview-fund-utilisation';
 import { OverviewAlerts } from './_components/overview-alerts';
 import { OverviewCourseRail } from './_components/overview-course-rail';
 import { OverviewEnrolmentTrends } from './_components/overview-enrolment-trends';
-import { OverviewWeeklyGrowth } from './_components/overview-weekly-growth';
+import { OverviewFundUtilisation } from './_components/overview-fund-utilisation';
 import { OverviewGettingStarted } from './_components/overview-getting-started';
 import { OverviewKpis } from './_components/overview-kpis';
+import { OverviewWeeklyGrowth } from './_components/overview-weekly-growth';
 import { OverviewWelcome } from './_components/overview-welcome';
+
+// The alerts/activity row mounts (and fetches) only when scrolled near.
+// The trend charts fetch with the first wave: deferring them only added an IO round trip.
+const LOWER_ROW_MARGIN = '0px 0px 120px 0px';
 
 export default function OrganizationOverviewPage() {
   return (
@@ -55,10 +60,12 @@ export default function OrganizationOverviewPage() {
           </Card>
         </div>
 
-        <div className='grid gap-4 lg:grid-cols-2'>
-          <OverviewAlerts />
-          <OverviewActivityFeed />
-        </div>
+        <LazySection rootMargin={LOWER_ROW_MARGIN} minHeight={280}>
+          <div className='grid gap-4 lg:grid-cols-2'>
+            <OverviewAlerts />
+            <OverviewActivityFeed />
+          </div>
+        </LazySection>
       </div>
     </OrgPage>
   );

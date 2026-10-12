@@ -13,7 +13,6 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
 import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
-import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -148,7 +147,6 @@ export function InstructorStudentsPanel({
     enabled,
     staleTime: STALE_TIMES.live,
     placeholderData: keepPreviousData,
-    retry: retryUnlessClientOrSearchError,
   });
   const searchIssue = useSearchIssue(searchState, rosterQuery.error);
 

@@ -27,12 +27,9 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
-import { extractPage } from '@/lib/api-helpers';
+import { useQuizzesByClassIds } from '@/hooks/use-batched-lookups';
 import type { ClassDefinition, Quiz } from '@/services/client';
-import {
-  getAllQuizzesOptions,
-  getClassDefinitionsForOrganisationOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+import { getClassDefinitionsForOrganisationOptions } from '@/services/client/@tanstack/react-query.gen';
 import { surfaceTheme } from '@/components/data-display';
 
 type Status = 'Draft' | 'Active' | 'Published';
@@ -65,17 +62,16 @@ export default function ExamsPage() {
     return map;
   }, [classesQuery.data]);
 
-  const quizzesQuery = useQuery({
-    ...getAllQuizzesOptions({ query: { pageable: { page: 0, size: 200 } } }),
-    enabled: classTitleByUuid.size > 0,
-  });
+  const classUuids = useMemo(() => [...classTitleByUuid.keys()], [classTitleByUuid]);
+  const quizzesQuery = useQuizzesByClassIds(classUuids);
 
+  // Org-scoped: the search is filtered server-side to this org's class definitions.
   const orgQuizzes = useMemo(
     () =>
-      extractPage<Quiz>(quizzesQuery.data).items.filter(
+      quizzesQuery.items.filter(
         q => q.class_definition_uuid && classTitleByUuid.has(q.class_definition_uuid)
       ),
-    [quizzesQuery.data, classTitleByUuid]
+    [quizzesQuery.items, classTitleByUuid]
   );
 
   const [query, setQuery] = useState('');

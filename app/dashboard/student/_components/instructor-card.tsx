@@ -11,21 +11,32 @@ import {
   getUserByUuidOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { CourseTrainingApplication } from '@/services/client';
 import { isFullUser } from '@/services/user/is-full-user';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { InstructorSkillCard } from '../../instructor/profile/skills/_component/instructor-skill-card';
 
 type Props = {
   instructor: SearchInstructor;
   courseId: string;
   onViewProfile: () => void;
+  /** This course's application for the instructor, when the list looked them up in one batch. */
+  application?: CourseTrainingApplication;
+  applicationsInline?: boolean;
 };
 
-export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) => {
+export const InstructorCard = ({
+  instructor,
+  onViewProfile,
+  courseId,
+  application,
+  applicationsInline = false,
+}: Props) => {
   const { data } = useQuery({
     ...getUserByUuidOptions({ path: { uuid: instructor.user_uuid } }),
-    enabled: !!instructor.uuid,
+    enabled: !!instructor.uuid && !!instructor.user_uuid && !instructor.profile_inline,
   });
   const user = data?.data;
   // A learner browsing the instructor catalogue has no relationship with these accounts, so
@@ -33,15 +44,20 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
   // not part of the payload. The badge is a fact about the record we were given, not about the
   // instructor, so it only appears when the full record actually came back.
   const affiliations = isFullUser(user) ? (user.organisation_affiliations ?? []) : [];
+  const profileImageUrl = instructor.profile_inline
+    ? instructor.profile_image_url
+    : user?.profile_image_url;
 
   const { data: skills } = useQuery({
     ...getInstructorSkillsOptions({
       query: { pageable: {} },
       path: { instructorUuid: instructor?.uuid as string },
     }),
-    enabled: !!instructor.uuid,
+    enabled: !!instructor.uuid && !instructor.skills_inline,
   });
-  const instructorSkills = skills?.data?.content || [];
+  const instructorSkills = instructor.skills_inline
+    ? (instructor.specializations ?? [])
+    : skills?.data?.content || [];
   const skillNames = instructorSkills.map(skill => skill.skill_name);
 
   // The rating comes with the list when the API sends it; otherwise this card, and only
@@ -58,12 +74,12 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
     ...searchTrainingApplicationsOptions({
       query: { pageable: {}, searchParams: { applicant_uuid_eq: instructor?.uuid as string } },
     }),
-    enabled: !!instructor?.uuid,
+    enabled: !!instructor?.uuid && !applicationsInline,
   });
 
-  const matchedCourse = appliedCourses?.data?.content?.find(
-    course => course.course_uuid === courseId
-  );
+  const matchedCourse = applicationsInline
+    ? application
+    : appliedCourses?.data?.content?.find(course => course.course_uuid === courseId);
 
   const ratesLabel = lowestRatesLabel(matchedCourse?.rate_card);
 
@@ -72,7 +88,10 @@ export const InstructorCard = ({ instructor, onViewProfile, courseId }: Props) =
       <div className='flex h-full flex-col space-y-4 p-4'>
         <div className='flex items-start gap-4'>
           <Avatar className='h-14 w-14'>
-            <AvatarImage src={user?.profile_image_url ?? undefined} alt={instructor.full_name} />
+            <AvatarImage
+              src={toAuthenticatedMediaUrl(profileImageUrl) ?? undefined}
+              alt={instructor.full_name}
+            />
             <AvatarFallback>{instructor?.full_name?.charAt(0)}</AvatarFallback>
           </Avatar>
 

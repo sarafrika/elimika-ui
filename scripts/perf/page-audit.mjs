@@ -63,7 +63,6 @@ let PAGES = [
   '/dashboard/students',
   '/dashboard/training-hub',
   '/dashboard/classes',
-  '/dashboard/trainings',
   '/dashboard/calendar',
   '/dashboard/profile/general',
   '/dashboard/reviews',

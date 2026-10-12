@@ -32,12 +32,13 @@ These came out of the June 2026 performance post-mortem (`docs/perf/post-mortem.
 - **Never fetch unbounded pages to read a few rows** — no `pageable: { size: 1000 }` map hooks. Scope requests to the ids actually on screen.
 - **Gate every query whose path/query params can be undefined** with a React Query `enabled:` option. An undefined path param sends a literal `{uuid}` placeholder to the API. `enabled` must be a top-level query option — nested inside the API `query: {}` object it is silently sent as a query-string param and does nothing (Biome blocks this pattern).
 - **`LocalDate` API params** (timetable `start`/`end` etc.): pass `localDate(...)` from `lib/date.ts`, never a raw `Date` — the serializer turns `Date` into a full ISO datetime, which the backend rejects.
-- **No `form.watch()` in render** — it re-renders the entire form per keystroke. Use `useWatch({ control, name })` inside a small subscriber component (`components/form/watched-value.tsx` has `WatchedText`/`WatchedValue`). Biome warns on `form.watch(...)`.
+- **No `form.watch()` in render** — it re-renders the entire form per keystroke. Use `useWatch({ control, name })` inside a small subscriber component (`components/form/watched-value.tsx` has `WatchedText`/`WatchedValue`). Biome errors on `form.watch(...)`.
 - **Memoize context provider values**; `useMemo` derived lists; defer/debounce search-driven filtering (`useDeferredValue`).
 - **Heavy libraries load lazily**: pdfjs via `lib/pdfjs.ts`, the tiptap editor via `simple-editor-lazy`, charts/viewers via `next/dynamic`. Biome's `noRestrictedImports` enforces the known ones; extend it when you wrap a new heavy library.
 - **staleTime is deliberate**: pick a tier from `lib/query-client.ts` (`STALE_TIMES.reference/entity/live`). Shell data (wallet, profile) must not refetch on every navigation; polls (notifications) are ≥ 60s and dropdown content fetches on open, not on page load.
 - **Media URLs from the API** (`profile_image_url`, thumbnails) must go through `toAuthenticatedMediaUrl` (`src/lib/media-url.ts`) — direct hits on the API host are unauthenticated.
 - **Measure before/after**: `npx next experimental-analyze -o` + `node scripts/perf/route-sizes.mjs --compare docs/perf/route-sizes-phase4.json` for bundles (`@next/bundle-analyzer` does not work with Turbopack); `scripts/perf/login.mjs` + `scripts/perf/page-audit.mjs --domain <role>` for authenticated request counts/time-to-data. `scripts/perf/ts-error-ratchet.mjs` must pass (`--update` to lock in reductions).
+- **Blocking CI gate**: `.github/workflows/perf-gate.yml` runs `pnpm lint` (the `.biome-plugins` guardrails are errors; legacy hits live in `scripts/perf/lint-guardrail-allowlist.json`, which may only shrink) and `route-gate.mjs` per role against staging. See `docs/perf/route-gate.md`.
 
 ## Brand-color guard
 `scripts/check-brand-colors.mjs` runs as part of `pnpm lint`. It enforces two tiers:
