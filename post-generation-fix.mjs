@@ -4,6 +4,7 @@ const reactQueryFilePath = './services/client/@tanstack/react-query.gen.ts';
 const zodFilePath = './services/client/zod.gen.ts';
 const clientFilePath = './services/client/client.gen.ts';
 const transformersFilePath = './services/client/transformers.gen.ts';
+const sdkFilePath = './services/client/sdk.gen.ts';
 
 const replaceOrThrow = (content, searchValue, replaceValue, label) => {
   if (content.includes(replaceValue)) {
@@ -101,6 +102,11 @@ const fixClientGeneration = content => {
   return nextContent;
 };
 
+// Per-operation serializers would override the flattening one in hey-api.ts and send
+// `pageable[page]=0`, which the API ignores; keep the global serializer in charge.
+const fixSdkGeneration = content =>
+  content.replaceAll(/^\s*querySerializer: \{.*\},\n/gm, '');
+
 const updateFile = (filePath, transform) => {
   const currentContent = readFileSync(filePath, 'utf8');
   const nextContent = transform(currentContent);
@@ -114,3 +120,4 @@ updateFile(reactQueryFilePath, fixReactQueryGeneration);
 updateFile(zodFilePath, fixZodGeneration);
 updateFile(clientFilePath, fixClientGeneration);
 updateFile(transformersFilePath, fixTransformersGeneration);
+updateFile(sdkFilePath, fixSdkGeneration);

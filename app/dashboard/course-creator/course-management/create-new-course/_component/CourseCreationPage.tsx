@@ -12,10 +12,8 @@ import {
   getCourseByUuidOptions,
   getCourseByUuidQueryKey,
   publishCourseMutation,
-  publishCourseQueryKey,
   searchCoursesQueryKey,
   unpublishCourseMutation,
-  unpublishCourseQueryKey,
 } from '../../../../../../services/client/@tanstack/react-query.gen';
 import { invalidateContentModerationWorkflowQueries } from '../../../../../../src/features/dashboard/workflow-query-invalidation';
 import { PendingEditBanner } from '../../../_components/pending-edit-banner';
@@ -76,12 +74,6 @@ const CourseCreationPage = () => {
         {
           async onSuccess(data) {
             toast.success(data?.message || 'Course unpublished successfully');
-            queryClient.invalidateQueries({
-              queryKey: unpublishCourseQueryKey({ path: { uuid: courseId as string } }),
-            });
-            queryClient.invalidateQueries({
-              queryKey: publishCourseQueryKey({ path: { uuid: courseId as string } }),
-            });
             queryClient.invalidateQueries({
               queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
             });

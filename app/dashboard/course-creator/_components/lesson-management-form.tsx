@@ -522,9 +522,10 @@ function LessonContentForm({
       // on an existing one we keep the edited record and drop the row the upload made.
       const targetUuid = existingUuid ?? uploadedUuid;
 
+      const updateBody: LessonContent = { ...contentBody, uuid: targetUuid };
       const saved = targetUuid
         ? await updateLessonContent.mutateAsync({
-          body: { ...contentBody, uuid: targetUuid },
+          body: updateBody,
           path: {
             courseUuid: courseId as string,
             lessonUuid: lessonId as string,

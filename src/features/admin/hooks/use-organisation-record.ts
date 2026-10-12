@@ -9,12 +9,12 @@ import type {
   ClassDefinition,
   DocumentTypeOption,
   InstructorObligation,
+  ListObligationsData,
   OrgInstructorSummary,
   Organisation,
   OrganisationDashboardStats,
   OrganisationDocument,
   OrganisationInvitation,
-  SchemaEnum6Writable,
   SkillsFundSummary,
   TrainingBranch,
   User,
@@ -28,7 +28,7 @@ import {
   getOrganisationDocumentsOptions,
   getOrganisationInstructorSummariesOptions,
   getOrganisationStatisticsOptions,
-  getSummaryOptions,
+  getSummary2Options,
   getTrainingBranchesByOrganisationOptions,
   getUsersByOrganisationOptions,
   listDocumentTypesOptions,
@@ -37,6 +37,8 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { InstructorPayable, MonthlySettlement } from '../components/finance-tab';
 import { configQuery, listQuery } from '../lib/admin-queries';
+
+type ObligationStatus = NonNullable<ListObligationsData['query']>['status'];
 
 const BRANCH_PAGE = { page: 0, size: 20 };
 const MEMBER_PAGE_SIZE = 20;
@@ -193,7 +195,7 @@ export function useOrganisationObligations(uuid: string, status: string, enabled
       path: { organisationUuid: uuid },
       query: {
         pageable: { page: 0, size: 50 },
-        ...(status && status !== 'any' ? { status: status as SchemaEnum6Writable } : {}),
+        ...(status && status !== 'any' ? { status: status as ObligationStatus } : {}),
       },
     }),
     ...listQuery,
@@ -237,7 +239,7 @@ export function useOrganisationPayables(uuid: string, enabled = true) {
 /** Skills fund balances, read-only here. */
 export function useOrganisationSkillsFund(uuid: string, enabled = true) {
   const query = useQuery({
-    ...getSummaryOptions({ path: { organisationUuid: uuid } }),
+    ...getSummary2Options({ path: { organisationUuid: uuid } }),
     ...listQuery,
     enabled: Boolean(uuid) && enabled,
   });

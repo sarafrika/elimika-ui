@@ -223,7 +223,7 @@ export function ProfilePage({
         // `first_name` / `last_name` are required on the wire; validation already
         // rejects blanks, so fall back to the source value rather than sending
         // `undefined` and blanking the record.
-        const userBody: UpdateUserData['body'] = {
+        const userBody: UpdateUserData['body'] & Pick<User, 'full_name'> = {
           ...(profileSource as User),
           ...(firstName ? { first_name: firstName } : {}),
           ...(lastName ? { last_name: lastName } : {}),

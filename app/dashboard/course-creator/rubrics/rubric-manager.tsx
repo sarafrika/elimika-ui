@@ -510,8 +510,6 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
     title: rubric.title,
     description: rubric.description,
     rubric_type: rubric.rubric_type,
-    rubric_category: rubric.rubric_category,
-    assessment_scope: rubric.assessment_scope,
     course_creator_uuid: creatorUuid || '',
     is_public: rubric.is_public,
     is_published: rubric.is_published,
