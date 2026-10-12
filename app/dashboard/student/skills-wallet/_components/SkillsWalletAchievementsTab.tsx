@@ -1,12 +1,10 @@
 'use client';
 
-import { SkillsWalletAchievementMetrics } from '@/app/dashboard/_components/skills-wallet/SkillsWalletAchievementMetrics';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Award, Flag, Plus, Star, Trophy } from 'lucide-react';
+import { Award, Flag, Pencil, Plus, Star, Trophy } from 'lucide-react';
 import { StatCard, fmtDate, type AchievementRecord } from './SkillsWalletShared';
 
 const TYPE_LABELS = {
@@ -21,7 +19,9 @@ type SkillsWalletAchievementsTabProps = {
   achievements?: AchievementRecord[];
   title?: string;
   description?: string;
+  canAddAchievement?: boolean;
   onAddAchievement?: () => void;
+  onEditAchievement?: (achievement: AchievementRecord) => void;
   isLoading?: boolean;
   failed?: boolean;
   onRetry?: () => void;
@@ -31,7 +31,9 @@ export function SkillsWalletAchievementsTab({
   achievements = [],
   title = 'Achievements',
   description = 'Track your skills, credentials, experience, verified records and achievements.',
+  canAddAchievement = false,
   onAddAchievement,
+  onEditAchievement,
   isLoading,
   failed,
   onRetry,
@@ -52,7 +54,7 @@ export function SkillsWalletAchievementsTab({
           <h2 className='text-xl font-semibold'>{title}</h2>
           <p className='text-muted-foreground text-sm'>{description}</p>
         </div>
-        {onAddAchievement && (
+        {canAddAchievement && onAddAchievement && (
           <Button type='button' onClick={onAddAchievement}>
             <Plus className='size-4' />Add achievement
           </Button>
@@ -60,6 +62,8 @@ export function SkillsWalletAchievementsTab({
       </div>
 
       <h3 className='text-lg font-semibold'>Saved achievements</h3>
+
+      {/* <SkillsWalletAchievementMetrics /> */}
 
       {isLoading ? (
         <div className='space-y-4' aria-label='Loading achievements'>
@@ -75,24 +79,59 @@ export function SkillsWalletAchievementsTab({
             {stats.map(stat => <StatCard key={stat.label} {...stat} />)}
           </div>
           {achievements.length ? (
-            <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+            <div className='divide-y rounded-lg border'>
               {achievements.map(achievement => (
-                <Card key={achievement.id} className='overflow-hidden'>
-                  <CardContent className='space-y-3 p-4'>
-                    <div className='flex items-start justify-between gap-2'>
-                      <div className='bg-primary/10 text-primary grid h-14 w-14 shrink-0 place-items-center rounded-xl'>
-                        <Trophy className='h-7 w-7' />
-                      </div>
-                      <Badge variant='outline'>{TYPE_LABELS[achievement.achievement_type]}</Badge>
+                <div
+                  key={achievement.id}
+                  className='flex items-start gap-3 p-4 sm:items-center'
+                >
+                  <div className='bg-primary/10 text-primary grid h-10 w-10 shrink-0 place-items-center rounded-lg'>
+                    <Trophy className='h-5 w-5' />
+                  </div>
+
+                  <div className='min-w-0 flex-1 space-y-1'>
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <h3 className='break-words font-medium'>{achievement.name}</h3>
+                      <Badge variant='outline'>
+                        {TYPE_LABELS[achievement.achievement_type]}
+                      </Badge>
                     </div>
-                    <h3 className='font-semibold break-words'>{achievement.name}</h3>
-                    {achievement.description && <p className='text-muted-foreground text-sm break-words whitespace-pre-line'>{achievement.description}</p>}
-                    {achievement.awarded_by && <p className='text-muted-foreground text-xs break-words'>Awarded by {achievement.awarded_by}</p>}
+
+                    {achievement.description && (
+                      <p className='text-muted-foreground break-words text-sm whitespace-pre-line'>
+                        {achievement.description}
+                      </p>
+                    )}
+
+                    {achievement.awarded_by && (
+                      <p className='text-muted-foreground break-words text-xs'>
+                        Awarded by {achievement.awarded_by}
+                      </p>
+                    )}
+
                     <p className='text-muted-foreground text-xs'>
-                      {achievement.achieved_at ? fmtDate(achievement.achieved_at) : 'Award date not specified'}
+                      {achievement.achieved_at
+                        ? fmtDate(achievement.achieved_at)
+                        : 'Award date not specified'}
                     </p>
-                  </CardContent>
-                </Card>
+                  </div>
+
+                  {canAddAchievement &&
+                    achievement.uuid &&
+                    onEditAchievement && (
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='sm'
+                        className='shrink-0'
+                        aria-label={`Edit ${achievement.name}`}
+                        onClick={() => onEditAchievement(achievement)}
+                      >
+                        <Pencil className='size-4' />
+                        <span className='hidden sm:inline'>Edit</span>
+                      </Button>
+                    )}
+                </div>
               ))}
             </div>
           ) : (
@@ -102,7 +141,6 @@ export function SkillsWalletAchievementsTab({
         </>
       )}
 
-      <SkillsWalletAchievementMetrics />
 
     </div>
   );

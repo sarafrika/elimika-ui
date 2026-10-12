@@ -1,9 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wallet-tab';
 import { SkillsWalletEducationTab } from '@/app/dashboard/_components/skills-wallet/SkillsWalletEducationTab';
+import { AddAchievementDialog } from '@/app/dashboard/_components/skills-wallet/AddAchievementDialog';
+import { canAddWalletAchievement } from '@/app/dashboard/_components/skills-wallet/achievement-access';
 import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
 import { useStudent } from '@/context/student-context';
+import { useUserProfile } from '@/context/profile-context';
 import { cn } from '@/lib/utils';
 import { LearnerSkillGoalsCard } from '@/src/features/skills/learner-skill-goals-card';
 import {
@@ -24,7 +28,7 @@ import { SkillsWalletExperienceTab } from './_components/SkillsWalletExperienceT
 import { SkillsWalletMySkillsTab } from './_components/SkillsWalletMySkillsTab';
 import { SkillsWalletOverviewTab } from './_components/SkillsWalletOverviewTab';
 import { SkillsWalletPortfolioTab } from './_components/SkillsWalletPortfolioTab';
-import { WalletIdCard } from './_components/SkillsWalletShared';
+import { WalletIdCard, type AchievementRecord } from './_components/SkillsWalletShared';
 import { SkillsWalletVerficationTab } from './_components/SkillsWalletVerficationTab';
 import { useStudentSkillsWalletData } from './_components/useStudentSkillsWalletData';
 
@@ -48,6 +52,10 @@ export default function SkillsWallet() {
   const { value: tab, setValue: setTab, hrefFor } = useWalletTab(TAB_IDS, 'overview');
   const data = useStudentSkillsWalletData(tab === 'overview' || tab === 'achievements');
   const student = useStudent();
+  const profile = useUserProfile();
+  const canAddAchievement = canAddWalletAchievement(profile, 'student');
+  const [achievementOpen, setAchievementOpen] = useState(false);
+  const [editingAchievement, setEditingAchievement] = useState<AchievementRecord | null>(null);
 
   return (
     <div className='min-h-screen'>
@@ -114,6 +122,15 @@ export default function SkillsWallet() {
           <SectionTabPanel value='achievements'>
             {tab === 'achievements' ? (
               <SkillsWalletAchievementsTab
+                canAddAchievement={canAddAchievement}
+                onAddAchievement={() => {
+                  setEditingAchievement(null);
+                  setAchievementOpen(true);
+                }}
+                onEditAchievement={achievement => {
+                  setEditingAchievement(achievement);
+                  setAchievementOpen(true);
+                }}
                 achievements={data.achievements}
                 isLoading={data.achievementsQuery.isLoading}
                 failed={data.achievementsQuery.isError}
@@ -128,6 +145,14 @@ export default function SkillsWallet() {
           </SectionTabPanel>
         </SectionTabs>
       </div>
+      {achievementOpen && canAddAchievement && (
+        <AddAchievementDialog
+          open={achievementOpen}
+          onOpenChange={setAchievementOpen}
+          canAddAchievement={canAddAchievement}
+          achievement={editingAchievement}
+        />
+      )}
     </div>
   );
 }

@@ -1,18 +1,19 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { RubricCombobox } from './rubric-combobox';
-import { CoursePassMarkForm } from './course-pass-mark-form';
 import { AsyncSection } from '@/components/data/async-section';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Info, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
-import Link from 'next/link';
-import { useState } from 'react';
+import { Textarea } from '@/components/ui/textarea';
+import { getErrorMessage } from '@/lib/error-utils';
+import { STALE_TIMES } from '@/lib/query-client';
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { AlertTriangle, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
 import { Input } from '../../../../components/ui/input';
-import { Label } from '../../../../components/ui/label';
 import {
   Select,
   SelectContent,
@@ -21,42 +22,35 @@ import {
   SelectValue,
 } from '../../../../components/ui/select';
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '../../../../components/ui/sheet';
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import Spinner from '../../../../components/ui/spinner';
-import { Switch } from '../../../../components/ui/switch';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '../../../../components/ui/tooltip';
-import { useCourseCreator } from '../../../../context/course-creator-context';
 import {
   addCourseAssessmentMutation,
   deleteCourseAssessmentMutation,
   deleteLineItemMutation,
-  getCourseAssessmentsOptions,
+  getCourseAssessmentsInfiniteOptions,
+  getCourseAssessmentsInfiniteQueryKey,
+  getCourseAssessmentsQueryKey,
   getCourseEvaluationPlanQueryKey,
   getLineItemsOptions,
   getLineItemsQueryKey,
-  getAssessmentRubricByUuidOptions,
   updateCourseAssessmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
-  AssessmentRubric,
   CourseAssessment,
   CourseAssessmentLineItem,
-  ResponseDtoVoid,
 } from '../../../../services/client/types.gen';
-import { useRubricsData } from '../rubrics/rubric-chaining';
 import { ASSESSMENT_TYPES } from '../rubrics/rubric-manager';
 import { CATEGORY_META, LinkItemsModal, TaskItemType } from './assesment-link-items';
+import { CoursePassMarkForm } from './course-pass-mark-form';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -66,77 +60,6 @@ type CourseAssessmentStructureProps = {
 };
 
 type Assessment = CourseAssessment & { uuid: string };
-
-type AssessmentFormValues = {
-  title: string;
-  description: string;
-  rubric_uuid: string;
-  weight_percentage: number | '';
-  is_required: boolean;
-  assessment_type: string;
-};
-
-const DEFAULT_FORM: AssessmentFormValues = {
-  title: '',
-  description: '',
-  rubric_uuid: '',
-  weight_percentage: '',
-  is_required: true,
-  assessment_type: '',
-};
-
-// The server derives category, major-assessment and contribution level from the type and the weight
-// and ignores anything the client sends for them (see CourseAssessmentDTO in the backend). Mirrored
-// here only so the form can show what will be recorded while the user is still typing — if the
-// backend rules change, these move with them.
-const deriveCategory = (assessmentType: string): string => {
-  if (!assessmentType) return 'General Assessment';
-  const type = assessmentType.toLowerCase();
-  if (type.includes('attendance')) return 'Participation Component';
-  if (type.includes('assignment')) return 'Coursework Component';
-  if (type.includes('quiz')) return 'Quiz Component';
-  if (type.includes('exam')) return 'Examination Component';
-  if (type.includes('project')) return 'Project Component';
-  if (type.includes('presentation')) return 'Presentation Component';
-  return 'Assessment Component';
-};
-
-const deriveContributionLevel = (weight: number | ''): string => {
-  if (weight === '') return 'Unknown Contribution';
-  if (weight >= 40) return 'Major Contribution';
-  if (weight >= 25) return 'Significant Contribution';
-  if (weight >= 10) return 'Standard Contribution';
-  return 'Minor Contribution';
-};
-
-const getErrorMessage = (error: unknown, fallback: string) =>
-  (error as ResponseDtoVoid | undefined)?.message ||
-  (error instanceof Error ? error.message : fallback);
-
-// ─── Badge helper ─────────────────────────────────────────────────────────────
-
-const TYPE_COLORS: Record<string, string> = {
-  Attendance: 'bg-muted text-muted-foreground',
-  'Diagnostic/Entry': 'bg-secondary text-secondary-foreground',
-  'Continuous Diagnostic': 'bg-accent text-accent-foreground',
-  'Formative (theory)': 'bg-primary/10 text-primary',
-  'Formative (practical)': 'bg-primary/20 text-primary',
-  Summative: 'bg-destructive/10 text-destructive',
-  Project: 'bg-accent/60 text-accent-foreground',
-  Exam: 'bg-destructive/20 text-destructive',
-  Other: 'bg-muted text-muted-foreground',
-};
-
-function TypeBadge({ type }: { type: string }) {
-  const cls = TYPE_COLORS[type] ?? TYPE_COLORS['Other'];
-  return (
-    <span
-      className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${cls}`}
-    >
-      {type}
-    </span>
-  );
-}
 
 // ─── Per-row line items component ─────────────────────────────────────────────
 // Each assessment row fetches its own line items independently so the list
@@ -153,11 +76,12 @@ function AssessmentLineItems({
 
   const { data, isLoading } = useQuery({
     ...getLineItemsOptions({ path: { courseUuid, assessmentUuid } }),
-    enabled: !!assessmentUuid,
+    enabled: Boolean(courseUuid && assessmentUuid),
+    staleTime: STALE_TIMES.entity,
   });
 
-  // Handle both { data: { content: [] } } and { data: [] } response shapes
-  const lineItems: CourseAssessmentLineItem[] = Array.isArray(data?.data) ? data.data : [];
+  const lineItems: CourseAssessmentLineItem[] =
+    data?.error || data?.success === false || !Array.isArray(data?.data) ? [] : data.data;
 
   const deleteLineItemMut = useMutation(deleteLineItemMutation());
 
@@ -213,536 +137,415 @@ function AssessmentLineItems({
   );
 }
 
-function LabelInfo({ text }: { text: string }) {
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Info className='text-muted-foreground hover:text-foreground h-4 w-4 cursor-pointer transition-colors' />
-        </TooltipTrigger>
-        <TooltipContent className='max-w-xs'>
-          <p>{text}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-// ─── Assessment Sheet ─────────────────────────────────────────────────────────
-
-type ModalMode = 'add' | 'edit';
-
-type AssessmentSheetProps = {
-  open: boolean;
-  mode: ModalMode;
-  initial?: Assessment;
-  courseUuid: string;
-  createdBy: string;
-  onClose: () => void;
-  onSuccess: () => void;
+type AssessmentDraft = {
+  id: string;
+  original?: Assessment;
+  title: string;
+  assessment_type: string;
+  description: string;
+  weight_percentage: number | '';
+  savedWithoutId?: boolean;
 };
 
-function AssessmentSheet({
-  open,
-  mode,
-  initial,
+type DraftErrors = Partial<Record<'title' | 'assessment_type' | 'weight_percentage', string>>;
+
+function newAssessmentDraft(assessment?: Assessment): AssessmentDraft {
+  return {
+    id: assessment?.uuid ?? crypto.randomUUID(),
+    original: assessment,
+    title: assessment?.title ?? '',
+    assessment_type: assessment?.assessment_type ?? '',
+    description: assessment?.description ?? '',
+    weight_percentage: assessment?.weight_percentage ?? '',
+  };
+}
+
+function AssessmentBatchEditor({
   courseUuid,
   createdBy,
-  onClose,
-  onSuccess,
-}: AssessmentSheetProps) {
-  const toFormValues = (assessment?: Assessment): AssessmentFormValues => {
-    if (!assessment) return DEFAULT_FORM;
-
-    return {
-      title: assessment.title,
-      description: assessment.description ?? '',
-      rubric_uuid: assessment.rubric_uuid ?? '',
-      weight_percentage: assessment.weight_percentage,
-      is_required: assessment.is_required ?? false,
-      is_major_assessment: assessment.is_major_assessment ?? false,
-      assessment_type: assessment.assessment_type ?? '',
-    };
-  };
-
-  const [form, setForm] = useState<AssessmentFormValues>(() => toFormValues(initial));
-
-  const [prevInitial, setPrevInitial] = useState(initial);
-
-  if (initial !== prevInitial) {
-    setPrevInitial(initial);
-    setForm(toFormValues(initial));
-  }
-
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof AssessmentFormValues, string>>
-  >({});
-
-  const creator = useCourseCreator();
-
-  // The picker searches rubrics on the server; the chosen one is read by id.
-  const { data: selectedRubricData } = useQuery({
-    ...getAssessmentRubricByUuidOptions({ path: { uuid: form.rubric_uuid ?? '' } }),
-    enabled: Boolean(form.rubric_uuid),
-  });
-  const selectedRubric: AssessmentRubric | undefined = form.rubric_uuid
-    ? selectedRubricData?.data
-    : undefined;
-
+  assessments,
+  editing,
+  onCancel,
+  onRefresh,
+  onSaved,
+  disabled,
+}: CourseAssessmentStructureProps & {
+  assessments: Assessment[];
+  editing: boolean;
+  onCancel: () => void;
+  onRefresh: () => Promise<void>;
+  onSaved: () => void;
+  disabled: boolean;
+}) {
+  const [drafts, setDrafts] = useState<AssessmentDraft[]>(() =>
+    editing ? assessments.map(newAssessmentDraft) : [newAssessmentDraft()]
+  );
+  const [removed, setRemoved] = useState<Assessment[]>([]);
+  const [errors, setErrors] = useState<Record<string, DraftErrors>>({});
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const saving = useRef(false);
   const createMut = useMutation(addCourseAssessmentMutation());
   const updateMut = useMutation(updateCourseAssessmentMutation());
+  const deleteMut = useMutation(deleteCourseAssessmentMutation());
 
-  const isSaving = createMut.isPending || updateMut.isPending;
+  const draftUuids = new Set([
+    ...drafts.flatMap(draft => (draft.original ? [draft.original.uuid] : [])),
+    ...removed.map(assessment => assessment.uuid),
+  ]);
+  const savedWeight = editing
+    ? 0
+    : assessments.reduce(
+        (sum, assessment) =>
+          sum + (draftUuids.has(assessment.uuid) ? 0 : assessment.weight_percentage),
+        0
+      );
+  const totalWeight = Number(
+    (
+      savedWeight +
+      drafts.reduce(
+        (sum, draft) =>
+          sum + (!editing && draft.savedWithoutId ? 0 : Number(draft.weight_percentage)),
+        0
+      )
+    ).toFixed(2)
+  );
+  const hasValidTotal = Math.abs(totalWeight - 100) < 0.001;
 
-  function set<K extends keyof AssessmentFormValues>(
-    key: K,
-    value: AssessmentFormValues[K]
-  ) {
-    setForm(prev => ({
-      ...prev,
-      [key]: value,
-    }));
-
-    setErrors(prev => ({
-      ...prev,
-      [key]: undefined,
-    }));
+  function patchDraft(id: string, patch: Partial<AssessmentDraft>) {
+    setDrafts(current => current.map(draft => (draft.id === id ? { ...draft, ...patch } : draft)));
+    setErrors(current => ({ ...current, [id]: {} }));
+    setSaveError('');
   }
 
-  function validate(): boolean {
-    const newErrors: typeof errors = {};
-
-    if (!form.title.trim()) {
-      newErrors.title = 'Title is required';
-    }
-
-    if (
-      form.weight_percentage === '' ||
-      Number(form.weight_percentage) < 0 ||
-      Number(form.weight_percentage) > 100
-    ) {
-      newErrors.weight_percentage = 'Weight must be between 0 and 100';
-    }
-
-    setErrors(newErrors);
-
-    return Object.keys(newErrors).length === 0;
+  function removeDraft(draft: AssessmentDraft) {
+    const original = draft.original;
+    if (original) setRemoved(current => [...current, original]);
+    setDrafts(current => current.filter(item => item.id !== draft.id));
+    setSaveError('');
   }
 
-  function handleSubmit() {
-    if (!validate()) return;
+  async function saveAll() {
+    if (saving.current || disabled || !courseUuid) return;
+    const nextErrors: Record<string, DraftErrors> = {};
+    for (const draft of drafts) {
+      const rowErrors: DraftErrors = {};
+      if (!draft.title.trim()) rowErrors.title = 'Title is required.';
+      if (!draft.assessment_type) rowErrors.assessment_type = 'Select an assessment type.';
+      if (
+        draft.weight_percentage === '' ||
+        !Number.isFinite(draft.weight_percentage) ||
+        draft.weight_percentage < 0 ||
+        draft.weight_percentage > 100
+      )
+        rowErrors.weight_percentage = 'Enter a weight between 0 and 100.';
+      if (Object.keys(rowErrors).length) nextErrors[draft.id] = rowErrors;
+    }
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length) return;
+    if (!hasValidTotal) {
+      setSaveError('The total weight of all course assessments must be 100%.');
+      return;
+    }
+    if (drafts.length === 0) return;
 
-    const body = {
-      title: form.title.trim(),
-      description: form.description.trim(),
-      rubric_uuid: form.rubric_uuid || null,
-      weight_percentage: Number(form.weight_percentage),
-      is_required: form.is_required,
-      is_major_assessment: form.is_major_assessment,
-      assessment_type: form.assessment_type,
-      // aggregation_strategy: 'points_sum',
-      // sync_class_attendance: true,
-      created_by: createdBy || undefined,
-    };
-
-    if (mode === 'add') {
-      createMut.mutate(
-        {
-          path: {
-            courseUuid,
-          },
-          body: {
-            ...body,
-            course_uuid: courseUuid,
-          } as never,
-        },
-        {
-          onSuccess: () => {
-            toast.success('Assessment created successfully!');
-
-            setForm(DEFAULT_FORM);
-            setErrors({});
-
-            onSuccess();
-          },
-          onError: err =>
-            toast.error(
-              getErrorMessage(err, 'Failed to create assessment')
-            ),
+    saving.current = true;
+    setIsSaving(true);
+    setSaveError('');
+    let failed = false;
+    let changed = false;
+    const failures: string[] = [];
+    try {
+      // Remove staged deletions and reduce weights before increasing other components.
+      for (const assessment of removed) {
+        try {
+          const result = await deleteMut.mutateAsync({
+            path: { courseUuid, assessmentUuid: assessment.uuid },
+          });
+          if (
+            result &&
+            typeof result === 'object' &&
+            (('error' in result && result.error) ||
+              ('success' in result && result.success === false))
+          )
+            throw new Error(getErrorMessage(result, 'Failed to delete assessment.'));
+          changed = true;
+          setRemoved(current => current.filter(item => item.uuid !== assessment.uuid));
+        } catch (error) {
+          failures.push(
+            `${assessment.title}: ${getErrorMessage(error, 'Failed to delete assessment.')}`
+          );
         }
-      );
-    } else if (initial) {
-      updateMut.mutate(
-        {
-          path: {
-            courseUuid,
-            assessmentUuid: initial.uuid,
-          },
-          body: {
-            ...body,
-            uuid: initial.uuid,
-            course_uuid: courseUuid,
-            updated_by: createdBy,
-          } as never,
-        },
-        {
-          onSuccess: () => {
-            toast.success('Assessment updated successfully!');
-            onSuccess();
-          },
-          onError: err =>
-            toast.error(
-              getErrorMessage(err, 'Failed to update assessment')
-            ),
+      }
+      const orderedDrafts = [...drafts].sort((a, b) => {
+        const deltaA = Number(a.weight_percentage) - (a.original?.weight_percentage ?? 0);
+        const deltaB = Number(b.weight_percentage) - (b.original?.weight_percentage ?? 0);
+        return deltaA - deltaB;
+      });
+      for (const draft of orderedDrafts) {
+        if (draft.savedWithoutId) continue;
+        const body: CourseAssessment = {
+          ...draft.original,
+          course_uuid: courseUuid,
+          title: draft.title.trim(),
+          assessment_type: draft.assessment_type,
+          description: draft.description.trim(),
+          weight_percentage: Number(draft.weight_percentage),
+          is_required: draft.original?.is_required ?? true,
+        };
+        if (
+          draft.original &&
+          body.title === draft.original.title &&
+          body.assessment_type === draft.original.assessment_type &&
+          body.description === (draft.original.description ?? '') &&
+          body.weight_percentage === draft.original.weight_percentage
+        )
+          continue;
+        try {
+          const result = draft.original
+            ? await updateMut.mutateAsync({
+                path: { courseUuid, assessmentUuid: draft.original.uuid },
+                body: { ...body, updated_by: createdBy || undefined },
+              })
+            : await createMut.mutateAsync({
+                path: { courseUuid },
+                body: { ...body, created_by: createdBy || undefined },
+              });
+          if (result.error || result.success === false)
+            throw new Error(getErrorMessage(result, 'Failed to save assessment.'));
+          changed = true;
+          const uuid = result.data?.uuid ?? draft.original?.uuid;
+          // Keep successful creates marked as saved even if an API response omits its id.
+          // A retry must never POST the same row twice.
+          setDrafts(current =>
+            current.map(item =>
+              item.id === draft.id
+                ? {
+                    ...item,
+                    original: uuid ? { ...body, ...result.data, uuid } : undefined,
+                    savedWithoutId: !uuid,
+                  }
+                : item
+            )
+          );
+        } catch (error) {
+          failures.push(`${draft.title}: ${getErrorMessage(error, 'Failed to save assessment.')}`);
         }
-      );
+      }
+      failed = failures.length > 0;
+      if (failed) {
+        setSaveError(
+          `Some changes could not be saved. Your remaining changes are ready to retry. ${failures.join(' ')}`
+        );
+        toast.error('Some assessment changes could not be saved.');
+      } else {
+        toast.success(
+          editing ? 'Assessments updated successfully.' : 'Assessments added successfully.'
+        );
+        setRemoved([]);
+        setErrors({});
+      }
+    } finally {
+      try {
+        if (changed) await onRefresh();
+      } finally {
+        saving.current = false;
+        setIsSaving(false);
+      }
+      if (!failed) {
+        setDrafts([newAssessmentDraft()]);
+        onSaved();
+      }
     }
   }
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={isOpen => !isOpen && onClose()}
-    >
-      <SheetContent
-        className='flex w-full flex-col gap-0 p-0 sm:max-w-[650px]'
-        side='right'
-      >
-        <SheetHeader className='border-b px-6 py-5'>
-          <SheetTitle>
-            {mode === 'add' ? 'Add Assessment' : 'Edit Assessment'}
-          </SheetTitle>
-
-          <SheetDescription>
-            {mode === 'add'
-              ? 'Define a new assessment component for this course'
-              : 'Update the assessment component details'}
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className='flex-1 overflow-y-auto px-6 py-6'>
-          <div className='flex flex-col gap-5'>
-            {/* Title */}
-            <div className='flex flex-col gap-1.5'>
-              <Label className='text-sm font-medium'>
-                Component Title{' '}
-                <span className='text-destructive'>*</span>
-              </Label>
-
-              <Input
-                placeholder='e.g. Weekly Quizzes'
-                value={form.title}
-                onChange={e => set('title', e.target.value)}
-                className={errors.title ? 'border-destructive' : ''}
-              />
-
-              {errors.title && (
-                <p className='text-destructive text-xs'>
-                  {errors.title}
-                </p>
-              )}
-            </div>
-
-            {/* Description */}
-            <div className='flex flex-col gap-1.5'>
-              <Label className='text-sm font-medium'>
-                Description
-              </Label>
-
-              <textarea
-                placeholder='Brief description of the assessment component...'
-                value={form.description}
-                onChange={e => set('description', e.target.value)}
-                rows={3}
-                className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full resize-none rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none'
-              />
-            </div>
-
-            {/* Type + Weight */}
-            <div className='flex w-full gap-4'>
-              <div className='flex w-full gap-4'>
-                {/* Assessment Type */}
-                <div className='flex flex-1 flex-col gap-1.5'>
-                  <Label className='flex items-center gap-1 text-sm font-medium'>
-                    Assessment Type
-                    <span className='text-destructive'>*</span>
-
-                    <LabelInfo
-                      text='Select the type of assessment, such as Quiz, Exam, Assignment, or Project. This helps instructors organize and manage their assessments.'
-                    />
-                  </Label>
-
-                  <Select
-                    value={form.assessment_type}
-                    onValueChange={v =>
-                      set('assessment_type', v)
+    <CardContent className='flex flex-col gap-3 border-b py-5'>
+      <div className='space-y-1'>
+        <h4 className='text-foreground text-sm font-semibold'>
+          {editing ? 'Edit all assessments' : 'Add assessments'}
+        </h4>
+        <p className='text-muted-foreground text-xs'>
+          {editing
+            ? 'Update the components below, then save all changes. Removing a saved component deletes it when you save.'
+            : 'Enter one or more components, then add them all together.'}
+        </p>
+      </div>
+      <fieldset disabled={isSaving} className='flex min-w-0 flex-col gap-3'>
+        {drafts.length === 0 && (
+          <EmptyState
+            variant='compact'
+            title='No assessment rows'
+            description='Add a row to define an assessment component.'
+          />
+        )}
+        {drafts.map((draft, index) => {
+          const rowErrors = errors[draft.id];
+          return (
+            <fieldset
+              key={draft.id}
+              disabled={disabled || draft.savedWithoutId}
+              className='border-border grid min-w-0 gap-2 rounded-md border p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_110px_auto]'
+            >
+              <legend className='text-muted-foreground px-1 text-xs'>Assessment {index + 1}</legend>
+              <div className='min-w-0 space-y-1'>
+                <Input
+                  value={draft.title}
+                  aria-label={`Assessment ${index + 1} title`}
+                  aria-invalid={Boolean(rowErrors?.title)}
+                  aria-describedby={rowErrors?.title ? `${draft.id}-title-error` : undefined}
+                  placeholder='e.g. Final practical'
+                  onChange={event => patchDraft(draft.id, { title: event.target.value })}
+                />
+                {rowErrors?.title && (
+                  <p id={`${draft.id}-title-error`} className='text-destructive text-xs'>
+                    {rowErrors.title}
+                  </p>
+                )}
+              </div>
+              <div className='min-w-0 space-y-1'>
+                <Select
+                  value={draft.assessment_type}
+                  onValueChange={value => patchDraft(draft.id, { assessment_type: value })}
+                  disabled={isSaving || disabled || draft.savedWithoutId}
+                >
+                  <SelectTrigger
+                    className='w-full'
+                    aria-label={`Assessment ${index + 1} type`}
+                    aria-invalid={Boolean(rowErrors?.assessment_type)}
+                    aria-describedby={
+                      rowErrors?.assessment_type ? `${draft.id}-type-error` : undefined
                     }
                   >
-                    <SelectTrigger
-                      className={`w-full ${errors.assessment_type
-                        ? 'border-destructive'
-                        : ''
-                        }`}
-                    >
-                      <SelectValue placeholder='Select type' />
-                    </SelectTrigger>
-
-                    <SelectContent>
-                      {ASSESSMENT_TYPES.map(type => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  {errors.assessment_type && (
-                    <p className='text-destructive text-xs'>
-                      {errors.assessment_type}
-                    </p>
-                  )}
-                </div>
-
-                {/* Assessment Category */}
-                <div className='flex flex-1 flex-col gap-1.5'>
-                  <Label className='flex items-center gap-1 text-sm font-medium'>
-                    Assessment Category
-
-                    <LabelInfo
-                      text='Derived from the assessment type — the platform categorises assessments consistently across every course, so this is shown rather than chosen.'
-                    />
-                  </Label>
-
-                  <div className='bg-muted/50 flex h-9 items-center rounded-md border px-3'>
-                    <span
-                      className={
-                        form.assessment_type
-                          ? 'text-foreground text-sm'
-                          : 'text-muted-foreground text-sm'
-                      }
-                    >
-                      {form.assessment_type
-                        ? deriveCategory(form.assessment_type)
-                        : 'Choose a type to see the category'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Weight */}
-            <div className='flex flex-1 flex-col gap-1.5'>
-              <Label className='text-sm font-medium'>
-                Weight (%) <span className='text-destructive'>*</span>
-              </Label>
-
-              <Input
-                type='number'
-                min={0}
-                max={100}
-                placeholder='e.g. 25'
-                value={form.weight_percentage}
-                onChange={e =>
-                  set(
-                    'weight_percentage',
-                    e.target.value === ''
-                      ? ''
-                      : Number(e.target.value)
-                  )
-                }
-                className={
-                  errors.weight_percentage
-                    ? 'border-destructive'
-                    : ''
-                }
-              />
-
-              {errors.weight_percentage ? (
-                <p className='text-destructive text-xs'>
-                  {errors.weight_percentage}
-                </p>
-              ) : (
-                form.weight_percentage !== '' && (
-                  <p className='text-muted-foreground text-xs'>
-                    {form.weight_percentage}% of the final grade —{' '}
-                    {deriveContributionLevel(
-                      form.weight_percentage
+                    <SelectValue placeholder='Select type' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {draft.assessment_type && !ASSESSMENT_TYPES.includes(draft.assessment_type) && (
+                      <SelectItem value={draft.assessment_type}>{draft.assessment_type}</SelectItem>
                     )}
-                    {form.is_major_assessment
-                      ? ', counted as a major assessment'
-                      : ''}
+                    {ASSESSMENT_TYPES.map(type => (
+                      <SelectItem key={type} value={type}>
+                        {type}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {rowErrors?.assessment_type && (
+                  <p id={`${draft.id}-type-error`} className='text-destructive text-xs'>
+                    {rowErrors.assessment_type}
                   </p>
-                )
-              )}
-            </div>
-
-            {/* Rubric */}
-            <div className='hidden flex-col gap-1.5'>
-              <Label className='flex items-center gap-1 text-sm font-medium'>
-                Rubric
-
-                <LabelInfo
-                  text='Attach a grading rubric to define the assessment criteria and scoring to be used for this assessment evaluation. This helps ensure consistent and transparent evaluation of submissions for all students.'
-                />
-              </Label>
-
-              <p className='text-muted-foreground text-xs'>
-                Associate a grading rubric with this assessment
-              </p>
-
-              <>
-                <RubricCombobox
-                  creatorUuid={creator?.profile?.uuid}
-                  value={form.rubric_uuid}
-                  onChange={uuid => set('rubric_uuid', uuid)}
-                  placeholder='Select a rubric (optional)'
-                  className='sm:max-w-[650px]'
-                  aria-label='Assessment rubric'
-                />
-
-                {selectedRubric ? (
-                  <div className='bg-muted/50 mt-1 flex items-start justify-between gap-2 rounded-lg border px-3 py-2'>
-                    <div className='min-w-0'>
-                      <p className='text-foreground truncate text-xs font-semibold'>
-                        {selectedRubric.title}
-                      </p>
-
-                      {selectedRubric.description && (
-                        <p className='text-muted-foreground mt-0.5 line-clamp-5 text-xs'>
-                          {selectedRubric.description}
-                        </p>
-                      )}
-                    </div>
-
-                    <button
-                      type='button'
-                      onClick={() => set('rubric_uuid', '')}
-                      className='text-muted-foreground hover:text-foreground hover:bg-muted mt-0.5 shrink-0 rounded p-0.5 transition-colors'
-                      title='Clear rubric'
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-                ) : (
-                  <div className='bg-warning/20 border-warning/40 flex flex-col gap-3 rounded-lg border p-4'>
-                    <div className='flex items-start gap-2'>
-                      <AlertTriangle className='text-warning-foreground mt-0.5 h-4 w-4 shrink-0' />
-
-                      <div className='text-sm'>
-                        <p className='text-warning-foreground font-medium'>
-                          No rubric selected
-                        </p>
-
-                        <p className='text-warning-foreground/80 text-xs'>
-                          If none of the available rubrics fit,
-                          you can create a new one.
-                        </p>
-                      </div>
-                    </div>
-
-                    <Link
-                      href='/dashboard/course-creator/rubrics'
-                      target='_blank'
-                    >
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='border-warning text-warning-foreground hover:bg-warning/100 w-fit self-center'
-                        onClick={onClose}
-                      >
-                        Create New Rubric
-                      </Button>
-                    </Link>
-                  </div>
                 )}
-              </>
-            </div>
-
-            {/* Toggles */}
-            <div className='bg-muted/40 mt-4 flex flex-col gap-4 rounded-xl border p-4'>
-              {/* Required Assessment */}
-              <div className='flex items-center justify-between'>
-                <div>
-                  <p className='text-foreground text-sm font-medium'>
-                    Required Assessment
-                  </p>
-
-                  <p className='text-muted-foreground text-xs'>
-                    Students must complete this assessment
-                  </p>
-                </div>
-
-                <Switch
-                  checked={form.is_required}
-                  onCheckedChange={checked =>
-                    set('is_required', checked)
-                  }
-                />
               </div>
-
-              {/* Major Assessment */}
-              <div className='flex items-center justify-between border-t pt-4'>
-                <div>
-                  <p className='text-foreground text-sm font-medium'>
-                    Major Assessment
-                  </p>
-
-                  <p className='text-muted-foreground text-xs'>
-                    Mark this assessment as a major assessment
-                  </p>
+              <div className='space-y-1'>
+                <div className='flex items-center gap-1.5'>
+                  <Input
+                    type='number'
+                    min={0}
+                    max={100}
+                    step='any'
+                    value={draft.weight_percentage}
+                    aria-label={`Assessment ${index + 1} weight (%)`}
+                    aria-invalid={Boolean(rowErrors?.weight_percentage)}
+                    aria-describedby={
+                      rowErrors?.weight_percentage ? `${draft.id}-weight-error` : undefined
+                    }
+                    placeholder='Weight'
+                    onChange={event =>
+                      patchDraft(draft.id, {
+                        weight_percentage:
+                          event.target.value === '' ? '' : Number(event.target.value),
+                      })
+                    }
+                  />
+                  <span className='text-muted-foreground text-xs'>%</span>
                 </div>
-
-                <Switch
-                  checked={form.is_major_assessment}
-                  onCheckedChange={checked =>
-                    set('is_major_assessment', checked)
-                  }
-                  aria-label='Major Assessment'
-                />
+                {rowErrors?.weight_percentage && (
+                  <p id={`${draft.id}-weight-error`} className='text-destructive text-xs'>
+                    {rowErrors.weight_percentage}
+                  </p>
+                )}
               </div>
-            </div>
+              <Button
+                type='button'
+                variant='ghost'
+                size='icon'
+                aria-label={`Remove assessment ${index + 1}`}
+                onClick={() => removeDraft(draft)}
+              >
+                <Trash2 className='text-destructive h-4 w-4' />
+              </Button>
+              <Textarea
+                rows={2}
+                className='sm:col-span-4'
+                value={draft.description}
+                aria-label={`Assessment ${index + 1} description`}
+                placeholder='What is assessed and how.'
+                onChange={event => patchDraft(draft.id, { description: event.target.value })}
+              />
+              {draft.savedWithoutId && (
+                <p className='text-muted-foreground text-xs sm:col-span-4'>
+                  Saved. Reopen the editor to change this component.
+                </p>
+              )}
+            </fieldset>
+          );
+        })}
+        <div className='border-border bg-muted/40 flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2'>
+          <span className='text-muted-foreground text-sm'>Total course weight</span>
+          <Badge
+            variant={hasValidTotal ? 'default' : 'outline'}
+            className={hasValidTotal ? '' : 'border-destructive text-destructive'}
+            aria-live='polite'
+          >
+            {totalWeight}% {hasValidTotal ? '' : '— must be 100%'}
+          </Badge>
+        </div>
+        {removed.length > 0 && (
+          <p className='text-destructive text-xs'>
+            {removed.length} saved assessment(s) will be deleted when you save.
+          </p>
+        )}
+        {saveError && (
+          <p role='alert' className='text-destructive text-sm'>
+            {saveError}
+          </p>
+        )}
+        <div className='flex flex-wrap items-center justify-between gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            disabled={disabled}
+            onClick={() => setDrafts(current => [...current, newAssessmentDraft()])}
+            className='gap-2'
+          >
+            <Plus size={14} />
+            Add another assessment
+          </Button>
+          <div className='flex items-center gap-2'>
+            <Button type='button' variant='outline' size='sm' onClick={onCancel}>
+              Cancel
+            </Button>
+            <Button
+              type='button'
+              size='sm'
+              disabled={isSaving || disabled || drafts.length === 0 || !courseUuid}
+              onClick={saveAll}
+              className='gap-2'
+            >
+              {isSaving ? <Spinner className='h-4 w-4' /> : <Save size={14} />}
+              {isSaving ? 'Saving...' : editing ? 'Save all changes' : 'Add all assessments'}
+            </Button>
           </div>
         </div>
-
-        {/* Footer */}
-        <SheetFooter className='border-t px-6 py-4'>
-          <Button
-            variant='outline'
-            onClick={onClose}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
-
-          <Button
-            onClick={handleSubmit}
-            disabled={isSaving}
-            className='min-w-[120px]'
-          >
-            {isSaving ? (
-              <>
-                <Spinner className='mr-2 h-4 w-4' />
-                Saving...
-              </>
-            ) : (
-              <>
-                <Save size={15} className='mr-2' />
-                {mode === 'add'
-                  ? 'Add Assessment'
-                  : 'Save Changes'}
-              </>
-            )}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+      </fieldset>
+    </CardContent>
   );
 }
 
-// ─── Delete Confirm Sheet ─────────────────────────────────────────────────────
+// ─── Delete confirmation modal ────────────────────────────────────────────────
 
-type DeleteConfirmSheetProps = {
+type DeleteConfirmModalProps = {
   open: boolean;
   assessment: Assessment | undefined;
   courseUuid: string;
@@ -750,65 +553,79 @@ type DeleteConfirmSheetProps = {
   onSuccess: () => void;
 };
 
-function DeleteConfirmSheet({
+function DeleteConfirmModal({
   open,
   assessment,
   courseUuid,
   onClose,
   onSuccess,
-}: DeleteConfirmSheetProps) {
+}: DeleteConfirmModalProps) {
   const deleteMut = useMutation(deleteCourseAssessmentMutation());
 
   function handleDelete() {
-    if (!assessment) return;
-    deleteMut.mutate({ path: { courseUuid, assessmentUuid: assessment.uuid } } as never, {
-      onSuccess: () => {
-        toast.success('Assessment deleted successfully');
-        onSuccess();
-      },
-      onError: err => toast.error(getErrorMessage(err, 'Failed to delete assessment')),
-    });
+    if (!assessment || !courseUuid || deleteMut.isPending) return;
+    deleteMut.mutate(
+      { path: { courseUuid, assessmentUuid: assessment.uuid } },
+      {
+        onSuccess: result => {
+          if (
+            result &&
+            typeof result === 'object' &&
+            (('error' in result && result.error) ||
+              ('success' in result && result.success === false))
+          ) {
+            toast.error(getErrorMessage(result, 'Failed to delete assessment'));
+            return;
+          }
+          toast.success('Assessment deleted successfully');
+          onSuccess();
+        },
+        onError: err => toast.error(getErrorMessage(err, 'Failed to delete assessment')),
+      }
+    );
   }
 
   return (
-    <Sheet open={open} onOpenChange={isOpen => !isOpen && onClose()}>
-      <SheetContent className='flex w-full flex-col gap-0 p-0 sm:max-w-sm' side='right'>
-        <SheetHeader className='border-b px-6 py-5'>
-          <SheetTitle>Delete Assessment</SheetTitle>
-          <SheetDescription>This action cannot be undone.</SheetDescription>
-        </SheetHeader>
-        <div className='flex flex-1 flex-col items-start gap-4 px-6 py-6'>
-          <div className='bg-destructive/10 flex h-12 w-12 items-center justify-center rounded-full'>
-            <AlertTriangle size={22} className='text-destructive' />
-          </div>
-          <p className='text-muted-foreground text-sm'>
+    <AlertDialog open={open} onOpenChange={isOpen => !isOpen && !deleteMut.isPending && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete assessment?</AlertDialogTitle>
+          <AlertDialogDescription>
             Are you sure you want to delete{' '}
-            <span className='text-foreground font-semibold'>{assessment?.title}</span>? This cannot
-            be undone.
-          </p>
-        </div>
-        <SheetFooter className='border-t px-6 py-4'>
-          <Button variant='outline' onClick={onClose} disabled={deleteMut.isPending}>
-            Cancel
-          </Button>
-          <Button
-            variant='destructive'
-            onClick={handleDelete}
-            disabled={deleteMut.isPending}
-            className='min-w-[100px]'
-          >
-            {deleteMut.isPending ? (
-              <>
-                <Spinner className='mr-2 h-4 w-4' />
-                Deleting...
-              </>
-            ) : (
-              'Delete'
-            )}
-          </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+            <span className='text-foreground font-semibold'>{assessment?.title}</span>? This action
+            cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel asChild>
+            <Button type='button' variant='outline' disabled={deleteMut.isPending}>
+              Cancel
+            </Button>
+          </AlertDialogCancel>
+          <AlertDialogAction asChild>
+            <Button
+              type='button'
+              variant='destructive'
+              onClick={event => {
+                event.preventDefault();
+                handleDelete();
+              }}
+              disabled={deleteMut.isPending}
+              className='min-w-[100px]'
+            >
+              {deleteMut.isPending ? (
+                <>
+                  <Spinner className='mr-2 h-4 w-4' />
+                  Deleting...
+                </>
+              ) : (
+                'Delete'
+              )}
+            </Button>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -819,7 +636,6 @@ export const CourseAssessmentStructure = ({
   createdBy,
 }: CourseAssessmentStructureProps) => {
   const qc = useQueryClient();
-  const creator = useCourseCreator();
 
   const {
     data: assessmentsData,
@@ -827,50 +643,66 @@ export const CourseAssessmentStructure = ({
     isError,
     error,
     refetch,
-  } = useQuery({
-    ...getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } }),
-    enabled: !!courseUuid,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    ...getCourseAssessmentsInfiniteOptions({ path: { courseUuid }, query: { pageable: {} } }),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _pages, lastPageParam) => {
+      if (lastPage.error || lastPage.success === false) return undefined;
+      const metadata = lastPage.data?.metadata;
+      const page = metadata?.pageNumber ?? (typeof lastPageParam === 'number' ? lastPageParam : 0);
+      if (metadata?.hasNext || page + 1 < (metadata?.totalPages ?? 0)) return page + 1;
+      return undefined;
+    },
+    enabled: Boolean(courseUuid),
+    staleTime: STALE_TIMES.entity,
   });
-  const assessments: Assessment[] = (assessmentsData?.data?.content ?? []).filter(
-    (assessment): assessment is Assessment => Boolean(assessment.uuid)
+  // Load each actual page so central editing and weight totals include every component.
+  useEffect(() => {
+    if (courseUuid && hasNextPage && !isFetchingNextPage && !isError) void fetchNextPage();
+  }, [courseUuid, hasNextPage, isFetchingNextPage, isError, fetchNextPage]);
+  const loadingAssessments = isLoading || hasNextPage || isFetchingNextPage;
+  const assessments = useMemo(
+    () =>
+      (assessmentsData?.pages ?? [])
+        .flatMap(page => (page.error || page.success === false ? [] : (page.data?.content ?? [])))
+        .filter((assessment): assessment is Assessment => Boolean(assessment.uuid)),
+    [assessmentsData]
   );
-
-  const { rubrics } = useRubricsData(creator?.data?.profile?.uuid as string);
-  const filteredRubrics = rubrics.filter(rubric =>
-    assessments.some(a => a.rubric_uuid === rubric.uuid)
+  const totalWeight = Number(
+    assessments.reduce((sum, a) => sum + a.weight_percentage, 0).toFixed(2)
   );
-
-  const totalWeight = assessments.reduce((sum, a) => sum + (a.weight_percentage ?? 0), 0);
-
-  const [modalMode, setModalMode] = useState<ModalMode | null>(null);
-  const [editingAssessment, setEditingAssessment] = useState<Assessment | undefined>(undefined);
+  const [mode, setMode] = useState<'add' | 'edit' | null>(null);
   const [deletingAssessment, setDeletingAssessment] = useState<Assessment | undefined>(undefined);
   const [linkModalTarget, setLinkModalTarget] = useState<Assessment | null>(null);
 
-  function openAdd() {
-    setEditingAssessment(undefined);
-    setModalMode('add');
-  }
-  function openEdit(a: Assessment) {
-    setEditingAssessment(a);
-    setModalMode('edit');
-  }
-  function closeModal() {
-    setModalMode(null);
-    setEditingAssessment(undefined);
+  async function refreshAssessments() {
+    await Promise.all([
+      qc.invalidateQueries({
+        queryKey: getCourseAssessmentsInfiniteQueryKey({
+          path: { courseUuid },
+          query: { pageable: {} },
+        }),
+      }),
+      qc.invalidateQueries({
+        queryKey: getCourseAssessmentsQueryKey({ path: { courseUuid }, query: { pageable: {} } }),
+      }),
+      qc.invalidateQueries({
+        queryKey: getCourseEvaluationPlanQueryKey({ path: { courseUuid } }),
+      }),
+    ]);
   }
 
   function onMutationSuccess() {
-    qc.invalidateQueries({
-      queryKey: getCourseAssessmentsOptions({ path: { courseUuid }, query: { pageable: {} } })
-        .queryKey,
-    });
-    void qc.invalidateQueries({
-      queryKey: getCourseEvaluationPlanQueryKey({ path: { courseUuid } }),
-    });
-    closeModal();
+    void refreshAssessments();
     setDeletingAssessment(undefined);
   }
+
+  const loadError = isError
+    ? error
+    : assessmentsData?.pages.find(page => page.error || page.success === false);
 
   return (
     <>
@@ -878,7 +710,7 @@ export const CourseAssessmentStructure = ({
         <CoursePassMarkForm courseUuid={courseUuid} />
       </div>
 
-      <div className='bg-card rounded-xl border shadow-sm'>
+      <Card className='gap-0 py-0'>
         {/* Header */}
         <div className='flex flex-col gap-1 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>
           <div>
@@ -889,188 +721,207 @@ export const CourseAssessmentStructure = ({
               Define the assessment components and their weights (total: 100%)
             </p>
           </div>
-          <Button onClick={openAdd} size='sm' className='mt-3 gap-2 sm:mt-0'>
-            <Plus size={15} />
-            Add Assessment
-          </Button>
-        </div>
-
-        {/* Table — degrades independently (skeleton / error / empty are local) */}
-        <AsyncSection
-          loading={isLoading && !assessmentsData}
-          error={isError ? error : undefined}
-          empty={assessments.length === 0}
-          onRetry={refetch}
-          className='m-6'
-          skeleton={
-            <div className='divide-y'>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className='flex items-center justify-between gap-4 px-6 py-4'>
-                  <div className='flex-1 space-y-2'>
-                    <Skeleton className='h-4 w-1/3' />
-                    <Skeleton className='h-3 w-1/2' />
-                  </div>
-                  <Skeleton className='h-4 w-20' />
-                  <Skeleton className='h-8 w-16' />
-                </div>
-              ))}
-            </div>
-          }
-          emptyState={
-            <div className='flex flex-col items-center justify-center gap-3 py-16 text-center'>
-              <div className='bg-muted rounded-full p-4'>
-                <Plus size={24} className='text-muted-foreground' />
-              </div>
-              <p className='text-foreground font-medium'>No assessments yet</p>
-              <p className='text-muted-foreground max-w-xs text-sm'>
-                Add assessment components to define the grading structure for this course.
-              </p>
-              <Button onClick={openAdd} size='sm' variant='outline' className='mt-1 gap-2'>
-                <Plus size={14} />
-                Add First Assessment
+          {!mode && (
+            <div className='mt-3 flex flex-wrap items-center gap-2 sm:mt-0'>
+              <Button
+                type='button'
+                onClick={() => setMode('edit')}
+                size='sm'
+                variant='outline'
+                disabled={loadingAssessments || Boolean(loadError) || assessments.length === 0}
+                className='gap-2'
+              >
+                <Pencil size={15} />
+                Edit assessments
+              </Button>
+              <Button
+                type='button'
+                onClick={() => setMode('add')}
+                size='sm'
+                disabled={loadingAssessments || Boolean(loadError) || !courseUuid}
+                className='gap-2'
+              >
+                <Plus size={15} />
+                Add assessments
               </Button>
             </div>
-          }
-        >
-          <div className='overflow-x-auto'>
-            <table className='w-full text-sm'>
-              <thead>
-                <tr className='bg-muted/40 border-b'>
-                  <th className='text-foreground px-6 py-3 text-left font-semibold'>
-                    Component Title
-                  </th>
-                  <th className='text-foreground px-4 py-3 text-left font-semibold'>
-                    Weight (Score Range)
-                  </th>
-                  <th className='text-foreground px-4 py-3 text-left font-semibold'>
-                    Linked Tasks
-                  </th>
-                  {/* <th className='text-foreground px-4 py-3 text-left font-semibold'>Type</th> */}
-                  <th className='text-foreground px-4 py-3 text-right font-semibold'>Actions</th>
-                </tr>
-              </thead>
+          )}
+        </div>
 
-              <tbody className='divide-y'>
-                {assessments.map(a => (
-                  <tr key={a.uuid} className='hover:bg-muted/30 transition-colors'>
-                    {/* Title */}
-                    <td className='px-6 py-4'>
-                      <p className='text-foreground font-medium'>{a.title}</p>
-                      {a.description && (
-                        <p className='text-muted-foreground mt-0.5 line-clamp-1 text-xs'>
-                          {a.description}
-                        </p>
-                      )}
-                      {a.is_major_assessment && (
-                        <span className='bg-primary/15 text-primary mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold'>
-                          Major
-                        </span>
-                      )}
-                    </td>
-
-                    {/* Weight */}
-                    <td className='px-4 py-4'>
-                      <div className='flex flex-col gap-1'>
-                        <span className='text-foreground font-semibold'>
-                          {a.weight_percentage}% (0–{a.weight_percentage})
-                        </span>
-                        <span
-                          className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
-                            ? 'bg-success/10 text-success/70'
-                            : 'bg-muted-foreground/10 text-muted-foreground'
-                            }`}
-                        >
-                          {a.is_required ? 'Required' : 'Not required'}
-                        </span>
+        {mode ? (
+          <AssessmentBatchEditor
+            key={`${courseUuid}-${mode}`}
+            courseUuid={courseUuid}
+            createdBy={createdBy}
+            assessments={assessments}
+            editing={mode === 'edit'}
+            onCancel={() => setMode(null)}
+            onRefresh={refreshAssessments}
+            onSaved={() => setMode(null)}
+            disabled={loadingAssessments || Boolean(loadError)}
+          />
+        ) : (
+          <CardContent className='px-0'>
+            {/* Table — degrades independently (skeleton / error / empty are local) */}
+            <AsyncSection
+              loading={loadingAssessments}
+              error={loadError}
+              empty={assessments.length === 0}
+              onRetry={refetch}
+              className='m-6'
+              skeleton={
+                <div className='divide-y'>
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className='flex items-center justify-between gap-4 px-6 py-4'>
+                      <div className='flex-1 space-y-2'>
+                        <Skeleton className='h-4 w-1/3' />
+                        <Skeleton className='h-3 w-1/2' />
                       </div>
-                    </td>
+                      <Skeleton className='h-4 w-20' />
+                      <Skeleton className='h-8 w-16' />
+                    </div>
+                  ))}
+                </div>
+              }
+              emptyState={
+                <EmptyState
+                  icon={Plus}
+                  variant='plain'
+                  title='No assessments yet'
+                  description='Add assessment components to define the grading structure for this course.'
+                  action={
+                    <Button
+                      type='button'
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setMode('add')}
+                      disabled={loadingAssessments || Boolean(loadError) || !courseUuid}
+                    >
+                      <Plus size={14} className='mr-2' />
+                      Add first assessment
+                    </Button>
+                  }
+                />
+              }
+            >
+              <div className='overflow-x-auto'>
+                <table className='w-full text-sm'>
+                  <thead>
+                    <tr className='bg-muted/40 border-b'>
+                      <th className='text-foreground px-6 py-3 text-left font-semibold'>
+                        Component Title
+                      </th>
+                      <th className='text-foreground px-4 py-3 text-left font-semibold'>
+                        Weight (Score Range)
+                      </th>
+                      <th className='text-foreground px-4 py-3 text-left font-semibold'>
+                        Linked Tasks
+                      </th>
+                      <th className='text-foreground px-4 py-3 text-right font-semibold'>
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
 
-                    {/* Linked tasks — self-fetching per row */}
-                    <td className='px-4 py-4'>
-                      <div className='flex flex-col gap-1.5'>
-                        <AssessmentLineItems courseUuid={courseUuid} assessmentUuid={a.uuid} />
-                        <button
-                          type='button'
-                          onClick={() => setLinkModalTarget(a)}
-                          className='text-muted-foreground hover:text-foreground hover:bg-muted flex w-max items-center gap-1.5 rounded-full border border-dashed px-2.5 py-1 text-xs transition-colors'
-                        >
-                          <Plus size={11} />
-                          Link items
-                        </button>
-                      </div>
-                    </td>
-
-                    {/* Type */}
-                    {/* <td className='px-4 py-4'>
-                      <div className='flex flex-col items-start gap-1'>
-                        <TypeBadge type={a.assessment_type} />
-                        {a.rubric_uuid === null && (
-                          <div className='flex items-center gap-2'>
-                            <span className='bg-destructive/10 text-destructive rounded-md px-2 py-0.5 text-xs font-medium'>
-                              No rubric
+                  <tbody className='divide-y'>
+                    {assessments.map(a => (
+                      <tr key={a.uuid} className='hover:bg-muted/30 transition-colors'>
+                        {/* Title */}
+                        <td className='px-6 py-4'>
+                          <p className='text-foreground font-medium'>{a.title}</p>
+                          {a.description && (
+                            <p className='text-muted-foreground mt-0.5 line-clamp-1 text-xs'>
+                              {a.description}
+                            </p>
+                          )}
+                          {a.is_major_assessment && (
+                            <span className='bg-primary/15 text-primary mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold'>
+                              Major
                             </span>
-                            <button
-                              onClick={() => openEdit(a)}
-                              className='text-destructive hover:text-destructive/80 text-xs font-medium underline underline-offset-2 transition-colors'
+                          )}
+                        </td>
+
+                        {/* Weight */}
+                        <td className='px-4 py-4'>
+                          <div className='flex flex-col gap-1'>
+                            <span className='text-foreground font-semibold'>
+                              {a.weight_percentage}% (0–{a.weight_percentage})
+                            </span>
+                            <span
+                              className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                                a.is_required
+                                  ? 'bg-success/10 text-success/70'
+                                  : 'bg-muted-foreground/10 text-muted-foreground'
+                              }`}
                             >
-                              Add rubric
+                              {a.is_required ? 'Required' : 'Not required'}
+                            </span>
+                          </div>
+                        </td>
+
+                        {/* Linked tasks — self-fetching per row */}
+                        <td className='px-4 py-4'>
+                          <div className='flex flex-col gap-1.5'>
+                            <AssessmentLineItems courseUuid={courseUuid} assessmentUuid={a.uuid} />
+                            <button
+                              type='button'
+                              onClick={() => setLinkModalTarget(a)}
+                              className='text-muted-foreground hover:text-foreground hover:bg-muted flex w-max items-center gap-1.5 rounded-full border border-dashed px-2.5 py-1 text-xs transition-colors'
+                            >
+                              <Plus size={11} />
+                              Link items
                             </button>
                           </div>
-                        )}
-                      </div>
-                    </td> */}
+                        </td>
 
-                    {/* Actions */}
-                    <td className='px-4 py-4'>
-                      <div className='flex items-center justify-end gap-1'>
-                        <button
-                          onClick={() => openEdit(a)}
-                          className='text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg p-1.5 transition-colors'
-                          title='Edit assessment'
-                        >
-                          <Pencil size={15} />
-                        </button>
-                        <button
-                          onClick={() => setDeletingAssessment(a)}
-                          className='text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-lg p-1.5 transition-colors'
-                          title='Delete assessment'
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+                        {/* Actions */}
+                        <td className='px-4 py-4'>
+                          <div className='flex items-center justify-end gap-1'>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='icon'
+                              onClick={() => setDeletingAssessment(a)}
+                              className='text-muted-foreground hover:text-destructive hover:bg-destructive/10'
+                              aria-label={`Delete ${a.title}`}
+                            >
+                              <Trash2 size={15} />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
 
-              <tfoot>
-                <tr className='bg-muted/40 border-t'>
-                  <td className='text-foreground px-6 py-3 font-bold'>Total</td>
-                  <td
-                    className={`px-4 py-3 text-left font-bold ${totalWeight === 100 ? 'text-success' : totalWeight > 100 ? 'text-destructive' : 'text-warning'}`}
-                  >
-                    {totalWeight}%
-                  </td>
-                  <td className='px-4 py-3' />
-                  <td className='px-4 py-3' />
-                  <td className='px-4 py-3' />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </AsyncSection>
+                  <tfoot>
+                    <tr className='bg-muted/40 border-t'>
+                      <td className='text-foreground px-6 py-3 font-bold'>Total</td>
+                      <td
+                        className={`px-4 py-3 text-left font-bold ${totalWeight === 100 ? 'text-success' : totalWeight > 100 ? 'text-destructive' : 'text-warning'}`}
+                      >
+                        {totalWeight}%
+                      </td>
+                      <td className='px-4 py-3' />
+                      <td className='px-4 py-3' />
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </AsyncSection>
 
-        {!isLoading && assessments.length > 0 && totalWeight !== 100 && (
-          <div
-            className={`flex items-center gap-2 border-t px-6 py-3 text-sm font-medium ${totalWeight > 100 ? 'bg-destructive/5 text-destructive' : 'bg-primary/15 text-primary'}`}
-          >
-            <AlertTriangle size={14} />
-            {totalWeight > 100
-              ? `Total weight exceeds 100% by ${totalWeight - 100}%. Please adjust.`
-              : `Total weight is ${totalWeight}%. ${100 - totalWeight}% remaining to allocate.`}
-          </div>
+            {!loadingAssessments && assessments.length > 0 && totalWeight !== 100 && (
+              <div
+                className={`flex items-center gap-2 border-t px-6 py-3 text-sm font-medium ${totalWeight > 100 ? 'bg-destructive/5 text-destructive' : 'bg-primary/15 text-primary'}`}
+              >
+                <AlertTriangle size={14} />
+                {totalWeight > 100
+                  ? `Total weight exceeds 100% by ${totalWeight - 100}%. Please adjust.`
+                  : `Total weight is ${totalWeight}%. ${100 - totalWeight}% remaining to allocate.`}
+              </div>
+            )}
+          </CardContent>
         )}
-      </div>
+      </Card>
 
       {/* Link items modal */}
       {linkModalTarget && (
@@ -1084,142 +935,7 @@ export const CourseAssessmentStructure = ({
         />
       )}
 
-      {/* Course Rubrics */}
-      {/* <div className='bg-card mt-10'>
-        <div className='flex flex-col gap-1 px-6 pt-6 sm:flex-row sm:items-center sm:justify-between'>
-          <h3 className='text-foreground text-lg font-bold'>Course Rubrics</h3>
-        </div>
-
-        <div className='flex flex-col'>
-          {filteredRubrics.map(rubric => {
-            const sortedLevels = [...(rubric.scoringLevels ?? [])].sort(
-              (a: unknown, b: unknown) => (a.level_order ?? 0) - (b.level_order ?? 0)
-            );
-            const sortedCriteria = [...(rubric.criteria ?? [])].sort(
-              (a: unknown, b: unknown) => (a.display_order ?? 0) - (b.display_order ?? 0)
-            );
-            const matrixCells: Record<string, unknown> = {};
-            sortedCriteria.forEach((crit: unknown) => {
-              (crit.scoring ?? []).forEach((cell: unknown) => {
-                matrixCells[`${crit.uuid}_${cell.rubric_scoring_level_uuid}`] = cell;
-              });
-            });
-
-            return (
-              <div key={rubric.uuid} className='bg-card mx-2 my-4 overflow-hidden rounded-xl border pb-3 shadow-sm'>
-                <div className='px-6 py-5'>
-                  <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
-                    <div className='flex flex-col gap-1.5'>
-                      <h4 className='text-foreground text-base font-bold'>{rubric.title || 'Untitled Rubric'}</h4>
-                      {rubric.description && (
-                        <p className='text-muted-foreground line-clamp-2 max-w-2xl text-sm'>{rubric.description}</p>
-                      )}
-                      <div className='text-muted-foreground mt-1 flex flex-wrap items-center gap-3 text-xs'>
-                        {rubric.rubric_type && (
-                          <span className='flex items-center gap-1'>
-                            <span className='bg-success h-2 w-2 rounded-full' />
-                            Type: <span className='text-foreground font-medium'>{rubric.rubric_type}</span>
-                          </span>
-                        )}
-                        {rubric.rubric_category && (
-                          <span className='flex items-center gap-1'>
-                            Category: <span className='text-foreground font-medium'>{rubric.rubric_category}</span>
-                          </span>
-                        )}
-                        <span className='flex items-center gap-1'>
-                          {rubric.is_public
-                            ? <><Globe size={12} /><span className='text-foreground font-medium'>Public</span></>
-                            : <><LockIcon size={12} /><span className='text-foreground font-medium'>Private</span></>}
-                        </span>
-                        {rubric.total_weight != null && (
-                          <span>Weight: <span className='text-foreground font-medium'>{rubric.total_weight}</span></span>
-                        )}
-                        {rubric.min_passing_score != null && (
-                          <span>Min pass: <span className='text-foreground font-medium'>{rubric.min_passing_score}</span></span>
-                        )}
-                      </div>
-                    </div>
-                    <div className='flex shrink-0 items-center gap-2'>
-                      <Link href='/dashboard/course-creator/rubrics' target='_blank'>
-                        <Button type='button' variant='outline' size='sm' className='w-fit self-center'>
-                          <Edit2 size={13} /> Edit
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-
-                {sortedCriteria.length === 0 ? (
-                  <div className='text-muted-foreground border-t px-6 py-4 text-xs italic'>No criteria added yet.</div>
-                ) : (
-                  <div className='overflow-x-auto border-t'>
-                    <table className='w-full text-sm'>
-                      <thead>
-                        <tr className='bg-muted/40 border-b'>
-                          <th className='text-foreground min-w-[200px] px-4 py-2.5 text-left text-xs font-semibold'>Criteria</th>
-                          {sortedLevels.map((level: unknown) => (
-                            <th
-                              key={level.uuid}
-                              className='text-foreground min-w-[130px] border-l px-3 py-2.5 text-center text-xs font-semibold'
-                              style={level.color_code ? { backgroundColor: level.color_code + '22' } : undefined}
-                            >
-                              {level.name || level.description}
-                              {level.points != null && (
-                                <span className='text-muted-foreground ml-1 font-normal'>({level.points} pts)</span>
-                              )}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody className='divide-y'>
-                        {sortedCriteria.map((crit: unknown) => (
-                          <tr key={crit.uuid} className='hover:bg-muted/20 transition-colors'>
-                            <td className='px-4 py-3 align-top'>
-                              <p className='text-foreground text-xs font-medium'>{crit.component_name}</p>
-                              {crit.description && (
-                                <p className='text-muted-foreground mt-0.5 whitespace-pre-wrap text-xs'>{crit.description}</p>
-                              )}
-                            </td>
-                            {sortedLevels.map((level: unknown) => {
-                              const cell = matrixCells[`${crit.uuid}_${level.uuid}`] ?? null;
-                              return (
-                                <td key={level.uuid} className='border-l px-3 py-3 align-top text-xs'>
-                                  {cell ? (
-                                    <div className='text-muted-foreground whitespace-pre-wrap'>
-                                      {cell.description || <span className='italic'>No description</span>}
-                                      {cell.points != null && (
-                                        <p className='text-foreground mt-1 font-medium'>{cell.points} pts</p>
-                                      )}
-                                    </div>
-                                  ) : (
-                                    <span className='text-muted-foreground'>—</span>
-                                  )}
-                                </td>
-                              );
-                            })}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div> */}
-
-      <AssessmentSheet
-        open={!!modalMode}
-        mode={modalMode ?? 'add'}
-        initial={editingAssessment}
-        courseUuid={courseUuid}
-        createdBy={createdBy}
-        onClose={closeModal}
-        onSuccess={onMutationSuccess}
-      />
-
-      <DeleteConfirmSheet
+      <DeleteConfirmModal
         open={!!deletingAssessment}
         assessment={deletingAssessment}
         courseUuid={courseUuid}

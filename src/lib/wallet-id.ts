@@ -44,10 +44,10 @@ function checkDigit(body: string): string {
   // Simple mod-check over the ALPHABET; single character.
   let sum = 0;
   for (let i = 0; i < body.length; i++) {
-    const idx = ALPHABET.indexOf(body[i].toUpperCase());
+    const idx = ALPHABET.indexOf(body.charAt(i).toUpperCase());
     sum += (idx >= 0 ? idx : body.charCodeAt(i)) * (i + 1);
   }
-  return ALPHABET[sum % ALPHABET.length];
+  return ALPHABET.charAt(sum % ALPHABET.length);
 }
 
 type WalletIdOptions = {

@@ -105,6 +105,7 @@ export type ExperienceRecord = {
 
 export type AchievementRecord = {
   id: string;
+  uuid?: string;
   name: string;
   description: string;
   achievement_type: AchievementTypeEnum;

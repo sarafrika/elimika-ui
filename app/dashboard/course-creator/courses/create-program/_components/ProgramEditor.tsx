@@ -47,13 +47,13 @@ import type { PendingProgramMedia, ProgramMediaKey } from '../save-program-media
 import { useSaveProgram } from '../use-save-program';
 import ProgramCourses from './ProgramCourses';
 import { ProgramSetup } from './ProgramFields';
-import { ProgramSavingOverlay } from './ProgramSavingOverlay';
 import {
   ProgramAssessment,
   ProgramBranding,
   ProgramEvaluation,
   ProgramPricing,
 } from './ProgramFutureSteps';
+import { ProgramSavingOverlay } from './ProgramSavingOverlay';
 
 const STEPS = [
   { key: 'setup', label: 'Program set-up', icon: ClipboardList },
@@ -383,8 +383,8 @@ export default function ProgramEditor({
                 <div className='space-y-6 p-5'>
                   <p className='text-muted-foreground text-xs' role='status'>
                     {draftStorageFailed
-                      ? 'Browser draft storage is unavailable. Extra categories, subject, award, and brand identity cannot be stored in this browser.'
-                      : 'Changed steps are saved before you continue. Extra categories, subject, award, and brand identity are kept in this browser draft.'}
+                      ? 'Browser draft storage is unavailable.'
+                      : 'Changed steps are saved before you continue.'}
                   </p>
                   {validationMessage && (
                     <p role='alert' className='text-destructive text-sm'>

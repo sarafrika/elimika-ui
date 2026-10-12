@@ -1,15 +1,6 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import {
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -20,11 +11,13 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import type { Category } from '@/services/client/types.gen';
-import { X } from 'lucide-react';
 import { useFormContext } from 'react-hook-form';
 import { CourseLearningOutcomes } from '../../../_components/course-learning-outcomes';
 import type { ProgramFormValues } from '../program-schema';
+import { ProgramCategories } from './ProgramCategories';
 import { ProgramRequirements } from './ProgramRequirements';
+
+const PROGRAM_AWARDS = ['Certificate', 'Diploma', 'Degree', 'Postgraduate Diploma'];
 
 type TextFieldName =
   | 'title'
@@ -130,7 +123,7 @@ export function ProgramSetup({ categories }: { categories: Category[] }) {
   const { control } = useFormContext<ProgramFormValues>();
   return (
     <>
-      <div className='grid items-start gap-4 md:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid items-start gap-4 md:grid-cols-2 lg:grid-cols-3'>
         <ProgramTextField
           name='title'
           label='Program title'
@@ -142,83 +135,40 @@ export function ProgramSetup({ categories }: { categories: Category[] }) {
           label='Program code (optional)'
           placeholder='e.g. MUSIC-101'
         />
+      </div>
+
+      <ProgramCategories categories={categories} />
+      <div className='grid items-start gap-4 md:grid-cols-2'>
         <FormField
           control={control}
-          name='categoryUuids'
+          name='draft.award'
           render={({ field }) => (
-            <FormItem className='md:col-span-2'>
-              <FormLabel>Categories</FormLabel>
-              <Select
-                value=''
-                onValueChange={uuid => {
-                  if (!field.value.includes(uuid)) field.onChange([...field.value, uuid]);
-                }}
-                disabled={
-                  !categories.some(
-                    category => category.uuid && !field.value.includes(category.uuid)
-                  )
-                }
-              >
+            <FormItem>
+              <FormLabel>Program award</FormLabel>
+              <Select value={field.value} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger ref={field.ref} onBlur={field.onBlur} className='w-full'>
-                    <SelectValue
-                      placeholder={
-                        field.value.length ? 'Add another category' : 'Select categories'
-                      }
-                    />
+                    <SelectValue placeholder='Select program award' />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  {categories
-                    .filter(category => category.uuid && !field.value.includes(category.uuid))
-                    .map(category => (
-                      <SelectItem key={category.uuid} value={category.uuid!}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
+                  {field.value && !PROGRAM_AWARDS.includes(field.value) && (
+                    <SelectItem value={field.value}>{field.value}</SelectItem>
+                  )}
+                  {PROGRAM_AWARDS.map(award => (
+                    <SelectItem key={award} value={award}>
+                      {award}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
-              {field.value.length > 0 && (
-                <div className='flex flex-wrap gap-2' aria-label='Selected categories'>
-                  {field.value.map((uuid, index) => {
-                    const name = categories.find(category => category.uuid === uuid)?.name ?? uuid;
-                    return (
-                      <Badge key={uuid} variant='secondary' className='gap-1'>
-                        {name}
-                        {index === 0 && ' (Primary)'}
-                        <Button
-                          type='button'
-                          variant='ghost'
-                          size='icon'
-                          className='h-6 w-6'
-                          aria-label={`Remove ${name}`}
-                          onClick={() =>
-                            field.onChange(field.value.filter(value => value !== uuid))
-                          }
-                        >
-                          <X className='size-3' />
-                        </Button>
-                      </Badge>
-                    );
-                  })}
-                </div>
-              )}
-              <FormDescription>
-                Select one or more. The first selection is the primary category saved with the
-                program.
-              </FormDescription>
               <FormMessage />
             </FormItem>
           )}
         />
-        <DraftField name='subject' label='Subject' />
         <ProgramTextField name='classLimit' label='Class limit' type='number' min={1} />
-        <DraftField name='award' placeholder='eg. Certificate of award' label='Program award' />
       </div>
-      <p className='text-muted-foreground text-xs'>
-        Subject and award are kept in your browser draft. Saving keeps the program in its current
-        state; publish, unpublish or archive it with the actions above.
-      </p>
+
       <div className='grid gap-4 md:grid-cols-2'>
         <ProgramTextField
           name='description'
