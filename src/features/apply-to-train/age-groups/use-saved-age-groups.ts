@@ -19,7 +19,7 @@ export type SavedAgeGroupView = {
   max_age?: number;
   owner_type?: string;
   owner_uuid?: string;
-  owner_name?: string;
+  owner_name?: string | null;
 };
 
 export const MAX_SAVED_AGE_GROUPS = 50;

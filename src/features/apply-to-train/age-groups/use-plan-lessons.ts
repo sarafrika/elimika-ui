@@ -12,6 +12,7 @@ import {
 import type { ApplyKind } from '../types';
 import type { PlanLesson } from './model';
 
+const MAX_PROGRAM_COURSES = 12;
 const LESSON_PAGE = { page: 0, size: 200 };
 
 /** Active lessons by lesson number, as the server counts them. */
@@ -70,12 +71,18 @@ export function usePlanLessons(kind: ApplyKind | null, uuid: string | null) {
     staleTime: STALE_TIMES.entity,
   });
   const courses = useMemo(
-    () => (forProgram ? (programCourses.data?.data ?? []).filter(course => course.uuid) : []),
+    // Capped so a large programme cannot fan out into one request per course.
+    () =>
+      forProgram
+        ? (programCourses.data?.data ?? [])
+            .filter(course => course.uuid)
+            .slice(0, MAX_PROGRAM_COURSES)
+        : [],
     [forProgram, programCourses.data]
   );
 
   const member = useQueries({
-    queries: courses.map(course => ({
+    queries: courses.slice(0, MAX_PROGRAM_COURSES).map(course => ({
       ...getCourseLessonsOptions({
         path: { courseUuid: course.uuid as string },
         query: { pageable: LESSON_PAGE },
