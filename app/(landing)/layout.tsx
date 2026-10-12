@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { PublicTopNav } from '@/components/PublicTopNav';
-import { ProductFooter } from '@/src/features/marketing/product-page/ProductFooter';
 import { productFontVariables } from '@/src/features/marketing/product-page/fonts';
 import '@/styles/elimika-product.css';
 
@@ -12,7 +11,6 @@ export default function LandingLayout({ children }: { children: ReactNode }) {
       <PublicTopNav wide />
       <div className={`sw-page ${productFontVariables}`}>
         <main>{children}</main>
-        <ProductFooter />
       </div>
     </div>
   );
