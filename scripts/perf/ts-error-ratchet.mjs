@@ -16,12 +16,17 @@ const CEILING_FILE = new URL('./ts-error-ceiling.txt', import.meta.url);
 
 let output = '';
 try {
-  output = execSync('pnpm exec tsc --noEmit -p tsconfig.json', {
+  output = execSync('pnpm exec tsc --noEmit --pretty false -p tsconfig.json', {
     encoding: 'utf8',
     maxBuffer: 64 * 1024 * 1024,
   });
 } catch (error) {
   output = `${error.stdout ?? ''}${error.stderr ?? ''}`;
+  if (error.signal || !/error TS\d+/.test(output)) {
+    console.error(output || error.message);
+    console.error('✖ TypeScript did not complete; the error ceiling was not checked.');
+    process.exit(1);
+  }
 }
 
 // Generated route types under .next drift with the last build, so a repo with a warm
@@ -43,6 +48,7 @@ if (process.argv.includes('--update')) {
 }
 
 if (count > ceiling) {
+  console.error(sourceLines.join('\n'));
   console.error(`✖ tsc errors: ${count} (ceiling ${ceiling}) — new type errors were introduced.`);
   process.exit(1);
 }

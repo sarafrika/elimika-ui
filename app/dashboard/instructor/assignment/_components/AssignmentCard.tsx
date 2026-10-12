@@ -21,6 +21,7 @@ type AssignmentCardProps = {
 };
 
 const statusTone: Record<AssignmentCardData['status'], string> = {
+  pending: 'border-warning/20 bg-warning/10 text-warning',
   graded: 'border-success/20 bg-success/10 text-success',
   ongoing: 'border-primary/20 bg-primary/10 text-primary',
   overdue: 'border-destructive/20 bg-destructive/10 text-destructive',

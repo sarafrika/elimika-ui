@@ -89,7 +89,7 @@ export function ProgramCategories({ categories }: { categories: Category[] }) {
       setOpen(false);
       setName('');
       toast.success('Subcategory added');
-      void queryClient.invalidateQueries({ queryKey: getAllCategoriesQueryKey({}) });
+      void queryClient.invalidateQueries({ queryKey: getAllCategoriesQueryKey({ query: { pageable: {} } }) });
     },
     onError: error => toast.error(getErrorMessage(error, 'Unable to add subcategory')),
   });
