@@ -1,6 +1,7 @@
 'use client';
 
 import PhoneInputBase, { type Country, type Value } from 'react-phone-number-input';
+import flags from 'react-phone-number-input/flags';
 import 'react-phone-number-input/style.css';
 
 import { cn } from '@/lib/utils';
@@ -37,6 +38,8 @@ export function PhoneInput({
     <PhoneInputBase
       international
       countryCallingCodeEditable={false}
+      limitMaxLength
+      flags={flags}
       defaultCountry={defaultCountry}
       value={(value ?? undefined) as Value | undefined}
       onChange={next => onChange?.(next || undefined)}
