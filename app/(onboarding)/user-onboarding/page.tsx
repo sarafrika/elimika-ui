@@ -592,7 +592,13 @@ function UserOnboardingWizard() {
         <StepFooter
           onBack={() => goTo(2)}
           primaryLabel='Save and continue'
-          onPrimary={() => goTo(4)}
+          onPrimary={() => {
+            // Wallet dialogs refresh their own lists, not the onboarding progress.
+            void queryClient.invalidateQueries({
+              predicate: query => isDomainOnboardingKey(query.queryKey),
+            });
+            goTo(4);
+          }}
         />
       </OnboardingFrame>
     );
