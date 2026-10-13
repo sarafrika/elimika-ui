@@ -1,4 +1,4 @@
-177
+174
 
 Maximum allowed source TypeScript errors. Fix errors above this ceiling rather
 than increasing it. Lower the ceiling with --update after reducing the count.

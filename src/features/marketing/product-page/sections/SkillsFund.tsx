@@ -1,8 +1,6 @@
 'use client';
 
 import { signIn } from 'next-auth/react';
-import Link from 'next/link';
-import { onboardingPath } from '@/src/features/onboarding/lib/user-onboarding';
 
 const DASHBOARD_ENTRY_PATH = '/dashboard';
 
@@ -14,7 +12,7 @@ const FUND_ROWS = [
 ] as const;
 
 export function SkillsFund() {
-  // Applying starts a learner sign-up; funding a student still signs in to the dashboard.
+  // The source points both CTAs at /contact; there is no Skills Fund route yet, so both sign in.
   const startSignIn = () =>
     signIn('keycloak', { redirectTo: `${window.location.origin}${DASHBOARD_ENTRY_PATH}` });
 
@@ -30,9 +28,9 @@ export function SkillsFund() {
         </p>
 
         <div className='button-row'>
-          <Link href={onboardingPath('student')} className='button button--accent'>
+          <button type='button' className='button button--accent' onClick={startSignIn}>
             Apply for Skills Fund
-          </Link>
+          </button>
 
           <button
             type='button'

@@ -1,7 +1,6 @@
 'use client';
 
 import { ShoppingCart } from 'lucide-react';
-import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -12,7 +11,6 @@ import { surfaceTheme } from '@/components/data-display/page-shell';
 import { Button } from '@/components/ui/button';
 import { useSavedCart } from '@/hooks/use-saved-cart';
 import { cn } from '@/lib/utils';
-import { ONBOARDING_PATH, onboardingPath } from '@/src/features/onboarding/lib/user-onboarding';
 import { PublicSearch } from '@/src/features/search/components/public-search';
 
 /** Wide public pages (the catalogue) use the screen up to 2400px instead of a 1280px column. */
@@ -20,10 +18,6 @@ export const WIDE_PUBLIC_CONTAINER = surfaceTheme.pageWide;
 
 export function MarketingTopNav({ wide = false }: { wide?: boolean }) {
   const pathname = usePathname();
-  const { status: sessionStatus } = useSession();
-  // Signed-out visitors get a sign-up entry, except inside the wizard itself.
-  const showGetStarted =
-    sessionStatus === 'unauthenticated' && !pathname.startsWith(ONBOARDING_PATH);
 
   const { data: cartData } = useSavedCart();
   const cartItemCount = cartData?.items?.length ?? 0;
@@ -109,17 +103,12 @@ export function MarketingTopNav({ wide = false }: { wide?: boolean }) {
             <ThemeSwitcher size='icon' />
           </div>
 
-          {showGetStarted && (
-            <Button asChild className='hidden sm:inline-flex'>
-              <Link href={onboardingPath()}>Get started</Link>
-            </Button>
-          )}
           <LoginButton />
         </div>
       </div>
 
       <div className='border-border border-t px-6 py-3 lg:hidden'>
-        <div className='flex flex-wrap items-center gap-2'>
+        <div className='flex flex-wrap gap-2'>
           {navLinks.map(link => (
             <Link
               key={link.href}
@@ -131,14 +120,6 @@ export function MarketingTopNav({ wide = false }: { wide?: boolean }) {
               {link.label}
             </Link>
           ))}
-          {showGetStarted && (
-            <Link
-              href={onboardingPath()}
-              className='bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-3 py-1 text-sm font-medium transition sm:hidden'
-            >
-              Get started
-            </Link>
-          )}
         </div>
       </div>
     </nav>

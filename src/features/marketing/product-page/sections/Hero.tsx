@@ -1,9 +1,10 @@
 'use client';
 
 import { ArrowRight, Circle, Play, Sparkles, Users, Wallet } from 'lucide-react';
-import Link from 'next/link';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import { onboardingPath } from '@/src/features/onboarding/lib/user-onboarding';
+
+const DASHBOARD_ENTRY_PATH = '/dashboard';
 
 const BADGES = ['Verified certificates', 'Skills funding', 'Talent verifying'] as const;
 
@@ -34,10 +35,18 @@ export function Hero() {
         </p>
 
         <div className='button-row'>
-          <Link href={onboardingPath()} className='button button--dark'>
+          <button
+            type='button'
+            className='button button--dark'
+            onClick={() =>
+              signIn('keycloak', {
+                redirectTo: `${window.location.origin}${DASHBOARD_ENTRY_PATH}`,
+              })
+            }
+          >
             Create Your Skills Wallet
             <ArrowRight size={16} aria-hidden />
-          </Link>
+          </button>
 
           <button
             type='button'

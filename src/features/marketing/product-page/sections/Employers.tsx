@@ -2,8 +2,6 @@
 
 import { BadgeCheck } from 'lucide-react';
 import { signIn } from 'next-auth/react';
-import Link from 'next/link';
-import { onboardingPath } from '@/src/features/onboarding/lib/user-onboarding';
 
 const DASHBOARD_ENTRY_PATH = '/dashboard';
 
@@ -26,7 +24,7 @@ const CANDIDATES = [
 ] as const;
 
 export function Employers() {
-  // Talent search starts an organisation sign-up; funding still lives behind the dashboard.
+  // Talent search and student funding both live behind the dashboard, so both CTAs sign in.
   const startSignIn = () => {
     void signIn('keycloak', {
       redirectTo: `${window.location.origin}${DASHBOARD_ENTRY_PATH}`,
@@ -44,12 +42,9 @@ export function Employers() {
           fund students and employee wallets for approved upskilling programs.
         </p>
         <div className='button-row'>
-          <Link
-            href={onboardingPath('organisation_user')}
-            className='button skills-wallet-button--navy'
-          >
+          <button type='button' className='button skills-wallet-button--navy' onClick={startSignIn}>
             Search Talent
-          </Link>
+          </button>
           <button type='button' className='button button--outline' onClick={startSignIn}>
             Fund Students
           </button>
