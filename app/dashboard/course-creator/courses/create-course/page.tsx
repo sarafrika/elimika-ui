@@ -236,6 +236,8 @@ export default function CreateCoursePage() {
         useState<Provider | null>(null);
     const [selectedPracticeLessonId, setSelectedPracticeLessonId] = useState<string>('');
     const [assessmentSheetOpen, setAssessmentSheetOpen] = useState(false);
+    const [inlineAssessmentOpen, setInlineAssessmentOpen] = useState(false);
+    const [assessmentFormVersion, setAssessmentFormVersion] = useState(0);
     const [assessmentMode, setAssessmentMode] = useState<AssessmentMode>('Quiz');
     const [selectedAssessmentLessonId, setSelectedAssessmentLessonId] = useState<string>('');
     const [selectedAssessmentLesson, setSelectedAssessmentLesson] = useState<Lesson | null>(null);
@@ -592,6 +594,7 @@ export default function CreateCoursePage() {
             setSelectedAssessmentLesson(lesson);
             setSelectedQuizUuid(mode === 'Quiz' ? quizUuid ?? null : null);
             setSelectedAssignmentUuid(mode === 'Assignment' ? assignmentUuid ?? null : null);
+            setInlineAssessmentOpen(false);
             setAssessmentSheetOpen(true);
         },
         [lessonsWithUuid]
@@ -604,10 +607,20 @@ export default function CreateCoursePage() {
     }, []);
 
     const openNewAssessment = useCallback(
-        (mode: AssessmentMode, lessonId?: string) => {
-            openAssessmentSheet(mode, lessonId);
+        (mode: AssessmentMode, lessonId: string) => {
+            const lesson = lessonsWithUuid.find(currentLesson => currentLesson.uuid === lessonId);
+            if (!lesson) return;
+
+            setAssessmentMode(mode);
+            setSelectedAssessmentLessonId(lesson.uuid);
+            setSelectedAssessmentLesson(lesson);
+            setSelectedQuizUuid(null);
+            setSelectedAssignmentUuid(null);
+            setAssessmentSheetOpen(false);
+            setAssessmentFormVersion(version => version + 1);
+            setInlineAssessmentOpen(true);
         },
-        [openAssessmentSheet]
+        [lessonsWithUuid]
     );
 
     const openAssessmentEditor = useCallback(
@@ -903,8 +916,11 @@ export default function CreateCoursePage() {
                                             lessons={lessonsWithUuid}
                                             lessonContentsMap={lessonContentMap}
                                             isLoading={lessonsLoading || lessonContentQueries.some(query => query.isPending)}
-                                            loadError={lessonContentQueries.some(query => (query.isError && !query.data) || !!query.data?.error || query.data?.success === false)}
-                                            onRetry={() => { lessonContentQueries.forEach(query => void query.refetch()); }}
+                                            loadError={(lessonsError && !lessonsResponse) || !!lessonsResponse?.error || lessonsResponse?.success === false || lessonContentQueries.some(query => (query.isError && !query.data) || !!query.data?.error || query.data?.success === false)}
+                                            onRetry={() => {
+                                                void refetchLessons();
+                                                lessonContentQueries.forEach(query => void query.refetch());
+                                            }}
                                         />
                                         <StepNav
                                             previousLabel='Previous step'
@@ -987,7 +1003,7 @@ export default function CreateCoursePage() {
                                         <div className='space-y-1'>
                                             <p className='text-foreground text-md font-bold'>Assessment builder</p>
                                             <p className='text-muted-foreground text-sm'>
-                                                Track quizzes and assignments by lesson, then open the sheet to create or edit one.
+                                                Add quizzes and assignments directly beneath each lesson, and track existing assessments.
                                             </p>
                                         </div>
 
@@ -1015,6 +1031,8 @@ export default function CreateCoursePage() {
                                                     .map((lesson, index) => {
                                                         const items = assessmentsByLesson.get(lesson.uuid) ?? [];
                                                         const isExpanded = expandedAssessmentLessonIds.includes(lesson.uuid);
+                                                        const isInlineAssessmentOpen =
+                                                            inlineAssessmentOpen && selectedAssessmentLessonId === lesson.uuid;
                                                         const lessonLabel = lesson.lesson_number ?? index + 1;
 
                                                         const toggleLesson = () => {
@@ -1078,6 +1096,8 @@ export default function CreateCoursePage() {
                                                                                     <Button
                                                                                         type="button"
                                                                                         size="sm"
+                                                                                        aria-expanded={isInlineAssessmentOpen && assessmentMode === 'Quiz'}
+                                                                                        aria-controls={isInlineAssessmentOpen && assessmentMode === 'Quiz' ? `assessment-builder-${lesson.uuid}` : undefined}
                                                                                         onClick={() =>
                                                                                             openNewAssessment('Quiz', lesson.uuid)
                                                                                         }
@@ -1090,6 +1110,8 @@ export default function CreateCoursePage() {
                                                                                         type="button"
                                                                                         size="sm"
                                                                                         variant="outline"
+                                                                                        aria-expanded={isInlineAssessmentOpen && assessmentMode === 'Assignment'}
+                                                                                        aria-controls={isInlineAssessmentOpen && assessmentMode === 'Assignment' ? `assessment-builder-${lesson.uuid}` : undefined}
                                                                                         onClick={() =>
                                                                                             openNewAssessment(
                                                                                                 'Assignment',
@@ -1105,6 +1127,50 @@ export default function CreateCoursePage() {
                                                                         </div>
                                                                     </div>
                                                                 </CardHeader>
+
+                                                                {isInlineAssessmentOpen && (
+                                                                    <CardContent className='space-y-4 border-b border-border/70 p-4 sm:p-5'>
+                                                                        <section
+                                                                            id={`assessment-builder-${lesson.uuid}`}
+                                                                            aria-labelledby={`assessment-builder-title-${lesson.uuid}`}
+                                                                            className='min-w-0 space-y-4'
+                                                                        >
+                                                                            <div className='flex flex-wrap items-center justify-between gap-3'>
+                                                                                <h3 id={`assessment-builder-title-${lesson.uuid}`} className='text-lg font-semibold text-foreground'>
+                                                                                    {assessmentMode === 'Quiz' ? 'Quiz Builder' : 'Assignment Builder'}
+                                                                                </h3>
+                                                                                <Button type='button' variant='outline' size='sm' onClick={() => setInlineAssessmentOpen(false)}>
+                                                                                    Close builder
+                                                                                </Button>
+                                                                            </div>
+                                                                            <AssessmentCreation
+                                                                                key={`${assessmentMode}-${lesson.uuid}-${assessmentFormVersion}`}
+                                                                                course={courseApiResponse}
+                                                                                lessons={lessonsResponse?.data}
+                                                                                lessonContentsMap={lessonContentMap}
+                                                                                mode={assessmentMode}
+                                                                                selectedLessonId={lesson.uuid}
+                                                                                selectedLesson={lesson}
+                                                                                setSelectedLessonId={setSelectedAssessmentLessonId}
+                                                                                setSelectedLesson={setSelectedAssessmentLesson}
+                                                                                onQuizSaved={() => {
+                                                                                    void refreshAssessmentLists();
+                                                                                }}
+                                                                                onAssignmentSaved={() => {
+                                                                                    void refreshAssessmentLists();
+                                                                                }}
+                                                                                onQuizDeleted={() => {
+                                                                                    setInlineAssessmentOpen(false);
+                                                                                    void refreshAssessmentLists();
+                                                                                }}
+                                                                                onAssignmentDeleted={() => {
+                                                                                    setInlineAssessmentOpen(false);
+                                                                                    void refreshAssessmentLists();
+                                                                                }}
+                                                                            />
+                                                                        </section>
+                                                                    </CardContent>
+                                                                )}
 
                                                                 {isExpanded ? (
                                                                     <CardContent className="space-y-3 p-5">
@@ -1365,6 +1431,7 @@ export default function CreateCoursePage() {
                 </section>
             </Tabs>
 
+            {/* Keep the builder sheet for editing existing assessments and as a reference. */}
             {assessmentSheetOpen && (
                 <Sheet open={assessmentSheetOpen} onOpenChange={open => (!open ? closeAssessmentSheet() : setAssessmentSheetOpen(true))}>
                     <SheetContent

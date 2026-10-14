@@ -53,11 +53,13 @@ export function LessonOutline({
   courseId,
   lessons,
   isLoading,
+  loadError = false,
   renderPages,
 }: {
   courseId: string;
   lessons: SavedLesson[];
   isLoading: boolean;
+  loadError?: boolean;
   renderPages: LessonPagesRenderer;
 }) {
   const [entries, setEntries] = useState<LessonEntry[]>(() =>
@@ -66,6 +68,8 @@ export function LessonOutline({
       .map(lesson => ({ key: lesson.uuid, lesson }))
   );
   const entriesRef = useRef(entries);
+  const initialized = useRef(false);
+  const [focusLessonKey, setFocusLessonKey] = useState<string | null>(null);
   const removedIds = useRef(new Set<string>());
   const [busy, setBusy] = useState<string | null>(null);
   const locked = useRef(false);
@@ -87,12 +91,23 @@ export function LessonOutline({
       .sort((a, b) => a.lesson_number - b.lesson_number)
       .filter(lesson => !known.has(lesson.uuid) && !removedIds.current.has(lesson.uuid))
       .map(lesson => ({ key: lesson.uuid, lesson }));
-    if (added.length) {
-      const next = [...entriesRef.current, ...added];
+    let next = added.length ? [...entriesRef.current, ...added] : entriesRef.current;
+    if (!initialized.current && !isLoading && !loadError) {
+      initialized.current = true;
+      if (!next.length) next = [{ key: crypto.randomUUID() }];
+    }
+    if (next !== entriesRef.current) {
       entriesRef.current = next;
       setEntries(next);
     }
-  }, [lessons]);
+  }, [lessons, isLoading, loadError]);
+
+  const addLesson = () => {
+    if (locked.current || isLoading || loadError) return;
+    const key = crypto.randomUUID();
+    commit([...entriesRef.current, { key }]);
+    setFocusLessonKey(key);
+  };
 
   const remember = (key: string, lesson: SavedLesson) => {
     commit(entriesRef.current.map(entry => (entry.key === key ? { ...entry, lesson } : entry)));
@@ -238,8 +253,8 @@ export function LessonOutline({
         </div>
         <LessonAction
           label='Add lesson'
-          disabled={!!busy || isLoading}
-          onClick={() => commit([...entriesRef.current, { key: crypto.randomUUID() }])}
+          disabled={!!busy || isLoading || loadError}
+          onClick={addLesson}
         >
           <Plus className='size-4' />
         </LessonAction>
@@ -258,7 +273,8 @@ export function LessonOutline({
             entry={entry}
             index={index}
             total={entries.length}
-            disabled={!!busy}
+            disabled={!!busy || (Boolean(entry.lesson) && loadError)}
+            focusTitle={focusLessonKey === entry.key}
             saving={busy === entry.key && !deleteTarget}
             onSave={title => save(entry.key, title)}
             onMove={direction => void move(entry.key, direction)}
@@ -270,6 +286,14 @@ export function LessonOutline({
           />
         ))
       )}
+      <LessonAction
+        label='Add new lesson'
+        disabled={!!busy || isLoading || loadError}
+        onClick={addLesson}
+        className='fixed right-6 bottom-[max(1.5rem,env(safe-area-inset-bottom))] z-30 size-12 rounded-full shadow-lg sm:size-14'
+      >
+        <Plus className='size-6' />
+      </LessonAction>
       {orderFailed && (
         <div role='alert' className='text-destructive flex items-center gap-2 text-sm'>
           Lesson order has not been saved.
@@ -314,6 +338,7 @@ function InlineLesson({
   index,
   total,
   disabled,
+  focusTitle,
   saving,
   onSave,
   onMove,
@@ -324,6 +349,7 @@ function InlineLesson({
   index: number;
   total: number;
   disabled: boolean;
+  focusTitle: boolean;
   saving: boolean;
   onSave: (title: string) => Promise<SavedLesson>;
   onMove: (direction: -1 | 1) => void;
@@ -331,6 +357,13 @@ function InlineLesson({
   renderPages: LessonPagesRenderer;
 }) {
   const [title, setTitle] = useState(entry.lesson?.title ?? '');
+  const titleInputRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (!focusTitle) return;
+    const input = titleInputRef.current;
+    input?.focus({ preventScroll: true });
+    input?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [focusTitle]);
   const header: LessonHeaderRenderer = ({ pageCount, addPage, pagesBusy, savePages }) => (
     <div className='flex flex-wrap items-center gap-2'>
       <span
@@ -340,6 +373,7 @@ function InlineLesson({
         {index + 1}
       </span>
       <Input
+        ref={titleInputRef}
         value={title}
         disabled={disabled || pagesBusy}
         onChange={event => setTitle(event.target.value)}

@@ -119,7 +119,7 @@ export function LessonContentStack({
       ) : null}
       {loadError && (
         <EmptyState
-          title='Unable to load lesson pages'
+          title='Unable to load lessons or pages'
           description='Try again before editing pages.'
           action={
             <Button variant='outline' onClick={onRetry}>
@@ -133,6 +133,7 @@ export function LessonContentStack({
         courseId={courseId}
         lessons={lessons}
         isLoading={isLoading}
+        loadError={loadError}
         renderPages={(lesson, index, renderHeader, saveLesson) => (
           <LessonPages
             courseId={courseId}
@@ -142,7 +143,7 @@ export function LessonContentStack({
             types={types}
             renderHeader={renderHeader}
             saveLesson={saveLesson}
-            loading={isLoading || loadError}
+            loading={Boolean(lesson) && (isLoading || loadError)}
           />
         )}
       />
@@ -169,11 +170,14 @@ function LessonPages({
   saveLesson: () => Promise<CourseLesson>;
   loading: boolean;
 }) {
-  const [pages, setPages] = useState<PageEntry[]>(() =>
-    sortLessonPages(contents).flatMap(content =>
+  const [pages, setPages] = useState<PageEntry[]>(() => {
+    const savedPages = sortLessonPages(contents).flatMap(content =>
       content.uuid ? [{ key: content.uuid, createdAt: pageCreatedAt(content), content }] : []
-    )
-  );
+    );
+    return lesson || savedPages.length
+      ? savedPages
+      : [{ key: crypto.randomUUID(), createdAt: Date.now() }];
+  });
   const pagesRef = useRef(pages);
   const commitPages = (next: PageEntry[]) => {
     pagesRef.current = next;
