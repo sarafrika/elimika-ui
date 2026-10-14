@@ -9,8 +9,8 @@ import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { absoluteDateTime, relativeTimeFromNow } from '@/lib/date';
 import { conflictWindowLabel, toSchedulingConflict } from '@/lib/scheduling-conflicts';
-import { cn } from '@/lib/utils';
 import type { UserDomain } from '@/lib/types';
+import { cn } from '@/lib/utils';
 import {
   useMarkAllNotificationsRead,
   useNotificationAction,
@@ -28,6 +28,7 @@ import {
   getNotificationUrlPath,
   notificationIcon,
 } from '../../../../src/features/dashboard/components/dashboard-notifications';
+import { stripHtml } from '../../../../src/features/dashboard/courses/shared/_components/courses-data';
 
 type NotificationTab = 'all' | 'unread' | 'popups' | 'archived';
 
@@ -418,7 +419,7 @@ export function AlertsTab() {
                               {details.map(([label, value]) => (
                                 <div key={label} className='min-w-0'>
                                   <dt className='text-muted-foreground'>{label}</dt>
-                                  <dd className='text-foreground truncate font-medium'>{value}</dd>
+                                  <dd className='text-foreground truncate font-medium'>{stripHtml(value)}</dd>
                                 </div>
                               ))}
                             </dl>
