@@ -18,7 +18,7 @@ import { useCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
 import { dayjs } from '@/lib/date';
 import { RATE_BASES, type SelectableRateBasis } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { instructorApplyToTrainHref } from '@/src/features/apply-to-train/links';
 import { creatorRole } from '@/src/features/rate-card/application-display';
 import { MissingRatesNote } from '@/src/features/rate-card/components/application-sections';
 import { ApplicationStatusBadge } from '@/src/features/rate-card/components/application-status-badge';
@@ -36,11 +36,7 @@ const cardId = (kind: TrainingApplicationKind, parentUuid: string) =>
   `rate-card-${kind}-${parentUuid}`;
 
 function applyHref(kind: TrainingApplicationKind, parentUuid: string, applicationUuid?: string) {
-  const params = new URLSearchParams();
-  if (applicationUuid) params.set('application', applicationUuid);
-  if (kind === 'program') params.set('kind', 'program');
-  const search = params.toString();
-  return dashboardUrl('instructor', `courses/apply/${parentUuid}${search ? `?${search}` : ''}`);
+  return instructorApplyToTrainHref({ kind, uuid: parentUuid }, applicationUuid);
 }
 
 /** The instructor's rate cards: one per course or program they applied to train. */
@@ -133,7 +129,7 @@ export function InstructorRateCards() {
             description='Apply to train a course; your rate card appears here once you send it.'
             action={
               <Button asChild variant='outline'>
-                <Link href={dashboardUrl('instructor', 'courses')}>Browse courses</Link>
+                <Link href={instructorApplyToTrainHref()}>Browse courses</Link>
               </Button>
             }
           />

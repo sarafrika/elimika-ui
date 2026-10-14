@@ -72,6 +72,7 @@ const workflowQueryIds = {
     'listProgramTrainingApplications',
     'searchTrainingApplications',
     'searchProgramTrainingApplications',
+    'searchApplyToTrainCatalogue',
     'getTrainingApplicationHistory',
     'getProgramTrainingApplicationHistory',
     'listTrainingRateUpdates',

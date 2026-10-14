@@ -1,5 +1,15 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import type React from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
 import { surfaceTheme } from '@/components/data-display';
 import {
   type FieldToTab,
@@ -37,16 +47,6 @@ import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { ProfileHero } from '@/src/features/profile/landing/components/profile-hero';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
-import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
-import type React from 'react';
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import { ElimikaUserId } from '../../../../../app/dashboard/_components/elimika-user-id';
 import { useProfileShareUrl } from '../../../../../app/dashboard/_components/skills-wallet/use-profile-share-url';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
@@ -57,6 +57,7 @@ import { SettingsField } from '../_components/settings-field';
 import { SettingsPageHeader } from '../_components/settings-page-header';
 import { TimezoneSetting } from '../_components/timezone-setting';
 import { AcademicGroupsPanel } from '../panels/academic-groups-panel';
+import { AgeGroupsPanel } from '../panels/age-groups-panel';
 import { InstitutionProfilePanel } from '../panels/institution-profile-panel';
 import { RolesPermissionsPanel } from '../panels/roles-permissions-panel';
 import {
@@ -1015,6 +1016,12 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
               </div>
             )}
           </SectionTabPanel>
+
+          {variant === 'instructor' || variant === 'organisation' ? (
+            <SectionTabPanel value='age-groups'>
+              {activeTab === 'age-groups' ? <AgeGroupsPanel owner={variant} /> : null}
+            </SectionTabPanel>
+          ) : null}
 
           {variant === 'organisation' ? (
             <>

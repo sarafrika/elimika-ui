@@ -19,10 +19,12 @@ import { formatPricingLabel } from '../format';
 import type { PublicCourseDetail, PublicCourseSummary } from '../types';
 
 type CourseDetailsCardProps = {
-  course: Pick<
-    PublicCourseSummary,
-    'uuid' | 'price' | 'duration_hours' | 'duration_minutes' | 'total_duration_display'
-  > & Partial<Pick<Course, 'minimum_training_fee' | 'created_date'>>;
+  // The generated Course allows nulls where the public summary uses undefined; accept both.
+  course: Pick<PublicCourseSummary, 'uuid' | 'price'> & {
+    duration_hours?: number | null;
+    duration_minutes?: number | null;
+    total_duration_display?: string | null;
+  } & Partial<Pick<Course, 'minimum_training_fee' | 'created_date'>>;
   currencyCode?: string | null;
   priceAmount?: number | null;
   isFree?: boolean;
@@ -119,31 +121,29 @@ function CourseDetailsCard({
   const hasTrainingFee = typeof trainingFee === 'number' && Number.isFinite(trainingFee);
   const price = hasTrainingFee
     ? formatPricingLabel({
-      priceAmount: trainingFee,
-      currencyCode: currencyCode ?? null,
-      isFree: trainingFee === 0,
-    })
+        priceAmount: trainingFee,
+        currencyCode: currencyCode ?? null,
+        isFree: trainingFee === 0,
+      })
     : formatPricingLabel({
-      priceAmount: priceAmount ?? null,
-      currencyCode: currencyCode ?? null,
-      isFree,
-    });
+        priceAmount: priceAmount ?? null,
+        currencyCode: currencyCode ?? null,
+        isFree,
+      });
   const created = course?.created_date ? new Date(course.created_date) : null;
   const createdLabel =
     created && !Number.isNaN(created.getTime())
       ? new Intl.DateTimeFormat('en-GB', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        timeZone: 'UTC',
-      }).format(created)
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          timeZone: 'UTC',
+        }).format(created)
       : '—';
   return (
     <Card className='gap-0 overflow-hidden py-0'>
       <div className='from-primary to-primary/80 text-primary-foreground bg-gradient-to-br p-5'>
-        <div className='text-xs tracking-wide uppercase'>
-          Starting From
-        </div>
+        <div className='text-xs tracking-wide uppercase'>Starting From</div>
         <div className='mt-1 font-mono text-3xl font-semibold'>{price}</div>
         {deliveryCount !== undefined && (
           <p className='mt-1 text-xs'>

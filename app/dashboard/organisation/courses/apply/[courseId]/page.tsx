@@ -5,13 +5,14 @@
 // Instructor and generic apply routes re-export this page.
 
 import { useQuery } from '@tanstack/react-query';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
-
 import { AsyncSection } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
@@ -23,12 +24,12 @@ import {
   getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
+import { instructorApplyToTrainHref } from '@/src/features/apply-to-train/links';
 import { type CourseTrainerApplicantType } from '@/src/features/course-record';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { dashboardUrl, routeSegmentFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useTrainingApplication } from '@/src/features/rate-card/hooks';
-import { ArrowLeft } from 'lucide-react';
 import { isApplicantTrainingRequirement } from './_components/apply-model';
 import { ApplyWizard, ApplyWizardSkeleton } from './_components/apply-wizard';
 
@@ -48,8 +49,17 @@ export default function ApplyPage() {
   const pathname = usePathname();
   const { replaceBreadcrumbs } = useBreadcrumb();
 
-  const { activeDomain } = useUserDomain();
-  const isInstructorDomain = activeDomain === 'instructor';
+  const { activeDomain, isReady: domainReady } = useUserDomain();
+  const pathSegment = routeSegmentFromPath(pathname);
+  const isInstructorDomain = pathSegment === 'instructor' || activeDomain === 'instructor';
+  // Instructors apply through their own flow; this page stays the organisation wizard.
+  const domainPending = !pathSegment && !domainReady;
+  useEffect(() => {
+    if (!isInstructorDomain || !trainingId) return;
+    router.replace(
+      instructorApplyToTrainHref({ kind: isProgram ? 'program' : 'course', uuid: trainingId }, editingUuid)
+    );
+  }, [isInstructorDomain, trainingId, isProgram, editingUuid, router]);
   const organisation = useOrganisation();
   const instructor = useInstructor();
   const profile = useUserProfile();
@@ -140,6 +150,15 @@ export default function ApplyPage() {
     ]);
   }, [replaceBreadcrumbs, applicantDomain, backHref, pathname]);
 
+  if (isInstructorDomain || domainPending) {
+    return (
+      <div className='mx-auto w-full max-w-[1600px] space-y-4 px-3 py-4 sm:px-5 lg:px-6'>
+        <Skeleton className='h-8 w-64' />
+        <Skeleton className='h-96 w-full rounded-2xl' />
+      </div>
+    );
+  }
+
   if (notFound) {
     return (
       <div className='text-muted-foreground p-8 text-center text-sm'>
@@ -160,10 +179,6 @@ export default function ApplyPage() {
     requirements,
     programRequirements,
     minimumFee,
-    courseAgeRange: {
-      min: course?.age_lower_limit ?? null,
-      max: course?.age_upper_limit ?? null,
-    },
     requirementsLoading: requirementsQuery.isLoading && requirementRowCount === 0,
     requirementsError: requirementsQuery.error,
     onRetryRequirements: () => void requirementsQuery.refetch(),

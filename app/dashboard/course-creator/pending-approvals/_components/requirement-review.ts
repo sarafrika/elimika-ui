@@ -10,9 +10,9 @@ export const REVIEW_ITEMS = [
     summary: 'Proposed training formats, delivery methods and venues.',
   },
   {
-    id: 'target-age-group',
-    title: 'Target age group',
-    summary: 'The age groups the applicant proposes to train.',
+    id: 'age-groups',
+    title: 'Age groups',
+    summary: 'The age groups the applicant proposes to train, with hours per lesson.',
   },
   {
     id: 'lesson-plan',
@@ -46,7 +46,7 @@ export function emptyReviewDraft(): ReviewDraft {
     requirements: {
       'skills-wallet': { status: 'under_review', comment: '' },
       'training-method': { status: 'under_review', comment: '' },
-      'target-age-group': { status: 'under_review', comment: '' },
+      'age-groups': { status: 'under_review', comment: '' },
       'lesson-plan': { status: 'under_review', comment: '' },
       'rate-card': { status: 'under_review', comment: '' },
     },

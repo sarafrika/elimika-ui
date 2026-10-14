@@ -40,6 +40,7 @@ import { creatorRole } from '../application-display';
 import { useApplicationHistory, useRateUpdates, useTrainingApplication } from '../hooks';
 import type { TrainingApplication, TrainingApplicationKind, TrainingRateUpdate } from '../types';
 import {
+  ApplicationAgeGroups,
   ApplicationHistoryList,
   DetailSection,
   DetailSectionSkeleton,
@@ -296,6 +297,19 @@ export function TrainingApplicationDetails({
             </DetailSection>
           ) : loading ? (
             <DetailSectionSkeleton rows={2} />
+          ) : null}
+
+          {application?.applicant_type === 'instructor' ? (
+            <DetailSection
+              title='Age groups'
+              description='Who you would teach, and the hours each group spends on every lesson.'
+            >
+              <ApplicationAgeGroups
+                kind={kind}
+                parentUuid={parentUuid}
+                groups={application.age_groups}
+              />
+            </DetailSection>
           ) : null}
 
           {application ? (

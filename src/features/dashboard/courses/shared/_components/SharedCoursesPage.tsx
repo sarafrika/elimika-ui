@@ -445,7 +445,7 @@ const createCatalogCards = (
       detailsPrefetchQuery: catalogItemPrefetchQuery(item.kind, item.id),
 
       enrollHref: isInstructorApplyCard
-        ? getApplyToTrainHref(item.kind, item.id)
+        ? getApplyToTrainHref(item.kind, item.id, domain)
         : roleScopedDashboardPath(domain, getEnrollHref(domain, item.kind, item.id)),
 
       instructorHref: roleScopedDashboardPath(domain, getInstructorHref(domain, item.id)),

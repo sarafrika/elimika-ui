@@ -41,6 +41,8 @@ type CourseCatalogCardLayoutProps = {
   badges?: ReactNode;
   stats: ReactNode;
   children: ReactNode;
+  /** Off where reviews mean nothing, e.g. the apply-to-train picker. */
+  showRating?: boolean;
 };
 
 const imageToneClasses = {
@@ -56,6 +58,7 @@ export function CourseCatalogCardLayout({
   badges,
   stats,
   children,
+  showRating = true,
 }: CourseCatalogCardLayoutProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
   const videoUrl = toAuthenticatedMediaUrl(card.videoUrl);
@@ -174,7 +177,7 @@ export function CourseCatalogCardLayout({
           )}
         </div>
 
-        {!card.reviewCount ? (
+        {!showRating ? null : !card.reviewCount ? (
           <span className='text-muted-foreground text-xs'>No reviews yet</span>
         ) : (
           <StarRatingSummary

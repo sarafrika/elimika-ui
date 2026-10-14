@@ -1,4 +1,3 @@
-import type { UserDomain } from '@/lib/types';
 import {
   BadgeCheck,
   BarChart3,
@@ -43,6 +42,7 @@ import {
   Wrench
 } from 'lucide-react';
 import type { ComponentType } from 'react';
+import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -313,6 +313,11 @@ export default {
           title: 'Training Hub',
           url: '/dashboard/training-hub',
           icon: ClipboardList,
+        },
+        {
+          title: 'Apply to Train',
+          url: '/dashboard/apply-to-train',
+          icon: Rocket,
         },
         {
           title: 'My Courses',

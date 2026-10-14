@@ -14,22 +14,21 @@ import type { TrainingApplication } from '@/src/features/rate-card/types';
 
 export type TrainingContentKind = 'course' | 'program';
 
-export type StepId = 'venues' | 'requirements' | 'target-group' | 'pricing' | 'review';
+export type StepId = 'venues' | 'requirements' | 'pricing' | 'review';
 
 export type ApplyStep = { id: StepId; label: string };
 
-/** Wizard order; instructors skip venues and add a lesson-plan step before pricing. */
+/** Wizard order; instructors skip venues. */
 export const APPLY_STEPS: readonly ApplyStep[] = [
   { id: 'venues', label: 'Classrooms & labs' },
   { id: 'requirements', label: 'Requirements' },
-  { id: 'target-group', label: 'Target group' },
   { id: 'pricing', label: 'Pricing' },
   { id: 'review', label: 'Review' },
 ];
 
 export function visibleSteps(applicantType: CourseTrainerApplicantType): readonly ApplyStep[] {
   return applicantType === 'organisation'
-    ? APPLY_STEPS.filter(step => step.id !== 'target-group')
+    ? APPLY_STEPS
     : APPLY_STEPS.filter(step => step.id !== 'venues');
 }
 
