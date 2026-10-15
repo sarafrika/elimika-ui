@@ -98,6 +98,10 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
     activeDomain,
     '/dashboard/courses/create-course'
   );
+  const createProgramHref = roleScopedDashboardPath(
+    activeDomain,
+    '/dashboard/courses/create-program'
+  );
   const createClassHref = roleScopedDashboardPath(activeDomain, '/dashboard/classes/new');
 
   return useMemo(() => {
@@ -109,6 +113,12 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
             description: 'Start building a new course',
             icon: Sparkles,
             onSelect: () => router.push(createCourseHref),
+          },
+          {
+            label: 'Create Program',
+            description: 'Bundle courses to create a new program',
+            icon: Sparkles,
+            onSelect: () => router.push(createProgramHref),
           },
         ];
 
