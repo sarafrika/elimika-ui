@@ -220,12 +220,26 @@ export function dedupeRequirements<T extends RequirementRow>(rows: readonly T[])
   });
 }
 
-/** The two cards: what the training provider has ready, and what the learner brings. */
+/**
+ * Split a requirement list into the provider buckets the course UI expects: the
+ * organisation, the instructor, the course creator, and the learner. The legacy
+ * `provided` / `bring` fields are kept for older callers that still render the
+ * two-card view.
+ */
 export function splitRequirements<T extends RequirementRow>(rows: readonly T[]) {
   const unique = dedupeRequirements(rows);
+  const organisation = unique.filter(row => normalise(row.provided_by) === 'organisation');
+  const instructor = unique.filter(row => normalise(row.provided_by) === 'instructor');
+  const courseCreator = unique.filter(row => normalise(row.provided_by) === 'course_creator');
+  const student = unique.filter(row => normalise(row.provided_by) === 'student');
+
   return {
-    provided: unique.filter(row => normalise(row.provided_by) !== 'student'),
-    bring: unique.filter(row => normalise(row.provided_by) === 'student'),
+    organisation,
+    instructor,
+    courseCreator,
+    student,
+    provided: [...organisation, ...instructor, ...courseCreator],
+    bring: student,
   };
 }
 

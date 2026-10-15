@@ -1,6 +1,10 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { AsyncSection } from '@/components/data/async-section';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
+import { SearchUnavailable } from '@/components/search/search-unavailable';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,27 +19,27 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Slider } from '@/components/ui/slider';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
-import { SearchQueryInput } from '@/components/search/search-input';
-import { SearchNotice } from '@/components/search/search-notice';
-import { SearchUnavailable } from '@/components/search/search-unavailable';
-import { isSearchUnavailable } from '@/lib/api-errors';
-import { useNearMe } from '@/src/features/near-me/near-me';
-import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
+import { useStudent } from '@/context/student-context';
 import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
+import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
+import { isSearchUnavailable } from '@/lib/api-errors';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   getCourseByUuidOptions,
   getInstructorReviewsOptions,
+  getTrainingProgramByUuidOptions,
+  listProgramTrainingApplicationsOptions,
   listTrainingApplicationsOptions,
+  searchProgramTrainingApplicationsOptions,
   searchSkillsOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import type { SearchInstructor } from '@/src/features/dashboard/courses/types';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useNearMe } from '@/src/features/near-me/near-me';
+import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
 import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
-import { AsyncSection } from '@/components/data/async-section';
-import { STALE_TIMES } from '@/lib/query-client';
 import { useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
@@ -57,6 +61,7 @@ import {
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Skeleton } from '../../../../../../../components/ui/skeleton';
 import { toAuthenticatedMediaUrl } from '../../../../../../lib/media-url';
 import { stripHtml } from '../../_components/courses-data';
@@ -235,7 +240,9 @@ function InstructorSearchPageSkeleton() {
 export default function StudentInstructorSearchPage() {
   const searchParams = useSearchParams();
   const courseId = searchParams.get('courseId');
+  const programId = searchParams.get('programId');
   const router = useRouter();
+  const student = useStudent();
   const { activeDomain } = useUserDomain();
   // Names, headlines and skills are matched by the search index (`q`); the other filters
   // narrow the returned page in the browser.
@@ -267,8 +274,17 @@ export default function StudentInstructorSearchPage() {
   });
   const course = courseResp?.data;
 
+  const { data: programResp, isLoading: isProgramLoading, isFetching: isProgramFetching } = useQuery({
+    ...getTrainingProgramByUuidOptions({
+      path: { uuid: programId as string },
+    }),
+    enabled: Boolean(programId),
+  });
+  const program = programResp?.data;
+
+  // update
   const {
-    data: applications,
+    data: courseApplications,
     isLoading: isApplicationsLoading,
     isFetching: isApplicationsFetching,
   } = useQuery({
@@ -279,10 +295,28 @@ export default function StudentInstructorSearchPage() {
     enabled: !!courseId,
   });
 
-  const approvedInstructorUuids =
-    applications?.data?.content
-      ?.filter(application => application?.applicant_type === 'instructor')
-      ?.map(application => application?.applicant_uuid) ?? [];
+  const {
+    data: programApplications,
+    isLoading: isProgramApplicationsLoading,
+    isFetching: isProgramApplicationsFetching,
+  } = useQuery({
+    ...listProgramTrainingApplicationsOptions({
+      path: { programUuid: programId as string },
+      query: { pageable: {}, status: 'approved' },
+    }),
+    enabled: !!programId,
+  });
+
+  const approvedInstructorUuids = [
+    ...(courseApplications?.data?.content ?? [])
+      .filter(application => application?.applicant_type === 'instructor')
+      .map(application => application?.applicant_uuid)
+      .filter((uuid): uuid is string => Boolean(uuid)),
+    ...(programApplications?.data?.content ?? [])
+      .filter(application => application?.applicant_type === 'instructor')
+      .map(application => application?.applicant_uuid)
+      .filter((uuid): uuid is string => Boolean(uuid)),
+  ].filter((uuid, index, arr) => arr.indexOf(uuid) === index);
 
   useEffect(() => {
     try {
@@ -329,12 +363,12 @@ export default function StudentInstructorSearchPage() {
   );
 
   const scopedInstructors = useMemo(() => {
-    if (!courseId) return [];
+    if (!courseId && !programId) return [];
 
     return trainingInstructors.filter(instructor =>
       approvedInstructorUuids.includes(instructor.uuid)
     );
-  }, [approvedInstructorUuids, courseId, trainingInstructors]);
+  }, [approvedInstructorUuids, courseId, programId, trainingInstructors]);
 
   const savedInstructors = useMemo(
     () => trainingInstructors.filter(instructor => savedInstructorUuids.includes(instructor.uuid)),
@@ -358,22 +392,36 @@ export default function StudentInstructorSearchPage() {
     loading ||
     isCourseLoading ||
     isCourseFetching ||
+    isProgramLoading ||
+    isProgramFetching ||
     isApplicationsLoading ||
-    isApplicationsFetching;
+    isApplicationsFetching ||
+    isProgramApplicationsLoading ||
+    isProgramApplicationsFetching;
 
   const showDistance = nearMe.active;
 
   const { data: instructorPricing } = useQuery({
-    ...searchTrainingApplicationsOptions({
-      query: {
-        pageable: {},
-        searchParams: {
-          course_uuid: courseId as string,
-          applicant_uuid_in: activeInstructorList.map(instructor => instructor.uuid).join(','),
+    ...(programId
+      ? searchProgramTrainingApplicationsOptions({
+        query: {
+          pageable: {},
+          searchParams: {
+            program_uuid: programId,
+            applicant_uuid_in: activeInstructorList.map(instructor => instructor.uuid).join(','),
+          },
         },
-      },
-    }),
-    enabled: Boolean(courseId) && activeInstructorList.length > 0,
+      })
+      : searchTrainingApplicationsOptions({
+        query: {
+          pageable: {},
+          searchParams: {
+            course_uuid: courseId as string,
+            applicant_uuid_in: activeInstructorList.map(instructor => instructor.uuid).join(','),
+          },
+        },
+      })),
+    enabled: (Boolean(courseId) || Boolean(programId)) && activeInstructorList.length > 0,
   });
 
   const pricingMap = useMemo(() => {
@@ -530,6 +578,22 @@ export default function StudentInstructorSearchPage() {
     );
   };
 
+  const handleHireInstructor = (uuid: string) => {
+    if (!student?.uuid) {
+      toast.error('Only students can hire or book instructors.');
+      return;
+    }
+
+    const params = new URLSearchParams();
+    if (courseId) params.set('courseId', courseId);
+    if (programId) params.set('programId', programId);
+    params.set('id', uuid);
+
+    router.push(
+      roleScopedDashboardPath(activeDomain, `/dashboard/courses/instructor?${params.toString()}`)
+    );
+  };
+
   const viewHeading =
     activeView === 'search'
       ? 'All Instructors'
@@ -539,25 +603,26 @@ export default function StudentInstructorSearchPage() {
 
   const viewSubheading =
     activeView === 'search'
-      ? 'Find, compare, and hire verified instructors.'
+      ? program
+        ? `Find, compare, and hire verified instructors for ${program.title}.`
+        : course
+          ? `Find, compare, and hire verified instructors for ${course.name}.`
+          : 'Find, compare, and hire verified instructors.'
       : activeView === 'saved'
         ? 'Review the instructors you saved for later.'
-        : 'See the instructors already approved for this course.';
+        : program
+          ? 'See the instructors already approved for this program.'
+          : course
+            ? 'See the instructors already approved for this course.'
+            : 'See the instructors already approved for this offering.';
 
   return (
     <div className="px-4 py-6">
-      <Link
-        href={roleScopedDashboardPath(activeDomain, '/dashboard/courses')}
-        className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to Browse Courses
-      </Link>
-
-      <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-xl font-semibold">{viewHeading}</h2>
           {/* <p className="text-sm text-muted-foreground">{viewSubheading}</p> */}
-          <p className="text-[15px] text-muted-foreground mt-1">{course?.name}</p>
+          <p className="text-[15px] text-muted-foreground mt-1">{program?.title ?? course?.name}</p>
 
         </div>
 
@@ -588,6 +653,13 @@ export default function StudentInstructorSearchPage() {
           </Button>
         </div>
       </div>
+
+      <Link
+        href={roleScopedDashboardPath(activeDomain, '/dashboard/courses')}
+        className="inline-flex items-center gap-1 p-6 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to Browse Courses
+      </Link>
 
       {nearUnavailable ? (
         <SearchUnavailable
@@ -654,7 +726,7 @@ export default function StudentInstructorSearchPage() {
             </section>
           )} */}
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-[280px_1fr]">
+          <div className="grid gap-4 lg:grid-cols-[280px_1fr]">
             {activeView === 'search' && (
               <aside className="space-y-4 rounded-xl border bg-card p-4">
                 <div>
@@ -938,14 +1010,7 @@ export default function StudentInstructorSearchPage() {
                           <Button
                             size="sm"
                             className="bg-primary hover:bg-primary/90"
-                            onClick={() =>
-                              router.push(
-                                roleScopedDashboardPath(
-                                  activeDomain,
-                                  `/dashboard/courses/instructor?courseId=${courseId ?? ''}&id=${instructor.uuid}`
-                                )
-                              )
-                            }
+                            onClick={() => handleHireInstructor(instructor.uuid as string)}
                           >
                             Hire Now
                           </Button>

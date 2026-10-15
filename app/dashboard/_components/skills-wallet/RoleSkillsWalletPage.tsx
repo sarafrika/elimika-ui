@@ -12,7 +12,7 @@ import {
   Trophy,
   UploadCloud,
 } from 'lucide-react';
-import { type FormEvent, useMemo, useState } from 'react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 
 import { useVerifiedSkillsContent } from '@/app/dashboard/_components/skills-wallet/live-data';
@@ -24,17 +24,17 @@ import { SkillsWalletExperienceTab } from '@/app/dashboard/student/skills-wallet
 import { SkillsWalletMySkillsTab } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletMySkillsTab';
 import { SkillsWalletOverviewTab } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletOverviewTab';
 import { SkillsWalletPortfolioTab } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletPortfolioTab';
-import type {
-  AchievementRecord,
-  CompetencyRecord,
-  CredentialRecord,
-  ExperienceRecord,
-  PortfolioRecord,
-  SkillRecord,
-  SkillsWalletData,
-  VerificationEventRecord,
+import {
+  WalletIdCard,
+  type AchievementRecord,
+  type CompetencyRecord,
+  type CredentialRecord,
+  type ExperienceRecord,
+  type PortfolioRecord,
+  type SkillRecord,
+  type SkillsWalletData,
+  type VerificationEventRecord,
 } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletShared';
-import { WalletIdCard } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletShared';
 import { SkillsWalletVerficationTab } from '@/app/dashboard/student/skills-wallet/_components/SkillsWalletVerficationTab';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
@@ -56,7 +56,6 @@ import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
 import { extractPage } from '@/lib/api-helpers';
 import { STALE_TIMES } from '@/lib/query-client';
-import { cn } from '@/lib/utils';
 import {
   addCourseCreatorExperienceMutation,
   addInstructorExperienceMutation,
@@ -87,13 +86,14 @@ import type {
   InstructorProfessionalMembership,
 } from '@/services/client/types.gen';
 
+import { PageHeader } from '../../../../components/page-header';
+import { AddAchievementDialog } from './AddAchievementDialog';
 import { RoleSkillsWalletMySkillsTab } from './RoleSkillsWalletMySkillsTab';
 import { SkillsWalletEducationTab } from './SkillsWalletEducationTab';
-import { useSkillsWalletAchievements } from './useSkillsWalletAchievements';
+import { canAddWalletAchievement } from './achievement-access';
 import { SKILL_PROFICIENCY, toWalletSkill } from './skill-proficiency';
 import { useWalletTab } from './use-wallet-tab';
-import { AddAchievementDialog } from './AddAchievementDialog';
-import { canAddWalletAchievement } from './achievement-access';
+import { useSkillsWalletAchievements } from './useSkillsWalletAchievements';
 
 type SkillsWalletRole = Extract<VerifiedSkillsRole, 'instructor' | 'course_creator'>;
 
@@ -1000,128 +1000,127 @@ function ProfileSkillsWalletPage({
   };
 
   return (
-    <div className='min-h-screen'>
-      <div className='border-b'>
-        <div className={cn(surfaceTheme.pageWide, 'py-5')}>
-          <div className='flex flex-row items-center justify-between'>
-            <div>
-              <h1 className='text-foreground text-2xl font-bold'>Skills Wallet</h1>
-              <p className='text-muted-foreground text-sm'>
-                Your verified record of skills, competencies, achievements and credentials.
-              </p>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
+      <div className={surfaceTheme.pageStack}>
+        <PageHeader
+          eyebrow='SKILLS WALLET'
+          title='Skills Wallet'
+          description='Your verified record of skills, competencies, achievements and credentials.'
+          actions={
+            <div className='flex flex-wrap gap-2'>
+              <WalletIdCard label={`${getRoleLabel(role)} Wallet ID`} />
             </div>
-            <WalletIdCard label={`${getRoleLabel(role)} Wallet ID`} />
-          </div>
-        </div>
-      </div>
+          }
+        />
 
-      <div className={cn(surfaceTheme.pageWide, 'py-6')}>
-        <SectionTabs
-          tabs={TABS}
-          value={tab}
-          onValueChange={setTab}
-          hrefFor={hrefFor}
-          label='Wallet sections'
-          variant='pill'
-          sticky
-        >
-          <SectionTabPanel value='overview'>
-            {tab === 'overview' ? (
-              skillsFailed ? (
-                <EmptyState
-                  title='Unable to load wallet skills'
-                  action={
-                    <Button variant='outline' onClick={() => void skillsQuery.refetch()}>
-                      Try again
-                    </Button>
-                  }
+        <div>
+          <SectionTabs
+            tabs={TABS}
+            value={tab}
+            onValueChange={setTab}
+            hrefFor={hrefFor}
+            label='Wallet sections'
+            variant='pill'
+            sticky
+          >
+            <SectionTabPanel value='overview'>
+              {tab === 'overview' ? (
+                skillsFailed ? (
+                  <EmptyState
+                    title='Unable to load wallet skills'
+                    action={
+                      <Button variant='outline' onClick={() => void skillsQuery.refetch()}>
+                        Try again
+                      </Button>
+                    }
+                  />
+                ) : (
+                  <SkillsWalletOverviewTab
+                    data={data}
+                    isLoading={
+                      skillsQuery.isLoading ||
+                      verifiedSkillsContent.isLoading ||
+                      experienceQuery.isLoading || achievementsQuery.isLoading
+                    }
+                    achievementsFailed={achievementsQuery.isError}
+                    onRetryAchievements={() => void achievementsQuery.refetch()}
+                    onNavigateToTab={value => setTab(value as TabId)}
+                  />
+                )
+              ) : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='skills'>
+              {tab === 'skills' ? (
+                profileUuid ? (
+                  <RoleSkillsWalletMySkillsTab
+                    key={`${role}-${profileUuid}`}
+                    role={role}
+                    profileUuid={profileUuid}
+                  />
+                ) : (
+                  <SkillsWalletMySkillsTab data={{ skills: [], categoryCounts: [] }} />
+                )
+              ) : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='education'>
+              {tab === 'education' ? <SkillsWalletEducationTab /> : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='portfolio'>
+              {tab === 'portfolio' ? <SkillsWalletPortfolioTab /> : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='credentials'>
+              {tab === 'credentials' ? (
+                <SkillsWalletCredentialsVaultTab
+                  data={credentialData}
+                  onAddCredential={() => setCredentialOpen(true)}
                 />
-              ) : (
-                <SkillsWalletOverviewTab
-                  data={data}
-                  isLoading={
-                    skillsQuery.isLoading ||
-                    verifiedSkillsContent.isLoading ||
-                    experienceQuery.isLoading || achievementsQuery.isLoading
-                  }
-                  achievementsFailed={achievementsQuery.isError}
-                  onRetryAchievements={() => void achievementsQuery.refetch()}
-                  onNavigateToTab={value => setTab(value as TabId)}
+              ) : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='competencies'>
+              {tab === 'competencies' ? <SkillsWalletCompetenciesTab data={data} /> : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='experience'>
+              {tab === 'experience' ? (
+                <SkillsWalletExperienceTab
+                  experiences={data.experiences}
+                  title={`${getRoleLabel(role)} Experience`}
+                  onAddExperience={() => setExperienceOpen(true)}
+                  onDeleteExperience={setDeletingExperience}
                 />
-              )
-            ) : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='skills'>
-            {tab === 'skills' ? (
-              profileUuid ? (
-                <RoleSkillsWalletMySkillsTab
-                  key={`${role}-${profileUuid}`}
-                  role={role}
-                  profileUuid={profileUuid}
+              ) : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='achievements'>
+              {tab === 'achievements' ? (
+                <SkillsWalletAchievementsTab
+                  canAddAchievement={canAddAchievement}
+                  onAddAchievement={() => {
+                    setEditingAchievement(null);
+                    setAchievementOpen(true);
+                  }}
+                  onEditAchievement={achievement => {
+                    setEditingAchievement(achievement);
+                    setAchievementOpen(true);
+                  }}
+                  achievements={data.achievements}
+                  isLoading={achievementsQuery.isLoading}
+                  failed={achievementsQuery.isError}
+                  onRetry={() => void achievementsQuery.refetch()}
+                  title='Achievements'
                 />
-              ) : (
-                <SkillsWalletMySkillsTab data={{ skills: [], categoryCounts: [] }} />
-              )
-            ) : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='education'>
-            {tab === 'education' ? <SkillsWalletEducationTab /> : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='portfolio'>
-            {tab === 'portfolio' ? <SkillsWalletPortfolioTab /> : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='credentials'>
-            {tab === 'credentials' ? (
-              <SkillsWalletCredentialsVaultTab
-                data={credentialData}
-                onAddCredential={() => setCredentialOpen(true)}
-              />
-            ) : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='competencies'>
-            {tab === 'competencies' ? <SkillsWalletCompetenciesTab data={data} /> : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='experience'>
-            {tab === 'experience' ? (
-              <SkillsWalletExperienceTab
-                experiences={data.experiences}
-                title={`${getRoleLabel(role)} Experience`}
-                onAddExperience={() => setExperienceOpen(true)}
-                onDeleteExperience={setDeletingExperience}
-              />
-            ) : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='achievements'>
-            {tab === 'achievements' ? (
-              <SkillsWalletAchievementsTab
-                canAddAchievement={canAddAchievement}
-                onAddAchievement={() => {
-                  setEditingAchievement(null);
-                  setAchievementOpen(true);
-                }}
-                onEditAchievement={achievement => {
-                  setEditingAchievement(achievement);
-                  setAchievementOpen(true);
-                }}
-                achievements={data.achievements}
-                isLoading={achievementsQuery.isLoading}
-                failed={achievementsQuery.isError}
-                onRetry={() => void achievementsQuery.refetch()}
-                title='Achievements'
-              />
-            ) : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='verification'>
-            {tab === 'verification' ? (
-              <SkillsWalletVerficationTab
-                events={data.verificationEvents}
-                title='Verification'
-                description='Automatically updated after trusted profile records are completed.'
-                onAddProof={() => setCredentialOpen(true)}
-              />
-            ) : null}
-          </SectionTabPanel>
-        </SectionTabs>
+              ) : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='verification'>
+              {tab === 'verification' ? (
+                <SkillsWalletVerficationTab
+                  events={data.verificationEvents}
+                  title='Verification'
+                  description='Automatically updated after trusted profile records are completed.'
+                  onAddProof={() => setCredentialOpen(true)}
+                />
+              ) : null}
+            </SectionTabPanel>
+          </SectionTabs>
+        </div>
       </div>
 
       <DeleteModal

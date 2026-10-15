@@ -2,9 +2,9 @@
 
 import { ClassScheduleCalendar } from '@/app/class-invite/page';
 import {
-  BillingBasisCards,
   basisStatus,
   billableUnits,
+  BillingBasisCards,
   computeUpcomingSessions,
   DEFAULT_DAYS,
   DeliveryCards,
@@ -14,18 +14,18 @@ import {
   OfferingPicker,
   PickDatesPanel,
   ScheduleModeCards,
-  ServiceCards,
-  type ServiceKey,
   scheduleTotals,
+  ServiceCards,
   serviceFormat,
   sessionMinutesFor,
   StandardSchedule,
   toDateTime,
-  UpcomingSessions,
   unitsLabel,
+  UpcomingSessions,
   type DayKey,
   type DayRow,
   type Offering,
+  type ServiceKey,
 } from '@/components/class-form';
 import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -44,6 +44,14 @@ import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import useSearchTrainingInstructors from '@/hooks/use-search-training-instructors';
 import { localDate } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
+import {
+  formatRate,
+  formatRateAmount,
+  formatRateBasis,
+  rateFor,
+  type DeliveryMode,
+  type SelectableRateBasis,
+} from '@/lib/rate-card';
 import type { SchedulingConflict } from '@/lib/scheduling-conflicts';
 import {
   createBookingMutation,
@@ -54,14 +62,6 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ScheduledInstance } from '@/services/client/types.gen';
-import {
-  type DeliveryMode,
-  formatRate,
-  formatRateAmount,
-  formatRateBasis,
-  type SelectableRateBasis,
-  rateFor,
-} from '@/lib/rate-card';
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
@@ -79,6 +79,7 @@ const DEFAULT_END_TIME = '10:00';
 
 type Props = {
   courseId: string | null;
+  programId?: string | null;
   instructorId: string | null;
 };
 
@@ -183,7 +184,7 @@ function InstructorSummary({ instructor }: { instructor: SearchInstructor }) {
   );
 }
 
-export default function InstructorHirePage({ courseId, instructorId }: Props) {
+export default function InstructorHirePage({ courseId, programId, instructorId }: Props) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const student = useStudent();
@@ -215,6 +216,12 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   const [endDate, setEndDate] = useState(fmtDate(new Date(Date.now() + 28 * 86400000)));
   const [requirementsChecked, setRequirementsChecked] = useState<Record<string, boolean>>({});
   const [termsOk, setTermsOk] = useState(false);
+
+  useEffect(() => {
+    if (!student?.uuid) {
+      toast.error('Only students can hire or book instructors.');
+    }
+  }, [student?.uuid]);
 
   const courseApplicationsQuery = useQuery({
     ...searchTrainingApplicationsOptions({
@@ -327,13 +334,16 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
     if (offeringsLoading) return;
     setSelectedOffering(current => {
       if (offerings.some(offering => offering.value === current)) return current;
+      const preferredProgram = programId ? `program:${programId}` : null;
+      const preferredCourse = courseId ? `course:${courseId}` : null;
       return (
-        offerings.find(offering => offering.value === `course:${courseId}`)?.value ??
+        offerings.find(offering => offering.value === preferredProgram)?.value ??
+        offerings.find(offering => offering.value === preferredCourse)?.value ??
         offerings[0]?.value ??
         ''
       );
     });
-  }, [courseId, offerings, offeringsLoading]);
+  }, [courseId, offerings, offeringsLoading, programId]);
 
   useEffect(() => {
     setRequirementsChecked({});
@@ -465,13 +475,18 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   const createBooking = useMutation(createBookingMutation());
   const isSubmitting = createBooking.isPending;
 
-  const handleBack = () =>
+  const handleBack = () => {
+    const params = new URLSearchParams();
+    if (courseId) params.set('courseId', courseId);
+    if (programId) params.set('programId', programId);
+
     router.push(
       roleScopedDashboardPath(
         activeDomain,
-        `/dashboard/courses/instructor${courseId ? `?courseId=${courseId}` : ''}`
+        `/dashboard/courses/instructor${params.toString() ? `?${params.toString()}` : ''}`
       )
     );
+  };
 
   const handleDeliveryChange = (next: DeliveryMode) => {
     setDelivery(next);
@@ -490,10 +505,13 @@ export default function InstructorHirePage({ courseId, instructorId }: Props) {
   };
 
   const handleSubmit = async () => {
-    if (!student?.uuid) return toast.error('Student profile is required before booking.');
+    if (!student?.uuid) {
+      toast.error('Only students can hire or book instructors.');
+      return;
+    }
     if (selectedProgram) return toast.error('Program booking is not available yet.');
     if (!instructorId || !selectedCourseUuid || !selectedApplication)
-      return toast.error('Select an approved course or program.');
+      return toast.error('Select an approved course.');
     if (!delivery) return toast.error('Pick how the sessions are delivered.');
     if (!rateBasis) return toast.error('Pick how you would like to be billed.');
     if (!serviceKey) return toast.error('Pick a service.');

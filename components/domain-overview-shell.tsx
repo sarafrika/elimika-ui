@@ -2,7 +2,13 @@
 
 import { surfaceTheme } from '@/components/data-display';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 import type { ReactNode } from 'react';
+
+import { WelcomeBanner } from '@/components/dashboard';
+import { Button } from '@/components/ui/button';
+import { useOrganisation } from '@/context/organisation-context';
+import { useUserProfile } from '@/context/profile-context';
 
 type BadgeTone = 'default' | 'secondary' | 'success' | 'warning' | 'destructive' | 'outline';
 
@@ -15,10 +21,19 @@ interface DomainOverviewShellProps {
     tone?: BadgeTone;
   };
   actions?: ReactNode;
+  welcomeContent?: ReactNode;
   leftColumn: ReactNode;
   rightColumn: ReactNode;
+  children: ReactNode;
   className?: string;
 }
+
+const dateLabel = () =>
+  new Date().toLocaleDateString('en-KE', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
 
 function DomainOverviewShell({
   domainLabel,
@@ -26,44 +41,74 @@ function DomainOverviewShell({
   subtitle,
   badge,
   actions,
+  welcomeContent,
   leftColumn,
   rightColumn,
   className,
+  children,
 }: DomainOverviewShellProps) {
   return (
-    <div className={cn(surfaceTheme.pageWide, 'space-y-6 overflow-x-auto py-10', className)}>
-      {/* <div className='border-border bg-card rounded-3xl border p-6 shadow-sm'>
-        <div className='flex flex-col gap-6 md:flex-row md:items-center md:justify-between'>
-          <div className='space-y-2'>
-            <Badge
-              variant='outline'
-              className='border-border/70 bg-muted/60 text-xs font-semibold tracking-[0.3em] uppercase'
-            >
-              {domainLabel}
-            </Badge>
-            <h1 className='text-3xl font-semibold tracking-tight'>{title}</h1>
-            <p className='text-muted-foreground text-sm'>{subtitle}</p>
-          </div>
-          <div className='flex flex-col items-start gap-3 sm:flex-row sm:items-center'>
-            {badge ? (
-              <Badge
-                variant={badge.tone ?? 'outline'}
-                className='gap-1 rounded-full px-3 py-1 text-xs font-semibold tracking-wide'
-              >
-                {badge.label}
-              </Badge>
-            ) : null}
-            {actions}
-          </div>
-        </div>
-      </div> */}
+    <div className={cn(surfaceTheme.pageWide, 'space-y-6 overflow-x-auto pt-4 pb-10', className)}>
+      <OverviewWelcome welcomeContent={welcomeContent} />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">
+      {children}
+
+      {/* <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">
         <section className="space-y-4">{leftColumn}</section>
         <section className="space-y-4">{rightColumn}</section>
-      </div>
+      </div> */}
     </div>
   );
 }
 
 export default DomainOverviewShell;
+
+
+/** Greeting banner for the org overview, wired to the org + profile context. */
+function OverviewWelcome({ welcomeContent }: { welcomeContent?: ReactNode }) {
+  const organisation = useOrganisation();
+  const profile = useUserProfile();
+
+  const firstName = profile?.first_name?.trim();
+  const orgName = organisation?.name?.trim();
+  const title = firstName
+    ? `Welcome back, ${firstName}`
+    : orgName
+      ? `Welcome, ${orgName}`
+      : 'Welcome back';
+
+  return (
+    <WelcomeBanner
+      eyebrow={dateLabel()}
+      title={title}
+      description={
+        orgName
+          ? `Here's what's happening across ${orgName} today.`
+          : "Here's what's happening across your account today."
+      }
+      content={welcomeContent}
+      compact
+      className='bg-primary/75'
+      actions={
+        <>
+          <Button
+            asChild
+            variant='secondary'
+            size='sm'
+            className='bg-white/15 text-white hover:bg-white/25 sm:h-10 sm:px-4'
+          >
+            <Link href='/dashboard/course-creator/analytics'>View Analytics</Link>
+          </Button>
+          <Button
+            asChild
+            size='sm'
+            className='bg-teal-500 text-white shadow-sm hover:bg-teal-600 sm:h-10 sm:px-4'
+          >
+            <Link href='/dashboard/course-creator/pending-approvals'>Manage Approvals</Link>
+          </Button>
+        </>
+      }
+    />
+  );
+}
+

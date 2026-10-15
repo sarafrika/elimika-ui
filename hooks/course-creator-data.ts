@@ -1,6 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import {
   calculateCourseAnalytics,
   calculateMonetizationSummary,
@@ -11,7 +10,8 @@ import {
   type CourseCreatorDashboardData,
   emptyCourseCreatorDashboardData,
 } from '@/lib/types/course-creator';
-import { type Course, type CourseCreator, searchCourses } from '@/services/client';
+import { type Course, type CourseCreator, searchCourses, searchTrainingPrograms, TrainingProgram } from '@/services/client';
+import { useQuery } from '@tanstack/react-query';
 import { useUserProfile } from '../context/profile-context';
 
 /** First-load state of the creator's course list, for sections derived from it. */
@@ -41,7 +41,7 @@ export function useCourseCreatorDashboardData() {
       const response = await searchCourses({
         query: {
           searchParams: { course_creator_uuid_eq: courseCreator?.uuid },
-          pageable: { page: 0, size: 100, sort: [] },
+          pageable: { page: 0, size: 100 },
         },
       });
       const content = response.data?.data?.content;
@@ -51,7 +51,23 @@ export function useCourseCreatorDashboardData() {
     staleTime: STALE_TIMES.entity,
   });
 
-  const loading = Boolean(user?.isLoading) || coursesQuery.isLoading;
+  const programsQuery = useQuery({
+    queryKey: ['course-creator-dashboard-programs', courseCreator?.uuid],
+    queryFn: async () => {
+      const response = await searchTrainingPrograms({
+        query: {
+          searchParams: { course_creator_uuid_eq: courseCreator?.uuid },
+          pageable: { page: 0, size: 100 },
+        },
+      });
+      const content = response.data?.data?.content;
+      return Array.isArray(content) ? (content as TrainingProgram[]) : [];
+    },
+    enabled: Boolean(hasCourseCreatorDomain && courseCreator?.uuid),
+    staleTime: STALE_TIMES.entity,
+  });
+
+  const loading = Boolean(user?.isLoading) || coursesQuery.isLoading || programsQuery.isLoading;
   const coursesStatus: CourseCreatorCoursesStatus = {
     loading,
     error: coursesQuery.error,
@@ -71,14 +87,16 @@ export function useCourseCreatorDashboardData() {
   }
 
   const courses = coursesQuery.data ?? [];
+  const programs = programsQuery.data ?? [];
 
   const data: CourseCreatorDashboardData = {
     userUuid,
     profile: courseCreator,
     courses,
-    analytics: calculateCourseAnalytics(courses),
+    programs,
+    analytics: calculateCourseAnalytics(courses, programs),
     monetization: calculateMonetizationSummary(courses),
-    trainingRequirements: calculateTrainingRequirementSummary(courses),
+    trainingRequirements: calculateTrainingRequirementSummary(courses, programs),
     verification: {
       adminVerified: courseCreator?.admin_verified ?? false,
       profileComplete: courseCreator?.is_profile_complete ?? false,

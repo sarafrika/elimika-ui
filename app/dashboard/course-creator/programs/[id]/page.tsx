@@ -10,9 +10,13 @@ import { Button } from '@/components/ui/button';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getTrainingProgramByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { ProgramRecordRouteActions } from '@/src/features/dashboard/programs/components/ProgramRecordRouteActions';
 import { ProgramRecordPage } from '@/src/features/program-record';
+import { surfaceTheme } from '../../../../../components/data-display';
+import { cn } from '../../../../../lib/utils';
 
-const PROGRAMS_HREF = '/dashboard/course-creator/programs';
+const PROGRAMS_HREF = '/dashboard/course-creator/courses';
+const CATALOGUE_HREF = PROGRAMS_HREF;
 const EDIT_PROGRAM_HREF = '/dashboard/course-creator/courses/create-program';
 
 /**
@@ -48,17 +52,26 @@ export default function CourseCreatorProgramRoute() {
   if (!programUuid) return null;
 
   return (
-    <ProgramRecordPage
-      programUuid={programUuid}
-      backHref={PROGRAMS_HREF}
-      primaryAction={
-        <Button asChild className='h-10 w-full rounded-[10px]'>
-          <Link href={`${EDIT_PROGRAM_HREF}?id=${encodeURIComponent(programUuid)}`}>
-            <Pen className='size-4' />
-            Edit programme
-          </Link>
-        </Button>
-      }
-    />
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
+      <ProgramRecordRouteActions
+        programUuid={programUuid}
+        classesHref={`${CATALOGUE_HREF}/available-programs/${programUuid}`}
+        instructorsHref={`${CATALOGUE_HREF}/instructor?courseId=${encodeURIComponent(programUuid)}`}
+      />
+
+      <ProgramRecordPage
+        programUuid={programUuid}
+        backHref={PROGRAMS_HREF}
+        primaryAction={
+          <Button asChild className='h-10 w-full rounded-[10px]'>
+            <Link href={`${EDIT_PROGRAM_HREF}?id=${encodeURIComponent(programUuid)}`}>
+              <Pen className='size-4' />
+              Edit programme
+            </Link>
+          </Button>
+        }
+      />
+    </div>
+
   );
 }

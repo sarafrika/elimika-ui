@@ -2,17 +2,22 @@
 'use client';
 
 import { STALE_TIMES } from '@/lib/query-client';
+import { withOnData } from '@/lib/query-on-data';
 import {
   ClassDefinition,
   CourseAssessment,
-  type ClassBatchSummary,
+  getCourseTrainingRequirements,
+  getProgramRequirements,
   searchCourses,
   type Assignment,
+  type ClassBatchSummary,
   type Course,
   type CourseCreator,
+  type CourseTrainingRequirement,
   type Enrollment,
   type Instructor,
   type Organisation,
+  type ProgramRequirement,
   type Quiz,
   type SearchResponse,
   type Student,
@@ -40,9 +45,8 @@ import {
   searchStudentsOptions,
   searchTrainingProgramsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { type QueryClient, useQueries } from '@tanstack/react-query';
+import { useQueries, type QueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
-import { withOnData } from '@/lib/query-on-data';
 
 /**
  * Batched entity lookups: one search request per ~100 ids (`uuid_in=` filter)
@@ -434,6 +438,116 @@ export function useProgramsByIds(ids: string[]) {
     STALE_TIMES.reference
   );
   return { programMap: map, isLoading };
+}
+
+export function useTrainingRequirementsByIds(courseIds: string[], programIds: string[]) {
+  const courseUniqueIds = useMemo(() => uniqueSortedIds(courseIds), [courseIds]);
+  const programUniqueIds = useMemo(() => uniqueSortedIds(programIds), [programIds]);
+
+  const queries = useMemo(
+    () => [
+      ...courseUniqueIds.map(courseUuid => ({
+        queryKey: ['course-training-requirements', courseUuid],
+        queryFn: async ({ signal }: { signal?: AbortSignal }) => {
+          const content: CourseTrainingRequirement[] = [];
+
+          for (let page = 0; ; page += 1) {
+            const { data, error } = await getCourseTrainingRequirements({
+              path: { courseUuid },
+              query: { pageable: { page, size: 200 } },
+              signal,
+            });
+
+            if (error) throw error;
+
+            const rows = data?.data?.content ?? [];
+            content.push(...rows);
+            const metadata = data?.data?.metadata;
+            const hasNext =
+              metadata?.hasNext ??
+              (metadata?.last !== undefined ? !metadata.last : metadata?.totalPages !== undefined
+                ? page + 1 < metadata.totalPages
+                : metadata?.totalElements !== undefined
+                  ? content.length < Number(metadata.totalElements)
+                  : rows.length > 0);
+
+            if (!hasNext || rows.length === 0) {
+              return { items: content };
+            }
+          }
+        },
+        staleTime: STALE_TIMES.entity,
+      })),
+      ...programUniqueIds.map(programUuid => ({
+        queryKey: ['program-training-requirements', programUuid],
+        queryFn: async ({ signal }: { signal?: AbortSignal }) => {
+          const content: ProgramRequirement[] = [];
+
+          for (let page = 0; ; page += 1) {
+            const { data, error } = await getProgramRequirements({
+              path: { programUuid },
+              query: { pageable: { page, size: 200 } },
+              signal,
+            });
+
+            if (error) throw error;
+
+            const rows = data?.data?.content ?? [];
+            content.push(...rows);
+            const metadata = data?.data?.metadata;
+            const hasNext =
+              metadata?.hasNext ??
+              (metadata?.last !== undefined ? !metadata.last : metadata?.totalPages !== undefined
+                ? page + 1 < metadata.totalPages
+                : metadata?.totalElements !== undefined
+                  ? content.length < Number(metadata.totalElements)
+                  : rows.length > 0);
+
+            if (!hasNext || rows.length === 0) {
+              return { items: content };
+            }
+          }
+        },
+        staleTime: STALE_TIMES.entity,
+      })),
+    ],
+    [courseUniqueIds, programUniqueIds]
+  );
+
+  return useQueries({
+    queries,
+    combine: results => {
+      const courseRequirementMap: Record<string, CourseTrainingRequirement[]> = {};
+      const programRequirementMap: Record<string, ProgramRequirement[]> = {};
+
+      for (const [index, result] of results.entries()) {
+        const isCourseQuery = index < courseUniqueIds.length;
+        const uuid = isCourseQuery ? courseUniqueIds[index] : programUniqueIds[index - courseUniqueIds.length];
+
+        if (!uuid) continue;
+
+        const items = ((result.data as { items?: CourseTrainingRequirement[] | ProgramRequirement[] } | undefined)
+          ?.items ?? []) as CourseTrainingRequirement[] | ProgramRequirement[];
+
+        if (isCourseQuery) {
+          courseRequirementMap[uuid] = items as CourseTrainingRequirement[];
+        } else {
+          programRequirementMap[uuid] = items as ProgramRequirement[];
+        }
+      }
+
+      return {
+        courseRequirementMap,
+        programRequirementMap,
+        isLoading: results.some(result => result.isLoading),
+        isError: results.some(
+          result => result.isError || result.data?.error || result.data?.success === false
+        ),
+        error: results.find(result => result.error)?.error ?? null,
+        refetch: () => Promise.all(results.map(result => result.refetch())),
+      };
+    },
+  });
 }
 
 export function useAssignmentsByIds(ids: string[]) {

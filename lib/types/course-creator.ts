@@ -1,4 +1,4 @@
-import type { Course, CourseCreator } from '@/services/client';
+import type { Course, CourseCreator, TrainingProgram } from '@/services/client';
 
 interface CourseCreatorAssignment {
   organisationUuid?: string;
@@ -12,9 +12,12 @@ interface CourseCreatorAssignment {
 
 export interface CourseCreatorAnalyticsSummary {
   totalCourses: number;
+  totalPrograms: number;
   publishedCourses: number;
+  publishedPrograms: number;
   inReviewCourses: number;
   draftCourses: number;
+  draftPrograms: number;
   archivedCourses: number;
 }
 
@@ -32,6 +35,10 @@ export interface CourseCreatorTrainingRequirementSummary {
   totalRequirements: number;
   mandatoryRequirements: number;
   optionalRequirements: number;
+  courseCount: number;
+  programCount: number;
+  publishedCourseCount: number;
+  publishedProgramCount: number;
 }
 
 export interface CourseCreatorVerificationStatus {
@@ -50,6 +57,7 @@ export interface CourseCreatorDashboardData {
   userUuid: string | null;
   profile: CourseCreator | null;
   courses: Course[];
+  programs: TrainingProgram[];
   analytics: CourseCreatorAnalyticsSummary;
   monetization: CourseCreatorMonetizationSummary;
   trainingRequirements: CourseCreatorTrainingRequirementSummary;
@@ -61,11 +69,15 @@ export const emptyCourseCreatorDashboardData: CourseCreatorDashboardData = {
   userUuid: null,
   profile: null,
   courses: [],
+  programs: [],
   analytics: {
     totalCourses: 0,
+    totalPrograms: 0,
     publishedCourses: 0,
+    publishedPrograms: 0,
     inReviewCourses: 0,
     draftCourses: 0,
+    draftPrograms: 0,
     archivedCourses: 0,
   },
   monetization: {
@@ -81,6 +93,10 @@ export const emptyCourseCreatorDashboardData: CourseCreatorDashboardData = {
     totalRequirements: 0,
     mandatoryRequirements: 0,
     optionalRequirements: 0,
+    courseCount: 0,
+    programCount: 0,
+    publishedCourseCount: 0,
+    publishedProgramCount: 0,
   },
   verification: {
     adminVerified: false,

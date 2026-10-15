@@ -1,14 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wallet-tab';
-import { SkillsWalletEducationTab } from '@/app/dashboard/_components/skills-wallet/SkillsWalletEducationTab';
 import { AddAchievementDialog } from '@/app/dashboard/_components/skills-wallet/AddAchievementDialog';
+import { SkillsWalletEducationTab } from '@/app/dashboard/_components/skills-wallet/SkillsWalletEducationTab';
 import { canAddWalletAchievement } from '@/app/dashboard/_components/skills-wallet/achievement-access';
+import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wallet-tab';
 import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
-import { useStudent } from '@/context/student-context';
 import { useUserProfile } from '@/context/profile-context';
-import { cn } from '@/lib/utils';
+import { useStudent } from '@/context/student-context';
 import { LearnerSkillGoalsCard } from '@/src/features/skills/learner-skill-goals-card';
 import {
   BadgeCheck,
@@ -20,7 +18,9 @@ import {
   Target,
   Trophy,
 } from 'lucide-react';
+import { useState } from 'react';
 
+import { PageHeader } from '../../../../components/page-header';
 import { SkillsWalletAchievementsTab } from './_components/SkillsWalletAchievementsTab';
 import { SkillsWalletCompetenciesTab } from './_components/SkillsWalletCompetenciesTab';
 import { SkillsWalletCredentialsVaultTab } from './_components/SkillsWalletCredentialsVaultTab';
@@ -58,93 +58,95 @@ export default function SkillsWallet() {
   const [editingAchievement, setEditingAchievement] = useState<AchievementRecord | null>(null);
 
   return (
-    <div className='min-h-screen'>
-      <div className='border-b'>
-        <div className={cn(surfaceTheme.pageWide, 'py-5')}>
-          <div className='flex flex-row items-center justify-between'>
-            <div>
-              <h1 className='text-foreground text-2xl font-bold'>Skills Wallet</h1>
-              <p className='text-muted-foreground text-sm'>
-                Your verified record of skills, competencies, achievements and credentials.
-              </p>
+    <div className={`${surfaceTheme.pageWide} py-4`}>
+      <div className={surfaceTheme.pageStack}>
+        <PageHeader
+          eyebrow='SKILLS WALLET'
+          title='Skills Wallet'
+          description='Your verified record of skills, competencies, achievements and credentials.'
+          actions={
+            <div className='flex flex-wrap gap-2'>
+              <WalletIdCard />
             </div>
-            <WalletIdCard />
-          </div>
+          }
+        />
+
+        <div>
+          <SectionTabs
+            tabs={TABS}
+            value={tab}
+            onValueChange={setTab}
+            hrefFor={hrefFor}
+            label='Wallet sections'
+            variant='pill'
+            sticky
+          >
+            <SectionTabPanel value='overview'>
+              {tab === 'overview' ? (
+                <SkillsWalletOverviewTab
+                  data={data}
+                  isLoading={data.isLoading}
+                  achievementsFailed={data.achievementsQuery.isError}
+                  onRetryAchievements={() => void data.achievementsQuery.refetch()}
+                  onNavigateToTab={value => setTab(value as TabId)}
+                />
+              ) : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='skills'>
+              {tab === 'skills' ? (
+                <div className='space-y-6'>
+                  <LearnerSkillGoalsCard studentUuid={student?.uuid} />
+                  <SkillsWalletMySkillsTab data={data} />
+                </div>
+              ) : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='education'>
+              {tab === 'education' ? <SkillsWalletEducationTab /> : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='portfolio'>
+              {tab === 'portfolio' ? <SkillsWalletPortfolioTab /> : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='credentials'>
+              {tab === 'credentials' ? <SkillsWalletCredentialsVaultTab data={data} /> : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='competencies'>
+              {tab === 'competencies' ? <SkillsWalletCompetenciesTab data={data} /> : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='experience'>
+              {tab === 'experience' ? (
+                <SkillsWalletExperienceTab experiences={data.experiences} />
+              ) : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='achievements'>
+              {tab === 'achievements' ? (
+                <SkillsWalletAchievementsTab
+                  canAddAchievement={canAddAchievement}
+                  onAddAchievement={() => {
+                    setEditingAchievement(null);
+                    setAchievementOpen(true);
+                  }}
+                  onEditAchievement={achievement => {
+                    setEditingAchievement(achievement);
+                    setAchievementOpen(true);
+                  }}
+                  achievements={data.achievements}
+                  isLoading={data.achievementsQuery.isLoading}
+                  failed={data.achievementsQuery.isError}
+                  onRetry={() => void data.achievementsQuery.refetch()}
+                />
+              ) : null}
+            </SectionTabPanel>
+            <SectionTabPanel value='verification'>
+              {tab === 'verification' ? (
+                <SkillsWalletVerficationTab events={data.verificationEvents} />
+              ) : null}
+            </SectionTabPanel>
+          </SectionTabs>
         </div>
       </div>
 
-      <div className={cn(surfaceTheme.pageWide, 'py-6')}>
-        <SectionTabs
-          tabs={TABS}
-          value={tab}
-          onValueChange={setTab}
-          hrefFor={hrefFor}
-          label='Wallet sections'
-          variant='pill'
-          sticky
-        >
-          <SectionTabPanel value='overview'>
-            {tab === 'overview' ? (
-              <SkillsWalletOverviewTab
-                data={data}
-                isLoading={data.isLoading}
-                achievementsFailed={data.achievementsQuery.isError}
-                onRetryAchievements={() => void data.achievementsQuery.refetch()}
-                onNavigateToTab={value => setTab(value as TabId)}
-              />
-            ) : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='skills'>
-            {tab === 'skills' ? (
-              <div className='space-y-6'>
-                <LearnerSkillGoalsCard studentUuid={student?.uuid} />
-                <SkillsWalletMySkillsTab data={data} />
-              </div>
-            ) : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='education'>
-            {tab === 'education' ? <SkillsWalletEducationTab /> : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='portfolio'>
-            {tab === 'portfolio' ? <SkillsWalletPortfolioTab /> : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='credentials'>
-            {tab === 'credentials' ? <SkillsWalletCredentialsVaultTab data={data} /> : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='competencies'>
-            {tab === 'competencies' ? <SkillsWalletCompetenciesTab data={data} /> : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='experience'>
-            {tab === 'experience' ? (
-              <SkillsWalletExperienceTab experiences={data.experiences} />
-            ) : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='achievements'>
-            {tab === 'achievements' ? (
-              <SkillsWalletAchievementsTab
-                canAddAchievement={canAddAchievement}
-                onAddAchievement={() => {
-                  setEditingAchievement(null);
-                  setAchievementOpen(true);
-                }}
-                onEditAchievement={achievement => {
-                  setEditingAchievement(achievement);
-                  setAchievementOpen(true);
-                }}
-                achievements={data.achievements}
-                isLoading={data.achievementsQuery.isLoading}
-                failed={data.achievementsQuery.isError}
-                onRetry={() => void data.achievementsQuery.refetch()}
-              />
-            ) : null}
-          </SectionTabPanel>
-          <SectionTabPanel value='verification'>
-            {tab === 'verification' ? (
-              <SkillsWalletVerficationTab events={data.verificationEvents} />
-            ) : null}
-          </SectionTabPanel>
-        </SectionTabs>
-      </div>
+
+
       {achievementOpen && canAddAchievement && (
         <AddAchievementDialog
           open={achievementOpen}
