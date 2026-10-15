@@ -1,0 +1,82 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { Pen } from 'lucide-react';
+import Link from 'next/link';
+import { useParams, usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { STALE_TIMES } from '@/lib/query-client';
+import { getTrainingProgramByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { ProgramRecordRouteActions } from '@/src/features/dashboard/programs/components/ProgramRecordRouteActions';
+import { ProgramRecordPage } from '@/src/features/program-record';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
+import { surfaceTheme } from '../../../../../components/data-display';
+import { cn } from '../../../../../lib/utils';
+
+const EDIT_PROGRAM_HREF = '/dashboard/course-creator/courses/create-program';
+
+/**
+ * The course creator's record for one of their training programmes: the shared
+ * programme record, with the route keeping its breadcrumbs and the Edit action.
+ */
+export default function CourseCreatorProgramRoute() {
+  const params = useParams();
+  const domain = domainFromPath(usePathname());
+  const catalogueHref = roleScopedDashboardPath(domain, '/dashboard/courses');
+  const programUuid = (Array.isArray(params?.id) ? params.id[0] : params?.id) ?? '';
+  const { replaceBreadcrumbs } = useBreadcrumb();
+
+  // Shares its cache entry with the record's own program query.
+  const { data } = useQuery({
+    ...getTrainingProgramByUuidOptions({ path: { uuid: programUuid } }),
+    enabled: Boolean(programUuid),
+    staleTime: STALE_TIMES.entity,
+  });
+  const title = data?.data?.title;
+
+  useEffect(() => {
+    replaceBreadcrumbs([
+      {
+        id: 'dashboard',
+        title: 'Dashboard',
+        url: roleScopedDashboardPath(domain, '/dashboard/overview'),
+      },
+      { id: 'courses', title: 'Courses', url: catalogueHref },
+      {
+        id: 'program-details',
+        title: title ?? 'Program details',
+        url: roleScopedDashboardPath(domain, `/dashboard/programs/${programUuid}`),
+        isLast: true,
+      },
+    ]);
+  }, [replaceBreadcrumbs, domain, catalogueHref, programUuid, title]);
+
+  if (!programUuid) return null;
+
+  return (
+    <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
+      <ProgramRecordRouteActions
+        programUuid={programUuid}
+        classesHref={`${catalogueHref}/available-programs/${programUuid}`}
+        instructorsHref={`${catalogueHref}/instructor?courseId=${encodeURIComponent(programUuid)}`}
+      />
+
+      <ProgramRecordPage
+        programUuid={programUuid}
+        backHref={catalogueHref}
+        primaryAction={
+          <Button asChild className='h-10 w-full rounded-[10px]'>
+            <Link href={`${EDIT_PROGRAM_HREF}?id=${encodeURIComponent(programUuid)}`}>
+              <Pen className='size-4' />
+              Edit programme
+            </Link>
+          </Button>
+        }
+      />
+    </div>
+  );
+}

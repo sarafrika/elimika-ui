@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Pen } from 'lucide-react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
@@ -12,11 +12,11 @@ import { STALE_TIMES } from '@/lib/query-client';
 import { getTrainingProgramByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { ProgramRecordRouteActions } from '@/src/features/dashboard/programs/components/ProgramRecordRouteActions';
 import { ProgramRecordPage } from '@/src/features/program-record';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { surfaceTheme } from '../../../../../components/data-display';
 import { cn } from '../../../../../lib/utils';
 
-const PROGRAMS_HREF = '/dashboard/course-creator/courses';
-const CATALOGUE_HREF = PROGRAMS_HREF;
 const EDIT_PROGRAM_HREF = '/dashboard/course-creator/courses/create-program';
 
 /**
@@ -25,6 +25,8 @@ const EDIT_PROGRAM_HREF = '/dashboard/course-creator/courses/create-program';
  */
 export default function CourseCreatorProgramRoute() {
   const params = useParams();
+  const domain = domainFromPath(usePathname());
+  const catalogueHref = roleScopedDashboardPath(domain, '/dashboard/courses');
   const programUuid = (Array.isArray(params?.id) ? params.id[0] : params?.id) ?? '';
   const { replaceBreadcrumbs } = useBreadcrumb();
 
@@ -38,16 +40,20 @@ export default function CourseCreatorProgramRoute() {
 
   useEffect(() => {
     replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/course-creator/overview' },
-      { id: 'programs', title: 'Programs', url: PROGRAMS_HREF },
+      {
+        id: 'dashboard',
+        title: 'Dashboard',
+        url: roleScopedDashboardPath(domain, '/dashboard/overview'),
+      },
+      { id: 'courses', title: 'Courses', url: catalogueHref },
       {
         id: 'program-details',
         title: title ?? 'Program details',
-        url: `${PROGRAMS_HREF}/${programUuid}`,
+        url: roleScopedDashboardPath(domain, `/dashboard/programs/${programUuid}`),
         isLast: true,
       },
     ]);
-  }, [replaceBreadcrumbs, programUuid, title]);
+  }, [replaceBreadcrumbs, domain, catalogueHref, programUuid, title]);
 
   if (!programUuid) return null;
 
@@ -55,13 +61,13 @@ export default function CourseCreatorProgramRoute() {
     <div className={cn(surfaceTheme.pageWide, 'flex flex-col gap-4 py-4 pb-10')}>
       <ProgramRecordRouteActions
         programUuid={programUuid}
-        classesHref={`${CATALOGUE_HREF}/available-programs/${programUuid}`}
-        instructorsHref={`${CATALOGUE_HREF}/instructor?courseId=${encodeURIComponent(programUuid)}`}
+        classesHref={`${catalogueHref}/available-programs/${programUuid}`}
+        instructorsHref={`${catalogueHref}/instructor?courseId=${encodeURIComponent(programUuid)}`}
       />
 
       <ProgramRecordPage
         programUuid={programUuid}
-        backHref={PROGRAMS_HREF}
+        backHref={catalogueHref}
         primaryAction={
           <Button asChild className='h-10 w-full rounded-[10px]'>
             <Link href={`${EDIT_PROGRAM_HREF}?id=${encodeURIComponent(programUuid)}`}>
@@ -72,6 +78,5 @@ export default function CourseCreatorProgramRoute() {
         }
       />
     </div>
-
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
   Form,
@@ -20,14 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
@@ -65,7 +57,9 @@ export function ProgramAssessment({
   const totalWeight = Number(
     created.reduce((total, row) => total + (Number(row.weight) || 0), 0).toFixed(2)
   );
-  const [sheetAssessment, setSheetAssessment] = useState<Assessment | null | undefined>(undefined);
+  const [editorAssessment, setEditorAssessment] = useState<Assessment | null | undefined>(
+    undefined
+  );
   const [deletingUuid, setDeletingUuid] = useState<string | null>(null);
 
   const saveAssessment = async (assessment: Assessment) => {
@@ -78,7 +72,7 @@ export function ProgramAssessment({
         setValue('draft.assessments', previous, { shouldDirty: true });
         return false;
       }
-      setSheetAssessment(undefined);
+      setEditorAssessment(undefined);
       toast.success(assessment.uuid ? 'Assessment updated.' : 'Assessment created.');
       return true;
     } catch (error) {
@@ -125,16 +119,26 @@ export function ProgramAssessment({
               Define the assessment components and their weights (total: 100%).
             </p>
           </div>
-          <Button
-            type='button'
-            size='sm'
-            disabled={!programUuid || Boolean(deletingUuid)}
-            onClick={() => setSheetAssessment(null)}
-          >
-            <Plus /> Add Assessment
-          </Button>
+          {editorAssessment === undefined && (
+            <Button
+              type='button'
+              size='sm'
+              disabled={!programUuid || Boolean(deletingUuid)}
+              onClick={() => setEditorAssessment(null)}
+            >
+              <Plus /> Add Assessment
+            </Button>
+          )}
         </div>
-        {!created.length ? (
+        {editorAssessment !== undefined ? (
+          <ProgramAssessmentEditor
+            key={editorAssessment?.uuid ?? 'new'}
+            assessment={editorAssessment}
+            assessments={created}
+            onSave={saveAssessment}
+            onClose={() => setEditorAssessment(undefined)}
+          />
+        ) : !created.length ? (
           <EmptyState
             variant='compact'
             title='No assessments yet'
@@ -175,7 +179,7 @@ export function ProgramAssessment({
                           size='icon'
                           aria-label={`Edit ${row.name}`}
                           disabled={Boolean(deletingUuid)}
-                          onClick={() => setSheetAssessment({ ...row })}
+                          onClick={() => setEditorAssessment({ ...row })}
                         >
                           <Pencil />
                         </Button>
@@ -201,24 +205,26 @@ export function ProgramAssessment({
             </table>
           </div>
         )}
-        <div
-          className='bg-muted/40 border-border flex items-center justify-between border-t px-5 py-3 font-semibold'
-          role='status'
-        >
-          <span>Total assessment weight</span>
-          <span
-            className={
-              totalWeight === 100
-                ? 'text-success'
-                : totalWeight > 100
-                  ? 'text-destructive'
-                  : 'text-warning'
-            }
+        {editorAssessment === undefined && (
+          <div
+            className='bg-muted/40 border-border flex items-center justify-between border-t px-5 py-3 font-semibold'
+            role='status'
           >
-            {totalWeight}%
-          </span>
-        </div>
-        {created.length > 0 && totalWeight !== 100 && (
+            <span>Total assessment weight</span>
+            <span
+              className={
+                totalWeight === 100
+                  ? 'text-success'
+                  : totalWeight > 100
+                    ? 'text-destructive'
+                    : 'text-warning'
+              }
+            >
+              {totalWeight}%
+            </span>
+          </div>
+        )}
+        {editorAssessment === undefined && created.length > 0 && totalWeight !== 100 && (
           <p className='border-border text-muted-foreground border-t px-5 py-3 text-sm'>
             {totalWeight > 100
               ? `Total weight exceeds 100% by ${Number((totalWeight - 100).toFixed(2))}%. Please adjust.`
@@ -226,20 +232,11 @@ export function ProgramAssessment({
           </p>
         )}
       </Card>
-      {sheetAssessment !== undefined && (
-        <ProgramAssessmentSheet
-          key={sheetAssessment?.uuid ?? 'new'}
-          assessment={sheetAssessment}
-          assessments={created}
-          onSave={saveAssessment}
-          onClose={() => setSheetAssessment(undefined)}
-        />
-      )}
     </section>
   );
 }
 
-function ProgramAssessmentSheet({
+function ProgramAssessmentEditor({
   assessment,
   assessments,
   onSave,
@@ -281,113 +278,112 @@ function ProgramAssessmentSheet({
   };
 
   return (
-    <Sheet
-      open
-      onOpenChange={open => {
-        if (!open && !saving) onClose();
-      }}
-    >
-      <SheetContent className='flex w-full flex-col gap-0 p-0 sm:max-w-xl'>
-        <SheetHeader className='border-border border-b px-5 py-5'>
-          <SheetTitle>{assessment ? 'Edit Assessment' : 'Add Assessment'}</SheetTitle>
-          <SheetDescription>
-            Set the assessment details and its contribution to the program grade.
-          </SheetDescription>
-        </SheetHeader>
-        <Form {...form}>
-          <form
-            className='flex min-h-0 flex-1 flex-col'
-            noValidate
-            onSubmit={event => {
+    <CardContent className='flex flex-col gap-3 px-5 py-5'>
+      <div className='space-y-1'>
+        <h4 className='text-foreground text-sm font-semibold'>
+          {assessment ? 'Edit assessment' : 'Add assessment'}
+        </h4>
+        <p className='text-muted-foreground text-xs'>
+          Set the component details and its contribution to the program grade, then save.
+        </p>
+      </div>
+      <Form {...form}>
+        <fieldset
+          disabled={saving}
+          className='flex min-w-0 flex-col gap-3'
+          onKeyDown={event => {
+            if (event.key === 'Enter' && event.target instanceof HTMLInputElement) {
+              event.preventDefault();
               event.stopPropagation();
-              void form.handleSubmit(submit)(event);
-            }}
-          >
-            <fieldset
-              disabled={saving}
-              className='min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5'
-            >
-              <FormField
-                control={form.control}
-                name='name'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Component title</FormLabel>
+              if (!saving) void form.handleSubmit(submit)();
+            }
+          }}
+        >
+          <fieldset className='border-border grid min-w-0 gap-3 rounded-md border p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_110px]'>
+            <legend className='text-muted-foreground px-1 text-xs'>Assessment component</legend>
+            <FormField
+              control={form.control}
+              name='name'
+              render={({ field }) => (
+                <FormItem className='min-w-0'>
+                  <FormLabel>Component title</FormLabel>
+                  <FormControl>
+                    <Input {...field} placeholder='e.g. Final performance' />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='assessmentType'
+              render={({ field }) => (
+                <FormItem className='min-w-0'>
+                  <FormLabel>Assessment type</FormLabel>
+                  <Select value={field.value} onValueChange={field.onChange} disabled={saving}>
                     <FormControl>
-                      <Input {...field} placeholder='e.g. Final performance' />
+                      <SelectTrigger className='w-full'>
+                        <SelectValue placeholder='Select type' />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className='grid gap-4 sm:grid-cols-2'>
-                <FormField
-                  control={form.control}
-                  name='assessmentType'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Assessment type</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger className='w-full'>
-                            <SelectValue />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {ASSESSMENT_TYPES.map(type => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name='weight'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Weight (%)</FormLabel>
-                      <FormControl>
-                        <Input
-                          {...field}
-                          type='number'
-                          min={0}
-                          max={100}
-                          step='any'
-                          placeholder='e.g. 40'
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              <FormField
-                control={form.control}
-                name='criteria'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        {...field}
-                        rows={4}
-                        placeholder='Describe what learners need to demonstrate'
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                    <SelectContent>
+                      {field.value && !ASSESSMENT_TYPES.includes(field.value) && (
+                        <SelectItem value={field.value}>{field.value}</SelectItem>
+                      )}
+                      {ASSESSMENT_TYPES.map(type => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='weight'
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Weight (%)</FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      type='number'
+                      min={0}
+                      max={100}
+                      step='any'
+                      placeholder='e.g. 40'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name='criteria'
+              render={({ field }) => (
+                <FormItem className='sm:col-span-3'>
+                  <FormLabel>Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      {...field}
+                      rows={2}
+                      placeholder='Describe what learners need to demonstrate'
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className='grid gap-3 sm:col-span-3 sm:grid-cols-2'>
               <FormField
                 control={form.control}
                 name='isRequired'
                 render={({ field }) => (
-                  <FormItem className='flex items-center justify-between gap-4 rounded-lg border p-4'>
+                  <FormItem className='flex items-center justify-between gap-3 rounded-md border p-3'>
                     <div className='space-y-1'>
                       <FormLabel>Required assessment</FormLabel>
                       <FormDescription>Students must complete this assessment.</FormDescription>
@@ -409,7 +405,7 @@ function ProgramAssessmentSheet({
                 control={form.control}
                 name='active'
                 render={({ field }) => (
-                  <FormItem className='flex items-center justify-between gap-4 rounded-lg border p-4'>
+                  <FormItem className='flex items-center justify-between gap-3 rounded-md border p-3'>
                     <div className='space-y-1'>
                       <FormLabel>Active assessment</FormLabel>
                       <FormDescription>Enable this assessment for the program.</FormDescription>
@@ -427,29 +423,41 @@ function ProgramAssessmentSheet({
                   </FormItem>
                 )}
               />
-              <p className='bg-muted/40 rounded-md p-3 text-sm' role='status'>
-                Total weight after saving:{' '}
-                <span
-                  className={
-                    proposedWeight > 100 ? 'text-destructive font-semibold' : 'font-semibold'
-                  }
-                >
-                  {proposedWeight}%
-                </span>
-              </p>
-            </fieldset>
-            <SheetFooter className='border-border border-t px-5 py-4'>
-              <Button type='button' variant='outline' disabled={saving} onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type='submit' disabled={saving}>
-                {saving ? <Spinner /> : <Save />}
-                {saving ? 'Saving…' : assessment ? 'Save changes' : 'Create Assessment'}
-              </Button>
-            </SheetFooter>
-          </form>
-        </Form>
-      </SheetContent>
-    </Sheet>
+            </div>
+          </fieldset>
+          <div
+            className='border-border bg-muted/40 flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2 text-sm'
+            role='status'
+          >
+            <span className='text-muted-foreground'>Total program weight after saving</span>
+            <span
+              className={
+                proposedWeight > 100
+                  ? 'text-destructive font-semibold'
+                  : proposedWeight === 100
+                    ? 'text-success font-semibold'
+                    : 'text-warning font-semibold'
+              }
+            >
+              {proposedWeight}%
+            </span>
+          </div>
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <Button type='button' variant='outline' size='sm' disabled={saving} onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type='button'
+              size='sm'
+              disabled={saving}
+              onClick={() => void form.handleSubmit(submit)()}
+            >
+              {saving ? <Spinner /> : <Save />}
+              {saving ? 'Saving…' : assessment ? 'Save changes' : 'Add assessment'}
+            </Button>
+          </div>
+        </fieldset>
+      </Form>
+    </CardContent>
   );
 }
