@@ -1,17 +1,55 @@
-import type { Course, CourseTrainingRequirement } from '@/services/client';
+import type {
+  Course,
+  CourseTrainingRequirement,
+  ProgramRequirement,
+  TrainingProgram,
+} from '@/services/client';
 import type {
   CourseCreatorAnalyticsSummary,
   CourseCreatorMonetizationSummary,
   CourseCreatorTrainingRequirementSummary,
 } from '../types/course-creator';
 
-export function calculateCourseAnalytics(courses: Course[]): CourseCreatorAnalyticsSummary {
-  return courses.reduce<CourseCreatorAnalyticsSummary>(
+export function calculateCourseAnalytics(
+  courses: Course[],
+  programs: TrainingProgram[] = []
+): CourseCreatorAnalyticsSummary {
+  const programIds = new Set<string>();
+  const publishedProgramIds = new Set<string>();
+  const draftProgramIds = new Set<string>();
+
+  for (const program of programs) {
+    if (program.uuid) {
+      programIds.add(program.uuid);
+      if (program.published || program.status === 'published') {
+        publishedProgramIds.add(program.uuid);
+      }
+      if (program.status === 'draft') {
+        draftProgramIds.add(program.uuid);
+      }
+    }
+  }
+
+  const summary = courses.reduce<
+    Omit<CourseCreatorAnalyticsSummary, 'totalPrograms' | 'publishedPrograms' | 'draftPrograms'> & {
+      totalPrograms: number;
+      publishedPrograms: number;
+      draftPrograms: number;
+    }
+  >(
     (acc, course) => {
       acc.totalCourses += 1;
+
+      if (course.program_uuid) {
+        programIds.add(course.program_uuid);
+      }
+
       switch (course.status) {
         case 'published':
           acc.publishedCourses += 1;
+          if (course.program_uuid) {
+            publishedProgramIds.add(course.program_uuid);
+          }
           break;
         case 'in_review':
           acc.inReviewCourses += 1;
@@ -29,12 +67,41 @@ export function calculateCourseAnalytics(courses: Course[]): CourseCreatorAnalyt
     },
     {
       totalCourses: 0,
+      totalPrograms: 0,
       publishedCourses: 0,
+      publishedPrograms: 0,
       inReviewCourses: 0,
       draftCourses: 0,
+      draftPrograms: 0,
       archivedCourses: 0,
     }
   );
+
+  return {
+    ...summary,
+    totalPrograms: programIds.size,
+    publishedPrograms: publishedProgramIds.size,
+    draftPrograms: draftProgramIds.size,
+  };
+}
+
+export function calculateCourseProgramCounts(courses: Course[]) {
+  const programIds = new Set<string>();
+  const publishedProgramIds = new Set<string>();
+
+  courses.forEach(course => {
+    if (course.program_uuid) {
+      programIds.add(course.program_uuid);
+      if (course.status === 'published') {
+        publishedProgramIds.add(course.program_uuid);
+      }
+    }
+  });
+
+  return {
+    totalPrograms: programIds.size,
+    publishedPrograms: publishedProgramIds.size,
+  };
 }
 
 export function calculateMonetizationSummary(courses: Course[]): CourseCreatorMonetizationSummary {
@@ -86,17 +153,43 @@ export function calculateMonetizationSummary(courses: Course[]): CourseCreatorMo
 }
 
 export function calculateTrainingRequirementSummary(
-  courses: Course[]
+  courses: Course[],
+  programs: TrainingProgram[] = [],
+  courseRequirements: CourseTrainingRequirement[] = [],
+  programRequirements: ProgramRequirement[] = []
 ): CourseCreatorTrainingRequirementSummary {
-  const requirements = courses.flatMap(course => course.training_requirements ?? []);
+  const programIds = new Set<string>();
+  const publishedProgramIds = new Set<string>();
+
+  for (const program of programs) {
+    if (program.uuid) {
+      programIds.add(program.uuid);
+      if (program.published || program.status === 'published') {
+        publishedProgramIds.add(program.uuid);
+      }
+    }
+  }
+
+  for (const course of courses) {
+    if (course.program_uuid) {
+      programIds.add(course.program_uuid);
+    }
+    if (course.status === 'published' && course.program_uuid) {
+      publishedProgramIds.add(course.program_uuid);
+    }
+  }
+
+  const requirements = [...courseRequirements, ...programRequirements];
   const totalRequirements = requirements.length;
-  const mandatoryRequirements = requirements.filter(
-    (requirement: CourseTrainingRequirement) => requirement.is_mandatory
-  ).length;
+  const mandatoryRequirements = requirements.filter(requirement => requirement.is_mandatory).length;
 
   return {
     totalRequirements,
     mandatoryRequirements,
     optionalRequirements: totalRequirements - mandatoryRequirements,
+    courseCount: courses.length,
+    programCount: programIds.size,
+    publishedCourseCount: courses.filter(course => course.status === 'published').length,
+    publishedProgramCount: publishedProgramIds.size,
   };
 }

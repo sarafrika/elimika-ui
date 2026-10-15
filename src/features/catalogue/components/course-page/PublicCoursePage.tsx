@@ -100,7 +100,11 @@ export function PublicCoursePage({ model }: { model: CoursePageModel }) {
   };
 
   const counts: Partial<Record<CourseTab, number>> = {
-    requirements: requirements.provided.length + requirements.bring.length,
+    requirements:
+      requirements.organisation.length +
+      requirements.instructor.length +
+      requirements.courseCreator.length +
+      requirements.student.length,
     syllabus: model.lessons.length,
     classes: offerQuery.data?.open_class_count,
   };

@@ -12,6 +12,7 @@ export default function StudentInstructorSearchRoute() {
     return (
       <InstructorHirePage
         courseId={searchParams.get('courseId')}
+        programId={searchParams.get('programId')}
         instructorId={instructorId}
       />
     );

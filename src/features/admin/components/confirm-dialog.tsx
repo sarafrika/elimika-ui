@@ -1,7 +1,5 @@
 'use client';
 
-import { AlertTriangle, ArrowRight, Check, ShieldAlert } from 'lucide-react';
-import { type ReactNode, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -14,6 +12,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import { AlertTriangle, ArrowRight, Check, ShieldAlert } from 'lucide-react';
+import { type ReactNode, useEffect, useState } from 'react';
+import { stripHtml } from '../../dashboard/courses/shared/_components/courses-data';
 import { buildConfirm, type ConfirmAction, type ConfirmSubject } from '../lib/confirm-effects';
 
 interface ConfirmDialogProps {
@@ -95,7 +96,7 @@ export function ConfirmDialog({
           </div>
 
           {note ? (
-            <p className='bg-muted/40 text-foreground rounded-md px-3 py-2 text-sm'>“{note}”</p>
+            <p className='bg-muted/40 text-foreground rounded-md px-3 py-2 text-sm'>“{stripHtml(note)}”</p>
           ) : null}
 
           {children}
@@ -106,7 +107,7 @@ export function ConfirmDialog({
               <div className='space-y-1'>
                 {content.warnings.map(warning => (
                   <p key={warning} className='text-foreground text-xs leading-relaxed'>
-                    {warning}
+                    {stripHtml(warning)}
                   </p>
                 ))}
               </div>

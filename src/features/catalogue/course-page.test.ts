@@ -148,7 +148,10 @@ test('dedupeRequirements drops exact repeats, ignoring case and spacing', () => 
     { name: '  ', provided_by: 'student' },
   ];
   assert.equal(dedupeRequirements(rows).length, 3);
-  const { provided, bring } = splitRequirements(rows);
+  const { organisation, instructor, student, provided, bring } = splitRequirements(rows);
+  assert.equal(organisation.length, 1);
+  assert.equal(instructor.length, 0);
+  assert.equal(student.length, 2);
   assert.equal(provided.length, 1);
   assert.equal(bring.length, 2);
 });

@@ -1,15 +1,5 @@
 'use client';
 
-import {
-  keepPreviousData,
-  type QueryClient,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
-import { GraduationCap, Layers, type LucideIcon, SlidersHorizontal, Users } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { ALL_CATEGORIES, CategoryTabs } from '@/components/category-tabs';
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { surfaceTheme } from '@/components/data-display';
@@ -54,8 +44,8 @@ import { categoryWithDescendants, matchesCategoryFilter } from '@/lib/category-f
 import { STALE_TIMES } from '@/lib/query-client';
 import type { RateCard } from '@/lib/rate-card';
 import { catalogItemPrefetchQuery } from '@/lib/route-prefetch';
-import { classifySearchError } from '@/lib/search/query';
 import { enumParam, numberParam, stringParam } from '@/lib/search-state';
+import { classifySearchError } from '@/lib/search/query';
 import type { UserDomain } from '@/lib/types';
 import { ApplicantTypeEnum } from '@/services/client';
 import {
@@ -78,8 +68,6 @@ import type {
   GetClassDefinitionsForProgramResponse,
   SearchCoursesAndProgrammesData,
 } from '@/services/client/types.gen';
-import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
-import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
 import {
   type CatalogTrainingApplicationData,
   type CoursesCatalogCardData,
@@ -96,10 +84,23 @@ import {
   getInstructorHref,
   stripHtml,
 } from '@/src/features/dashboard/courses/shared/_components/courses-data';
+import { CoursesCatalogCard } from '@/src/features/dashboard/courses/shared/_components/CoursesCatalogCard';
+import { CoursesCategoryFilters } from '@/src/features/dashboard/courses/shared/_components/CoursesCategoryFilters';
 import { StudentCoursesCard } from '@/src/features/dashboard/courses/shared/_components/StudentCoursesCard';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useTypeSearch } from '@/src/features/search/hooks/use-type-search';
+import {
+  keepPreviousData,
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
+import { GraduationCap, Layers, type LucideIcon, SlidersHorizontal, Users } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { PageHeader } from '../../../../../../components/page-header';
 import {
   catalogPriceOptions,
   catalogResultCount,
@@ -269,11 +270,11 @@ function cachedInstructorCount(
   const cached =
     kind === 'course'
       ? qc.getQueriesData<GetClassDefinitionsForCourseResponse>({
-          queryKey: getClassDefinitionsForCourseQueryKey({ path: { courseUuid: id } }),
-        })
+        queryKey: getClassDefinitionsForCourseQueryKey({ path: { courseUuid: id } }),
+      })
       : qc.getQueriesData<GetClassDefinitionsForProgramResponse>({
-          queryKey: getClassDefinitionsForProgramQueryKey({ path: { programUuid: id } }),
-        });
+        queryKey: getClassDefinitionsForProgramQueryKey({ path: { programUuid: id } }),
+      });
   const rows = cached.find(([, response]) => response?.data)?.[1]?.data;
   if (!rows) return undefined;
 
@@ -441,14 +442,14 @@ const createCatalogCards = (
 
       showInstructorCta: !isInstructorApplyCard,
 
-      detailsHref: roleScopedDashboardPath(domain, item.href),
+      detailsHref: item.kind === 'program' ? `/dashboard/course-creator/programs/${item.id}` : roleScopedDashboardPath(domain, item.href),
       detailsPrefetchQuery: catalogItemPrefetchQuery(item.kind, item.id),
 
       enrollHref: isInstructorApplyCard
         ? getApplyToTrainHref(item.kind, item.id, domain)
         : roleScopedDashboardPath(domain, getEnrollHref(domain, item.kind, item.id)),
 
-      instructorHref: roleScopedDashboardPath(domain, getInstructorHref(domain, item.id)),
+      instructorHref: item.kind === "program" ? `/dashboard/course-creator/courses/instructor?programId=${item.id}` : roleScopedDashboardPath(domain, getInstructorHref(domain, item.id)),
 
       icon: presentation.icon,
       imageTone: presentation.imageTone,
@@ -785,8 +786,8 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     () =>
       fromCatalogue
         ? (courseCatalogueQuery.data?.data?.content ?? []).filter(
-            item => item.uuid && (!item.type || item.type === 'course')
-          )
+          item => item.uuid && (!item.type || item.type === 'course')
+        )
         : [],
     [courseCatalogueQuery.data, fromCatalogue]
   );
@@ -1344,15 +1345,15 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     () =>
       catalogueSettled
         ? [
-            ...new Set(
-              paginatedItems
-                .filter(
-                  item =>
-                    item.creatorUuid && !item.creatorName && !countsById.get(item.id)?.creatorName
-                )
-                .map(item => item.creatorUuid)
-            ),
-          ]
+          ...new Set(
+            paginatedItems
+              .filter(
+                item =>
+                  item.creatorUuid && !item.creatorName && !countsById.get(item.id)?.creatorName
+              )
+              .map(item => item.creatorUuid)
+          ),
+        ]
         : [],
     [catalogueSettled, countsById, paginatedItems]
   );
@@ -1558,74 +1559,67 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           : 'Discover courses and programmes across the platform.';
 
   return (
-    <div className={`bg-background ${surfaceTheme.pageWide} py-4`}>
-      <div className='space-y-6'>
-        <header className='bg-card'>
-          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-            {isStudentDomain ? (
-              <div className=''>
-                <h1 className='text-2xl font-bold'>Start a Course</h1>
-                <p className='text-muted-foreground/60 text-sm'>
-                  Choose how you want to learn — join a class or find an instructor.
-                </p>
-              </div>
-            ) : (
-              <div className=''>
-                <h1 className='text-2xl font-bold'>Course Catalogue</h1>
-                <p className='text-muted-foreground/60 text-sm'>{catalogueSubtitle}</p>
-              </div>
-            )}
-
+    <div className={`${surfaceTheme.pageWide} py-4`}>
+      <div className={surfaceTheme.pageStack}>
+        <PageHeader
+          eyebrow='COURSES'
+          title={isStudentDomain ? 'Start a Course' : 'Courses Catalogue'}
+          description={isStudentDomain ? 'Choose how you want to learn — join a class or find an instructor.' : `${catalogueSubtitle}`}
+          actions={
             <div className='flex flex-wrap gap-2'>
-              {[
-                {
-                  icon: GraduationCap,
-                  value: facetMode ? courseResultCount : mappedCourses.length,
-                  label: 'Courses',
-                },
-                {
-                  icon: Layers,
-                  value: mappedPrograms.length,
-                  label: 'Programmes',
-                },
-                {
-                  icon: Users,
-                  value: providerCount,
-                  label: 'Providers',
-                },
-              ].map(({ icon: Icon, value, label }) => (
-                <span
-                  key={label}
-                  className='border-border bg-background inline-flex items-center gap-1.5 rounded-lg border px-3 py-2'
-                >
-                  <Icon className='text-primary size-4' />
+              <div className='flex flex-wrap gap-2'>
+                {[
+                  {
+                    icon: GraduationCap,
+                    value: facetMode ? courseResultCount : mappedCourses.length,
+                    label: 'Courses',
+                  },
+                  {
+                    icon: Layers,
+                    value: mappedPrograms.length,
+                    label: 'Programmes',
+                  },
+                  {
+                    icon: Users,
+                    value: providerCount,
+                    label: 'Providers',
+                  },
+                ].map(({ icon: Icon, value, label }) => (
+                  <span
+                    key={label}
+                    className='border-border bg-background inline-flex items-center gap-1.5 rounded-lg border px-3 py-2'
+                  >
+                    <Icon className='text-primary size-4' />
 
-                  <span className='text-foreground text-sm font-semibold tabular-nums'>
-                    {value}
+                    <span className='text-foreground text-sm font-semibold tabular-nums'>
+                      {value}
+                    </span>
+
+                    <span className='text-muted-foreground text-sm'>{label}</span>
                   </span>
-
-                  <span className='text-muted-foreground text-sm'>{label}</span>
-                </span>
-              ))}
+                ))}
+              </div>
             </div>
-          </div>
+          }
+        />
+      </div>
 
-          <div className='mt-4 space-y-2'>
-            <SearchQueryInput
-              search={search}
-              placeholder='Search courses and programmes…'
-              aria-label='Search the course catalogue'
-              className='h-11'
-            />
-            <SearchNotice
-              issue={searchIssue}
-              onReset={() => {
-                search.clear();
-                clearFilters();
-              }}
-            />
-          </div>
-        </header>
+      <div className='space-y-6'>
+        <div className='mt-4 space-y-2'>
+          <SearchQueryInput
+            search={search}
+            placeholder='Search courses and programmes…'
+            aria-label='Search the course catalogue'
+            className='h-11'
+          />
+          <SearchNotice
+            issue={searchIssue}
+            onReset={() => {
+              search.clear();
+              clearFilters();
+            }}
+          />
+        </div>
 
         <CategoryTabs
           categories={categories}

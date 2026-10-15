@@ -12,7 +12,9 @@ interface WelcomeBannerProps {
   /** Rich summary line (can embed highlighted counts). */
   description?: ReactNode;
   actions?: ReactNode;
-  className?: string
+  content?: ReactNode;
+  compact?: boolean;
+  className?: string;
 }
 
 export function WelcomeBanner({
@@ -20,12 +22,15 @@ export function WelcomeBanner({
   title,
   description,
   actions,
+  content,
+  compact = false,
   className,
 }: WelcomeBannerProps) {
   return (
     <div
       className={cn(
-        'to-primary relative overflow-hidden rounded-2xl border bg-gradient-to-r from-teal-700 via-teal-600 p-4 text-white shadow-sm sm:p-5 2xl:p-6',
+        'to-primary relative overflow-hidden rounded-2xl border bg-gradient-to-r from-teal-700 via-teal-600 text-white shadow-sm',
+        compact ? 'p-4 sm:p-5' : 'p-4 sm:p-5 2xl:p-6',
         className,
       )}
     >
@@ -45,7 +50,8 @@ export function WelcomeBanner({
         </div>
         {actions && <div className='flex flex-wrap gap-2'>{actions}</div>}
       </div>
+      {content && <div className='relative mt-4'>{content}</div>}
     </div>
-  )
+  );
 }
 
