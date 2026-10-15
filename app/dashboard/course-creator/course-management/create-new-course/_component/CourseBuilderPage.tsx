@@ -123,7 +123,7 @@ export default function CourseBuilderPage() {
       thumbnail_url: c.thumbnail_url || '',
       intro_video_url: c.intro_video_url || '',
       banner_url: c.banner_url || '',
-      status: c.status || '',
+      status: c.status,
       active: c.active ?? true,
       created_by: c.created_by || '',
       updated_by: c.updated_by || '',

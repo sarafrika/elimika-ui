@@ -14,6 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Form,
   FormControl,
@@ -23,7 +24,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -37,7 +37,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
-import { getCreatedCourse, type CourseSetupDrafts, type CourseSetupSectionRef } from '@/lib/course-setup';
+import { type CourseSetupDrafts, type CourseSetupSectionRef, getCreatedCourse } from '@/lib/course-setup';
 import { getErrorMessage } from '@/lib/error-utils';
 import { createCategory } from '@/services/client';
 import {
@@ -62,8 +62,8 @@ import { useRouter } from 'next/navigation';
 import {
   type Dispatch,
   forwardRef,
-  type RefObject,
   type ReactNode,
+  type RefObject,
   type SetStateAction,
   useEffect,
   useImperativeHandle,
@@ -176,9 +176,8 @@ function SavingOverlay({ stage, isUpdate }: { stage: SaveStage; isUpdate: boolea
             return (
               <div
                 key={step.key}
-                className={`flex items-center gap-3 transition-opacity duration-300 ${
-                  isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
-                }`}
+                className={`flex items-center gap-3 transition-opacity duration-300 ${isActive ? 'opacity-100' : isDone ? 'opacity-60' : 'opacity-25'
+                  }`}
               >
                 {isDone ? (
                   <CheckCircle2 className='text-success h-4 w-4 shrink-0' />
@@ -288,6 +287,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         training_requirement: emptyRequirement,
         ...initialValues,
         ...detailsDraftRef?.current,
+        status: initialValues?.status ?? detailsDraftRef?.current?.status ?? 'draft',
       },
       mode: 'onChange',
     });
@@ -311,6 +311,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             ...form.getValues(),
             ...initialValues,
             ...detailsDraftRef?.current,
+            status: initialValues.status ?? detailsDraftRef?.current?.status ?? 'draft',
           },
           { keepDirtyValues: true }
         );
@@ -515,18 +516,15 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           intro_video_url: data?.intro_video_url,
           category_uuids: data?.categories,
           difficulty_uuid: data?.difficulty,
-          prerequisites: data?.prerequisites,
+          prerequisites: "",
           duration_hours: 0,
+          status: data.status,
           duration_minutes: 0,
           class_limit: data?.class_limit,
           minimum_training_fee: data?.minimum_training_fee,
           creator_share_percentage: data?.creator_share_percentage,
           instructor_share_percentage: data?.instructor_share_percentage,
           revenue_share_notes: data?.revenue_share_notes,
-          // Lifecycle is never set from an edit. Sending status/active here demoted a
-          // published course to draft on every save, which is what took live courses off
-          // the catalogue when their creator edited them. Publishing and unpublishing go
-          // through their own endpoints; the API now ignores these fields on update.
           is_free: data?.is_free,
           age_lower_limit: data?.age_lower_limit,
           age_upper_limit: data?.age_upper_limit,
@@ -580,7 +578,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             objectives: data?.objectives,
             category_uuids: data?.categories,
             difficulty_uuid: data?.difficulty,
-            prerequisites: data?.prerequisites,
+            prerequisites: "",
             duration_hours: 0,
             duration_minutes: 0,
             class_limit: data?.class_limit,
@@ -1043,7 +1041,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                     </FormItem>
                   )}
                 />
-                <FormField
+                {/* <FormField
                   control={form.control}
                   name='prerequisites'
                   render={({ field }) => (
@@ -1063,7 +1061,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                       <FormMessage />
                     </FormItem>
                   )}
-                />
+                /> */}
               </CardContent>
             </section>
 

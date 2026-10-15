@@ -38,12 +38,17 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useCourseCreator } from '@/context/course-creator-context';
+import { useProgramRevenueShares } from '@/hooks/use-program-revenue-shares';
 import {
   useOfferingCounts,
   type OfferingCounts,
   type OfferingCountState,
 } from '@/hooks/use-offering-counts';
 import { isSearchUnavailable } from '@/lib/api-errors';
+import {
+  courseRevenueShares,
+  type ProgramRevenueShares,
+} from '@/lib/course-creator/revenue-shares';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   classifySearchError,
@@ -326,6 +331,16 @@ export default function CourseCreatorCoursesContent() {
     [offerings, creatorUuid, catalogueOpen]
   );
   const offeringCounts = useOfferingCounts(countReferences);
+  const revenueProgramIds = useMemo(
+    () =>
+      !creatorUuid || catalogueOpen
+        ? []
+        : filteredOfferings.flatMap(offering =>
+            offering.type === 'programs' && offering.item.uuid ? [offering.item.uuid] : []
+          ),
+    [creatorUuid, catalogueOpen, filteredOfferings]
+  );
+  const programShares = useProgramRevenueShares(revenueProgramIds);
 
   const loading =
     creator.isLoading || (!!creatorUuid && (coursesQuery.isPending || programsQuery.isPending));
@@ -618,6 +633,17 @@ export default function CourseCreatorCoursesContent() {
                       <OfferingRow
                         key={`${offering.type}-${offering.item.uuid ?? titleOf(offering)}`}
                         offering={offering}
+                        revenueShares={
+                          offering.type === 'courses'
+                            ? courseRevenueShares(offering.item)
+                            : programShares.shares.get(offering.item.uuid ?? '')
+                        }
+                        revenueSharesPending={offering.type === 'programs' && programShares.pending}
+                        onRetryRevenueShares={
+                          offering.type === 'programs'
+                            ? programShares.retry
+                            : () => void coursesQuery.refetch()
+                        }
                         counts={offeringCounts.get(
                           `${offering.type}-${offering.item.uuid}`
                         )}
@@ -748,10 +774,16 @@ function OfferingCount({ count }: { count?: OfferingCountState }) {
 
 function OfferingRow({
   offering,
+  revenueShares,
+  revenueSharesPending,
+  onRetryRevenueShares,
   counts,
   onDelete,
 }: {
   offering: Offering;
+  revenueShares?: ProgramRevenueShares;
+  revenueSharesPending: boolean;
+  onRetryRevenueShares: () => void;
   counts?: OfferingCounts;
   onDelete: () => void;
 }) {
@@ -855,19 +887,34 @@ function OfferingRow({
         </span>
       </TableCell>
       <TableCell>
-        {offering.type === 'courses' ? (
-          <span
-            className='font-mono text-sm whitespace-nowrap'
-            title='Creator share / instructor share'
-          >
-            {offering.item.creator_share_percentage}%{' '}
-            <span className='text-muted-foreground'>/</span>{' '}
-            {offering.item.instructor_share_percentage}%
+        {revenueSharesPending ? (
+          <span role='status' aria-label='Calculating revenue split'>
+            <Skeleton className='h-9 w-28' />
           </span>
+        ) : revenueShares ? (
+          <div className='space-y-1 text-xs whitespace-nowrap'>
+            <p>
+              <span className='font-mono tabular-nums'>{revenueShares.instructorShare}%</span>{' '}
+              instructor
+            </p>
+            <p className='text-muted-foreground'>
+              <span className='font-mono tabular-nums'>{revenueShares.creatorShare}%</span> creator
+            </p>
+          </div>
         ) : (
-          <span className='text-muted-foreground' title='Revenue shares are configured per course'>
-            Per course
-          </span>
+          <div className='text-muted-foreground flex items-center gap-1 text-xs'>
+            <span>Unavailable</span>
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              className='relative z-20 h-7 px-2 text-xs'
+              aria-label={`Retry revenue split for ${title}`}
+              onClick={onRetryRevenueShares}
+            >
+              Retry
+            </Button>
+          </div>
         )}
       </TableCell>
       <TableCell>

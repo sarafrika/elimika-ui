@@ -171,7 +171,7 @@ const mapCourseValues = (course?: Course | null): Partial<CourseCreationFormValu
         thumbnail_url: course.thumbnail_url || '',
         intro_video_url: course.intro_video_url || '',
         banner_url: course.banner_url || '',
-        status: course.status || '',
+        status: course.status,
         active: course.active ?? true,
         created_by: course.created_by || '',
         updated_by: course.updated_by || '',

@@ -8,7 +8,7 @@ export function CourseCreatorLoadingState({
   headline?: string;
 }) {
   return (
-    <div className='border-border bg-card flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border px-6 py-12 text-center shadow-lg backdrop-blur'>
+    <div className=' border-border bg-card flex min-h-[280px] flex-col items-center justify-center gap-4 rounded-[28px] border px-6 py-12 text-center shadow-lg backdrop-blur'>
       <Spinner className='text-primary h-7 w-7' />
       <p className='text-foreground text-sm font-semibold'>{headline}</p>
       <p className='text-muted-foreground max-w-sm text-xs'>
