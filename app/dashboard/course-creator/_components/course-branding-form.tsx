@@ -23,7 +23,6 @@ import {
   uploadCourseThumbnailMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import DragDropUpload from '../../student/assignment/drag-drop';
-import { useOptionalStepper } from '../courses/create-course/stepper';
 import { FormSection } from './course-creation-form';
 import {
   type CourseCreationFormValues,
@@ -147,7 +146,7 @@ const brandingSchema = courseCreationSchema.pick({
 type BrandingFormValues = z.infer<typeof brandingSchema>;
 
 const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
-  ({ showSubmitButton, initialValues, editingCourseId, successResponse, nextStepAfterSave = 7 }, ref) => {
+  ({ showSubmitButton, initialValues, editingCourseId, successResponse }, ref) => {
     const form = useForm<BrandingFormValues>({
       resolver: zodResolver(brandingSchema),
       defaultValues: {
@@ -163,8 +162,6 @@ const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
     const courseCreatorContext = useOptionalCourseCreator();
     const courseCreatorProfile = courseCreatorContext?.profile;
     const authorUuid = courseCreatorProfile?.uuid ?? instructor?.uuid ?? '';
-    const stepper = useOptionalStepper();
-    const setActiveStep = stepper?.setActiveStep ?? (() => undefined);
 
     const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
     const [bannerPreview, setBannerPreview] = useState<string | null>(null);
@@ -369,7 +366,6 @@ const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 queryClient.invalidateQueries({
                   queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
                 });
-                setActiveStep(nextStepAfterSave);
                 resolve(true);
                 return;
               }

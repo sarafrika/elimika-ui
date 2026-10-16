@@ -36,13 +36,13 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useClassDetails } from '../../hooks/use-class-details';
+import { type ClassDetailsEnrollment, useClassDetails } from '../../hooks/use-class-details';
 import { useDifficultyLevels } from '../../hooks/use-difficultyLevels';
 import { useUserDomains } from '../../hooks/use-user-query';
 
 type ClassInviteData = ReturnType<typeof useClassDetails>['data'];
 type ClassInviteCourse = NonNullable<ClassInviteData['course']>;
-type ClassInviteEnrollment = ClassInviteData['enrollments'][number];
+type ClassInviteEnrollment = ClassDetailsEnrollment;
 type ClassInviteProgram = NonNullable<ClassInviteData['program']>;
 type ClassInviteProgramCourse = ClassInviteData['pCourses'][number] & { title?: string };
 type ClassInviteSchedule = ClassInviteData['schedule'][number];
@@ -83,7 +83,7 @@ function ClassInviteContent() {
 
     const map = new Map<string, ClassInviteEnrollment>();
 
-    enrollments.forEach(enrollment => {
+    enrollments.forEach((enrollment: ClassInviteEnrollment) => {
       if (enrollment.student_uuid && !map.has(enrollment.student_uuid)) {
         map.set(enrollment.student_uuid, enrollment);
       }

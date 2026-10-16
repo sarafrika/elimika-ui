@@ -196,6 +196,7 @@ export default function StudentAssignmentSubmissionPage() {
     try {
       const response = await submitAssignmentMut.mutateAsync({
         path: { assignmentUuid: selectedAssignment.assignment.uuid },
+        query: { enrollmentUuid: activeEnrollmentUuid },
         body: {
           enrollment_uuid: activeEnrollmentUuid,
           student_uuid: selectedAssignment.classMeta.studentUuid,

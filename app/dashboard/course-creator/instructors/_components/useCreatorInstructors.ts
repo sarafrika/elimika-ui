@@ -17,7 +17,7 @@ export function useCreatorInstructors(instructorUuid?: string) {
     ...searchTrainingApplicationsInfiniteOptions({
       query: {
         searchParams: {
-          course_creator_uuid: creatorUuid,
+          ...(creatorUuid ? { course_creator_uuid: creatorUuid } : {}),
           applicant_type: 'instructor',
           status: 'approved',
           ...(instructorUuid ? { applicant_uuid_eq: instructorUuid } : {}),
@@ -29,6 +29,7 @@ export function useCreatorInstructors(instructorUuid?: string) {
     staleTime: STALE_TIMES.live,
     initialPageParam: 0,
     getNextPageParam: (lastPage, pages) => {
+      if (lastPage.error || lastPage.success === false) return undefined;
       const metadata = lastPage.data?.metadata;
       const nextPage = (metadata?.pageNumber ?? pages.length - 1) + 1;
       const hasNext =
@@ -36,7 +37,7 @@ export function useCreatorInstructors(instructorUuid?: string) {
         (metadata?.totalPages != null
           ? nextPage < metadata.totalPages
           : (lastPage.data?.content?.length ?? 0) === PAGE_SIZE);
-      return hasNext ? { query: { pageable: { page: nextPage, size: PAGE_SIZE } } } : undefined;
+      return hasNext ? nextPage : undefined;
     },
   });
   const groups = useMemo(

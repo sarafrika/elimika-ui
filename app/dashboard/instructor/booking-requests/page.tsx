@@ -1,6 +1,6 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type UseMutationOptions, type UseMutationResult, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
   CalendarDays,
@@ -61,6 +61,10 @@ const FILTERS = [
 ] as const;
 
 type BookingFilter = (typeof FILTERS)[number]['key'];
+
+type BookingMutation<T> = T extends UseMutationOptions<infer Data, infer Error, infer Variables, infer Context>
+  ? UseMutationResult<Data, Error, Variables, Context>
+  : never;
 
 const CONFIRMED_STATUSES = new Set(['confirmed', 'accepted_confirmed']);
 const ACTIVE_STATUSES = new Set(['accepted', 'payment_required', 'payment_failed']);
@@ -287,7 +291,7 @@ function InstructorBookingRequestsPage() {
               key={booking.uuid}
               booking={booking}
               student={studentMap[booking.student_uuid]}
-              studentUser={userMap[studentMap[booking.student_uuid]?.user_uuid]}
+              studentUser={userMap[studentMap[booking.student_uuid]?.user_uuid ?? '']}
               courseName={courseMap[booking.course_uuid]?.name}
               onAccept={() => setAcceptTarget(booking)}
               onDecline={() => setDeclineTarget(booking)}
@@ -326,7 +330,7 @@ function InstructorBookingRequestsPage() {
         booking={acceptTarget}
         student={acceptTarget ? studentMap[acceptTarget.student_uuid] : undefined}
         studentUser={
-          acceptTarget ? userMap[studentMap[acceptTarget.student_uuid]?.user_uuid] : undefined
+          acceptTarget ? userMap[studentMap[acceptTarget.student_uuid]?.user_uuid ?? ''] : undefined
         }
         courseName={acceptTarget ? courseMap[acceptTarget.course_uuid]?.name : undefined}
         acceptBooking={acceptBooking}
@@ -340,7 +344,7 @@ function InstructorBookingRequestsPage() {
           declineTarget
             ? getBookingStudentName(
               studentMap[declineTarget.student_uuid],
-              userMap[studentMap[declineTarget.student_uuid]?.user_uuid]
+              userMap[studentMap[declineTarget.student_uuid]?.user_uuid ?? '']
             )
             : ''
         }
@@ -496,8 +500,8 @@ function AcceptDialog({
   student?: Student;
   studentUser?: User;
   courseName?: string;
-  acceptBooking: ReturnType<typeof useMutation>;
-  requestPayment: ReturnType<typeof useMutation>;
+  acceptBooking: BookingMutation<ReturnType<typeof acceptBookingMutation>>;
+  requestPayment: BookingMutation<ReturnType<typeof requestPaymentMutation>>;
   onClose: () => void;
   onDone: (booking: BookingResponse | null) => void | Promise<void>;
 }) {
@@ -587,8 +591,8 @@ function DeclineDialog({
 }: {
   booking: BookingResponse | null;
   studentName: string;
-  declineBooking: ReturnType<typeof useMutation>;
-  cancelBooking: ReturnType<typeof useMutation>;
+  declineBooking: BookingMutation<ReturnType<typeof declineBookingMutation>>;
+  cancelBooking: BookingMutation<ReturnType<typeof cancelBookingMutation>>;
   onClose: () => void;
   onDone: (booking: BookingResponse | null) => void | Promise<void>;
 }) {

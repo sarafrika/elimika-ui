@@ -512,7 +512,6 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
     rubric_type: rubric.rubric_type,
     course_creator_uuid: creatorUuid || '',
     is_public: rubric.is_public,
-    is_published: rubric.is_published,
     active: rubric.active,
     status: toApiStatus(rubric.status),
     total_weight: Number(rubric.total_weight),
@@ -668,9 +667,7 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
               body: {
                 rubric_uuid: newRubricUuid,
                 component_name: criterion.component_name,
-                criteria_number: criterion.criteria_number,
                 description: criterion.description || '',
-                criteria_category: criterion.criteria_category || '',
                 display_order: index + 1,
               } satisfies CreateRubricCriterionBody,
               path: { rubricUuid: newRubricUuid },
@@ -720,8 +717,6 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
           title: currentRubric.title,
           description: currentRubric.description,
           rubric_type: currentRubric.rubric_type,
-          rubric_category: currentRubric.rubric_category,
-          assessment_scope: currentRubric.assessment_scope,
           total_weight: Number(currentRubric.total_weight),
           max_score: Number(currentRubric.max_score),
           min_passing_score: Number(currentRubric.min_passing_score),
@@ -795,9 +790,7 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
               const payload: UpdateRubricCriterionBody = {
                 rubric_uuid: currentRubric.uuid,
                 component_name: criterion.component_name,
-                criteria_number: criterion.criteria_number,
                 description: criterion.description || '',
-                criteria_category: criterion.criteria_category || '',
                 display_order: criterion.display_order,
               };
               if (!criterion.uuid) {
@@ -853,7 +846,6 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
                       criteria_uuid: criteriaUuid,
                       scoring_level_uuid: scoringLevelUuid,
                       description: linkPayload.description,
-                      points: Number(scoringEntry?.points ?? originalLevel?.points ?? 0),
                     },
                   })
                   .then(result => {

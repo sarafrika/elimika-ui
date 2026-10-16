@@ -11,18 +11,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { listMyInvitationsOptions, listMyInvitationsQueryKey } from '@/services/client/@tanstack/react-query.gen';
 import {
-    acceptInvitationFromInbox,
-    declineInvitationFromInbox,
-} from '@/services/client/sdk.gen';
-import type {
-    AcceptInvitationFromInboxData,
-    AcceptInvitationFromInboxResponse,
-    DeclineInvitationFromInboxData,
-    DeclineInvitationFromInboxResponse,
-    MyInvitation,
-} from '@/services/client/types.gen';
+    acceptInvitationFromInboxMutation,
+    declineInvitationFromInboxMutation,
+    listMyInvitationsOptions,
+    listMyInvitationsQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
 
 import { useUserProfile } from '../../../../../context/profile-context';
 
@@ -38,21 +32,8 @@ export function LessonHubClassInvitesTab({ highlightId }: { highlightId?: string
         refetchOnWindowFocus: false,
     });
 
-    const acceptInvite = useMutation<
-        AcceptInvitationFromInboxResponse,
-        unknown,
-        AcceptInvitationFromInboxData
-    >({
-        mutationFn: async variables => {
-            const { data, error } = await acceptInvitationFromInbox({
-                ...variables,
-                throwOnError: false,
-            });
-
-            if (error) throw error;
-
-            return data;
-        },
+    const acceptInvite = useMutation({
+        ...acceptInvitationFromInboxMutation(),
         onSuccess: () => {
             toast.success('Invitation accepted.');
             qc.invalidateQueries({ queryKey: listMyInvitationsQueryKey() });
@@ -63,21 +44,8 @@ export function LessonHubClassInvitesTab({ highlightId }: { highlightId?: string
         },
     });
 
-    const declineInvite = useMutation<
-        DeclineInvitationFromInboxResponse,
-        unknown,
-        DeclineInvitationFromInboxData
-    >({
-        mutationFn: async variables => {
-            const { data, error } = await declineInvitationFromInbox({
-                ...variables,
-                throwOnError: false,
-            });
-
-            if (error) throw error;
-
-            return data;
-        },
+    const declineInvite = useMutation({
+        ...declineInvitationFromInboxMutation(),
         onSuccess: () => {
             toast.success('Invitation declined.');
             qc.invalidateQueries({ queryKey: listMyInvitationsQueryKey() });
@@ -90,7 +58,7 @@ export function LessonHubClassInvitesTab({ highlightId }: { highlightId?: string
 
     const invites = useMemo(
         () =>
-            [...((data?.data ?? []) as MyInvitation[])].sort((a, b) => {
+            [...(data?.data ?? [])].sort((a, b) => {
                 const aTime = a.created_date ? new Date(a.created_date).getTime() : 0;
                 const bTime = b.created_date ? new Date(b.created_date).getTime() : 0;
                 return bTime - aTime;

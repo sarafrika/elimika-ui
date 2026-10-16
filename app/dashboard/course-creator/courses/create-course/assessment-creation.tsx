@@ -171,6 +171,14 @@ const AssessmentCreation = ({
     onAssignmentDeleted,
 }: AssessmentCreationFormProps) => {
     const qc = useQueryClient();
+    const quizLessons = useMemo(
+        () => ({
+            content: (lessons?.content ?? []).filter(
+                (lesson): lesson is Lesson & { uuid: string } => Boolean(lesson.uuid)
+            ),
+        }),
+        [lessons?.content]
+    );
 
     const [activeQuizUuid, setActiveQuizUuid] = useState<string | null>(initialQuizUuid);
     const [quizDraft, setQuizDraft] = useState<QuizPayload | null>(null);
@@ -586,7 +594,7 @@ const AssessmentCreation = ({
     const [bulkText, setBulkText] = useState('');
     const [isImporting, setIsImporting] = useState(false);
 
-    type QuestionType = 'MULTIPLE_CHOICE' | 'TRUE_FALSE' | 'SHORT_ANSWER' | 'ESSAY';
+    type BulkQuestionType = Exclude<QuestionType, 'MATCHING'>;
 
     interface ParsedOption {
         uuid: '';
@@ -597,7 +605,7 @@ const AssessmentCreation = ({
     interface ParsedQuestion {
         uuid: '';
         text: string;
-        type: QuestionType;
+        type: BulkQuestionType;
         points: number;
         explanation?: string;
         options: ParsedOption[];
@@ -609,7 +617,7 @@ const AssessmentCreation = ({
             .map(l => l.trim())
             .filter(Boolean);
 
-        let type: QuestionType = 'MULTIPLE_CHOICE';
+        let type: BulkQuestionType = 'MULTIPLE_CHOICE';
         let questionText = '';
         let points = 1;
         let explanation = '';
@@ -618,7 +626,7 @@ const AssessmentCreation = ({
 
         for (const line of lines) {
             if (line.startsWith('TYPE:')) {
-                type = line.replace('TYPE:', '').trim() as QuestionType;
+                type = line.replace('TYPE:', '').trim() as BulkQuestionType;
                 continue;
             }
 
@@ -1381,15 +1389,25 @@ const AssessmentCreation = ({
                 {mode === 'Quiz' && (
                     <div>
                         <QuizCreationForm
-                            lessons={lessons}
+                            lessons={quizLessons}
                             quizId={activeQuizUuid}
                             onSelectQuiz={handleQuizCreatedOrSelected}
                             onDraftChange={setQuizDraft}
                             questions={questions}
                             selectedLessonId={selectedLessonId}
-                            selectedLesson={selectedLesson}
+                            selectedLesson={
+                                selectedLesson?.uuid
+                                    ? { ...selectedLesson, uuid: selectedLesson.uuid }
+                                    : null
+                            }
                             setSelectedLessonId={setSelectedLessonId}
-                            setSelectedLesson={setSelectedLesson}
+                            setSelectedLesson={lesson =>
+                                setSelectedLesson(
+                                    lesson
+                                        ? quizLessons.content.find(item => item.uuid === lesson.uuid) ?? null
+                                        : null
+                                )
+                            }
                             addQuestion={addQuestion}
                             updateQuestionText={updateQuestionText}
                             updateQuestionPoint={updateQuestionPoints}

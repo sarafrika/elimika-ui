@@ -30,7 +30,6 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useCourseCreator } from '@/context/course-creator-context';
-import { extractEntity } from '@/lib/api-helpers';
 import { dayjs } from '@/lib/date';
 import type {
   Instructor,
@@ -39,6 +38,8 @@ import type {
   InstructorReview,
   InstructorSkill,
   Organisation,
+  User,
+  UserSummary,
 } from '@/services/client';
 import {
   getInstructorByUuidOptions,
@@ -112,7 +113,6 @@ function OrganisationProfile({ uuid, organisation }: { uuid: string; organisatio
               { label: 'Location', value: organisation.location || '-' },
               { label: 'Country', value: organisation.country || '-' },
               { label: 'Licence', value: organisation.licence_no || '-' },
-              { label: 'Website', value: organisation.website || '-' },
               { label: 'Created', value: formatDate(organisation.created_date) },
             ]}
           />
@@ -149,8 +149,9 @@ function InstructorProfile({
   instructorUser,
 }: {
   instructor?: Instructor;
-  instructorUser?: Instructor;
+  instructorUser?: User | UserSummary;
 }) {
+  const contactUser = instructorUser && 'email' in instructorUser ? instructorUser : undefined;
   return (
     <SectionCard
       title='User profile'
@@ -161,13 +162,13 @@ function InstructorProfile({
           columns={3}
           items={[
             { label: 'Full name', value: instructor?.full_name || '-' },
-            { label: 'Email', value: instructorUser?.email || '-' },
-            { label: 'Phone', value: instructorUser?.phone_number || '-' },
+            { label: 'Email', value: contactUser?.email || '-' },
+            { label: 'Phone', value: contactUser?.phone_number || '-' },
             {
               label: 'Location',
-              value: instructor?.formatted_location || instructor?.location || '-',
+              value: instructor?.formatted_location || instructor?.location_name || '-',
             },
-            { label: 'Organisation', value: instructor?.organisation || '-' },
+            { label: 'Organisation', value: contactUser?.organisation_affiliations?.map(row => row.organisation_name).filter(Boolean).join(', ') || '-' },
             { label: 'Created', value: formatDate(instructor?.created_date) },
           ]}
         />
@@ -380,7 +381,7 @@ export default function ManageApplicantPage({
     staleTime: 30_000,
   });
   const isInstructorLoading = instructorQuery.isLoading;
-  const instructor = extractEntity<Instructor>(instructorQuery.data) ?? undefined;
+  const instructor = instructorQuery.isError ? undefined : instructorQuery.data;
   const instructorMissed = typeHint === 'organisation' || (instructorQuery.isFetched && !instructor);
   const { data: organisationData, isLoading: isOrganisationLoading } = useQuery({
     ...getOrganisationByUuidOptions({ path: { uuid } }),
@@ -389,7 +390,8 @@ export default function ManageApplicantPage({
     staleTime: 30_000,
   });
 
-  const organisation = organisationData?.data as Organisation | undefined;
+  const organisation = organisationData?.error || organisationData?.success === false
+    ? undefined : organisationData?.data;
   const applicantType: ApplicantType | null = instructor
     ? 'instructor'
     : organisation
@@ -397,11 +399,13 @@ export default function ManageApplicantPage({
       : null;
   const displayApplicantType: ApplicantType = applicantType ?? 'instructor';
 
-  const { data: instructorUserData } = useQuery({
+  const instructorUserQuery = useQuery({
     ...getUserByUuidOptions({ path: { uuid: instructor?.user_uuid as string } }),
     enabled: !!instructor?.user_uuid,
     staleTime: 30_000,
   });
+  const instructorUser = instructorUserQuery.isError || instructorUserQuery.data?.success === false
+    ? undefined : instructorUserQuery.data?.data;
 
   const applications = useTrainingApplicationList(
     { applicant_uuid_eq: uuid, course_creator_uuid: creatorUuid },
@@ -465,11 +469,11 @@ export default function ManageApplicantPage({
       : organisation?.description || 'Organisation applicant';
   const applicantLocation =
     applicantType === 'instructor'
-      ? instructor?.formatted_location || instructor?.location || 'Location not listed'
+      ? instructor?.formatted_location || instructor?.location_name || 'Location not listed'
       : [organisation?.location, organisation?.country].filter(Boolean).join(', ') ||
         'Location not listed';
   const applicantAvatar =
-    applicantType === 'instructor' ? instructor?.profile_picture_url : undefined;
+    applicantType === 'instructor' ? instructorUser?.profile_image_url : undefined;
   const applicantInitials = (applicantName || 'AP')
     .split(' ')
     .map(part => part[0])
@@ -583,7 +587,7 @@ export default function ManageApplicantPage({
           <div className='relative -mt-12 px-5 pb-5'>
             <div className='flex flex-col gap-4 sm:flex-row sm:items-end'>
               <Avatar className='border-border/70 bg-background size-28 border shadow-md'>
-                <AvatarImage src={toAuthenticatedMediaUrl(applicantAvatar) || applicantAvatar} />
+                <AvatarImage src={toAuthenticatedMediaUrl(applicantAvatar) ?? undefined} />
                 <AvatarFallback className='bg-primary/10 text-primary text-2xl'>
                   {applicantInitials}
                 </AvatarFallback>
@@ -674,7 +678,7 @@ export default function ManageApplicantPage({
                 ) : (
                   <InstructorProfile
                     instructor={instructor}
-                    instructorUser={instructorUserData?.data as Instructor | undefined}
+                    instructorUser={instructorUser}
                   />
                 )}
               </SectionTabPanel>

@@ -364,7 +364,7 @@ export default function LessonHubAssessmentsTab() {
 
       courseMap.set(courseUuid, {
         uuid: courseUuid,
-        title: course?.name || course?.title || 'Untitled course',
+        title: course?.name || 'Untitled course',
       });
     }
 

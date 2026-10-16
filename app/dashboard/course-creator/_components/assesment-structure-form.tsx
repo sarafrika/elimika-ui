@@ -47,6 +47,7 @@ import {
 import type {
   CourseAssessment,
   CourseAssessmentLineItem,
+  CourseAssessmentWritable,
 } from '../../../../services/client/types.gen';
 import { ASSESSMENT_TYPES } from '../rubrics/rubric-manager';
 import { CATEGORY_META, LinkItemsModal, TaskItemType } from './assesment-link-items';
@@ -284,14 +285,18 @@ function AssessmentBatchEditor({
       });
       for (const draft of orderedDrafts) {
         if (draft.savedWithoutId) continue;
-        const body: CourseAssessment = {
-          ...draft.original,
+        const body: CourseAssessmentWritable = {
           course_uuid: courseUuid,
           title: draft.title.trim(),
           assessment_type: draft.assessment_type,
           description: draft.description.trim(),
           weight_percentage: Number(draft.weight_percentage),
           is_required: draft.original?.is_required ?? true,
+          aggregation_strategy: draft.original?.aggregation_strategy,
+          rubric_uuid: draft.original?.rubric_uuid,
+          sync_class_attendance: draft.original?.sync_class_attendance,
+          per_lesson: draft.original?.per_lesson,
+          program_assessment_uuid: draft.original?.program_assessment_uuid,
         };
         if (
           draft.original &&
@@ -305,11 +310,11 @@ function AssessmentBatchEditor({
           const result = draft.original
             ? await updateMut.mutateAsync({
                 path: { courseUuid, assessmentUuid: draft.original.uuid },
-                body: { ...body, updated_by: createdBy || undefined },
+                body,
               })
             : await createMut.mutateAsync({
                 path: { courseUuid },
-                body: { ...body, created_by: createdBy || undefined },
+                body,
               });
           if (result.error || result.success === false)
             throw new Error(getErrorMessage(result, 'Failed to save assessment.'));

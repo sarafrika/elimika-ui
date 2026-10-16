@@ -875,7 +875,12 @@ function SavedPracticeActivityManager({
           activityUuid: editingPracticeActivityId,
         },
       });
-      if (response.error || response.success === false) {
+      if (
+        typeof response === 'object' &&
+        response !== null &&
+        (('error' in response && response.error) ||
+          ('success' in response && response.success === false))
+      ) {
         throw new Error(getErrorMessage(response, 'Unable to delete practice activity'));
       }
       await qc.invalidateQueries({ queryKey: practiceActivitiesQueryKey });

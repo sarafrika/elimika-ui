@@ -266,9 +266,11 @@ export default function CourseCreatorCoursesContent() {
     return offerings.flatMap(offering => {
       const categoryUuids: string[] =
         offering.type === 'courses'
-          ? ((offering.item as Course).category_uuids ?? []).filter(Boolean)
-          : (offering.item as TrainingProgram).category_uuid
-            ? [(offering.item as TrainingProgram).category_uuid].filter(Boolean)
+          ? (offering.item.category_uuids ?? []).filter(
+              (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
+            )
+          : offering.item.category_uuid
+            ? [offering.item.category_uuid]
             : [];
 
       return categoryUuids.flatMap(categoryUuid => {
@@ -301,9 +303,11 @@ export default function CourseCreatorCoursesContent() {
     return offerings.filter(offering => {
       const categoryUuids: string[] =
         offering.type === 'courses'
-          ? ((offering.item as Course).category_uuids ?? []).filter(Boolean)
-          : (offering.item as TrainingProgram).category_uuid
-            ? [(offering.item as TrainingProgram).category_uuid].filter(Boolean)
+          ? (offering.item.category_uuids ?? []).filter(
+              (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
+            )
+          : offering.item.category_uuid
+            ? [offering.item.category_uuid]
             : [];
 
       const matches = categoryUuids.some(categoryUuid => {
