@@ -39,6 +39,7 @@ import {
 import { EvaluationRubricPreview } from '../../../_components/evaluation-rubric-preview';
 import { persistEvaluationAssociation } from '../../../_components/course-evaluation-utils';
 import type { ProgramFormValues } from '../program-schema';
+import { ProgramCourseEvaluations } from './ProgramCourseEvaluations';
 
 export function ProgramEvaluation({
   programUuid,
@@ -61,8 +62,8 @@ export function ProgramEvaluation({
     <section className='space-y-4' aria-label='Program evaluation'>
       <h3 className='text-sm font-medium'>Evaluation per course</h3>
       <p className='text-muted-foreground text-sm'>
-        Select each course and attach its evaluation rubric. Changes are saved to this program
-        immediately.
+        Review each course's lesson assignments and quizzes, then attach its evaluation rubric.
+        Rubric changes are saved to this program immediately.
       </p>
       {!courseUuid ? (
         <EmptyState
@@ -72,28 +73,37 @@ export function ProgramEvaluation({
         />
       ) : (
         <>
-          <div className='max-w-lg space-y-2'>
-            <Label htmlFor='program-evaluation-course'>Course to evaluate</Label>
-            <Select value={courseUuid} onValueChange={setChosenCourse}>
-              <SelectTrigger id='program-evaluation-course' className='w-full'>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {courseIds.map((uuid, index) => (
-                  <SelectItem key={uuid} value={uuid}>
-                    {courseMap[uuid]?.name ?? `Course ${index + 1}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className='grid gap-4 md:grid-cols-2'>
+            <div className='space-y-2'>
+              <Label htmlFor='program-evaluation-course'>Course to evaluate</Label>
+              <Select value={courseUuid} onValueChange={setChosenCourse}>
+                <SelectTrigger id='program-evaluation-course' className='w-full'>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {courseIds.map((uuid, index) => (
+                    <SelectItem key={uuid} value={uuid}>
+                      {courseMap[uuid]?.name ?? `Course ${index + 1}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <CourseProgramEvaluation
+              key={courseUuid}
+              courseUuid={courseUuid}
+              programUuid={programUuid}
+              creatorUuid={creatorUuid}
+              associatedBy={associatedBy}
+              onPendingChange={onPendingChange}
+            />
           </div>
-          <CourseProgramEvaluation
+          <ProgramCourseEvaluations
             key={courseUuid}
             courseUuid={courseUuid}
-            programUuid={programUuid}
-            creatorUuid={creatorUuid}
-            associatedBy={associatedBy}
-            onPendingChange={onPendingChange}
+            courseTitle={
+              courseMap[courseUuid]?.name ?? `Course ${courseIds.indexOf(courseUuid) + 1}`
+            }
           />
         </>
       )}

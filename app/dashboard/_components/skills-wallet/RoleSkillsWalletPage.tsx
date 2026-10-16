@@ -54,7 +54,6 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { useUserProfile } from '@/context/profile-context';
-import { extractPage } from '@/lib/api-helpers';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   addCourseCreatorExperienceMutation,
@@ -81,9 +80,7 @@ import type {
   Certificate,
   CourseCreatorExperience,
   DocumentTypeOption,
-  InstructorEducation,
   InstructorExperience,
-  InstructorProfessionalMembership,
 } from '@/services/client/types.gen';
 
 import { PageHeader } from '../../../../components/page-header';
@@ -102,6 +99,15 @@ type RoleSkillsWalletPageProps = {
 };
 
 type WalletExperience = InstructorExperience | CourseCreatorExperience;
+
+function getRelatedRecordList<T>(response: {
+  success?: boolean;
+  error?: unknown;
+  data?: T[] | { content?: T[] };
+}): T[] {
+  if (response.error || response.success === false) return [];
+  return Array.isArray(response.data) ? response.data : (response.data?.content ?? []);
+}
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard },
@@ -579,51 +585,64 @@ function AddCredentialDialog({
     });
 
   // Fetch related records (educations, memberships, experiences) so user can attach a document
-  const educationQuery = useQuery({
-    ...(role === 'instructor'
-      ? getInstructorEducationOptions({ path: { instructorUuid: profileUuid ?? '' } })
-      : getCourseCreatorEducationOptions({ path: { courseCreatorUuid: profileUuid ?? '' } })),
-    enabled: Boolean(profileUuid),
+  const instructorEducationQuery = useQuery({
+    ...getInstructorEducationOptions({ path: { instructorUuid: profileUuid ?? '' } }),
+    enabled: open && Boolean(profileUuid) && role === 'instructor',
+    select: response => getRelatedRecordList(response),
+    staleTime: STALE_TIMES.reference,
+  });
+  const creatorEducationQuery = useQuery({
+    ...getCourseCreatorEducationOptions({
+      path: { courseCreatorUuid: profileUuid ?? '' },
+      query: { pageable: { page: 0, size: 200 } },
+    }),
+    enabled: open && Boolean(profileUuid) && role === 'course_creator',
+    select: response => getRelatedRecordList(response),
+    staleTime: STALE_TIMES.reference,
+  });
+  const instructorMembershipQuery = useQuery({
+    ...getInstructorMembershipsOptions({
+      path: { instructorUuid: profileUuid ?? '' },
+      query: { pageable: { page: 0, size: 200 } },
+    }),
+    enabled: open && Boolean(profileUuid) && role === 'instructor',
+    select: response => getRelatedRecordList(response),
+    staleTime: STALE_TIMES.reference,
+  });
+  const creatorMembershipQuery = useQuery({
+    ...getCourseCreatorMembershipsOptions({
+      path: { courseCreatorUuid: profileUuid ?? '' },
+      query: { pageable: { page: 0, size: 200 } },
+    }),
+    enabled: open && Boolean(profileUuid) && role === 'course_creator',
+    select: response => getRelatedRecordList(response),
+    staleTime: STALE_TIMES.reference,
+  });
+  const instructorExperienceQuery = useQuery({
+    ...getInstructorExperienceOptions({
+      path: { instructorUuid: profileUuid ?? '' },
+      query: { pageable: { page: 0, size: 200 } },
+    }),
+    enabled: open && Boolean(profileUuid) && role === 'instructor',
+    select: response => getRelatedRecordList(response),
+    staleTime: STALE_TIMES.reference,
+  });
+  const creatorExperienceQuery = useQuery({
+    ...getCourseCreatorExperienceOptions({
+      path: { courseCreatorUuid: profileUuid ?? '' },
+      query: { pageable: { page: 0, size: 200 } },
+    }),
+    enabled: open && Boolean(profileUuid) && role === 'course_creator',
+    select: response => getRelatedRecordList(response),
     staleTime: STALE_TIMES.reference,
   });
 
-  const membershipQuery = useQuery({
-    ...(role === 'instructor'
-      ? getInstructorMembershipsOptions({
-        path: { instructorUuid: profileUuid ?? '' },
-        query: { pageable: { page: 0, size: 200 } },
-      })
-      : getCourseCreatorMembershipsOptions({
-        path: { courseCreatorUuid: profileUuid ?? '' },
-        query: { pageable: { page: 0, size: 200 } },
-      })),
-    enabled: Boolean(profileUuid),
-    staleTime: STALE_TIMES.reference,
-  });
-
-  const relatedExperienceQuery = useQuery({
-    ...(role === 'instructor'
-      ? getInstructorExperienceOptions({
-        path: { instructorUuid: profileUuid ?? '' },
-        query: { pageable: { page: 0, size: 200 } },
-      })
-      : getCourseCreatorExperienceOptions({
-        path: { courseCreatorUuid: profileUuid ?? '' },
-        query: { pageable: { page: 0, size: 200 } },
-      })),
-    enabled: Boolean(profileUuid),
-    staleTime: STALE_TIMES.reference,
-  });
-
-  const educations = (educationQuery.data?.data?.content ??
-    educationQuery.data?.data ??
-    []) as InstructorEducation[];
-  const memberships = (membershipQuery.data?.data?.content ??
-    membershipQuery.data?.data ??
-    []) as InstructorProfessionalMembership[];
-  const experiences = (relatedExperienceQuery.data?.data?.content ??
-    relatedExperienceQuery.data?.data ??
-    []) as InstructorExperience[];
+  const educations =
+    (role === 'instructor' ? instructorEducationQuery.data : creatorEducationQuery.data) ?? [];
+  const memberships =
+    (role === 'instructor' ? instructorMembershipQuery.data : creatorMembershipQuery.data) ?? [];
+  const experiences =
+    (role === 'instructor' ? instructorExperienceQuery.data : creatorExperienceQuery.data) ?? [];
 
   function RelatedRecordSelector() {
     return (
@@ -657,25 +676,35 @@ function AddCredentialDialog({
             >
               <option value=''>Select a record</option>
               {draft.related_kind === 'education' &&
-                educations.map(ed => (
-                  <option key={ed.uuid ?? ed.id} value={ed.uuid ?? ed.id}>
-                    {ed.school_name ?? ed.qualification ?? ed.title ?? ed.name ?? ed.uuid}
-                  </option>
-                ))}
+                educations.flatMap(ed =>
+                  ed.uuid ? (
+                    <option key={ed.uuid} value={ed.uuid}>
+                      {ed.qualification} — {ed.school_name}
+                    </option>
+                  ) : (
+                    []
+                  )
+                )}
               {draft.related_kind === 'membership' &&
-                memberships.map(mb => (
-                  <option key={mb.uuid ?? mb.id} value={mb.uuid ?? mb.id}>
-                    {mb.organisation_name ?? mb.name ?? mb.title ?? mb.uuid}
-                  </option>
-                ))}
+                memberships.flatMap(mb =>
+                  mb.uuid ? (
+                    <option key={mb.uuid} value={mb.uuid}>
+                      {mb.organisation_name}
+                    </option>
+                  ) : (
+                    []
+                  )
+                )}
               {draft.related_kind === 'experience' &&
-                experiences.map(ex => (
-                  <option key={ex.uuid ?? ex.id} value={ex.uuid ?? ex.id}>
-                    {ex.position ??
-                      ex.title ??
-                      `${ex.organisation_name ?? ''} ${ex.position ?? ''}`}
-                  </option>
-                ))}
+                experiences.flatMap(ex =>
+                  ex.uuid ? (
+                    <option key={ex.uuid} value={ex.uuid}>
+                      {ex.position} — {ex.organisation_name}
+                    </option>
+                  ) : (
+                    []
+                  )
+                )}
             </select>
           </div>
         ) : null}
@@ -886,19 +915,26 @@ function ProfileSkillsWalletPage({
     skillsQuery.isError || Boolean(skillsQuery.data?.error) || skillsQuery.data?.success === false;
   const skillPage = skillsFailed ? undefined : skillsQuery.data?.data;
   const skills = useMemo(() => (skillPage?.content ?? []).map(toWalletSkill), [skillPage]);
-  const experienceQuery = useQuery({
-    ...(role === 'instructor'
-      ? getInstructorExperienceOptions({
-        path: { instructorUuid: profileUuid ?? '' },
-        query: { pageable: { page: 0, size: 200 } },
-      })
-      : getCourseCreatorExperienceOptions({
-        path: { courseCreatorUuid: profileUuid ?? '' },
-        query: { pageable: { page: 0, size: 200 } },
-      })),
-    enabled: Boolean(profileUuid),
+  const instructorExperienceQuery = useQuery({
+    ...getInstructorExperienceOptions({
+      path: { instructorUuid: profileUuid },
+      query: { pageable: { page: 0, size: 200 } },
+    }),
+    enabled: Boolean(profileUuid) && role === 'instructor',
+    select: response => getRelatedRecordList(response),
     staleTime: STALE_TIMES.entity,
   });
+  const creatorExperienceQuery = useQuery({
+    ...getCourseCreatorExperienceOptions({
+      path: { courseCreatorUuid: profileUuid },
+      query: { pageable: { page: 0, size: 200 } },
+    }),
+    enabled: Boolean(profileUuid) && role === 'course_creator',
+    select: response => getRelatedRecordList(response),
+    staleTime: STALE_TIMES.entity,
+  });
+  const experienceQuery =
+    role === 'instructor' ? instructorExperienceQuery : creatorExperienceQuery;
   const documentTypesQuery = useQuery({
     ...listDocumentTypesOptions(),
     enabled: Boolean(profileUuid),
@@ -912,11 +948,8 @@ function ProfileSkillsWalletPage({
   const [experienceOpen, setExperienceOpen] = useState(false);
   const [credentialOpen, setCredentialOpen] = useState(false);
 
-  const experiences = useMemo(
-    () =>
-      experienceQuery.data?.error || experienceQuery.data?.success === false
-        ? []
-        : extractPage<WalletExperience>(experienceQuery.data).items,
+  const experiences = useMemo<WalletExperience[]>(
+    () => experienceQuery.data ?? [],
     [experienceQuery.data]
   );
   const documentTypes = (documentTypesQuery.data?.data ?? []) as DocumentTypeOption[];

@@ -169,7 +169,7 @@ export function LearningProgressDrilldown({ enrollments }: { enrollments: EnrolC
             {({ lessonsByCourse, isLoading, isFetching }) => {
                 const selectedEnrollment =
                     active.find((enrollment) => enrollment.course?.id === selectedId) ?? active[0];
-                const selectedCourseId = selectedEnrollment.course?.id ?? null;
+                const selectedCourseId = selectedEnrollment?.course?.id ?? null;
                 const selectedLessons = (selectedCourseId ? lessonsByCourse[selectedCourseId] : undefined) ?? [];
                 const selectedCompletedLessons = 0;
                 const totalCompletedLessons = 0;

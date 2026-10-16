@@ -442,14 +442,20 @@ const createCatalogCards = (
 
       showInstructorCta: !isInstructorApplyCard,
 
-      detailsHref: item.kind === 'program' ? `/dashboard/course-creator/programs/${item.id}` : roleScopedDashboardPath(domain, item.href),
+      detailsHref: roleScopedDashboardPath(domain, item.kind === "program" ? `/dashboard/programs/${item.id}` : roleScopedDashboardPath(domain, item.href)),
+
       detailsPrefetchQuery: catalogItemPrefetchQuery(item.kind, item.id),
 
       enrollHref: isInstructorApplyCard
         ? getApplyToTrainHref(item.kind, item.id, domain)
         : roleScopedDashboardPath(domain, getEnrollHref(domain, item.kind, item.id)),
 
-      instructorHref: item.kind === "program" ? `/dashboard/course-creator/courses/instructor?programId=${item.id}` : roleScopedDashboardPath(domain, getInstructorHref(domain, item.id)),
+      instructorHref: roleScopedDashboardPath(
+        domain,
+        item.kind === 'program'
+          ? `/dashboard/courses/instructor?programId=${item.id}`
+          : getInstructorHref(domain, item.id)
+      ),
 
       icon: presentation.icon,
       imageTone: presentation.imageTone,

@@ -1,0 +1,287 @@
+app/dashboard/student/assignment/[id]/page.tsx(197,62): error TS2345: Argument of type '{ path: { assignmentUuid: string; }; body: { enrollment_uuid: string; student_uuid: string | undefined; submission_text: string; }; }' is not assignable to parameter of type 'Options<SubmitAssignmentQueryData>'.
+  Property 'query' is missing in type '{ path: { assignmentUuid: string; }; body: { enrollment_uuid: string; student_uuid: string | undefined; submission_text: string; }; }' but required in type 'Omit<SubmitAssignmentQueryData, "url">'.
+app/dashboard/student/learning-hub/_components/LearningProgressDrilldown.tsx(172,42): error TS18048: 'selectedEnrollment' is possibly 'undefined'.
+app/dashboard/student/learning-hub/_components/LessonHubAssessmentsTab.tsx(367,40): error TS2339: Property 'title' does not exist on type 'Course'.
+app/dashboard/student/learning-hub/_components/LessonHubAssignmentsTab.tsx(173,32): error TS2339: Property 'message' does not exist on type '{}'.
+app/dashboard/student/learning-hub/_components/LessonHubAssignmentsTab.tsx(232,22): error TS18048: 'assignment.submission_types.length' is possibly 'undefined'.
+app/dashboard/student/learning-hub/_components/LessonHubAssignmentsTab.tsx(239,34): error TS18048: 'assignment' is possibly 'undefined'.
+app/dashboard/student/learning-hub/_components/LessonHubAssignmentsTab.tsx(239,34): error TS18048: 'assignment.submission_types' is possibly 'undefined'.
+app/dashboard/student/learning-hub/_components/LessonHubAssignmentsTab.tsx(239,62): error TS2339: Property 'map' does not exist on type 'SubmissionTypesEnum'.
+  Property 'map' does not exist on type '"TEXT"'.
+app/dashboard/student/learning-hub/_components/LessonHubAssignmentsTab.tsx(239,67): error TS7006: Parameter 'type' implicitly has an 'any' type.
+app/dashboard/student/learning-hub/_components/LessonHubAssignmentsTab.tsx(319,108): error TS2339: Property 'map' does not exist on type 'SubmissionTypesEnum'.
+  Property 'map' does not exist on type '"TEXT"'.
+app/dashboard/student/learning-hub/_components/LessonHubAssignmentsTab.tsx(319,112): error TS7006: Parameter 'type' implicitly has an 'any' type.
+app/dashboard/student/learning-hub/_components/LessonHubClassInvitesTab.tsx(216,61): error TS2345: Argument of type '{ body: { scope_acknowledged: true; }; path: { invitationUuid: string; }; }' is not assignable to parameter of type 'AcceptInvitationFromInboxData'.
+  Property 'url' is missing in type '{ body: { scope_acknowledged: true; }; path: { invitationUuid: string; }; }' but required in type 'AcceptInvitationFromInboxData'.
+app/dashboard/student/learning-hub/_components/LessonHubClassInvitesTab.tsx(232,62): error TS2345: Argument of type '{ path: { invitationUuid: string; }; }' is not assignable to parameter of type 'DeclineInvitationFromInboxData'.
+  Property 'url' is missing in type '{ path: { invitationUuid: string; }; }' but required in type 'DeclineInvitationFromInboxData'.
+app/dashboard/student/learning-hub/_components/LessonHubDashboardTab.tsx(689,29): error TS1355: A 'const' assertions can only be applied to references to enum members, or string, number, boolean, array, or object literals.
+app/dashboard/student/learning-hub/_components/useLearningHubStudyMetrics.ts(46,5): error TS2322: Type '{ [k: string]: unknown; }' is not assignable to type 'StudyActivityStore'.
+  'string' index signatures are incompatible.
+    Type 'unknown' is not assignable to type 'number'.
+app/dashboard/student/learning-hub/_components/useLearningHubStudyMetrics.ts(79,12): error TS18046: 'sum' is of type 'unknown'.
+app/dashboard/student/learning-hub/_components/useLearningHubStudyMetrics.ts(88,7): error TS2322: Type 'unknown' is not assignable to type 'number'.
+app/dashboard/student/learning-hub/_components/useLearningHubStudyMetrics.ts(107,5): error TS2322: Type 'unknown' is not assignable to type 'number'.
+app/dashboard/student/my-bookings/page.tsx(372,15): error TS2322: Type 'string | null | undefined' is not assignable to type 'string | undefined'.
+  Type 'null' is not assignable to type 'string | undefined'.
+app/dashboard/student/skills-fund/skillfund-component/AllocationsTab.tsx(239,15): error TS2322: Type '{ label: string; value: number; color: "#f59e0b" | "#0f766e" | "#7c3aed" | "#22c55e" | "#3b82f6" | undefined; percentage: number; }[]' is not assignable to type '{ value: number; color: string; label: string; }[]'.
+  Type '{ label: string; value: number; color: "#f59e0b" | "#0f766e" | "#7c3aed" | "#22c55e" | "#3b82f6" | undefined; percentage: number; }' is not assignable to type '{ value: number; color: string; label: string; }'.
+    Types of property 'color' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+app/dashboard/student/skills-fund/skillfund-component/DocumentsTab.tsx(31,38): error TS2339: Property 'reference' does not exist on type 'SkillsFundTransaction | WalletTransaction'.
+  Property 'reference' does not exist on type 'SkillsFundTransaction'.
+app/dashboard/student/skills-fund/skillfund-component/TransactionsTab.tsx(260,24): error TS2322: Type '{ label: string; value: number; color: "#f59e0b" | "#0f766e" | "#7c3aed" | "#22c55e" | "#3b82f6" | undefined; percentage: number; }[]' is not assignable to type '{ value: number; color: string; label: string; }[]'.
+  Type '{ label: string; value: number; color: "#f59e0b" | "#0f766e" | "#7c3aed" | "#22c55e" | "#3b82f6" | undefined; percentage: number; }' is not assignable to type '{ value: number; color: string; label: string; }'.
+    Types of property 'color' are incompatible.
+      Type 'string | undefined' is not assignable to type 'string'.
+        Type 'undefined' is not assignable to type 'string'.
+app/dashboard/student/skills-fund/skillfund-component/shared.tsx(171,28): error TS2322: Type '{ organisationUuid: string; }' is not assignable to type 'undefined'.
+app/dashboard/student/skills-wallet/_components/SkillsWalletCompetenciesTab.tsx(33,26): error TS2339: Property 'studentName' does not exist on type 'Pick<SkillsWalletData, "competencies">'.
+app/dashboard/student/skills-wallet/_components/SkillsWalletCompetenciesTab.tsx(212,118): error TS2339: Property 'topSkills' does not exist on type 'Pick<SkillsWalletData, "competencies">'.
+app/dashboard/student/skills-wallet/_components/useStudentSkillsWalletData.ts(551,52): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/dashboard/student/skills-wallet/_components/useStudentSkillsWalletData.ts(552,69): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/dashboard/student/skills-wallet/_components/useStudentSkillsWalletData.ts(660,69): error TS2345: Argument of type 'string | null | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(163,58): error TS2339: Property 'bucket' does not exist on type 'Wallet'.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(163,87): error TS2339: Property 'bucket' does not exist on type 'Wallet'.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(163,105): error TS2345: Argument of type 'Wallet' is not assignable to parameter of type 'WalletAccount'.
+  Type 'Wallet' is missing the following properties from type 'WalletAccount': id, bucket, label, balance_kes
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(168,65): error TS2339: Property 'bucket' does not exist on type 'Wallet'.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(168,83): error TS2345: Argument of type 'Wallet' is not assignable to parameter of type 'WalletAccount'.
+  Type 'Wallet' is missing the following properties from type 'WalletAccount': id, bucket, label, balance_kes
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(180,83): error TS2322: Type 'Wallet | null' is not assignable to type 'WalletAccount | null'.
+  Type 'Wallet' is missing the following properties from type 'WalletAccount': id, bucket, label, balance_kes
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(247,60): error TS2339: Property 'id' does not exist on type 'Wallet'.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(247,73): error TS2339: Property 'id' does not exist on type 'Wallet'.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(248,48): error TS2339: Property 'label' does not exist on type 'Wallet'.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(248,70): error TS2339: Property 'balance_kes' does not exist on type 'Wallet'.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(256,107): error TS2339: Property 'bucket' does not exist on type 'Wallet'.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(256,125): error TS2345: Argument of type 'Wallet' is not assignable to parameter of type 'WalletAccount'.
+  Type 'Wallet' is missing the following properties from type 'WalletAccount': id, bucket, label, balance_kes
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(270,37): error TS2607: JSX element class does not support attributes because it does not have a 'props' property.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(270,38): error TS2786: 'Lock' cannot be used as a JSX component.
+  Its type '{ new (): Lock; prototype: Lock; }' is not a valid JSX element type.
+    Type '{ new (): Lock; prototype: Lock; }' is not assignable to type 'new (props: any) => Component<any, any, any>'.
+      Type 'Lock' is missing the following properties from type 'Component<any, any, any>': context, setState, forceUpdate, render, and 2 more.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(271,40): error TS2339: Property 'label' does not exist on type 'Wallet'.
+app/dashboard/student/wallet/_components/PaymentsTab.tsx(271,61): error TS2339: Property 'balance_kes' does not exist on type 'Wallet'.
+app/dashboard/student/wallet/_components/TransactionsTab.tsx(71,56): error TS2322: Type 'string | undefined' is not assignable to type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+app/dashboard/student/wallet/_components/TransactionsTab.tsx(72,38): error TS18048: 'type' is possibly 'undefined'.
+app/dashboard/student/wallet/page.tsx(237,9): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>', gave the following error.
+    Argument of type '{ enabled: true; throwOnError?: ThrowOnError<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]> | undefined; ... 28 more ...; queryFn?: QueryFunction<...> | undefined; } | { ...; }' is not assignable to parameter of type 'DefinedInitialDataOptions<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>'.
+      Type '{ enabled: true; throwOnError?: ThrowOnError<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]> | undefined; ... 28 more ...; queryFn?: QueryFunction<...> | undefined; }' is not assignable to type 'DefinedInitialDataOptions<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>'.
+        Type '{ enabled: true; throwOnError?: ThrowOnError<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]> | undefined; ... 28 more ...; queryFn?: QueryFunction<...> | undefined; }' is not assignable to type '{ initialData: ApiResponseWallet | (() => ApiResponseWallet); queryFn?: QueryFunction<ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]> | undefined; }'.
+          Types of property 'initialData' are incompatible.
+            Type 'ApiResponseWallet | InitialDataFunction<ApiResponseWallet> | undefined' is not assignable to type 'ApiResponseWallet | (() => ApiResponseWallet)'.
+              Type 'undefined' is not assignable to type 'ApiResponseWallet | (() => ApiResponseWallet)'.
+  Overload 2 of 3, '(options: UndefinedInitialDataOptions<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Argument of type '{ enabled: true; throwOnError?: ThrowOnError<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]> | undefined; ... 28 more ...; queryFn?: QueryFunction<...> | undefined; } | { ...; }' is not assignable to parameter of type 'UndefinedInitialDataOptions<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>'.
+      Type '{ queryKey: ["wallet", "disabled"]; queryFn: () => Promise<undefined>; enabled: false; }' is not assignable to type 'UndefinedInitialDataOptions<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>'.
+        Type '{ queryKey: ["wallet", "disabled"]; queryFn: () => Promise<undefined>; enabled: false; }' is not assignable to type 'UseQueryOptions<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>'.
+          Types of property 'queryKey' are incompatible.
+            Type '["wallet", "disabled"]' is not assignable to type '[Pick<Options<GetWalletData>, "query" | "body" | "headers" | "path" | "baseUrl"> & { _id: string; _infinite?: boolean | undefined; tags?: readonly string[] | undefined; }]'.
+              Source has 2 element(s) but target allows only 1.
+  Overload 3 of 3, '(options: UseQueryOptions<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Argument of type '{ enabled: true; throwOnError?: ThrowOnError<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]> | undefined; ... 28 more ...; queryFn?: QueryFunction<...> | undefined; } | { ...; }' is not assignable to parameter of type 'UseQueryOptions<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>'.
+      Type '{ queryKey: ["wallet", "disabled"]; queryFn: () => Promise<undefined>; enabled: false; }' is not assignable to type 'UseQueryOptions<ApiResponseWallet, ResponseDtoVoid, ApiResponseWallet, [Pick<Options<GetWalletData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>'.
+        Types of property 'queryKey' are incompatible.
+          Type '["wallet", "disabled"]' is not assignable to type '[Pick<Options<GetWalletData>, "query" | "body" | "headers" | "path" | "baseUrl"> & { _id: string; _infinite?: boolean | undefined; tags?: readonly string[] | undefined; }]'.
+            Source has 2 element(s) but target allows only 1.
+app/dashboard/student/wallet/page.tsx(251,9): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]>, queryClient?: QueryClient | undefined): DefinedUseQueryResult<...>', gave the following error.
+    Argument of type '{ enabled: true; throwOnError?: ThrowOnError<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]> | undefined; ... 28 more ...; queryFn?: QueryFunction<...> | undefined; } | { ...; }' is not assignable to parameter of type 'DefinedInitialDataOptions<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]>'.
+      Type '{ enabled: true; throwOnError?: ThrowOnError<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]> | undefined; ... 28 more ...; queryFn?: QueryFunction<...> | undefined; }' is not assignable to type 'DefinedInitialDataOptions<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]>'.
+        Type '{ enabled: true; throwOnError?: ThrowOnError<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]> | undefined; ... 28 more ...; queryFn?: QueryFunction<...> | undefined; }' is not assignable to type '{ initialData: ApiResponsePagedDtoWalletTransaction | (() => ApiResponsePagedDtoWalletTransaction); queryFn?: QueryFunction<...> | undefined; }'.
+          Types of property 'initialData' are incompatible.
+            Type 'ApiResponsePagedDtoWalletTransaction | InitialDataFunction<ApiResponsePagedDtoWalletTransaction> | undefined' is not assignable to type 'ApiResponsePagedDtoWalletTransaction | (() => ApiResponsePagedDtoWalletTransaction)'.
+              Type 'undefined' is not assignable to type 'ApiResponsePagedDtoWalletTransaction | (() => ApiResponsePagedDtoWalletTransaction)'.
+  Overload 2 of 3, '(options: UndefinedInitialDataOptions<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Argument of type '{ enabled: true; throwOnError?: ThrowOnError<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]> | undefined; ... 28 more ...; queryFn?: QueryFunction<...> | undefined; } | { ...; }' is not assignable to parameter of type 'UndefinedInitialDataOptions<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]>'.
+      Type '{ queryKey: ["wallet-transactions", "disabled"]; queryFn: () => Promise<undefined>; enabled: false; }' is not assignable to type 'UndefinedInitialDataOptions<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]>'.
+        Type '{ queryKey: ["wallet-transactions", "disabled"]; queryFn: () => Promise<undefined>; enabled: false; }' is not assignable to type 'UseQueryOptions<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]>'.
+          Types of property 'queryKey' are incompatible.
+            Type '["wallet-transactions", "disabled"]' is not assignable to type '[Pick<Options<ListTransactions1Data>, "query" | "body" | "headers" | "path" | "baseUrl"> & { _id: string; _infinite?: boolean | undefined; tags?: readonly string[] | undefined; }]'.
+              Source has 2 element(s) but target allows only 1.
+  Overload 3 of 3, '(options: UseQueryOptions<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]>, queryClient?: QueryClient | undefined): UseQueryResult<...>', gave the following error.
+    Argument of type '{ enabled: true; throwOnError?: ThrowOnError<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]> | undefined; ... 28 more ...; queryFn?: QueryFunction<...> | undefined; } | { ...; }' is not assignable to parameter of type 'UseQueryOptions<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]>'.
+      Type '{ queryKey: ["wallet-transactions", "disabled"]; queryFn: () => Promise<undefined>; enabled: false; }' is not assignable to type 'UseQueryOptions<ApiResponsePagedDtoWalletTransaction, ResponseDtoVoid, ApiResponsePagedDtoWalletTransaction, [...]>'.
+        Types of property 'queryKey' are incompatible.
+          Type '["wallet-transactions", "disabled"]' is not assignable to type '[Pick<Options<ListTransactions1Data>, "query" | "body" | "headers" | "path" | "baseUrl"> & { _id: string; _infinite?: boolean | undefined; tags?: readonly string[] | undefined; }]'.
+            Source has 2 element(s) but target allows only 1.
+app/dashboard/student/wallet/page.tsx(303,27): error TS2339: Property 'id' does not exist on type 'WalletPayment'.
+app/dashboard/student/wallet/page.tsx(314,25): error TS2345: Argument of type '(prev: WalletPayment[]) => (WalletPayment | { id: string; item_name: string; item_type: string; amount_kes: number; amount_paid_kes: number; due_at: string; status: "completed"; partial_allowed: false; method: PaymentMethod; })[]' is not assignable to parameter of type 'SetStateAction<WalletPayment[]>'.
+  Type '(prev: WalletPayment[]) => (WalletPayment | { id: string; item_name: string; item_type: string; amount_kes: number; amount_paid_kes: number; due_at: string; status: "completed"; partial_allowed: false; method: PaymentMethod; })[]' is not assignable to type '(prevState: WalletPayment[]) => WalletPayment[]'.
+    Type '(WalletPayment | { id: string; item_name: string; item_type: string; amount_kes: number; amount_paid_kes: number; due_at: string; status: "completed"; partial_allowed: false; method: PaymentMethod; })[]' is not assignable to type 'WalletPayment[]'.
+      Type 'WalletPayment | { id: string; item_name: string; item_type: string; amount_kes: number; amount_paid_kes: number; due_at: string; status: "completed"; partial_allowed: false; method: PaymentMethod; }' is not assignable to type 'WalletPayment'.
+        Property 'uuid' is missing in type '{ id: string; item_name: string; item_type: string; amount_kes: number; amount_paid_kes: number; due_at: string; status: "completed"; partial_allowed: false; method: PaymentMethod; }' but required in type 'WalletPayment'.
+app/dashboard/student/wallet/page.tsx(437,23): error TS2304: Cannot find name 'TabId'.
+components/content-preview/AssignmentContentPreview.tsx(39,21): error TS2532: Object is possibly 'undefined'.
+components/lesson/ClassLessonWorkbook.tsx(125,46): error TS2345: Argument of type '{ path: { uuid: string; }; }' is not assignable to parameter of type 'Options<GetClassScheduleData>'.
+  Property 'query' is missing in type '{ path: { uuid: string; }; }' but required in type 'Omit<GetClassScheduleData, "url">'.
+components/lesson/LessonGradingPanel.tsx(159,15): error TS2538: Type 'undefined' cannot be used as an index type.
+components/lesson/LessonGradingPanel.tsx(256,28): error TS7006: Parameter 'name' implicitly has an 'any' type.
+components/lesson/LessonGradingPanel.tsx(347,59): error TS2339: Property 'schedule' does not exist on type 'LessonGradingTask'.
+components/lesson/LessonGradingPanel.tsx(359,45): error TS2339: Property 'schedule' does not exist on type 'LessonGradingTask'.
+components/profile-credentials/_components/CredentialCertificateCard.tsx(185,71): error TS2339: Property 'issueLabel' does not exist on type 'CredentialItem'.
+components/profile-credentials/_components/CredentialCertificateCard.tsx(197,18): error TS2339: Property 'profile_image' does not exist on type 'CredentialItem'.
+components/profile-credentials/_components/CredentialCertificateCard.tsx(198,28): error TS2339: Property 'profile_image' does not exist on type 'CredentialItem'.
+components/profile-credentials/_components/CredentialCertificateCard.tsx(249,71): error TS2551: Property 'completionLabel' does not exist on type 'CredentialItem'. Did you mean 'actionLabel'?
+components/profile-credentials/live-data.ts(465,9): error TS2561: Object literal may only specify known properties, but 'completionLabel' does not exist in type 'CredentialItem & { documentUrl?: string | undefined; metadata?: string | undefined; course?: Course | undefined; program?: TrainingProgram | undefined; }'. Did you mean to write 'actionLabel'?
+components/profile-credentials/live-data.ts(961,9): error TS2322: Type '{ id: string; certificateNumber: string | undefined; title: string; issuer: string; issuerIconText: string; completionLabel: string; issueLabel: string; level: string; status: string; statusIcon: ForwardRefExoticComponent<...>; ... 7 more ...; program: TrainingProgram | undefined; }[]' is not assignable to type 'CredentialItem[]'.
+  Property 'stage' is missing in type '{ id: string; certificateNumber: string | undefined; title: string; issuer: string; issuerIconText: string; completionLabel: string; issueLabel: string; level: string; status: string; statusIcon: ForwardRefExoticComponent<...>; ... 7 more ...; program: TrainingProgram | undefined; }' but required in type 'CredentialItem'.
+components/profile-credentials/live-data.ts(978,9): error TS2322: Type '{ id: string; certificateNumber: string | undefined; title: string; issuer: string; issuerIconText: string; completionLabel: string; issueLabel: string; level: string; status: string; statusIcon: ForwardRefExoticComponent<...>; ... 7 more ...; program: TrainingProgram | undefined; }[]' is not assignable to type 'CredentialItem[]'.
+  Property 'stage' is missing in type '{ id: string; certificateNumber: string | undefined; title: string; issuer: string; issuerIconText: string; completionLabel: string; issueLabel: string; level: string; status: string; statusIcon: ForwardRefExoticComponent<...>; ... 7 more ...; program: TrainingProgram | undefined; }' but required in type 'CredentialItem'.
+components/profile-credentials/live-data.ts(986,24): error TS7053: Element implicitly has an 'any' type because expression of type 'CredentialsTabId' can't be used to index type 'CredentialsTab'.
+  Property 'all' does not exist on type 'CredentialsTab'.
+components/profile-credentials/live-data.ts(1004,7): error TS2739: Type 'CredentialsTab' is missing the following properties from type 'Record<CredentialsTabId, CredentialItem[]>': all, badges, certificates, blockchain
+components/profile-credentials/live-data.ts(1005,36): error TS2345: Argument of type '{ id: string; certificateNumber: string | undefined; title: string; issuer: string; issuerIconText: string; completionLabel: string; issueLabel: string; level: string; status: string; statusIcon: ForwardRefExoticComponent<...>; ... 7 more ...; program: TrainingProgram | undefined; }[]' is not assignable to parameter of type 'CredentialItem[]'.
+  Property 'stage' is missing in type '{ id: string; certificateNumber: string | undefined; title: string; issuer: string; issuerIconText: string; completionLabel: string; issueLabel: string; level: string; status: string; statusIcon: ForwardRefExoticComponent<...>; ... 7 more ...; program: TrainingProgram | undefined; }' but required in type 'CredentialItem'.
+context/breadcrumb-provider.tsx(107,51): error TS2345: Argument of type 'Menu' is not assignable to parameter of type 'Record<string, MenuItem[] | MenuGroup[]>'.
+  Property 'student' is incompatible with index signature.
+    Type 'MenuSection[]' is not assignable to type 'MenuItem[] | MenuGroup[]'.
+      Type 'MenuSection[]' is not assignable to type 'MenuItem[]'.
+        Type 'MenuSection' is not assignable to type 'MenuItem'.
+          Types of property 'icon' are incompatible.
+            Type 'string' is not assignable to type 'ComponentType<{ className?: string | undefined; }> | undefined'.
+hooks/use-search-training-instructors.tsx(173,9): error TS2322: Type '{ gender: GenderEnum | null; user_domain: never[] | "student" | "instructor" | "admin" | "organisation_user" | "course_creator"; username: string | null; display_name: string | null; ... 31 more ...; formatted_location?: string | ... 1 more ... | undefined; }[]' is not assignable to type 'SearchInstructor[]'.
+  Type '{ gender: GenderEnum | null; user_domain: never[] | "student" | "instructor" | "admin" | "organisation_user" | "course_creator"; username: string | null; display_name: string | null; ... 31 more ...; formatted_location?: string | null; }' is not assignable to type 'SearchInstructor'.
+    Type '{ gender: GenderEnum | null; user_domain: never[] | "student" | "instructor" | "admin" | "organisation_user" | "course_creator"; username: string | null; display_name: string | null; ... 31 more ...; formatted_location?: string | null; }' is not assignable to type 'Instructor'.
+      Types of property 'review_count' are incompatible.
+        Type 'number' is not assignable to type 'bigint'.
+lib/course-creator/utils.ts(43,18): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+lib/course-creator/utils.ts(44,31): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+lib/course-creator/utils.ts(50,22): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+lib/course-creator/utils.ts(51,44): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+lib/course-creator/utils.ts(93,16): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+lib/course-creator/utils.ts(94,29): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+lib/course-creator/utils.ts(96,40): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+lib/course-creator/utils.ts(174,16): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+lib/course-creator/utils.ts(175,29): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+lib/course-creator/utils.ts(177,49): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+lib/course-creator/utils.ts(178,38): error TS2339: Property 'program_uuid' does not exist on type 'Course'.
+openapi-ts.config.ts(22,5): error TS2353: Object literal may only specify known properties, and 'postProcess' does not exist in type 'Output'.
+services/client/zod.gen.ts(31920,71): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(def: string): ZodDefault<ZodOptional<ZodString>>', gave the following error.
+    Argument of type 'number' is not assignable to parameter of type 'string'.
+  Overload 2 of 2, '(def: () => string): ZodDefault<ZodOptional<ZodString>>', gave the following error.
+    Argument of type 'number' is not assignable to parameter of type '() => string'.
+services/client/zod.gen.ts(31938,71): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(def: string): ZodDefault<ZodOptional<ZodString>>', gave the following error.
+    Argument of type 'number' is not assignable to parameter of type 'string'.
+  Overload 2 of 2, '(def: () => string): ZodDefault<ZodOptional<ZodString>>', gave the following error.
+    Argument of type 'number' is not assignable to parameter of type '() => string'.
+services/course-training-requirements.ts(11,10): error TS2769: No overload matches this call.
+  Overload 1 of 3, '(options: DefinedInitialDataOptions<ApiResponsePagedDtoCourseTrainingRequirement, ResponseDtoVoid, ApiResponsePagedDtoCourseTrainingRequirement, [...]>): Omit<...> & ... 1 more ... & { ...; }', gave the following error.
+    Type 'symbol | (({ signal }: { client: QueryClient; queryKey: [Pick<Options<GetCourseTrainingRequirementsData>, "query" | "body" | "headers" | "path" | "baseUrl"> & { ...; }]; signal: AbortSignal; meta: Record<...> | undefined; pageParam?: unknown; direction?: unknown; }) => Promise<...>)' is not assignable to type 'QueryFunction<ApiResponsePagedDtoCourseTrainingRequirement, [Pick<Options<GetCourseTrainingRequirementsData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]> | undefined'.
+      Type 'symbol' is not assignable to type 'QueryFunction<ApiResponsePagedDtoCourseTrainingRequirement, [Pick<Options<GetCourseTrainingRequirementsData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]>'.
+  Overload 2 of 3, '(options: UnusedSkipTokenOptions<ApiResponsePagedDtoCourseTrainingRequirement, ResponseDtoVoid, ApiResponsePagedDtoCourseTrainingRequirement, [...]>): OmitKeyof<...> & ... 1 more ... & { ...; }', gave the following error.
+    Type 'symbol | (({ signal }: { client: QueryClient; queryKey: [Pick<Options<GetCourseTrainingRequirementsData>, "query" | "body" | "headers" | "path" | "baseUrl"> & { ...; }]; signal: AbortSignal; meta: Record<...> | undefined; pageParam?: unknown; direction?: unknown; }) => Promise<...>)' is not assignable to type 'QueryFunction<ApiResponsePagedDtoCourseTrainingRequirement, [Pick<Options<GetCourseTrainingRequirementsData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }], never> | undefined'.
+      Type 'symbol' is not assignable to type 'QueryFunction<ApiResponsePagedDtoCourseTrainingRequirement, [Pick<Options<GetCourseTrainingRequirementsData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }], never>'.
+  Overload 3 of 3, '(options: UndefinedInitialDataOptions<ApiResponsePagedDtoCourseTrainingRequirement, ResponseDtoVoid, ApiResponsePagedDtoCourseTrainingRequirement, [...]>): UseQueryOptions<...> & ... 1 more ... & { ...; }', gave the following error.
+    Argument of type '{ enabled: boolean; staleTime: number; queryFn: unique symbol | (({ signal }: { client: QueryClient; queryKey: [Pick<Options<GetCourseTrainingRequirementsData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]; signal: AbortSignal; meta: Record<...> | undefined; pageParam?: unknown; direction?: unknown; }) => Promi...' is not assignable to parameter of type 'UndefinedInitialDataOptions<ApiResponsePagedDtoCourseTrainingRequirement, ResponseDtoVoid, ApiResponsePagedDtoCourseTrainingRequirement, [...]>'.
+      Type '{ enabled: boolean; staleTime: number; queryFn: unique symbol | (({ signal }: { client: QueryClient; queryKey: [Pick<Options<GetCourseTrainingRequirementsData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]; signal: AbortSignal; meta: Record<...> | undefined; pageParam?: unknown; direction?: unknown; }) => Promi...' is not assignable to type 'UndefinedInitialDataOptions<ApiResponsePagedDtoCourseTrainingRequirement, ResponseDtoVoid, ApiResponsePagedDtoCourseTrainingRequirement, [...]>'.
+        Type '{ enabled: boolean; staleTime: number; queryFn: unique symbol | (({ signal }: { client: QueryClient; queryKey: [Pick<Options<GetCourseTrainingRequirementsData>, "query" | ... 3 more ... | "baseUrl"> & { ...; }]; signal: AbortSignal; meta: Record<...> | undefined; pageParam?: unknown; direction?: unknown; }) => Promi...' is not assignable to type 'UseQueryOptions<ApiResponsePagedDtoCourseTrainingRequirement, ResponseDtoVoid, ApiResponsePagedDtoCourseTrainingRequirement, [...]>'.
+          Types of property 'queryKey' are incompatible.
+            Type '[]' is not assignable to type '[Pick<Options<GetCourseTrainingRequirementsData>, "query" | "body" | "headers" | "path" | "baseUrl"> & { _id: string; _infinite?: boolean | undefined; tags?: readonly string[] | undefined; }]'.
+              Source has 0 element(s) but target requires 1.
+src/features/dashboard/components/app-sidebar.tsx(66,36): error TS2322: Type 'MenuItem[] | MenuGroup[] | MenuSection[]' is not assignable to type 'MenuItem[] | MenuGroup[]'.
+  Type 'MenuSection[]' is not assignable to type 'MenuItem[] | MenuGroup[]'.
+    Type 'MenuSection[]' is not assignable to type 'MenuItem[]'.
+      Type 'MenuSection' is not assignable to type 'MenuItem'.
+        Types of property 'icon' are incompatible.
+          Type 'string' is not assignable to type 'ComponentType<{ className?: string | undefined; }> | undefined'.
+src/features/dashboard/components/app-sidebar.tsx(68,22): error TS2345: Argument of type 'MenuItem[] | MenuGroup[] | MenuSection[]' is not assignable to parameter of type 'MenuItem[] | MenuGroup[]'.
+  Type 'MenuSection[]' is not assignable to type 'MenuItem[] | MenuGroup[]'.
+    Type 'MenuSection[]' is not assignable to type 'MenuItem[]'.
+      Type 'MenuSection' is not assignable to type 'MenuItem'.
+        Types of property 'icon' are incompatible.
+          Type 'string' is not assignable to type 'ComponentType<{ className?: string | undefined; }> | undefined'.
+src/features/dashboard/components/app-sidebar.tsx(77,5): error TS2322: Type '(MenuItem | MenuSection)[]' is not assignable to type 'MenuItem[] | MenuGroup[]'.
+  Type '(MenuItem | MenuSection)[]' is not assignable to type 'MenuItem[]'.
+    Type 'MenuItem | MenuSection' is not assignable to type 'MenuItem'.
+      Type 'MenuSection' is not assignable to type 'MenuItem'.
+        Types of property 'icon' are incompatible.
+          Type 'string' is not assignable to type 'ComponentType<{ className?: string | undefined; }> | undefined'.
+src/features/dashboard/components/app-sidebar.tsx(77,31): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(predicate: (value: MenuItem | MenuSection, index: number, array: (MenuItem | MenuSection)[]) => value is MenuItem | MenuSection, thisArg?: any): (MenuItem | MenuSection)[]', gave the following error.
+    Argument of type '(item: MenuItem) => boolean' is not assignable to parameter of type '(value: MenuItem | MenuSection, index: number, array: (MenuItem | MenuSection)[]) => value is MenuItem | MenuSection'.
+      Types of parameters 'item' and 'value' are incompatible.
+        Type 'MenuItem | MenuSection' is not assignable to type 'MenuItem'.
+          Type 'MenuSection' is not assignable to type 'MenuItem'.
+            Types of property 'icon' are incompatible.
+              Type 'string' is not assignable to type 'ComponentType<{ className?: string | undefined; }> | undefined'.
+  Overload 2 of 2, '(predicate: (value: MenuItem | MenuSection, index: number, array: (MenuItem | MenuSection)[]) => unknown, thisArg?: any): (MenuItem | MenuSection)[]', gave the following error.
+    Argument of type '(item: MenuItem) => boolean' is not assignable to parameter of type '(value: MenuItem | MenuSection, index: number, array: (MenuItem | MenuSection)[]) => unknown'.
+      Types of parameters 'item' and 'value' are incompatible.
+        Type 'MenuItem | MenuSection' is not assignable to type 'MenuItem'.
+          Type 'MenuSection' is not assignable to type 'MenuItem'.
+            Types of property 'icon' are incompatible.
+              Type 'string' is not assignable to type 'ComponentType<{ className?: string | undefined; }> | undefined'.
+src/features/dashboard/courses/components/availability-listing-layout.tsx(83,27): error TS2345: Argument of type 'string | Date' is not assignable to parameter of type 'string'.
+  Type 'Date' is not assignable to type 'string'.
+src/features/dashboard/courses/components/availability-listing-layout.tsx(234,32): error TS2345: Argument of type '({ student_uuid }: { student_uuid: string; }) => string' is not assignable to parameter of type '(value: StudentSchedule, index: number, array: StudentSchedule[]) => string'.
+  Types of parameters '__0' and 'value' are incompatible.
+    Property 'student_uuid' is missing in type 'StudentSchedule' but required in type '{ student_uuid: string; }'.
+src/features/dashboard/courses/components/availability-listing-layout.tsx(238,44): error TS2345: Argument of type 'string | undefined' is not assignable to parameter of type 'string'.
+  Type 'undefined' is not assignable to type 'string'.
+src/features/dashboard/courses/components/availability-listing-layout.tsx(324,26): error TS2339: Property 'name' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/components/availability-listing-layout.tsx(343,22): error TS2339: Property 'skills_fund_eligible' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/components/availability-listing-layout.tsx(351,28): error TS2339: Property 'level_of_study' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/components/availability-listing-layout.tsx(419,36): error TS2345: Argument of type 'BundledClass' is not assignable to parameter of type '{ duration_minutes?: number | undefined; session_templates?: ClassSessionTemplate[] | undefined; }'.
+  Types of property 'duration_minutes' are incompatible.
+    Type 'bigint | undefined' is not assignable to type 'number | undefined'.
+      Type 'bigint' is not assignable to type 'number'.
+src/features/dashboard/courses/components/availability-listing-layout.tsx(465,20): error TS2339: Property 'venue' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/components/availability-listing-layout.tsx(517,18): error TS2339: Property 'skills_fund_eligible' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(264,66): error TS2339: Property 'institution_name' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(266,65): error TS2339: Property 'delivery_mode' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(267,59): error TS2339: Property 'class_type' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(268,69): error TS2339: Property 'academic_period' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(269,69): error TS2339: Property 'weekly_schedule' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(273,22): error TS2339: Property 'seats_available' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(273,50): error TS2339: Property 'capacity' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(278,33): error TS2339: Property 'tuition_fee_kes' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(283,20): error TS2339: Property 'skills_fund_eligible' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(285,57): error TS2339: Property 'age_group' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(286,69): error TS2339: Property 'prerequisite_level' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(287,52): error TS2339: Property 'rating' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/AvailableClassesPage.tsx(287,74): error TS2339: Property 'rating' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/pages/InstructorApprovedCoursesPage.tsx(185,45): error TS2345: Argument of type '() => ({ rowKey: string; courseUuid: string; category: string; subject: string[] | undefined; programType: null; displayName: string; classLimit: number | null; subjectLabel: string | string[]; durationLabel: string; rateLabel: string; image: string | null; status: string; } | null)[]' is not assignable to parameter of type '() => ApprovedCourseRow[]'.
+  Type '({ rowKey: string; courseUuid: string; category: string; subject: string[] | undefined; programType: null; displayName: string; classLimit: number | null; subjectLabel: string | string[]; durationLabel: string; rateLabel: string; image: string | null; status: string; } | null)[]' is not assignable to type 'ApprovedCourseRow[]'.
+    Type '{ rowKey: string; courseUuid: string; category: string; subject: string[] | undefined; programType: null; displayName: string; classLimit: number | null; subjectLabel: string | string[]; durationLabel: string; rateLabel: string; image: string | null; status: string; } | null' is not assignable to type 'ApprovedCourseRow'.
+      Type 'null' is not assignable to type 'ApprovedCourseRow'.
+src/features/dashboard/courses/pages/InstructorApprovedCoursesPage.tsx(218,15): error TS2345: Argument of type 'number | null | undefined' is not assignable to parameter of type 'number | undefined'.
+  Type 'null' is not assignable to type 'number | undefined'.
+src/features/dashboard/courses/pages/InstructorApprovedCoursesPage.tsx(227,29): error TS2677: A type predicate's type must be assignable to its parameter's type.
+  Type 'ApprovedCourseRow' is not assignable to type '{ rowKey: string; courseUuid: string; category: string; subject: string[] | undefined; programType: null; displayName: string; classLimit: number | null; subjectLabel: string | string[]; durationLabel: string; rateLabel: string; image: string | null; status: string; }'.
+    Types of property 'subject' are incompatible.
+      Type 'string' is not assignable to type 'string[]'.
+src/features/dashboard/courses/pages/InstructorApprovedCoursesPage.tsx(229,9): error TS18047: 'left' is possibly 'null'.
+src/features/dashboard/courses/pages/InstructorApprovedCoursesPage.tsx(229,40): error TS18047: 'right' is possibly 'null'.
+src/features/dashboard/courses/pages/InstructorApprovedCoursesPage.tsx(362,45): error TS2339: Property 'join' does not exist on type 'string | string[]'.
+  Property 'join' does not exist on type 'string'.
+src/features/dashboard/courses/shared/_components/ClassDetailsSheet.tsx(76,25): error TS2339: Property 'skills_fund_eligible' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/shared/_components/ClassDetailsSheet.tsx(136,36): error TS2339: Property 'academic_period' does not exist on type 'BundledClass'.
+src/features/dashboard/courses/shared/_components/CourseDetailsSheet.tsx(147,63): error TS2339: Property 'data' does not exist on type 'PagedDto'.
+src/features/dashboard/courses/shared/_components/CourseDetailsSheet.tsx(261,36): error TS2339: Property 'level' does not exist on type 'Course'.
+src/features/dashboard/courses/shared/_components/CourseDetailsSheet.tsx(261,78): error TS2339: Property 'level' does not exist on type 'Course'.
+src/features/dashboard/courses/shared/_components/CourseDetailsSheet.tsx(263,36): error TS2339: Property 'skills_fund_eligible' does not exist on type 'Course'.
+src/features/dashboard/courses/shared/_components/CourseDetailsSheet.tsx(295,36): error TS2339: Property 'age_group' does not exist on type 'Course'.
+src/features/dashboard/courses/shared/_components/CourseDetailsSheet.tsx(298,31): error TS2339: Property 'age_group' does not exist on type 'Course'.
+src/features/dashboard/courses/shared/_components/CourseDetailsSheet.tsx(316,30): error TS2339: Property 'schedule_overview' does not exist on type 'Course'.
+src/features/dashboard/workspace/pages/CourseCreatorOverviewContent.tsx(554,47): error TS2322: Type '{}' is not assignable to type 'Key | null | undefined'.
+src/features/dashboard/workspace/pages/CourseCreatorOverviewContent.tsx(562,51): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
+src/features/dashboard/workspace/pages/CourseCreatorOverviewContent.tsx(574,51): error TS2322: Type '{}' is not assignable to type 'ReactNode'.
+src/features/organisation/account/components/TrainingCenterForm.tsx(128,5): error TS2322: Type '{ contactPersonEmail: string | undefined; contactPersonPhone: string; active: true; uuid?: string; name?: string | undefined; description?: string | null; licence_no?: string | null; ... 8 more ...; verification_requested_at?: Date; }' is not assignable to type 'AsyncDefaultValues<{ name: string; active: boolean; description?: string | null | undefined; location?: string | null | undefined; latitude?: number | null | undefined; longitude?: number | null | undefined; ... 4 more ...; contactPersonPhone?: string | undefined; }> | { ...; } | undefined'.
+  Type '{ contactPersonEmail: string | undefined; contactPersonPhone: string; active: true; uuid?: string; name?: string | undefined; description?: string | null; licence_no?: string | null; ... 8 more ...; verification_requested_at?: Date; }' is not assignable to type '{ name?: string | undefined; active?: boolean | undefined; description?: string | null | undefined; location?: string | null | undefined; latitude?: number | null | undefined; longitude?: number | ... 1 more ... | undefined; ... 4 more ...; contactPersonPhone?: string | undefined; }'.
+    Types of property 'verification_requested_at' are incompatible.
+      Type 'Date | undefined' is not assignable to type 'string | undefined'.
+        Type 'Date' is not assignable to type 'string'.
+src/features/profile/landing/profile-page.tsx(72,28): error TS2339: Property 'location_name' does not exist on type 'SharedUserProfile'.
+src/features/profile/pages/student/StudentGuardianInformationPage.tsx(134,17): error TS2353: Object literal may only specify known properties, and 'updated_by' does not exist in type 'StudentWritable'.

@@ -80,7 +80,7 @@ interface ProgramRecordPageProps {
 export function ProgramRecordPage({
   programUuid,
   backHref,
-  backLabel = 'Back to programmes',
+  backLabel = 'Back to courses',
   primaryAction,
   onPrimaryAction,
   enrolHref,

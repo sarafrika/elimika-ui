@@ -1,3 +1,4 @@
+import { SchemaEnum6 } from '@/services/client/types.gen';
 import z from 'zod';
 export const MAX_VIDEO_SIZE_MB = 150; // Adjust according to your backend limit
 export const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
@@ -12,6 +13,7 @@ export const providedByOptions = [
 export const courseCreationSchema = z.object({
   name: z.string().min(1, 'Course name is required'),
   course_code: z.string().trim().optional(),
+  status: z.nativeEnum(SchemaEnum6).default(SchemaEnum6.DRAFT),
   description: z.string().min(10, 'Course description is required'),
   objectives: z
     .string()

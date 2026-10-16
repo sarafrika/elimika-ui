@@ -16,6 +16,7 @@ import {
     uploadSubmissionAttachmentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmission } from '@/services/client/types.gen';
+import { getErrorMessage } from '@/src/features/dashboard/courses/types';
 import {
     getDueSummary,
     getStudentAssignmentSubmissionState,
@@ -74,6 +75,7 @@ function AssignmentDetailSheet({
 
     const row = payload?.row;
     const assignment = row?.assignment;
+    const submissionTypes = assignment?.submission_types ? [assignment.submission_types] : [];
     const schedule = row?.schedule;
     const submission = row?.latestSubmission as AssignmentSubmission | null | undefined;
     const activeEnrollmentUuid = row?.classMeta.courseEnrollmentUuid ?? row?.classMeta.enrollmentUuid;
@@ -133,14 +135,13 @@ function AssignmentDetailSheet({
         }
 
         try {
-            // @ts-ignore
             const response = await submitAssignmentMut.mutateAsync({
                 path: { assignmentUuid: assignment?.uuid },
+                query: { enrollmentUuid: activeEnrollmentUuid },
                 body: {
                     enrollment_uuid: activeEnrollmentUuid,
                     student_uuid: row?.classMeta.studentUuid ?? student?.uuid,
                     submission_text: submissionText,
-                    file_urls: ['/assignment.pdf'],
                 },
             });
 
@@ -170,7 +171,7 @@ function AssignmentDetailSheet({
             toast.success('Assignment submitted successfully.');
             handleClose();
         } catch (error) {
-            toast.error(error?.message);
+            toast.error(getErrorMessage(error, 'Unable to submit this assignment right now.'));
         }
     };
 
@@ -229,14 +230,14 @@ function AssignmentDetailSheet({
                         </div>
                     )}
 
-                    {assignment?.submission_types?.length > 0 && (
+                    {submissionTypes.length > 0 && (
                         <div className="rounded-sm border bg-muted/30 p-3">
                             <p className="mb-2 text-xs font-medium text-muted-foreground">
                                 Accepted submission types
                             </p>
 
                             <div className="flex flex-wrap gap-2">
-                                {assignment.submission_types.map((type) => (
+                                {submissionTypes.map((type) => (
                                     <Badge key={type} variant="default">
                                         {type}
                                     </Badge>
@@ -316,7 +317,7 @@ function AssignmentDetailSheet({
                             <Input
                                 type='file'
                                 multiple
-                                accept={assignment?.submission_types?.length ? assignment.submission_types.map(type => {
+                                accept={submissionTypes.length ? submissionTypes.map(type => {
                                     switch (type.toUpperCase()) {
                                         case 'DOCUMENT':
                                             return '.pdf,.doc,.docx,.txt,.rtf';

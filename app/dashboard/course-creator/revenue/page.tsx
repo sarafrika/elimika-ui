@@ -254,18 +254,21 @@ const RevenuePage = () => {
       value: formatKES(analyticsData.totalRevenue),
       hint: `${analyticsData.completedTransactions} completed transactions`,
       icon: TrendingUp,
+      tone: 'muted',
     },
     {
       label: 'Withdrawals',
       value: formatKES(analyticsData.totalWithdrawals),
       hint: 'Funds already moved out',
       icon: Send,
+      tone: 'muted',
     },
     {
       label: 'Success rate',
       value: `${analyticsData.successRate.toFixed(0)}%`,
       hint: `${analyticsData.pendingTransactions} pending • ${analyticsData.failedTransactions} failed`,
       icon: Users,
+      tone: 'muted',
     },
   ] as const;
 
