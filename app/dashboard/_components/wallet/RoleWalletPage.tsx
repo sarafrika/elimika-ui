@@ -11,8 +11,8 @@ const ROLE_LABELS: Record<WalletRole, string> = {
 };
 
 const ROLE_DESCRIPTIONS: Record<WalletRole, string> = {
-  instructor: 'Personal funds, Skills Fund balances, rewards, refunds and marketplace credits',
-  course_creator: 'Personal funds, Skills Fund balances, rewards, refunds and marketplace credits',
+  instructor: 'Course class orders, delivery progress and wallet activity.',
+  course_creator: 'Class orders for your courses, delivery progress and wallet activity.',
 };
 
 export function RoleWalletPage({ role }: { role: WalletRole }) {
@@ -23,6 +23,7 @@ export function RoleWalletPage({ role }: { role: WalletRole }) {
   return (
     <WalletProvider>
       <WalletShell
+        role={role}
         title={ROLE_LABELS[role]}
         description={ROLE_DESCRIPTIONS[role]}
         initialTab={initialTab}
@@ -30,3 +31,12 @@ export function RoleWalletPage({ role }: { role: WalletRole }) {
     </WalletProvider>
   );
 }
+
+// ft: add class orders and earnings to training wallets
+
+// - Add instructor and course creator order dashboards and details
+// - Calculate lesson values, enrollment counts and revenue shares
+// - Fix available balances and withdrawal and transfer limits
+// - Improve wallet headers, loading states and currency formatting
+// - Batch metadata lookups and stabilize wallet data fetching
+// - Lower the TypeScript error ceiling

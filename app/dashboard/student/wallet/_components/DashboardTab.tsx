@@ -2,6 +2,7 @@
 
 import { AlertTriangle, CalendarCheck, ReceiptText } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { formatWalletMoney } from "@/src/features/wallet/wallet-accounts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { formatKES } from "../../../../../src/features/dashboard/courses/pages/PaymentMethodPicker";
 import { balanceBreakdown, fmtDate, METHOD_LABEL, TxnRow, useWallet, WalletDashboardTabProps, WalletPayment } from "../page";
@@ -12,14 +13,15 @@ export function DashboardTab({ onNavigate, canManagePayments, wallet, transactio
     const payments: WalletPayment[] = []
 
     const breakdown = balanceBreakdown(accounts);
+    const currency = wallet?.currency_code ?? "KES";
     const pendingPayments = payments.filter((p) => p.status === "pending");
     const rewardsTotal = accounts.filter((a) => a.bucket === "rewards").reduce((s, a) => s + a.balance_kes, 0);
     const pendingTotal = pendingPayments.reduce((s, p) => s + (p.amount_kes - p.amount_paid_kes), 0);
     const lowBalance = wallet?.balance_amount! < 5000;
 
     const stats = [
-        { label: "Available balance", value: formatKES(0), hint: "Skills Fund & marketplace credits — permitted purposes only", tone: "primary" },
-        { label: "Account balance", value: formatKES(wallet?.balance_amount!), hint: "Spendable on anything", tone: "muted" },
+        { label: "Available balance", value: formatWalletMoney(wallet ? breakdown.available : undefined, currency), hint: "Funds available to spend", tone: "primary" },
+        { label: "Account balance", value: formatWalletMoney(wallet?.balance_amount, currency), hint: "Personal wallet funds", tone: "muted" },
         { label: "Rewards", value: formatKES(0), hint: "Earned credits", tone: "muted" },
         { label: "Pending payments", value: formatKES(pendingTotal), hint: `${pendingPayments.length} awaiting settlement`, tone: "muted" },
     ];

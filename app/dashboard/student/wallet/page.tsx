@@ -4,10 +4,14 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { WalletDashboardSkeleton, WalletPageSkeleton } from "@/app/dashboard/_components/wallet/WalletPageSkeleton";
 import { useUserDomain } from "@/context/user-domain-context";
 import type { UserDomain } from "@/lib/types";
+import { STALE_TIMES } from "@/lib/query-client";
 import { type Bucket, buildWalletAccounts, type WalletAccount } from "@/src/features/wallet/wallet-accounts";
-import { useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
 import {
     ArrowDownLeft,
     ArrowLeftRight,
@@ -30,10 +34,10 @@ import {
     useMemo,
     useState
 } from "react";
-import { PageHeader } from "../../../../components/page-header";
+import { WalletPageHeader } from "@/app/dashboard/_components/wallet/WalletPageHeader";
 import { useUserProfile } from "../../../../context/profile-context";
 import { Wallet, WalletTransaction } from "../../../../services/client";
-import { getWalletOptions, listTransactions1Options } from "../../../../services/client/@tanstack/react-query.gen";
+import { getWalletOptions, getWalletQueryKey, listTransactions1Options, listTransactions1QueryKey } from "../../../../services/client/@tanstack/react-query.gen";
 import { AccountsTab } from "./_components/AccountsTab";
 import { AuditTab } from "./_components/AuditTab";
 import { DashboardTab } from "./_components/DashboardTab";
@@ -44,6 +48,11 @@ import { RewardsTab } from "./_components/RewardsTab";
 import { StatementsTab } from "./_components/StatementsTab";
 import { TopUpTab } from "./_components/TopUpTab";
 import { TransactionsTab } from "./_components/TransactionsTab";
+
+const TrainingOrdersDashboard = dynamic(
+    () => import("@/app/dashboard/_components/wallet/TrainingOrdersDashboard").then(module => module.TrainingOrdersDashboard),
+    { loading: () => <WalletDashboardSkeleton variant="training" /> }
+);
 
 /* =========================================================================
    Types
@@ -223,6 +232,7 @@ interface Toast {
 
 interface WalletState {
     wallet: Wallet | undefined;
+    isLoading: boolean;
     accounts: WalletAccount[];
     transactions: WalletTransaction[];
     payments: WalletPayment[];
@@ -243,37 +253,42 @@ export function useWallet() {
 }
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-    const user = useUserProfile()
-    const { data: walletResp } = useQuery(
-        user?.uuid
-            ? {
-                ...getWalletOptions({ path: { userUuid: user.uuid } }),
-                enabled: true,
-            }
+    const user = useUserProfile();
+    const userUuid = user?.uuid;
+    const walletQuery = useQuery({
+        ...(userUuid
+            ? getWalletOptions({ path: { userUuid } })
+            : { queryKey: getWalletQueryKey({ path: { userUuid: '' } }), queryFn: skipToken }),
+        enabled: Boolean(userUuid),
+        staleTime: STALE_TIMES.entity,
+    });
+    const wallet = walletQuery.data?.error || walletQuery.data?.success === false
+        ? undefined
+        : walletQuery.data?.data;
+    const currency = wallet?.currency_code ?? 'KES';
+    const transactionsQuery = useQuery({
+        ...(userUuid
+            ? listTransactions1Options({
+                path: { userUuid },
+                query: { pageable: { page: 0, size: 20 }, currency_code: currency },
+            })
             : {
-                queryKey: ["wallet", "disabled"] as const,
-                queryFn: async () => undefined,
-                enabled: false,
-            },
-    )
-    const wallet = walletResp?.data
-
-    const { data: transactionsResp } = useQuery(
-        user?.uuid
-            ? {
-                ...listTransactions1Options({
-                    path: { userUuid: user.uuid },
-                    query: { pageable: { size: 20 }, currency_code: "KES" }
+                queryKey: listTransactions1QueryKey({
+                    path: { userUuid: '' },
+                    query: { pageable: { page: 0, size: 20 }, currency_code: currency },
                 }),
-                enabled: true,
-            }
-            : {
-                queryKey: ["wallet-transactions", "disabled"] as const,
-                queryFn: async () => undefined,
-                enabled: false,
-            },
-    )
-    const transactions = transactionsResp?.data?.content ?? []
+                queryFn: skipToken,
+            }),
+        enabled: Boolean(userUuid && wallet),
+        staleTime: STALE_TIMES.entity,
+    });
+    const isLoading = Boolean(user?.isLoading) || walletQuery.isLoading || transactionsQuery.isLoading;
+    const transactions = useMemo(
+        () => transactionsQuery.data?.error || transactionsQuery.data?.success === false
+            ? []
+            : transactionsQuery.data?.data?.content ?? [],
+        [transactionsQuery.data]
+    );
 
     const accounts = useMemo<WalletAccount[]>(() => buildWalletAccounts(wallet), [wallet]);  // seedAccounts
 
@@ -283,17 +298,17 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const [audit, setAudit] = useState<AuditEntry[]>([]); // seedAudit
     const [toasts, setToasts] = useState<Toast[]>([]);
 
-    function notify(t: Omit<Toast, "id">) {
+    const notify = useCallback((t: Omit<Toast, "id">) => {
         const id = uid("toast");
         setToasts((prev) => [...prev, { ...t, id }]);
         setTimeout(() => setToasts((prev) => prev.filter((x) => x.id !== id)), 4000);
-    }
+    }, []);
 
-    function pushAudit(entry: Omit<AuditEntry, "id" | "created_at" | "actor_role">) {
+    const pushAudit = useCallback((entry: Omit<AuditEntry, "id" | "created_at" | "actor_role">) => {
         setAudit((prev) => [{ id: uid("aud"), created_at: new Date().toISOString(), actor_role: "student", ...entry }, ...prev]);
-    }
+    }, []);
 
-    function topUp(amount: number, method: PaymentMethod) {
+    const topUp = useCallback((amount: number, method: PaymentMethod) => {
         pushAudit({
             event_type: "top_up",
             entity_type: "wallet_transaction",
@@ -301,16 +316,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             updated_values: { amount_kes: amount, method },
         });
         notify({ type: "success", message: "Top-up received", description: `${fmtKES(amount)} via ${METHOD_LABEL[method]}` });
-    }
+    }, [pushAudit, notify]);
 
-    function pay(opts: { paymentId: string | null; itemType: string; itemName: string; amount: number; method: PaymentMethod; accountId: string; total?: number; alreadyPaid: number }) {
+    const pay = useCallback((opts: { paymentId: string | null; itemType: string; itemName: string; amount: number; method: PaymentMethod; accountId: string; total?: number; alreadyPaid: number }) => {
         const account = accounts.find((a) => a.id === opts.accountId);
         if (!account) return;
 
         if (opts.paymentId) {
             setPayments((prev) =>
                 prev.map((p) => {
-                    if (p.id !== opts.paymentId) return p;
+                    if (p.uuid !== opts.paymentId) return p;
                     const newPaid = opts.alreadyPaid + opts.amount;
                     return {
                         ...p,
@@ -323,7 +338,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         } else {
             setPayments((prev) => [
                 {
-                    id: uid("pay"),
+                    uuid: uid("pay"),
                     item_name: opts.itemName,
                     item_type: opts.itemType,
                     amount_kes: opts.amount,
@@ -344,9 +359,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             updated_values: { amount_kes: opts.amount, account: account.label, method: opts.method },
         });
         notify({ type: "success", message: "Payment confirmed", description: `${fmtKES(opts.amount)} from ${account.label}` });
-    }
+    }, [accounts, pushAudit, notify]);
 
-    function refund(txn: WalletTransaction) {
+    const refund = useCallback((txn: WalletTransaction) => {
         pushAudit({
             event_type: "refund_issued",
             entity_type: "wallet_transaction",
@@ -362,9 +377,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             message: "Refund recorded",
             description: txn.reference ? `Linked to ${txn.reference}` : undefined,
         });
-    }
+    }, [pushAudit, notify]);
 
-    const value: WalletState = { wallet, accounts, transactions, payments, rewards, statements, audit, notify, topUp, pay, refund };
+    const value = useMemo<WalletState>(
+        () => ({ wallet, isLoading, accounts, transactions, payments, rewards, statements, audit, notify, topUp, pay, refund }),
+        [wallet, isLoading, accounts, transactions, payments, rewards, statements, audit, notify, topUp, pay, refund]
+    );
 
     return (
         <WalletContext.Provider value={value}>
@@ -467,17 +485,21 @@ export function downloadCsv(filename: string, header: string[], rows: (string | 
 }
 
 export function WalletShell({
+    role = "student",
     title = "Student Wallet",
     description = "Personal funds, Skills Fund balances, rewards, refunds and marketplace credits",
     initialTab = "dashboard",
 }: {
+    role?: "student" | "instructor" | "course_creator";
     title?: string;
     description?: string;
     initialTab?: WalletTabId;
 }) {
     const [tab, setTab] = useState<WalletTabId>(initialTab);
-    const { activeDomain } = useUserDomain();
-    const { wallet, transactions } = useWallet();
+    const { activeDomain, isLoading: domainLoading } = useUserDomain();
+    const pathname = usePathname();
+    const { wallet, accounts, transactions, isLoading } = useWallet();
+    const availableBalance = useMemo(() => wallet ? balanceBreakdown(accounts).available : undefined, [wallet, accounts]);
     const visibleTabs = useMemo(
         () => TABS.filter(item => {
             const profiles = TAB_PROFILES[item.id];
@@ -493,13 +515,20 @@ export function WalletShell({
         [visibleTabs]
     );
 
+    if (activeTab === "dashboard" && (isLoading || (domainLoading && !activeDomain))) {
+        return <WalletPageSkeleton role={role} />;
+    }
+
     return (
         <div className="p-4 md:p-4 space-y-5">
-            <PageHeader
-                eyebrow='WALLET'
+            <WalletPageHeader
                 title={title}
                 description={description}
-                actions={<></>}
+                accountBalance={wallet?.balance_amount}
+                availableBalance={availableBalance}
+                currency={wallet?.currency_code ?? 'KES'}
+                isLoading={isLoading}
+                withdrawHref={`${pathname.replace(/\/$/, '')}/withdraw`}
             />
 
             <div className="-mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto">
@@ -525,12 +554,16 @@ export function WalletShell({
             </div>
 
             {activeTab === "dashboard" && (
-                <DashboardTab
-                    onNavigate={navigateToTab}
-                    canManagePayments={visibleTabs.some(item => item.id === "payments")}
-                    wallet={wallet}
-                    transactions={transactions}
-                />
+                activeDomain === "instructor" || activeDomain === "course_creator" ? (
+                    <TrainingOrdersDashboard key={activeDomain} role={activeDomain} />
+                ) : (
+                    <DashboardTab
+                        onNavigate={navigateToTab}
+                        canManagePayments={visibleTabs.some(item => item.id === "payments")}
+                        wallet={wallet}
+                        transactions={transactions}
+                    />
+                )
             )}
             {activeTab === "accounts" && <AccountsTab wallet={wallet} transactions={transactions} />}
             {activeTab === "payments" && <PaymentsTab />}
