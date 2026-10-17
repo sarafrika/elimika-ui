@@ -1,7 +1,7 @@
 'use client';
 
 import { TransferFundsSheet } from '@/app/dashboard/_components/transfer-funds-sheet';
-import { buildWalletAccounts, fmtDateTime, fmtKES, TxnRow, useWallet } from '@/app/dashboard/student/wallet/page';
+import { balanceBreakdown, buildWalletAccounts, fmtDateTime, fmtKES, TxnRow, useWallet } from '@/app/dashboard/student/wallet/page';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +32,7 @@ export function WalletWithdrawPage() {
 
   const walletAccounts = useMemo(() => buildWalletAccounts(wallet), [wallet]);
   const accountBalance = wallet?.balance_amount ?? walletAccounts[0]?.balance_kes ?? 0
-  const availableBalance = 0;
+  const availableBalance = useMemo(() => balanceBreakdown(walletAccounts).available, [walletAccounts]);
   const walletCurrency = wallet?.currency_code ?? 'KES';
 
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -55,9 +55,9 @@ export function WalletWithdrawPage() {
   }, [searchParams]);
 
   const isWithdrawalInvalid =
-    !withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > accountBalance;
+    !withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > availableBalance;
   const isTransferInvalid =
-    !targetUserUuid || !transferAmount || Number(transferAmount) <= 0 || Number(transferAmount) > accountBalance;
+    !targetUserUuid || !transferAmount || Number(transferAmount) <= 0 || Number(transferAmount) > availableBalance;
 
   const handleWithdraw = () => {
     if (isWithdrawalInvalid) return;

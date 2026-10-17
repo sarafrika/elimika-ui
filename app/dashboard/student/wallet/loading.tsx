@@ -1,5 +1,5 @@
-import { RouteSkeleton } from '@/components/dashboard/route-skeleton';
+import { WalletPageSkeleton } from '@/app/dashboard/_components/wallet/WalletPageSkeleton';
 
 export default function Loading() {
-  return <RouteSkeleton variant='overview' label='Loading wallet' />;
+  return <WalletPageSkeleton />;
 }

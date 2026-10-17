@@ -10,6 +10,7 @@ import {
   getProgramRequirements,
   searchCourses,
   type Assignment,
+  type Category,
   type ClassBatchSummary,
   type Course,
   type CourseCreator,
@@ -37,6 +38,7 @@ import {
   getUserDirectoryOptions,
   search2Options,
   searchAssignmentsOptions,
+  searchCategoriesOptions,
   searchCourseCreatorsOptions,
   searchCoursesQueryKey,
   searchEnrollmentsOptions,
@@ -390,6 +392,15 @@ function courseLookupQueries(uniqueIds: string[]) {
   });
 }
 
+export function useCategoriesByIds(ids: string[]) {
+  const { map, isLoading, isError, refetch } = useSearchByIds<Category>(
+    ids,
+    searchCategoriesOptions,
+    STALE_TIMES.reference
+  );
+  return { categoryMap: map, isLoading, isError, refetch };
+}
+
 export function useCoursesByIds(ids: string[]) {
   const uniqueIds = useMemo(() => uniqueSortedIds(ids), [ids]);
 
@@ -558,8 +569,8 @@ export function useQuizzesByIds(ids: string[]) {
 }
 
 export function useInstructorsByIds(ids: string[]) {
-  const { map, isLoading } = useSearchByIds<Instructor>(ids, searchInstructorsOptions);
-  return { instructorMap: map, isLoading };
+  const { map, isLoading, isError, refetch } = useSearchByIds<Instructor>(ids, searchInstructorsOptions);
+  return { instructorMap: map, isLoading, isError, refetch };
 }
 
 export function useCourseCreatorsByIds(ids: string[]) {
