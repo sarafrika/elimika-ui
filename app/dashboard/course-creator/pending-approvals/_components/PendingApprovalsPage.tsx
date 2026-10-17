@@ -347,40 +347,47 @@ export default function PendingApprovalsPage() {
         />
 
         <div className='grid gap-3 md:grid-cols-4'>
-          <div className='bg-card border-border/70 flex items-center gap-3 rounded-md border p-4 shadow-sm'>
-            <span className='border-border/70 bg-primary/10 text-primary flex size-10 items-center justify-center rounded-md border'>
+          <div className='bg-card border-border/70 relative flex items-center gap-3 overflow-hidden rounded-md border p-4 shadow-sm'>
+            <span className='bg-primary absolute inset-y-0 left-0 w-1' />
+            <span className='border-primary/20 bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-md border'>
               <Users className='size-5' />
             </span>
-            <div>
+            <div className='min-w-0'>
               <p className='text-muted-foreground text-xs font-medium uppercase'>Applicants</p>
               <p className='text-foreground text-xl font-semibold tabular-nums'>{stats.total}</p>
             </div>
           </div>
-          <div className='bg-card border-border/70 flex items-center gap-3 rounded-md border p-4 shadow-sm'>
-            <span className='border-border/70 bg-warning/10 text-warning flex size-10 items-center justify-center rounded-md border'>
+
+          <div className='bg-card border-border/70 relative flex items-center gap-3 overflow-hidden rounded-md border p-4 shadow-sm'>
+            <span className='bg-warning absolute inset-y-0 left-0 w-1' />
+            <span className='border-warning/20 bg-warning/10 text-warning flex size-10 shrink-0 items-center justify-center rounded-md border'>
               <Clock3 className='size-5' />
             </span>
-            <div>
+            <div className='min-w-0'>
               <p className='text-muted-foreground text-xs font-medium uppercase'>Pending</p>
               <p className='text-foreground text-xl font-semibold tabular-nums'>{stats.pending}</p>
             </div>
           </div>
-          <div className='bg-card border-border/70 flex items-center gap-3 rounded-md border p-4 shadow-sm'>
-            <span className='border-border/70 bg-primary/10 text-primary flex size-10 items-center justify-center rounded-md border'>
+
+          <div className='bg-card border-border/70 relative flex items-center gap-3 overflow-hidden rounded-md border p-4 shadow-sm'>
+            <span className='bg-primary absolute inset-y-0 left-0 w-1' />
+            <span className='border-primary/20 bg-primary/10 text-primary flex size-10 shrink-0 items-center justify-center rounded-md border'>
               <GraduationCap className='size-5' />
             </span>
-            <div>
+            <div className='min-w-0'>
               <p className='text-muted-foreground text-xs font-medium uppercase'>Instructors</p>
               <p className='text-foreground text-xl font-semibold tabular-nums'>
                 {stats.instructors}
               </p>
             </div>
           </div>
-          <div className='bg-card border-border/70 flex items-center gap-3 rounded-md border p-4 shadow-sm'>
-            <span className='border-border/70 bg-accent/10 text-accent-foreground flex size-10 items-center justify-center rounded-md border'>
+
+          <div className='bg-card border-border/70 relative flex items-center gap-3 overflow-hidden rounded-md border p-4 shadow-sm'>
+            <span className='bg-accent-foreground absolute inset-y-0 left-0 w-1' />
+            <span className='border-accent-foreground/20 bg-accent/50 text-accent-foreground flex size-10 shrink-0 items-center justify-center rounded-md border'>
               <Building2 className='size-5' />
             </span>
-            <div>
+            <div className='min-w-0'>
               <p className='text-muted-foreground text-xs font-medium uppercase'>Organisations</p>
               <p className='text-foreground text-xl font-semibold tabular-nums'>
                 {stats.organisations}

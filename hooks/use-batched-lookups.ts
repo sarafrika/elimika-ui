@@ -753,6 +753,7 @@ export function useClassesByIds(classUuids: string[]) {
       return {
         classMap,
         items: Object.values(classMap),
+        refetch: () => Promise.all(results.map(result => result.refetch())),
         isLoading: results.some(result => result.isLoading),
         isError: results.some(
           result => result.isError || result.data?.error || result.data?.success === false

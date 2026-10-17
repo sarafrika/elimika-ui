@@ -1,12 +1,13 @@
 'use client'
 
 import { AlertTriangle, CalendarCheck, ReceiptText } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../../../../components/ui/card";
 import { formatKES } from "../../../../../src/features/dashboard/courses/pages/PaymentMethodPicker";
 import { balanceBreakdown, fmtDate, METHOD_LABEL, TxnRow, useWallet, WalletDashboardTabProps, WalletPayment } from "../page";
 
 
-export function DashboardTab({ onNavigate, wallet, transactions }: WalletDashboardTabProps) {
+export function DashboardTab({ onNavigate, canManagePayments, wallet, transactions }: WalletDashboardTabProps) {
     const { accounts } = useWallet();
     const payments: WalletPayment[] = []
 
@@ -77,7 +78,9 @@ export function DashboardTab({ onNavigate, wallet, transactions }: WalletDashboa
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0">
                         <CardTitle className="text-base">Upcoming payments</CardTitle>
-                        <button onClick={() => onNavigate("payments")} className="text-xs text-primary">Manage</button>
+                        {canManagePayments && (
+                            <Button variant="link" size="sm" onClick={() => onNavigate("payments")} className="h-auto p-0 text-xs">Manage</Button>
+                        )}
                     </CardHeader>
                     <CardContent className="divide-y">
                         {pendingPayments.slice(0, 6).map((p) => (

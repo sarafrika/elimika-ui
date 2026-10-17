@@ -3,6 +3,9 @@
 
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useUserDomain } from "@/context/user-domain-context";
+import type { UserDomain } from "@/lib/types";
 import { type Bucket, buildWalletAccounts, type WalletAccount } from "@/src/features/wallet/wallet-accounts";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -22,6 +25,7 @@ import {
 import {
     createContext,
     type ReactNode,
+    useCallback,
     useContext,
     useMemo,
     useState
@@ -129,6 +133,13 @@ const TABS = [
 ] as const;
 
 export type WalletTabId = (typeof TABS)[number]["id"];
+
+const TAB_PROFILES: Partial<Record<WalletTabId, readonly UserDomain[]>> = {
+    accounts: ["student", "instructor", "organisation", "organisation_user"],
+    payments: ["student"],
+    "top-up": ["student"],
+    rewards: ["student"],
+};
 
 /* =========================================================================
    Formatting helpers
@@ -263,7 +274,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             },
     )
     const transactions = transactionsResp?.data?.content ?? []
-
 
     const accounts = useMemo<WalletAccount[]>(() => buildWalletAccounts(wallet), [wallet]);  // seedAccounts
 
@@ -434,7 +444,8 @@ export function TxnRow({ txn, action, tab }: { txn: WalletTransaction; action?: 
 }
 
 export interface WalletDashboardTabProps {
-    onNavigate: (tab: TabId) => void;
+    onNavigate: (tab: WalletTabId) => void;
+    canManagePayments: boolean;
     wallet: Wallet | undefined
     transactions: WalletTransaction[] | undefined
 }
@@ -465,7 +476,22 @@ export function WalletShell({
     initialTab?: WalletTabId;
 }) {
     const [tab, setTab] = useState<WalletTabId>(initialTab);
-    const { wallet, accounts, transactions } = useWallet()
+    const { activeDomain } = useUserDomain();
+    const { wallet, transactions } = useWallet();
+    const visibleTabs = useMemo(
+        () => TABS.filter(item => {
+            const profiles = TAB_PROFILES[item.id];
+            return !profiles || Boolean(activeDomain && profiles.includes(activeDomain));
+        }),
+        [activeDomain]
+    );
+    const activeTab = visibleTabs.some(item => item.id === tab) ? tab : "dashboard";
+    const navigateToTab = useCallback(
+        (nextTab: WalletTabId) => {
+            setTab(visibleTabs.some(item => item.id === nextTab) ? nextTab : "dashboard");
+        },
+        [visibleTabs]
+    );
 
     return (
         <div className="p-4 md:p-4 space-y-5">
@@ -478,32 +504,42 @@ export function WalletShell({
 
             <div className="-mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto">
                 <div className="flex gap-2 min-w-max pb-1">
-                    {TABS.map((t) => {
-                        const active = t.id === tab;
+                    {visibleTabs.map((t) => {
+                        const active = t.id === activeTab;
                         return (
-                            <button
+                            <Button
                                 key={t.id}
-                                onClick={() => setTab(t.id)}
+                                variant={active ? "default" : "outline"}
+                                size="sm"
+                                onClick={() => navigateToTab(t.id)}
+                                aria-current={active ? "page" : undefined}
                                 className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm whitespace-nowrap transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground hover:bg-muted border-border"
                                     }`}
                             >
                                 <t.icon className="h-3.5 w-3.5" />
                                 {t.label}
-                            </button>
+                            </Button>
                         );
                     })}
                 </div>
             </div>
 
-            {tab === "dashboard" && <DashboardTab onNavigate={setTab} wallet={wallet} transactions={transactions} />}
-            {tab === "accounts" && <AccountsTab wallet={wallet} transactions={transactions} />}
-            {tab === "payments" && <PaymentsTab />}
-            {tab === "top-up" && <TopUpTab />}
-            {tab === "transactions" && <TransactionsTab />}
-            {tab === "refunds" && <RefundsTab />}
-            {tab === "rewards" && <RewardsTab />}
-            {tab === "statements" && <StatementsTab />}
-            {tab === "audit" && <AuditTab />}
+            {activeTab === "dashboard" && (
+                <DashboardTab
+                    onNavigate={navigateToTab}
+                    canManagePayments={visibleTabs.some(item => item.id === "payments")}
+                    wallet={wallet}
+                    transactions={transactions}
+                />
+            )}
+            {activeTab === "accounts" && <AccountsTab wallet={wallet} transactions={transactions} />}
+            {activeTab === "payments" && <PaymentsTab />}
+            {activeTab === "top-up" && <TopUpTab />}
+            {activeTab === "transactions" && <TransactionsTab />}
+            {activeTab === "refunds" && <RefundsTab />}
+            {activeTab === "rewards" && <RewardsTab />}
+            {activeTab === "statements" && <StatementsTab />}
+            {activeTab === "audit" && <AuditTab />}
         </div>
     );
 }

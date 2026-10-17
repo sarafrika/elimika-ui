@@ -28,7 +28,18 @@ export type ApprovedPartnerRow = {
   name: string;
   subtitle?: string | null;
   searchText?: string;
-  offerings: { uuid: string; kind: 'course' | 'program'; name: string | null }[];
+  offerings: {
+    uuid: string;
+    kind: 'course' | 'program';
+    name: string | null;
+    creatorShare?: number | null;
+    trainerShare?: number | null;
+  }[];
+  classCount?: number | null;
+  studentCount?: number | null;
+  countsLoading?: boolean;
+  studentsLoading?: boolean;
+  classesPartial?: boolean;
   href: string;
 };
 
@@ -43,12 +54,68 @@ export type ApprovedPartnerSource = {
   isFetchingNextPage: boolean;
   refetch: () => Promise<unknown>;
   loadMore: () => Promise<unknown>;
+  hasMoreClasses?: boolean;
+  classesFetching?: boolean;
+  loadMoreClasses?: () => Promise<unknown>;
 };
 
 const HEADING = 'px-4 py-3 text-xs font-semibold tracking-wide whitespace-nowrap uppercase';
 const VISIBLE_OFFERINGS = 2;
 const plural = (count: number, label: string) =>
   `${formatCount(count, '0')} ${label}${count === 1 ? '' : 's'}`;
+
+function PartnerSplit({
+  offering,
+  partnerLabel,
+}: {
+  offering: ApprovedPartnerRow['offerings'][number];
+  partnerLabel: string;
+}) {
+  const { creatorShare, trainerShare } = offering;
+  if (creatorShare == null || trainerShare == null || (!creatorShare && !trainerShare)) {
+    return (
+      <span className='text-muted-foreground text-xs'>
+        {offering.kind === 'program' ? 'Split unavailable' : 'Split not set'}
+      </span>
+    );
+  }
+  return (
+    <div
+      className='w-28 shrink-0'
+      role='img'
+      aria-label={`Revenue split: you ${creatorShare}%, ${partnerLabel} ${trainerShare}%`}
+    >
+      <div className='bg-muted flex h-1.5 overflow-hidden rounded-full'>
+        <div className='bg-primary' style={{ width: `${creatorShare}%` }} />
+        <div className='bg-primary/30' style={{ width: `${trainerShare}%` }} />
+      </div>
+      <div className='text-muted-foreground mt-1 flex justify-between text-[11px] tabular-nums'>
+        <span>{creatorShare}%</span>
+        <span>{trainerShare}%</span>
+      </div>
+    </div>
+  );
+}
+
+function PartnerCount({
+  value,
+  loading,
+  partial = false,
+}: {
+  value?: number | null;
+  loading?: boolean;
+  partial?: boolean;
+}) {
+  if (loading) return <Skeleton className='ml-auto h-4 w-8' />;
+  return (
+    <span
+      className='tabular-nums'
+      title={value == null ? 'Count unavailable' : partial ? 'Classes loaded so far' : undefined}
+    >
+      {value == null ? '—' : `${partial ? '≥ ' : ''}${formatCount(value, '0')}`}
+    </span>
+  );
+}
 
 export default function ApprovedPartnersTable({
   sources,
@@ -59,6 +126,7 @@ export default function ApprovedPartnersTable({
 }) {
   const router = useRouter();
   const [search, setSearch] = useState('');
+  const [expanded, setExpanded] = useState<ReadonlySet<string>>(new Set());
   const term = useDeferredValue(search).trim().toLowerCase();
   const rows = useMemo(
     () => sources.flatMap(source => source.rows).sort((a, b) => a.name.localeCompare(b.name)),
@@ -90,6 +158,7 @@ export default function ApprovedPartnersTable({
   const hasProfile = sources.some(source => source.hasProfile);
   const hasError = sources.some(source => source.hasError);
   const hasNextPage = sources.some(source => source.hasNextPage);
+  const columnCount = organisationsOnly ? 6 : 7;
   const label = organisationsOnly ? 'organisation' : 'training partner';
   const searchLabel = organisationsOnly
     ? 'Search organisations or courses'
@@ -164,12 +233,12 @@ export default function ApprovedPartnersTable({
             />
           ) : (
             <Table
-              className={cn('text-left', organisationsOnly ? 'min-w-[760px]' : 'min-w-[900px]')}
+              className={cn('text-left', organisationsOnly ? 'min-w-[1000px]' : 'min-w-[1120px]')}
             >
               <caption className='sr-only'>
                 {organisationsOnly
-                  ? 'Approved organisations and the courses they train'
-                  : 'Approved freelancers and organisations with their courses and programs'}
+                  ? 'Approved organisations, courses, revenue splits, public classes and student enrolments'
+                  : 'Approved freelancers and organisations with their courses and programs, class counts, student enrolments and revenue splits'}
               </caption>
               <TableHeader className='bg-muted/40'>
                 <TableRow className='hover:bg-transparent'>
@@ -182,8 +251,38 @@ export default function ApprovedPartnersTable({
                     </TableHead>
                   )}
                   <TableHead scope='col' className={HEADING}>
-                    {organisationsOnly ? 'Courses' : 'Courses & programs'}
+                    <div className='flex items-center justify-between gap-6'>
+                      <span>{organisationsOnly ? 'Courses' : 'Courses & programs'}</span>
+                      <span className='flex flex-col gap-1 font-medium tracking-normal normal-case'>
+                        <span>Split</span>
+                        <span className='inline-flex items-center gap-3 text-xs'>
+                          <span className='inline-flex items-center gap-1'>
+                            <span aria-hidden className='bg-primary size-2 rounded-full' />
+                            You
+                          </span>
+                          <span className='inline-flex items-center gap-1'>
+                            <span aria-hidden className='bg-primary/30 size-2 rounded-full' />
+                            {organisationsOnly ? 'Organisation' : 'Trainer'}
+                          </span>
+                        </span>
+                      </span>
+                    </div>
                   </TableHead>
+                  <TableHead
+                    scope='col'
+                    className={cn(HEADING, 'text-right')}
+                    title='Visible classes on your approved courses and programs'
+                  >
+                    Classes
+                  </TableHead>
+                  <TableHead
+                    scope='col'
+                    className={cn(HEADING, 'text-right')}
+                    title='Enrolments across listed classes. A learner in multiple classes is counted in each class. Unavailable counts are shown as a dash.'
+                  >
+                    Students
+                  </TableHead>
+                  {/* // */}
                   <TableHead scope='col' className={HEADING}>
                     Status
                   </TableHead>
@@ -195,7 +294,7 @@ export default function ApprovedPartnersTable({
               <TableBody>
                 {filtered.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={organisationsOnly ? 4 : 5} className='whitespace-normal'>
+                    <TableCell colSpan={columnCount} className='whitespace-normal'>
                       <EmptyState
                         variant='plain'
                         icon={Search}
@@ -208,7 +307,11 @@ export default function ApprovedPartnersTable({
                   filtered.map(row => {
                     const isOrganisation = row.type === 'organisation';
                     const Icon = isOrganisation ? Building2 : GraduationCap;
-                    const shown = row.offerings.slice(0, VISIBLE_OFFERINGS);
+                    const rowKey = `${row.type}-${row.uuid}`;
+                    const isExpanded = expanded.has(rowKey);
+                    const shown = isExpanded
+                      ? row.offerings
+                      : row.offerings.slice(0, VISIBLE_OFFERINGS);
                     const hidden = row.offerings.length - shown.length;
                     return (
                       <TableRow
@@ -259,39 +362,78 @@ export default function ApprovedPartnersTable({
                           </TableCell>
                         )}
                         <TableCell className='w-full px-4 py-4 whitespace-normal'>
-                          <div className='flex flex-wrap items-center gap-1.5'>
+                          <div className='flex flex-col items-start gap-1.5'>
                             {shown.map(offering => (
-                              <Badge
+                              <div
                                 key={`${offering.kind}-${offering.uuid}`}
-                                variant='secondary'
-                                className='max-w-64 gap-1.5 rounded-md px-2 py-1 font-medium'
-                                title={offering.name ?? undefined}
+                                className='flex w-full items-center justify-between gap-6'
                               >
-                                {!offering.name && (
-                                  <CircleAlert
-                                    aria-hidden
-                                    className='text-muted-foreground size-3.5 shrink-0'
-                                  />
-                                )}
-                                <span
-                                  className={cn(
-                                    'truncate',
-                                    !offering.name && 'text-muted-foreground italic'
-                                  )}
+                                <Badge
+                                  variant='secondary'
+                                  className='-py-1 max-w-64 gap-1.5 rounded-md px-2 font-medium'
+                                  title={offering.name ?? undefined}
                                 >
-                                  {!organisationsOnly &&
-                                    `${offering.kind === 'course' ? 'Course' : 'Program'} · `}
-                                  {offering.name || 'Title unavailable'}
-                                </span>
-                              </Badge>
+                                  {!offering.name && (
+                                    <CircleAlert
+                                      aria-hidden
+                                      className='text-muted-foreground size-3.5 shrink-0'
+                                    />
+                                  )}
+                                  <span
+                                    className={cn(
+                                      'truncate',
+                                      !offering.name && 'text-muted-foreground italic'
+                                    )}
+                                  >
+                                    {!organisationsOnly &&
+                                      `${offering.kind === 'course' ? 'Course' : 'Program'} · `}
+                                    {offering.name || 'Title unavailable'}
+                                  </span>
+                                </Badge>
+
+                                <PartnerSplit
+                                  offering={offering}
+                                  partnerLabel={isOrganisation ? 'organisation' : 'freelancer'}
+                                />
+                              </div>
                             ))}
-                            {hidden > 0 && (
-                              <span className='text-muted-foreground text-xs'>+{hidden} more</span>
+
+                            {(hidden > 0 || isExpanded) && (
+                              <Button
+                                variant='ghost'
+                                size='sm'
+                                aria-expanded={isExpanded}
+                                onClick={() =>
+                                  setExpanded(previous => {
+                                    const next = new Set(previous);
+                                    if (next.has(rowKey)) next.delete(rowKey);
+                                    else next.add(rowKey);
+                                    return next;
+                                  })
+                                }
+                                className='text-primary h-auto self-start p-0 text-xs hover:bg-transparent hover:underline'
+                              >
+                                {isExpanded ? 'Show fewer' : `Show ${hidden} more`}
+                              </Button>
                             )}
+
                             {row.offerings.length === 0 && (
                               <span className='text-muted-foreground text-sm'>No courses yet</span>
                             )}
                           </div>
+                        </TableCell>
+                        <TableCell className='px-4 py-4 text-right'>
+                          <PartnerCount
+                            value={row.classCount}
+                            loading={row.countsLoading}
+                            partial={row.classesPartial}
+                          />
+                        </TableCell>
+                        <TableCell className='px-4 py-4 text-right'>
+                          <PartnerCount
+                            value={row.studentCount}
+                            loading={row.countsLoading || row.studentsLoading}
+                          />
                         </TableCell>
                         <TableCell className='px-4 py-4'>
                           <Badge
@@ -331,7 +473,10 @@ export default function ApprovedPartnersTable({
         </p>
       )}
       {sources
-        .filter(source => (source.hasError && rows.length > 0) || source.hasNextPage)
+        .filter(
+          source =>
+            (source.hasError && rows.length > 0) || source.hasNextPage || source.hasMoreClasses
+        )
         .map(source => {
           const sourceLabel = source.type === 'instructor' ? 'freelancer' : 'organisation';
           return (
@@ -340,7 +485,7 @@ export default function ApprovedPartnersTable({
                 <EmptyState
                   variant='compact'
                   title={`Some ${sourceLabel} details could not be loaded`}
-                  description='Available approvals are shown above. Missing titles are marked as unavailable.'
+                  description='Available approvals are shown above. Missing titles and counts are marked as unavailable.'
                   action={
                     <Button
                       variant='outline'
@@ -351,6 +496,20 @@ export default function ApprovedPartnersTable({
                     </Button>
                   }
                 />
+              )}
+              {source.hasMoreClasses && source.loadMoreClasses && (
+                <div className='flex flex-wrap items-center justify-center gap-3'>
+                  <p className='text-muted-foreground text-xs'>
+                    Class counts reflect visible classes loaded so far.
+                  </p>
+                  <Button
+                    variant='outline'
+                    disabled={source.classesFetching}
+                    onClick={() => void source.loadMoreClasses?.()}
+                  >
+                    {source.classesFetching && <Spinner />}Load more {sourceLabel} classes
+                  </Button>
+                </div>
               )}
               {source.hasNextPage && (
                 <div className='flex justify-center'>
