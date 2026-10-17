@@ -17,6 +17,7 @@ import { useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import { MessageSquare, Star, Users } from 'lucide-react';
 import { useState } from 'react';
+import { PageHeader } from '../../../../components/page-header';
 import {
   getCourseEnrollmentsOptions,
   getCourseReviewsOptions,
@@ -43,14 +44,15 @@ export default function CourseCreatorAnalyticsPage() {
   };
 
   return (
-    <div className='mx-auto w-full max-w-5xl space-y-6 px-4 py-10'>
-      <header>
-        <h1 className='text-3xl font-semibold tracking-tight'>Analytics</h1>
-        <p className='text-muted-foreground mt-2 text-sm'>
-          High-level indicators that highlight catalogue health, monetization readiness, and
-          operational compliance.
-        </p>
-      </header>
+    <div className='mx-auto w-full space-y-6 px-6 py-4'>
+      <PageHeader
+        eyebrow='ANALYTICS'
+        title=" Analytics"
+        description=" High-level indicators that highlight catalogue health, monetization readiness, and operational compliance."
+        actions={
+          <></>
+        }
+      />
 
       <Card className='lg:col-span-2'>
         <CardHeader>
@@ -224,9 +226,8 @@ function RatingStars({ value }: { value: number }) {
       {Array.from({ length: 5 }).map((_, i) => (
         <Star
           key={i}
-          className={`h-4 w-4 ${
-            i < value ? 'fill-yellow-500 text-yellow-500' : 'fill-muted text-muted-foreground'
-          }`}
+          className={`h-4 w-4 ${i < value ? 'fill-yellow-500 text-yellow-500' : 'fill-muted text-muted-foreground'
+            }`}
         />
       ))}
     </div>
@@ -262,7 +263,7 @@ function CourseReviewCard({
   const averageRating =
     reviewCount > 0
       ? Math.round((reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount) * 10) /
-        10
+      10
       : null;
 
   return (
@@ -356,7 +357,7 @@ function ReviewsSheet({
   const averageRating =
     reviewCount > 0
       ? Math.round((reviews.reduce((sum, review) => sum + review.rating, 0) / reviewCount) * 10) /
-        10
+      10
       : null;
 
   // Calculate rating distribution

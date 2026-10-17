@@ -30,6 +30,7 @@ import {
   Users,
 } from 'lucide-react';
 import { useCallback, useDeferredValue, useMemo, useState } from 'react';
+import { PageHeader } from '../../../../components/page-header';
 import { useCourseCreator } from '../../../../context/course-creator-context';
 import {
   getCourseEnrollmentsOptions,
@@ -300,19 +301,11 @@ const RevenuePage = () => {
 
   return (
     <div className={elimikaDesignSystem.components.pageContainer}>
-      <section
-        className='border-border/70 bg-card rounded-md border px-5 py-5 shadow-sm sm:px-6 lg:px-7'>
-        <div className='flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between'>
-          <div className='flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between'>
-            <div className='space-y-1.5'>
-              <h1 className='text-foreground text-2xl font-semibold tracking-tight sm:text-3xl'>
-                Revenue
-              </h1>
-              <p className='text-muted-foreground max-w-2xl text-sm'> Track revenue, inspect transaction history, and keep an eye on course performance
-                with a cleaner wallet-style layout.</p>
-            </div>
-          </div>
-
+      <PageHeader
+        eyebrow='REVENUE'
+        title=" Revenue"
+        description="Track revenue, inspect transaction history, and keep an eye on course performance with a cleaner wallet-style layout."
+        actions={
           <div className='flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end'>
             <Select value={timeRange} onValueChange={setTimeRange}>
               <SelectTrigger className='w-full sm:w-44'>
@@ -340,8 +333,8 @@ const RevenuePage = () => {
               )}
             </Button>
           </div>
-        </div>
-      </section>
+        }
+      />
 
       {showSummary && (
         <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>

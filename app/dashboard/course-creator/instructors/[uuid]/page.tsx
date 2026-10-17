@@ -1,5 +1,5 @@
-import { InstructorDetailPage } from '@/src/features/dashboard/instructor-detail/instructor-detail-page';
+import { CourseCreatorInstructorDetailPage } from "../_components/CreatorInstructorDetailsPage";
 
-export default function CourseCreatorInstructorDetailPage() {
-  return <InstructorDetailPage role='course-creator' />;
+export default function InstructorDetailPage() {
+  return <CourseCreatorInstructorDetailPage role="course-creator" />;
 }

@@ -49,11 +49,11 @@ import { toast } from 'sonner';
 import * as z from 'zod';
 import { useProfileShareUrl } from '../../../../../app/dashboard/_components/skills-wallet/use-profile-share-url';
 import RichTextRenderer from '../../../../../components/editors/richTextRenders';
+import { PageHeader } from '../../../../../components/page-header';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
 import ManageProfileActions from '../../../profile/add-profile/components/ManageProfileActions';
 import { useUserDomain } from '../../context/user-domain-context';
 import { SettingsField } from '../_components/settings-field';
-import { SettingsPageHeader } from '../_components/settings-page-header';
 import { TimezoneSetting } from '../_components/timezone-setting';
 import { AcademicGroupsPanel } from '../panels/academic-groups-panel';
 import { AgeGroupsPanel } from '../panels/age-groups-panel';
@@ -547,12 +547,13 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
   return (
     <div className={`${surfaceTheme.pageWide} mb-8 overflow-x-clip py-3 sm:py-4`}>
       <div className='space-y-4 sm:space-y-5'>
-        <SettingsPageHeader
+        <PageHeader
+          eyebrow='SETTINGS AND CONFIGURATION'
           title={config.title}
-          subtitle={config.subtitle}
-          profileName={profileName}
-          profileImage={profileImage}
-          initials={profileInitials}
+          description={config.subtitle}
+          actions={
+            <></>
+          }
         />
 
         <SectionTabs

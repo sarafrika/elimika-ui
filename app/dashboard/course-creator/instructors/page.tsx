@@ -7,6 +7,8 @@ export default async function InstructorsPage({
 }) {
   const { type } = await searchParams;
   return (
-    <InstructorDirectory initialType={type === 'organisation' ? 'organisation' : 'instructor'} />
+    <InstructorDirectory
+      initialType={type === 'instructor' || type === 'organisation' ? type : 'all'}
+    />
   );
 }
