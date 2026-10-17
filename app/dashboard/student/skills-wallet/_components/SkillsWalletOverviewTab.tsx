@@ -12,26 +12,26 @@ import {
 } from 'lucide-react';
 
 import { WalletShareButton } from '@/app/dashboard/_components/skills-wallet/WalletShareButton';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   listEducationOptions,
   listPortfolioOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { requireApiData } from '@/src/features/onboarding/lib/user-onboarding';
-
+import { SkillsWalletOverviewSkeleton } from './SkillsWalletOverviewSkeleton';
 import {
   Donut,
+  fmtDate,
   ICON_MAP,
   LegendRow,
-  StatCard,
-  fmtDate,
   type SkillsWalletData,
+  StatCard,
 } from './SkillsWalletShared';
 
 type SkillsWalletOverviewTabProps = {
@@ -132,13 +132,7 @@ export function SkillsWalletOverviewTab({
     .sort((a, b) => new Date(b.achieved_at ?? 0).getTime() - new Date(a.achieved_at ?? 0).getTime())
     .slice(0, 4);
 
-  if (isLoading)
-    return (
-      <div className='space-y-4' aria-label='Loading wallet overview'>
-        <Skeleton className='h-24 w-full' />
-        <Skeleton className='h-64 w-full' />
-      </div>
-    );
+  if (isLoading) return <SkillsWalletOverviewSkeleton />;
 
   const totalLevels = data.levelBreakdown.reduce((sum, level) => sum + level.count, 0) || 1;
 

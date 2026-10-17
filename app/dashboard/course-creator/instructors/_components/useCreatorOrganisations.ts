@@ -58,8 +58,14 @@ export function useCreatorOrganisations(organisationUuid?: string) {
     [applicationsQuery.data, creatorUuid, organisationUuid]
   );
   const courseIds = useMemo(() => [...new Set(groups.flatMap(group => group.courseIds))], [groups]);
-  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseIds);
+  const {
+    courseMap,
+    isLoading: coursesLoading,
+    isError: coursesError,
+    refetch: refetchCourses,
+  } = useCoursesByIds(courseIds);
   const hasError =
+    coursesError ||
     applicationsQuery.isError ||
     Boolean(applicationsQuery.data?.pages.some(page => page.error || page.success === false));
 
@@ -69,6 +75,7 @@ export function useCreatorOrganisations(organisationUuid?: string) {
     courseMap,
     applicationsQuery,
     hasError,
+    refetch: () => Promise.all([applicationsQuery.refetch(), refetchCourses()]),
     hasProfile: Boolean(creatorUuid),
     isLoading: profileLoading || applicationsQuery.isLoading || coursesLoading,
   };

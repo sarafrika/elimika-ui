@@ -2,6 +2,8 @@
 
 
 
+import { Badge } from "@/components/ui/badge";
+import { type Bucket, buildWalletAccounts, type WalletAccount } from "@/src/features/wallet/wallet-accounts";
 import { useQuery } from "@tanstack/react-query";
 import {
     ArrowDownLeft,
@@ -15,7 +17,6 @@ import {
     PlusCircle,
     ShieldCheck,
     Undo2,
-    Wallet as WalletIcon,
     X
 } from "lucide-react";
 import {
@@ -25,8 +26,7 @@ import {
     useMemo,
     useState
 } from "react";
-import { Badge } from "@/components/ui/badge";
-import { type Bucket, buildWalletAccounts, type WalletAccount } from "@/src/features/wallet/wallet-accounts";
+import { PageHeader } from "../../../../components/page-header";
 import { useUserProfile } from "../../../../context/profile-context";
 import { Wallet, WalletTransaction } from "../../../../services/client";
 import { getWalletOptions, listTransactions1Options } from "../../../../services/client/@tanstack/react-query.gen";
@@ -45,8 +45,8 @@ import { TransactionsTab } from "./_components/TransactionsTab";
    Types
    ========================================================================= */
 
-export type { Bucket, WalletAccount } from "@/src/features/wallet/wallet-accounts";
 export { buildWalletAccounts, daysFromNow } from "@/src/features/wallet/wallet-accounts";
+export type { Bucket, WalletAccount } from "@/src/features/wallet/wallet-accounts";
 
 export type PaymentMethod = "personal_wallet" | "skills_fund" | "rewards" | "mobile_money" | "card" | "bank";
 export type TxnStatus = "pending" | "completed" | "failed" | "reversed" | "refunded";
@@ -468,15 +468,13 @@ export function WalletShell({
     const { wallet, accounts, transactions } = useWallet()
 
     return (
-        <div className="p-4 md:p-6 space-y-5">
-            <header className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                    <h1 className="text-xl md:text-2xl font-semibold flex items-center gap-2">
-                        <WalletIcon className="h-5 w-5 text-primary" /> {title}
-                    </h1>
-                    <p className="text-sm text-muted-foreground">{description}</p>
-                </div>
-            </header>
+        <div className="p-4 md:p-4 space-y-5">
+            <PageHeader
+                eyebrow='WALLET'
+                title={title}
+                description={description}
+                actions={<></>}
+            />
 
             <div className="-mx-4 px-4 md:mx-0 md:px-0 overflow-x-auto">
                 <div className="flex gap-2 min-w-max pb-1">

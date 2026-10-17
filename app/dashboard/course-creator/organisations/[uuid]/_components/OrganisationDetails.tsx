@@ -35,9 +35,9 @@ export default function OrganisationDetails({ organisationUuid }: { organisation
     ...(organisationUuid && hasApproval
       ? getOrganisationByUuidOptions({ path: { uuid: organisationUuid } })
       : {
-          queryKey: getOrganisationByUuidQueryKey({ path: { uuid: organisationUuid } }),
-          queryFn: skipToken,
-        }),
+        queryKey: getOrganisationByUuidQueryKey({ path: { uuid: organisationUuid } }),
+        queryFn: skipToken,
+      }),
     enabled: Boolean(organisationUuid && hasApproval),
     staleTime: STALE_TIMES.reference,
   });
@@ -45,9 +45,9 @@ export default function OrganisationDetails({ organisationUuid }: { organisation
     ...(organisationUuid && hasApproval
       ? getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } })
       : {
-          queryKey: getClassDefinitionsForOrganisationQueryKey({ path: { organisationUuid } }),
-          queryFn: skipToken,
-        }),
+        queryKey: getClassDefinitionsForOrganisationQueryKey({ path: { organisationUuid } }),
+        queryFn: skipToken,
+      }),
     enabled: Boolean(organisationUuid && hasApproval),
     staleTime: STALE_TIMES.live,
   });
@@ -124,6 +124,7 @@ export default function OrganisationDetails({ organisationUuid }: { organisation
         <>
           <PageHeader
             title={organisation.name}
+            eyebrow={organisation.slug}
             description='Organisation details and instructors attached to your approved courses.'
           />
           <Card>

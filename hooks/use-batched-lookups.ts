@@ -379,15 +379,9 @@ function courseLookupQueries(uniqueIds: string[]) {
       queryKey: searchCoursesQueryKey({ query }),
       enabled: typeof window !== 'undefined',
       queryFn: async () => {
-        const { data, error, response } = await searchCourses({ query });
+        const { data, error } = await searchCourses({ query });
 
-        if (error) {
-          if (response.status === 400 || response.status === 404) {
-            return { data: { content: [] } };
-          }
-
-          throw error;
-        }
+        if (error) throw error;
 
         return data;
       },
@@ -401,7 +395,7 @@ export function useCoursesByIds(ids: string[]) {
 
   const queries = useMemo(() => courseLookupQueries(uniqueIds), [uniqueIds]);
 
-  const { map, isLoading, isError, refetch } = useQueries({
+  const { map, isLoading, isSuccess, isError, refetch } = useQueries({
     queries,
     combine: results => {
       const map: Record<string, Course> = {};
@@ -428,7 +422,7 @@ export function useCoursesByIds(ids: string[]) {
     },
   });
 
-  return { courseMap: map, isLoading, isError, refetch };
+  return { courseMap: map, isLoading, isSuccess, isError, refetch };
 }
 
 export function useProgramsByIds(ids: string[]) {

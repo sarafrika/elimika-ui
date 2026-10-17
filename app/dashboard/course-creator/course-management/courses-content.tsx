@@ -38,17 +38,18 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useCourseCreator } from '@/context/course-creator-context';
-import { useProgramRevenueShares } from '@/hooks/use-program-revenue-shares';
 import {
   useOfferingCounts,
   type OfferingCounts,
   type OfferingCountState,
 } from '@/hooks/use-offering-counts';
+import { useProgramRevenueShares } from '@/hooks/use-program-revenue-shares';
 import { isSearchUnavailable } from '@/lib/api-errors';
 import {
   courseRevenueShares,
   type ProgramRevenueShares,
 } from '@/lib/course-creator/revenue-shares';
+import { enrollmentTotal } from '@/lib/course-creator/offering-counts';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   classifySearchError,
@@ -61,13 +62,17 @@ import {
   deleteCourseMutation,
   deleteTrainingProgramMutation,
   getAllCategoriesOptions,
+  getClassDefinitionsForCourseOptions,
+  getClassDefinitionsForProgramOptions,
+  getCourseEnrollmentsOptions,
+  getProgramEnrollmentsOptions,
   searchCoursesOptions,
   searchCoursesQueryKey,
   searchTrainingProgramsOptions,
   searchTrainingProgramsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { format, isValid } from 'date-fns';
 import {
   BookOpen,
@@ -88,6 +93,7 @@ import Link from 'next/link';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ALL_CATEGORIES, CategoryTabs } from '../../../../components/category-tabs';
+import { PageHeader } from '../../../../components/page-header';
 import CoursesLoading from './loading';
 
 const CatalogueWorkspace = dynamic(
@@ -133,6 +139,88 @@ function pagesOf(metadata: PageMetadata | undefined, count: number, page: number
   if (metadata?.totalElements !== undefined)
     return Math.ceil(Number(metadata.totalElements) / PAGE_SIZE);
   return page + (metadata?.hasNext || count === PAGE_SIZE ? 2 : 1);
+}
+
+type DeletionDependencies = { classCount: number; enrollmentCount: number };
+
+// Deletion checks stay beside the page's delete handler and confirmation dialog.
+function readDeletionDependencies(
+  classes: { success?: boolean; error?: unknown; data?: unknown[] } | undefined,
+  enrollments:
+    | {
+        success?: boolean;
+        error?: unknown;
+        data?: { content?: unknown[]; metadata?: PageMetadata };
+      }
+    | undefined
+): DeletionDependencies {
+  if (
+    !classes ||
+    classes.error ||
+    classes.success === false ||
+    !Array.isArray(classes.data) ||
+    !enrollments ||
+    enrollments.error ||
+    enrollments.success === false ||
+    !Array.isArray(enrollments.data?.content)
+  )
+    throw new Error('Could not verify linked classes and enrollments. Please retry.');
+  const total = enrollmentTotal(enrollments.data?.metadata);
+  if (total == null) throw new Error('Could not verify enrollments. Please retry.');
+  return {
+    classCount: classes.data.length,
+    enrollmentCount: Math.max(total, enrollments.data.content.length),
+  };
+}
+
+function deletionBlockReason(type: Offering['type'], dependencies: DeletionDependencies) {
+  const { classCount, enrollmentCount } = dependencies;
+  const links = [
+    ...(classCount > 0 ? [`${classCount} linked ${classCount === 1 ? 'class' : 'classes'}`] : []),
+    ...(enrollmentCount > 0
+      ? [`${enrollmentCount} ${enrollmentCount === 1 ? 'enrollment' : 'enrollments'}`]
+      : []),
+  ];
+  return links.length > 0
+    ? `This ${type === 'courses' ? 'course' : 'program'} has ${links.join(' and ')} and cannot be deleted.`
+    : null;
+}
+
+async function checkOfferingDeletion(target: Offering, uuid: string, queryClient: QueryClient) {
+  const fresh = { staleTime: 0, retry: false } as const;
+  const [classes, enrollments] = await Promise.all([
+    target.type === 'courses'
+      ? queryClient.fetchQuery({
+          ...getClassDefinitionsForCourseOptions({
+            path: { courseUuid: uuid },
+            query: { activeOnly: false },
+          }),
+          ...fresh,
+        })
+      : queryClient.fetchQuery({
+          ...getClassDefinitionsForProgramOptions({
+            path: { programUuid: uuid },
+            query: { activeOnly: false },
+          }),
+          ...fresh,
+        }),
+    target.type === 'courses'
+      ? queryClient.fetchQuery({
+          ...getCourseEnrollmentsOptions({
+            path: { courseUuid: uuid },
+            query: { pageable: { page: 0, size: 1 } },
+          }),
+          ...fresh,
+        })
+      : queryClient.fetchQuery({
+          ...getProgramEnrollmentsOptions({
+            path: { programUuid: uuid },
+            query: { pageable: { page: 0, size: 1 } },
+          }),
+          ...fresh,
+        }),
+  ]);
+  return deletionBlockReason(target.type, readDeletionDependencies(classes, enrollments));
 }
 
 export default function CourseCreatorCoursesContent() {
@@ -267,8 +355,8 @@ export default function CourseCreatorCoursesContent() {
       const categoryUuids: string[] =
         offering.type === 'courses'
           ? (offering.item.category_uuids ?? []).filter(
-              (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
-            )
+            (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
+          )
           : offering.item.category_uuid
             ? [offering.item.category_uuid]
             : [];
@@ -304,8 +392,8 @@ export default function CourseCreatorCoursesContent() {
       const categoryUuids: string[] =
         offering.type === 'courses'
           ? (offering.item.category_uuids ?? []).filter(
-              (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
-            )
+            (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
+          )
           : offering.item.category_uuid
             ? [offering.item.category_uuid]
             : [];
@@ -340,8 +428,8 @@ export default function CourseCreatorCoursesContent() {
       !creatorUuid || catalogueOpen
         ? []
         : filteredOfferings.flatMap(offering =>
-            offering.type === 'programs' && offering.item.uuid ? [offering.item.uuid] : []
-          ),
+          offering.type === 'programs' && offering.item.uuid ? [offering.item.uuid] : []
+        ),
     [creatorUuid, catalogueOpen, filteredOfferings]
   );
   const programShares = useProgramRevenueShares(revenueProgramIds);
@@ -357,7 +445,8 @@ export default function CourseCreatorCoursesContent() {
     programsQuery.data?.success === false;
   const deleteCourse = useMutation(deleteCourseMutation());
   const deleteProgram = useMutation(deleteTrainingProgramMutation());
-  const deleting = deleteCourse.isPending || deleteProgram.isPending;
+  const [checkingDelete, setCheckingDelete] = useState(false);
+  const deleting = checkingDelete || deleteCourse.isPending || deleteProgram.isPending;
 
   useEffect(() => {
     if (!loading && !failed && page >= totalPages)
@@ -366,7 +455,14 @@ export default function CourseCreatorCoursesContent() {
 
   const handleDelete = async () => {
     if (!deleteTarget?.item.uuid || deleting) return;
+    setCheckingDelete(true);
     try {
+      // Recheck immediately before deleting, even if the dialog already loaded empty counts.
+      const blocked = await checkOfferingDeletion(deleteTarget, deleteTarget.item.uuid, qc);
+      if (blocked) {
+        toast.error(blocked);
+        return;
+      }
       const variables = { path: { uuid: deleteTarget.item.uuid } };
       const result =
         deleteTarget.type === 'courses'
@@ -395,6 +491,8 @@ export default function CourseCreatorCoursesContent() {
       toast.error(
         error instanceof Error ? error.message : 'Unable to delete this offering. Please try again.'
       );
+    } finally {
+      setCheckingDelete(false);
     }
   };
 
@@ -410,30 +508,28 @@ export default function CourseCreatorCoursesContent() {
     (contentType !== 'courses' ? Math.min(page * PAGE_SIZE, programsTotal) : 0);
 
   return (
-    <div className='mx-auto w-full px-4 pt-6 pb-12 sm:px-6 lg:px-8'>
-      <header className='flex flex-col justify-between gap-6 border-b pb-7 xl:flex-row xl:items-end'>
-        <div>
-          <h1 className='text-2xl font-bold'>Courses &amp; programs</h1>
-          <p className='text-muted-foreground max-w-5xl text-sm leading-relaxed'>
-            Manage your courses, build learning pathways, and track publishing and pricing from one
-            place.
-          </p>
-        </div>
-        <dl className='flex shrink-0 gap-1' aria-label='Library overview'>
-          {[
-            [coursesTotal + programsTotal, 'offerings'],
-            [coursesTotal, 'courses'],
-            [programsTotal, 'programs'],
-          ].map(([value, label]) => (
-            <div key={label} className='min-w-24 border-l px-4 py-2'>
-              <dt className='text-muted-foreground text-xs tracking-wider uppercase'>{label}</dt>
-              <dd className='mt-1 font-mono text-xl'>
-                {loading || failed ? '—' : Number(value).toLocaleString()}
-              </dd>
-            </div>
-          ))}
-        </dl>
-      </header>
+    <div className='mx-auto w-full px-4 pt-4 pb-12 sm:px-6 lg:px-8'>
+      <PageHeader
+        eyebrow='COURSES &amp; PROGRAMS'
+        title='Courses &amp; programs'
+        description=' Manage your courses, build learning pathways, and track publishing and pricing from one place.'
+        actions={
+          <dl className='flex shrink-0 gap-1' aria-label='Library overview'>
+            {[
+              [coursesTotal + programsTotal, 'offerings'],
+              [coursesTotal, 'courses'],
+              [programsTotal, 'programs'],
+            ].map(([value, label]) => (
+              <div key={label} className='min-w-24 border-l px-4 py-2'>
+                <dt className='text-muted-foreground text-xs tracking-wider uppercase'>{label}</dt>
+                <dd className='mt-1 font-mono text-xl'>
+                  {loading || failed ? '—' : Number(value).toLocaleString()}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        }
+      />
 
       <div className='mb-6 mt-4 flex flex-col justify-between gap-4 xl:flex-row xl:items-center'>
         <div
@@ -709,34 +805,143 @@ export default function CourseCreatorCoursesContent() {
         </Card>
       )}
 
-      <AlertDialog
-        open={!!deleteTarget}
-        onOpenChange={open => {
-          if (!open && !deleting) setDeleteTarget(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete {deleteTarget?.type === 'courses' ? 'course' : 'program'}?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete{' '}
-              <strong>{deleteTarget ? titleOf(deleteTarget) : ''}</strong>. This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <Button variant='outline' disabled={deleting} onClick={() => setDeleteTarget(null)}>
-              Cancel
-            </Button>
-            <Button variant='destructive' disabled={deleting} onClick={handleDelete}>
-              {deleting && <Spinner />} {deleting ? 'Deleting…' : 'Delete'}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {deleteTarget?.item.uuid && (
+        <OfferingDeletionDialog
+          key={`${deleteTarget.type}-${deleteTarget.item.uuid}`}
+          target={deleteTarget}
+          uuid={deleteTarget.item.uuid}
+          deleting={deleting}
+          onDelete={handleDelete}
+          onClose={() => setDeleteTarget(null)}
+        />
+      )}
     </div>
+  );
+}
+
+function OfferingDeletionDialog({
+  target,
+  uuid,
+  deleting,
+  onDelete,
+  onClose,
+}: {
+  target: Offering;
+  uuid: string;
+  deleting: boolean;
+  onDelete: () => Promise<void>;
+  onClose: () => void;
+}) {
+  const courseClassesQuery = useQuery({
+    ...getClassDefinitionsForCourseOptions({
+      path: { courseUuid: uuid },
+      query: { activeOnly: false },
+    }),
+    enabled: Boolean(uuid) && target.type === 'courses',
+    staleTime: 0,
+    retry: false,
+  });
+  const programClassesQuery = useQuery({
+    ...getClassDefinitionsForProgramOptions({
+      path: { programUuid: uuid },
+      query: { activeOnly: false },
+    }),
+    enabled: Boolean(uuid) && target.type === 'programs',
+    staleTime: 0,
+    retry: false,
+  });
+  const classesQuery = target.type === 'courses' ? courseClassesQuery : programClassesQuery;
+  const courseEnrollmentsQuery = useQuery({
+    ...getCourseEnrollmentsOptions({
+      path: { courseUuid: uuid },
+      query: { pageable: { page: 0, size: 1 } },
+    }),
+    enabled: Boolean(uuid) && target.type === 'courses',
+    staleTime: 0,
+    retry: false,
+  });
+  const programEnrollmentsQuery = useQuery({
+    ...getProgramEnrollmentsOptions({
+      path: { programUuid: uuid },
+      query: { pageable: { page: 0, size: 1 } },
+    }),
+    enabled: Boolean(uuid) && target.type === 'programs',
+    staleTime: 0,
+    retry: false,
+  });
+  const enrollmentsQuery =
+    target.type === 'courses' ? courseEnrollmentsQuery : programEnrollmentsQuery;
+  const checking =
+    classesQuery.isPending ||
+    enrollmentsQuery.isPending ||
+    classesQuery.isFetching ||
+    enrollmentsQuery.isFetching;
+  let checkFailed = classesQuery.isError || enrollmentsQuery.isError;
+  let blocked: string | null = null;
+  if (!checking && !checkFailed) {
+    try {
+      blocked = deletionBlockReason(
+        target.type,
+        readDeletionDependencies(classesQuery.data, enrollmentsQuery.data)
+      );
+    } catch {
+      checkFailed = true;
+    }
+  }
+  const kind = target.type === 'courses' ? 'course' : 'program';
+
+  return (
+    <AlertDialog
+      open
+      onOpenChange={open => {
+        if (!open && !deleting) onClose();
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>
+            {blocked ? `Cannot delete ${kind}` : `Delete ${kind}?`}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {checking
+              ? 'Checking linked classes and enrollments…'
+              : checkFailed
+                ? 'Could not verify linked classes and enrollments. Retry before deleting.'
+                : (blocked ?? (
+                    <>
+                      This will permanently delete <strong>{titleOf(target)}</strong>. This action
+                      cannot be undone.
+                    </>
+                  ))}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <Button variant='outline' disabled={deleting} onClick={onClose}>
+            {blocked ? 'Close' : 'Cancel'}
+          </Button>
+          {checkFailed && (
+            <Button
+              variant='outline'
+              disabled={checking || deleting}
+              onClick={() => {
+                void classesQuery.refetch();
+                void enrollmentsQuery.refetch();
+              }}
+            >
+              Retry checks
+            </Button>
+          )}
+          <Button
+            variant='destructive'
+            disabled={checking || checkFailed || Boolean(blocked) || deleting}
+            onClick={onDelete}
+          >
+            {(checking || deleting) && <Spinner />}
+            {deleting ? 'Deleting…' : checking ? 'Checking…' : 'Delete'}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

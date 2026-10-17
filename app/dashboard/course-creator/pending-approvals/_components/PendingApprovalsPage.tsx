@@ -16,7 +16,6 @@ import { ApplicantReviewSheet } from './ApplicantReviewSheet';
 import { applicationKey, type ReviewApplication } from './approval-queue';
 
 import { SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
-import { PageHeader } from '@/components/page-header';
 import { useInstructorsByIds, useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import { APPROVAL_QUERY_FRESHNESS, STALE_TIMES } from '@/lib/query-client';
 import type { CourseTrainingApplication, ProgramTrainingApplication } from '@/services/client';
@@ -25,6 +24,7 @@ import {
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { PageHeader } from '../../../../../components/page-header';
 import { stripHtml } from '../../../../../src/features/dashboard/courses/shared/_components/courses-data';
 
 type ApplicantType = 'instructor' | 'organisation';
@@ -340,8 +340,10 @@ export default function PendingApprovalsPage() {
     <main className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
+          eyebrow='APPLICATIONS TO TRAIN COURSES/PROGRAMS'
           title='Pending approvals'
           description='Review all instructor and organisation training applications from a single queue.'
+          actions={<></>}
         />
 
         <div className='grid gap-3 md:grid-cols-4'>
