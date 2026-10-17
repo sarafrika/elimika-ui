@@ -69,7 +69,12 @@ export function useApprovedInstructorClasses(
     () => classes.flatMap(item => (item.uuid ? [item.uuid] : [])),
     [classes]
   );
-  const { classMap, isLoading: countsLoading, isError: countsError } = useClassesByIds(classIds);
+  const {
+    classMap,
+    isLoading: countsLoading,
+    isError: countsError,
+    refetch: refetchCounts,
+  } = useClassesByIds(classIds);
   const queries = [courseQuery, programQuery];
   return {
     classes,
@@ -88,6 +93,6 @@ export function useApprovedInstructorClasses(
           .filter(query => query.hasNextPage && !query.isFetching)
           .map(query => query.fetchNextPage())
       ),
-    refetch: () => Promise.all(queries.map(query => query.refetch())),
+    refetch: () => Promise.all([...queries.map(query => query.refetch()), refetchCounts()]),
   };
 }

@@ -31,7 +31,8 @@ export function WalletWithdrawPage() {
   const transferFundsMut = useMutation({ ...transferMutation() });
 
   const walletAccounts = useMemo(() => buildWalletAccounts(wallet), [wallet]);
-  const availableBalance = wallet?.balance_amount ?? walletAccounts[0]?.balance_kes ?? 0;
+  const accountBalance = wallet?.balance_amount ?? walletAccounts[0]?.balance_kes ?? 0
+  const availableBalance = 0;
   const walletCurrency = wallet?.currency_code ?? 'KES';
 
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -54,9 +55,9 @@ export function WalletWithdrawPage() {
   }, [searchParams]);
 
   const isWithdrawalInvalid =
-    !withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > availableBalance;
+    !withdrawAmount || Number(withdrawAmount) <= 0 || Number(withdrawAmount) > accountBalance;
   const isTransferInvalid =
-    !targetUserUuid || !transferAmount || Number(transferAmount) <= 0 || Number(transferAmount) > availableBalance;
+    !targetUserUuid || !transferAmount || Number(transferAmount) <= 0 || Number(transferAmount) > accountBalance;
 
   const handleWithdraw = () => {
     if (isWithdrawalInvalid) return;
@@ -147,8 +148,8 @@ export function WalletWithdrawPage() {
       <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
         <Card className='border-primary/20 bg-primary text-primary-foreground'>
           <CardHeader className='pb-0'>
-            <CardDescription className='text-primary-foreground/80'>Available balance</CardDescription>
-            <CardTitle className='text-2xl'>{formatKES(availableBalance)}</CardTitle>
+            <CardDescription className='text-primary-foreground/80'>Account balance</CardDescription>
+            <CardTitle className='text-2xl'>{formatKES(accountBalance)}</CardTitle>
           </CardHeader>
           <CardContent className='text-xs text-primary-foreground/80'>Spendable funds across your active wallet.</CardContent>
         </Card>

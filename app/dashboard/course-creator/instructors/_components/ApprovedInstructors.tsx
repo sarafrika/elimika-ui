@@ -294,15 +294,20 @@ export default function ApprovedInstructors() {
                   <TableHead scope='col' className={HEADING}>
                     <div className='flex items-center justify-between gap-6'>
                       <span>Courses &amp; programs</span>
-                      <span className='flex items-center gap-3 font-medium tracking-normal normal-case'>
-                        Split
-                        <span className='inline-flex items-center gap-1'>
-                          <span aria-hidden className='bg-primary size-2 rounded-full' />
-                          You
-                        </span>
-                        <span className='inline-flex items-center gap-1'>
-                          <span aria-hidden className='bg-primary/30 size-2 rounded-full' />
-                          Instructor
+
+                      <span className='flex flex-col gap-1 font-medium tracking-normal normal-case'>
+                        <span>Split</span>
+
+                        <span className='inline-flex items-center gap-3 text-xs'>
+                          <span className='inline-flex items-center gap-1'>
+                            <span aria-hidden className='bg-primary size-2 rounded-full' />
+                            You
+                          </span>
+
+                          <span className='inline-flex items-center gap-1'>
+                            <span aria-hidden className='bg-primary/30 size-2 rounded-full' />
+                            Instructor
+                          </span>
                         </span>
                       </span>
                     </div>

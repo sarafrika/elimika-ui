@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { extractEntity, extractList, extractPage } from '@/lib/api-helpers';
@@ -81,7 +82,7 @@ import { useMemo } from 'react';
 /**
  * Which dashboard is looking at the instructor. An organisation manager sees the
  * instructor through the organisation (its classes, enrolments, ledger and the
- * affiliation); a course creator sees the instructor's own classes only.
+ * affiliation); a course creator sees classes for courses they created only.
  */
 export type InstructorDetailRole = 'organisation' | 'course-creator';
 
@@ -395,6 +396,8 @@ export function CourseCreatorInstructorDetailPage({ role }: { role: InstructorDe
   const routeUuid = decodeURIComponent(params?.uuid ?? '');
   const organisation = useOrganisation();
   const organisationUuid = isOrganisation ? (organisation?.uuid ?? '') : '';
+  const courseCreator = useOptionalCourseCreator();
+  const creatorUuid = courseCreator?.profile?.uuid;
   const { value: tab, setValue: setTab, hrefFor } = useSectionTab(config.tabs, config.defaultTab);
 
   // The organisation resolves the route id (instructor, user or email) through its roster.
@@ -461,8 +464,7 @@ export function CourseCreatorInstructorDetailPage({ role }: { role: InstructorDe
     retry: false,
   });
 
-  // Classes: the organisation's own classes led by this instructor, or every class the
-  // instructor teaches when a course creator is looking.
+  // Fetch the instructor's classes, then scope them to the creator's courses below.
   const organisationClassesQuery = useQuery({
     ...getClassDefinitionsForOrganisationOptions({ path: { organisationUuid } }),
     enabled: Boolean(organisationUuid),
@@ -536,7 +538,7 @@ export function CourseCreatorInstructorDetailPage({ role }: { role: InstructorDe
   }, [enrolmentCounts]);
 
   const classesData = withoutError(classesQuery.data);
-  const assignedClasses = useMemo(() => {
+  const classDefinitions = useMemo(() => {
     const definitions = (classesData?.data ?? [])
       .map(response => response.class_definition)
       .filter(isClassDefinition);
@@ -545,10 +547,25 @@ export function CourseCreatorInstructorDetailPage({ role }: { role: InstructorDe
       : definitions;
   }, [classesData, isOrganisation, instructorUuid]);
   const courseUuids = useMemo(
-    () => assignedClasses.flatMap(item => (item.course_uuid ? [item.course_uuid] : [])),
-    [assignedClasses]
+    () => classDefinitions.flatMap(item => (item.course_uuid ? [item.course_uuid] : [])),
+    [classDefinitions]
   );
   const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseUuids);
+  const assignedClasses = useMemo(
+    () =>
+      isOrganisation
+        ? classDefinitions
+        : classDefinitions.filter(
+            item =>
+              creatorUuid &&
+              item.course_uuid &&
+              courseMap[item.course_uuid]?.course_creator_uuid === creatorUuid
+          ),
+    [classDefinitions, isOrganisation, creatorUuid, courseMap]
+  );
+  const classesLoading =
+    classesQuery.isLoading ||
+    (!isOrganisation && (courseCreator?.isLoading || coursesLoading));
 
   const payables = extractList<OrganisationInstructorPayable>(payablesQuery.data);
   const payable = isOrganisation
@@ -638,7 +655,7 @@ export function CourseCreatorInstructorDetailPage({ role }: { role: InstructorDe
   }
 
   const tabCounts: Partial<Record<InstructorTab, number | null>> = {
-    classes: classesQuery.isLoading ? null : assignedClasses.length,
+    classes: classesLoading ? null : assignedClasses.length,
     reviews: reviewsQuery.isSuccess
       ? reviews.length
       : rating?.review_count == null
@@ -806,7 +823,7 @@ export function CourseCreatorInstructorDetailPage({ role }: { role: InstructorDe
             description={''}
             actions={<></>}
           >
-            {classesQuery.isLoading ? (
+            {classesLoading ? (
               <div className='space-y-2'>
                 {Array.from({ length: 5 }).map((_, index) => (
                   <Skeleton key={index} className='h-12 w-full rounded-md' />

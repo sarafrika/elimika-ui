@@ -16,7 +16,9 @@ function isRefundableTransaction(txn: WalletTransaction) {
 export function RefundsTab() {
     const { transactions, accounts, refund } = useWallet();
     const refundable = transactions.filter(isRefundableTransaction);
-    const recentTransactions = transactions.slice(0, 6);
+    const recentTransactions = transactions
+        .filter(transaction => transaction?.transaction_type === 'REFUND')
+        .slice(0, 6);
     const breakdown = balanceBreakdown(accounts);
     const [preview, setPreview] = useState<WalletTransaction | null>(null);
 
@@ -86,7 +88,7 @@ export function RefundsTab() {
                                 <h4 className="text-sm font-semibold text-foreground">No refundable payments</h4>
 
                                 <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-muted-foreground">
-                                    Refundable ledger entries will appear here once they are returned by the API.
+                                    Refundable ledger entries will appear here.
                                 </p>
                             </div>
                         )}
@@ -116,7 +118,7 @@ export function RefundsTab() {
                                 <h4 className="text-sm font-semibold text-foreground">No refund history</h4>
 
                                 <p className="mt-1.5 max-w-sm text-xs leading-relaxed text-muted-foreground">
-                                    Recent wallet transactions will appear here when the API returns them.
+                                    Recent wallet transactions will appear here.
                                 </p>
                             </div>
                         )}
