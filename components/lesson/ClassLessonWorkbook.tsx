@@ -20,9 +20,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
-import { dayjs } from '@/lib/date';
+import { dayjs, parseApiDate } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
+  endScheduledInstanceMutation,
   getAllContentTypesOptions,
   getClassScheduleQueryKey,
   getLessonContentOptions,
@@ -31,9 +32,9 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, ContentType, Course, Lesson } from '@/services/client/types.gen';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Video } from 'lucide-react';
+import { Clock, Video } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { EvaluationPanel } from './EvaluationPanel';
 import { useWorkbookNavigation } from './useWorkbookNavigation';
@@ -136,6 +137,33 @@ function SelectedLessonWorkbook({
     (startClass.isSuccess &&
       !hasApiError(startClass.data) &&
       startClass.variables.path.instanceUuid === sessionState.session?.uuid);
+  const endClass = useMutation({
+    ...endScheduledInstanceMutation(),
+    onSuccess: async (response, variables) => {
+      if (hasApiError(response)) {
+        toast.error(response.message || 'Unable to end class.');
+        return;
+      }
+      toast.success('Class completed.');
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: getClassScheduleQueryKey({ path: { uuid: classId } }),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: getScheduledInstanceQueryKey({ path: variables.path }),
+        }),
+      ]);
+    },
+    onError: () => toast.error('Unable to end class. Please try again.'),
+  });
+  const classCompleted = Boolean(
+    sessionState.session?.concluded_at ||
+      sessionState.session?.status === 'COMPLETED' ||
+      (endClass.isSuccess &&
+        !hasApiError(endClass.data) &&
+        endClass.variables.path.instanceUuid === sessionState.session?.uuid)
+  );
+  const classActive = classStarted && !availability.closed && !classCompleted;
   const requestedTab = searchParams.get('tab');
   const tab: LessonTabKey =
     requestedTab === 'assessment' || requestedTab === 'evaluation'
@@ -386,7 +414,7 @@ function SelectedLessonWorkbook({
       onPageChange={index => navigate({ content: contents[index]?.uuid ?? null })}
       onNextLesson={nextLesson?.uuid ? () => selectLesson(nextLesson.uuid!) : undefined}
       actions={
-        <div className='flex items-center gap-3'>
+        <div className='flex flex-wrap items-center gap-3'>
 
           {/* Visible to all roles */}
           <div className='flex items-center gap-2'>
@@ -428,7 +456,36 @@ function SelectedLessonWorkbook({
           </div>
 
           {/* Instructor-only action */}
-          {role === 'instructor' && (
+          {role === 'instructor' && classActive && sessionState.session && (
+            <>
+              <ClassEndCountdown endTime={sessionState.session.end_time} />
+              <Button
+                variant='destructive'
+                disabled={endClass.isPending || startClass.isPending}
+                onClick={() => {
+                  const session = sessionState.session;
+                  if (
+                    !session?.uuid ||
+                    !classActive ||
+                    endClass.isPending ||
+                    startClass.isPending
+                  ) {
+                    return;
+                  }
+                  endClass.mutate({ path: { instanceUuid: session.uuid } });
+                }}
+              >
+                {endClass.isPending && <Spinner />}
+                {endClass.isPending ? 'Ending class…' : 'End class'}
+              </Button>
+            </>
+          )}
+          {role === 'instructor' && classCompleted && (
+            <span className='text-success text-sm font-medium' role='status'>
+              Class completed
+            </span>
+          )}
+          {role === 'instructor' && !classActive && !classCompleted && (
             <Button
               variant='outline'
               disabled={
@@ -475,5 +532,45 @@ function SelectedLessonWorkbook({
     >
       {body}
     </LessonShell>
+  );
+}
+
+function ClassEndCountdown({ endTime }: { endTime: Date }) {
+  const end = parseApiDate(endTime)?.valueOf();
+  const [now, setNow] = useState(Date.now);
+
+  useEffect(() => {
+    if (end === undefined) return;
+    const refresh = () => setNow(Date.now());
+    refresh();
+    const timer = window.setInterval(refresh, 1000);
+    window.addEventListener('focus', refresh);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [end]);
+
+  if (end === undefined) return null;
+  const secondsRemaining = Math.max(0, Math.ceil((end - now) / 1000));
+  const hours = Math.floor(secondsRemaining / 3600);
+  const minutes = Math.floor((secondsRemaining % 3600) / 60);
+  const seconds = secondsRemaining % 60;
+  const countdown = [hours, minutes, seconds]
+    .map(value => String(value).padStart(2, '0'))
+    .join(':');
+
+  return (
+    <div className='text-muted-foreground flex items-center gap-2 text-sm'>
+      <Clock className='h-4 w-4' aria-hidden='true' />
+      <span
+        role='timer'
+        aria-label='Time remaining until scheduled class end'
+        className='tabular-nums'
+      >
+        {countdown}
+      </span>
+      <span>{secondsRemaining === 0 ? 'Scheduled time ended' : 'remaining'}</span>
+    </div>
   );
 }

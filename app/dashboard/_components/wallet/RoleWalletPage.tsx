@@ -31,12 +31,3 @@ export function RoleWalletPage({ role }: { role: WalletRole }) {
     </WalletProvider>
   );
 }
-
-// ft: add class orders and earnings to training wallets
-
-// - Add instructor and course creator order dashboards and details
-// - Calculate lesson values, enrollment counts and revenue shares
-// - Fix available balances and withdrawal and transfer limits
-// - Improve wallet headers, loading states and currency formatting
-// - Batch metadata lookups and stabilize wallet data fetching
-// - Lower the TypeScript error ceiling
