@@ -22,7 +22,7 @@ export function getWorkbookSessionAvailability(session?: ScheduledInstance, now 
       !closed
   );
 
-  return { canAdmit, canStart: canAdmit && !started, started };
+  return { canAdmit, canStart: canAdmit && !started, started, closed };
 }
 
 export function useWorkbookSessionAvailability(session?: ScheduledInstance) {

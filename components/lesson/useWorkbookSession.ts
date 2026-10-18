@@ -8,6 +8,7 @@ import {
   getScheduledInstanceOptions,
   getScheduledInstanceQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
+import { getWorkbookSessionAvailability } from './useWorkbookSessionAvailability';
 import { hasApiError, nextWorkbookPage, WORKBOOK_PAGE_SIZE } from './workbook-data';
 
 export function useWorkbookSession(classId: string, requestedId: string | null, enabled: boolean) {
@@ -59,7 +60,12 @@ export function useWorkbookSession(classId: string, requestedId: string | null, 
   }, [sessions, requestedSession, classId]);
   const session = requestedId
     ? available.find(item => item.uuid === requestedId)
-    : (available.find(item => new Date(item.end_time).getTime() >= Date.now()) ?? available.at(-1));
+    : (available.find(item => {
+        const { started, closed } = getWorkbookSessionAvailability(item);
+        return started && !closed;
+      }) ??
+      available.find(item => new Date(item.end_time).getTime() >= Date.now()) ??
+      available.at(-1));
   return {
     query,
     sessions: available,
