@@ -131,7 +131,7 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
             onSelect: () => router.push(createClassHref),
           },
           {
-            label: 'Add Course',
+            label: 'Apply to Train',
             description: 'Apply to train a new course',
             icon: BookOpen,
             onSelect: () =>

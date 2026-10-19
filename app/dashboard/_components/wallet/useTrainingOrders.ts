@@ -130,6 +130,7 @@ export function useTrainingOrders(role: TrainingWalletRole, page: number) {
 
   return {
     rows,
+    sales: salesQuery.sales,
     hasProfile: Boolean(profileUuid),
     isLoading:
       Boolean(profile?.isLoading) ||

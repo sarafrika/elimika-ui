@@ -309,7 +309,7 @@ export function LessonGradingPanel({
 
             <CardContent className='px-4 sm:px-6'>
               {!tasks.length ? (
-                <EmptyState title='No tasks assigned for this lesson' />
+                <EmptyState title='' description='No tasks assigned for this lesson' />
               ) : (
                 <div className='overflow-x-auto'>
                   <Table aria-label={`Assigned tasks for ${student.name}`}>
