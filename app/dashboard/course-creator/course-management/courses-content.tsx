@@ -45,11 +45,12 @@ import {
 } from '@/hooks/use-offering-counts';
 import { useProgramRevenueShares } from '@/hooks/use-program-revenue-shares';
 import { isSearchUnavailable } from '@/lib/api-errors';
+import { matchesCategoryFilter } from '@/lib/category-filters';
+import { enrollmentTotal } from '@/lib/course-creator/offering-counts';
 import {
   courseRevenueShares,
   type ProgramRevenueShares,
 } from '@/lib/course-creator/revenue-shares';
-import { enrollmentTotal } from '@/lib/course-creator/offering-counts';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   classifySearchError,
@@ -82,10 +83,9 @@ import {
   Eye,
   Layers,
   MoreHorizontal,
-  Plus,
   Search,
   Trash2,
-  X,
+  X
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Image from 'next/image';
@@ -116,6 +116,16 @@ const STATUS_OPTIONS = [
 ] as const;
 
 type Offering = { type: 'courses'; item: Course } | { type: 'programs'; item: TrainingProgram };
+
+function categoryUuidsOf(offering: Offering): string[] {
+  return offering.type === 'courses'
+    ? (offering.item.category_uuids ?? []).filter(
+        (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
+      )
+    : offering.item.category_uuid
+      ? [offering.item.category_uuid]
+      : [];
+}
 
 function titleOf(offering: Offering) {
   return offering.type === 'courses' ? offering.item.name : offering.item.title;
@@ -148,10 +158,10 @@ function readDeletionDependencies(
   classes: { success?: boolean; error?: unknown; data?: unknown[] } | undefined,
   enrollments:
     | {
-        success?: boolean;
-        error?: unknown;
-        data?: { content?: unknown[]; metadata?: PageMetadata };
-      }
+      success?: boolean;
+      error?: unknown;
+      data?: { content?: unknown[]; metadata?: PageMetadata };
+    }
     | undefined
 ): DeletionDependencies {
   if (
@@ -191,34 +201,34 @@ async function checkOfferingDeletion(target: Offering, uuid: string, queryClient
   const [classes, enrollments] = await Promise.all([
     target.type === 'courses'
       ? queryClient.fetchQuery({
-          ...getClassDefinitionsForCourseOptions({
-            path: { courseUuid: uuid },
-            query: { activeOnly: false },
-          }),
-          ...fresh,
-        })
-      : queryClient.fetchQuery({
-          ...getClassDefinitionsForProgramOptions({
-            path: { programUuid: uuid },
-            query: { activeOnly: false },
-          }),
-          ...fresh,
+        ...getClassDefinitionsForCourseOptions({
+          path: { courseUuid: uuid },
+          query: { activeOnly: false },
         }),
+        ...fresh,
+      })
+      : queryClient.fetchQuery({
+        ...getClassDefinitionsForProgramOptions({
+          path: { programUuid: uuid },
+          query: { activeOnly: false },
+        }),
+        ...fresh,
+      }),
     target.type === 'courses'
       ? queryClient.fetchQuery({
-          ...getCourseEnrollmentsOptions({
-            path: { courseUuid: uuid },
-            query: { pageable: { page: 0, size: 1 } },
-          }),
-          ...fresh,
-        })
-      : queryClient.fetchQuery({
-          ...getProgramEnrollmentsOptions({
-            path: { programUuid: uuid },
-            query: { pageable: { page: 0, size: 1 } },
-          }),
-          ...fresh,
+        ...getCourseEnrollmentsOptions({
+          path: { courseUuid: uuid },
+          query: { pageable: { page: 0, size: 1 } },
         }),
+        ...fresh,
+      })
+      : queryClient.fetchQuery({
+        ...getProgramEnrollmentsOptions({
+          path: { programUuid: uuid },
+          query: { pageable: { page: 0, size: 1 } },
+        }),
+        ...fresh,
+      }),
   ]);
   return deletionBlockReason(target.type, readDeletionDependencies(classes, enrollments));
 }
@@ -226,7 +236,7 @@ async function checkOfferingDeletion(target: Offering, uuid: string, queryClient
 export default function CourseCreatorCoursesContent() {
   const creator = useCourseCreator();
   const creatorUuid = creator.profile?.uuid;
-  const [contentType, setContentType] = useState<'all' | 'courses' | 'programs'>('all');
+  const [contentType, setContentType] = useState<'all' | 'courses' | 'programs' | 'drafts'>('all');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   useEffect(() => {
@@ -235,8 +245,12 @@ export default function CourseCreatorCoursesContent() {
   }, [search]);
   const deferredSearch = useDeferredValue(debouncedSearch);
   const [status, setStatus] = useState('all');
+  const isDrafts = contentType === 'drafts';
+  const effectiveStatus = isDrafts ? 'draft' : status;
   const [activeCategory, setActiveCategory] = useState(ALL_CATEGORIES);
   const [subjectByCategory, setSubjectByCategory] = useState<Record<string, string>>({});
+  const hasFilters =
+    !!search || (!isDrafts && status !== 'all') || activeCategory !== ALL_CATEGORIES;
   const [catalogueOpen, setCatalogueOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Offering | null>(null);
   const [pagination, setPagination] = useState({ key: '', page: 0 });
@@ -244,9 +258,7 @@ export default function CourseCreatorCoursesContent() {
     creatorUuid,
     contentType,
     deferredSearch,
-    status,
-    activeCategory,
-    subjectByCategory,
+    effectiveStatus,
   ]);
   const page = pagination.key === filterKey ? pagination.page : 0;
   const setPage = (nextPage: number) => setPagination({ key: filterKey, page: nextPage });
@@ -254,7 +266,7 @@ export default function CourseCreatorCoursesContent() {
 
   const sharedFilters = {
     course_creator_uuid_eq: creatorUuid,
-    ...(status !== 'all' ? { status_eq: status } : {}),
+    ...(effectiveStatus !== 'all' ? { status_eq: effectiveStatus } : {}),
   };
   // Free text goes as `q` (relevance-ranked by the search index). When the index is down
   // the term is dropped for that search so the library still lists.
@@ -350,36 +362,46 @@ export default function CourseCreatorCoursesContent() {
     });
   }, [contentType, coursesData, programsData, sentTerm]);
 
-  const categoryTabItems = useMemo(() => {
-    return offerings.flatMap(offering => {
-      const categoryUuids: string[] =
-        offering.type === 'courses'
-          ? (offering.item.category_uuids ?? []).filter(
-            (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
-          )
-          : offering.item.category_uuid
-            ? [offering.item.category_uuid]
-            : [];
+  const categoriesById = useMemo(
+    () => new Map(categories.map(category => [category.uuid ?? category.name, category])),
+    [categories]
+  );
+  const creatorCategories = useMemo(() => {
+    const usedCategoryUuids = new Set<string>();
+    for (const offering of offerings) {
+      for (const categoryUuid of categoryUuidsOf(offering)) {
+        let currentUuid: string | undefined = categoryUuid;
+        // Keep ancestors so assigned subjects retain their category tab and labels.
+        while (currentUuid && !usedCategoryUuids.has(currentUuid)) {
+          usedCategoryUuids.add(currentUuid);
+          currentUuid = categoriesById.get(currentUuid)?.parent_uuid ?? undefined;
+        }
+      }
+    }
+    return categories.filter(category => category.uuid && usedCategoryUuids.has(category.uuid));
+  }, [categories, categoriesById, offerings]);
 
-      return categoryUuids.flatMap(categoryUuid => {
-        const category = categories.find(item => item.uuid === categoryUuid);
-        if (!category) return [];
+  useEffect(() => {
+    if (
+      !coursesData ||
+      !programsData ||
+      !categoriesQuery.data?.data ||
+      categoriesQuery.data.error ||
+      categoriesQuery.data.success === false
+    )
+      return;
 
-        const rootCategory = category.parent_uuid
-          ? categories.find(item => item.uuid === category.parent_uuid)
-          : category;
-        if (!rootCategory?.uuid) return [];
-
-        return [
-          {
-            category: rootCategory.uuid,
-            subject: category.parent_uuid ? category.uuid ?? null : null,
-            programType: undefined,
-          },
-        ];
-      });
+    const availableUuids = new Set(creatorCategories.map(category => category.uuid));
+    if (activeCategory !== ALL_CATEGORIES && !availableUuids.has(activeCategory)) {
+      setActiveCategory(ALL_CATEGORIES);
+    }
+    setSubjectByCategory(current => {
+      const entries = Object.entries(current).filter(
+        ([category, subject]) => availableUuids.has(category) && availableUuids.has(subject)
+      );
+      return entries.length === Object.keys(current).length ? current : Object.fromEntries(entries);
     });
-  }, [categories, offerings]);
+  }, [activeCategory, creatorCategories, coursesData, programsData, categoriesQuery.data]);
 
   const filteredOfferings = useMemo(() => {
     if (activeCategory === ALL_CATEGORIES) {
@@ -388,31 +410,15 @@ export default function CourseCreatorCoursesContent() {
 
     const selectedSubject = subjectByCategory[activeCategory];
 
-    return offerings.filter(offering => {
-      const categoryUuids: string[] =
-        offering.type === 'courses'
-          ? (offering.item.category_uuids ?? []).filter(
-            (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
-          )
-          : offering.item.category_uuid
-            ? [offering.item.category_uuid]
-            : [];
-
-      const matches = categoryUuids.some(categoryUuid => {
-        const category = categories.find(item => item.uuid === categoryUuid);
-        const rootCategory = category?.parent_uuid
-          ? categories.find(item => item.uuid === category.parent_uuid)
-          : category;
-
-        if (!rootCategory?.uuid) return false;
-        if (rootCategory.uuid !== activeCategory) return false;
-        if (!selectedSubject) return true;
-        return categoryUuid === selectedSubject;
-      });
-
-      return matches;
-    });
-  }, [activeCategory, categories, offerings, subjectByCategory]);
+    return offerings.filter(offering =>
+      matchesCategoryFilter(
+        { categoryUuids: categoryUuidsOf(offering), categoryLabels: [] },
+        selectedSubject || activeCategory,
+        categories,
+        categoriesById
+      )
+    );
+  }, [activeCategory, categories, categoriesById, offerings, subjectByCategory]);
   const countReferences = useMemo(
     () =>
       !creatorUuid || catalogueOpen
@@ -513,22 +519,7 @@ export default function CourseCreatorCoursesContent() {
         eyebrow='COURSES &amp; PROGRAMS'
         title='Courses &amp; programs'
         description=' Manage your courses, build learning pathways, and track publishing and pricing from one place.'
-        actions={
-          <dl className='flex shrink-0 gap-1' aria-label='Library overview'>
-            {[
-              [coursesTotal + programsTotal, 'offerings'],
-              [coursesTotal, 'courses'],
-              [programsTotal, 'programs'],
-            ].map(([value, label]) => (
-              <div key={label} className='min-w-24 border-l px-4 py-2'>
-                <dt className='text-muted-foreground text-xs tracking-wider uppercase'>{label}</dt>
-                <dd className='mt-1 font-mono text-xl'>
-                  {loading || failed ? '—' : Number(value).toLocaleString()}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        }
+        actions={<></>}
       />
 
       <div className='mb-6 mt-4 flex flex-col justify-between gap-4 xl:flex-row xl:items-center'>
@@ -542,6 +533,7 @@ export default function CourseCreatorCoursesContent() {
               ['all', 'All content'],
               ['courses', 'Courses'],
               ['programs', 'Programs'],
+              ['drafts', 'Drafts'],
             ] as const
           ).map(([value, label]) => (
             <Button
@@ -560,16 +552,7 @@ export default function CourseCreatorCoursesContent() {
           ))}
         </div>
 
-        <div className='grid grid-cols-2 gap-2 sm:flex sm:flex-wrap'>
-          <Button
-            variant='ghost'
-            className='col-span-2 rounded-sm text-sm'
-            onClick={() => setCatalogueOpen(value => !value)}
-            aria-expanded={catalogueOpen}
-          >
-            <BookOpen className='size-4' />
-            View catalogue
-          </Button>
+        {/* <div className='grid grid-cols-2 gap-2 sm:flex sm:flex-wrap'>
           <Button variant='outline' className='rounded-sm text-sm' asChild>
             <Link href='/dashboard/course-creator/courses/create-course'>
               <Plus className='size-4' />
@@ -582,228 +565,219 @@ export default function CourseCreatorCoursesContent() {
               Create program
             </Link>
           </Button>
-        </div>
+        </div> */}
       </div>
 
-      {catalogueOpen ? (
-        <section className='space-y-4' aria-label='Catalogues'>
-          <div className='flex justify-end'>
-            <Button variant='outline' size='sm' onClick={() => setCatalogueOpen(false)}>
-              <X className='size-4' />
-              Close catalogue
+      <Card className='shadow-primary/5 gap-0 overflow-hidden rounded-2xl py-0 shadow-lg'>
+        <div className='flex flex-col gap-3 border-b p-4 sm:flex-row'>
+          <div className='relative flex-1'>
+            <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
+            <Input
+              type='search'
+              aria-label='Search courses and programs by title'
+              placeholder='Search courses and programs by title'
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              className='bg-muted/30 h-10 rounded-sm pl-10 text-sm'
+            />
+          </div>
+          <Select value={effectiveStatus} onValueChange={setStatus} disabled={isDrafts}>
+            <SelectTrigger
+              aria-label='Filter by status'
+              className='bg-muted/30 h-10 w-full rounded-sm text-sm sm:w-40'
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STATUS_OPTIONS.map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <CategoryTabs
+          categories={creatorCategories}
+          activeCategory={activeCategory}
+          onCategoryChange={setActiveCategory}
+          subjectByCategory={subjectByCategory}
+          onSubjectChange={setSubjectByCategory}
+        />
+
+        {hasFilters && (
+          <div className='border-b px-4 py-3 text-right'>
+            <Button variant='ghost' size='sm' onClick={resetFilters} className='h-7 text-xs'>
+              <X className='size-3' />
+              Clear filters
             </Button>
           </div>
-          <CatalogueWorkspace scope='course_creator' />
-        </section>
-      ) : (
-        <Card className='shadow-primary/5 gap-0 overflow-hidden rounded-2xl py-0 shadow-lg'>
-          <div className='flex flex-col gap-3 border-b p-4 sm:flex-row'>
-            <div className='relative flex-1'>
-              <Search className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2' />
-              <Input
-                type='search'
-                aria-label='Search courses and programs by title'
-                placeholder='Search courses and programs by title'
-                value={search}
-                onChange={event => setSearch(event.target.value)}
-                className='bg-muted/30 h-10 rounded-sm pl-10 text-sm'
-              />
-            </div>
-            <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger
-                aria-label='Filter by status'
-                className='bg-muted/30 h-10 w-full rounded-sm text-sm sm:w-40'
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        )}
 
-          <CategoryTabs
-            categories={categories}
-            items={categoryTabItems}
-            activeCategory={activeCategory}
-            onCategoryChange={setActiveCategory}
-            subjectByCategory={subjectByCategory}
-            onSubjectChange={setSubjectByCategory}
-          />
+        <SearchNotice
+          issue={searchIssue}
+          className='rounded-none border-x-0 border-t-0'
+          onReset={() => {
+            setSearch('');
+            setDebouncedSearch('');
+          }}
+        />
 
-          {(search || status !== 'all' || activeCategory !== ALL_CATEGORIES) && (
-            <div className='border-b px-4 py-3 text-right'>
-              <Button variant='ghost' size='sm' onClick={resetFilters} className='h-7 text-xs'>
-                <X className='size-3' />
-                Clear filters
-              </Button>
-            </div>
-          )}
-
-          <SearchNotice
-            issue={searchIssue}
-            className='rounded-none border-x-0 border-t-0'
-            onReset={() => {
-              setSearch('');
-              setDebouncedSearch('');
-            }}
-          />
-
-          <CardContent className='p-0' aria-busy={loading || search.trim() !== deferredSearch}>
-            {loading ? (
-              <CoursesLoading />
-            ) : !creatorUuid ? (
-              <EmptyState
-                variant='plain'
-                icon={BookOpen}
-                title='Creator profile unavailable'
-                description='Complete your course creator profile to manage your learning library.'
-              />
-            ) : failed ? (
-              <EmptyState
-                variant='plain'
-                title='Unable to load your library'
-                description='Please try again to load your courses and programs.'
-                action={
-                  <Button
-                    variant='outline'
-                    onClick={() => {
-                      void coursesQuery.refetch();
-                      void programsQuery.refetch();
-                    }}
-                  >
-                    Try again
-                  </Button>
-                }
-              />
-            ) : offerings.length === 0 ? (
-              <EmptyState
-                variant='plain'
-                icon={BookOpen}
-                title={
-                  search || status !== 'all' || activeCategory !== ALL_CATEGORIES
-                    ? 'No matching content'
+        <CardContent className='p-0' aria-busy={loading || search.trim() !== deferredSearch}>
+          {loading ? (
+            <CoursesLoading />
+          ) : !creatorUuid ? (
+            <EmptyState
+              variant='plain'
+              icon={BookOpen}
+              title='Creator profile unavailable'
+              description='Complete your course creator profile to manage your learning library.'
+            />
+          ) : failed ? (
+            <EmptyState
+              variant='plain'
+              title='Unable to load your library'
+              description='Please try again to load your courses and programs.'
+              action={
+                <Button
+                  variant='outline'
+                  onClick={() => {
+                    void coursesQuery.refetch();
+                    void programsQuery.refetch();
+                  }}
+                >
+                  Try again
+                </Button>
+              }
+            />
+          ) : offerings.length === 0 ? (
+            <EmptyState
+              variant='plain'
+              icon={BookOpen}
+              title={
+                hasFilters
+                  ? 'No matching content'
+                  : isDrafts
+                    ? 'No drafts yet'
                     : 'Your library starts here'
-                }
-                description={
-                  search || status !== 'all' || activeCategory !== ALL_CATEGORIES
-                    ? 'Try a different title or remove a filter.'
+              }
+              description={
+                hasFilters
+                  ? 'Try a different title or remove a filter.'
+                  : isDrafts
+                    ? 'Your draft courses and programs will appear here.'
                     : 'Create a course or bundle courses into a learning program.'
-                }
-                action={
-                  search || status !== 'all' || activeCategory !== ALL_CATEGORIES ? (
-                    <Button variant='outline' onClick={resetFilters}>
-                      Clear filters
-                    </Button>
-                  ) : (
-                    <Button asChild>
-                      <Link href='/dashboard/course-creator/courses/create-course'>
-                        Create course
-                      </Link>
-                    </Button>
-                  )
-                }
-              />
-            ) : (
-              <Table className='min-w-[1080px]'>
-                <TableHeader>
-                  <TableRow className='hover:bg-transparent [&>th]:h-12 [&>th]:px-3 [&>th]:text-sm [&>th]:font-medium'>
-                    <TableHead className='w-[34%] !pl-5'>
-                      Course or program
-                    </TableHead>
-                    <TableHead>Pricing</TableHead>
-                    <TableHead>Revenue split</TableHead>
-                    <TableHead>Instructors</TableHead>
-                    <TableHead>Students</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Updated</TableHead>
-                    <TableHead>
-                      <span className='sr-only'>Actions</span>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
+              }
+              action={
+                hasFilters ? (
+                  <Button variant='outline' onClick={resetFilters}>
+                    Clear filters
+                  </Button>
+                ) : (
+                  <Button asChild>
+                    <Link href='/dashboard/course-creator/courses/create-course'>
+                      Create course
+                    </Link>
+                  </Button>
+                )
+              }
+            />
+          ) : (
+            <Table className='min-w-[1080px]'>
+              <TableHeader>
+                <TableRow className='hover:bg-transparent [&>th]:h-12 [&>th]:px-3 [&>th]:text-sm [&>th]:font-medium'>
+                  <TableHead className='w-[34%] !pl-5'>
+                    Course or program
+                  </TableHead>
+                  <TableHead>Pricing</TableHead>
+                  <TableHead>Revenue split</TableHead>
+                  <TableHead>Instructors</TableHead>
+                  <TableHead>Students</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Updated</TableHead>
+                  <TableHead>
+                    <span className='sr-only'>Actions</span>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
 
-                <TableBody>
-                  {filteredOfferings.length ? (
-                    filteredOfferings.map(offering => (
-                      <OfferingRow
-                        key={`${offering.type}-${offering.item.uuid ?? titleOf(offering)}`}
-                        offering={offering}
-                        revenueShares={
-                          offering.type === 'courses'
-                            ? courseRevenueShares(offering.item)
-                            : programShares.shares.get(offering.item.uuid ?? '')
-                        }
-                        revenueSharesPending={offering.type === 'programs' && programShares.pending}
-                        onRetryRevenueShares={
-                          offering.type === 'programs'
-                            ? programShares.retry
-                            : () => void coursesQuery.refetch()
-                        }
-                        counts={offeringCounts.get(
-                          `${offering.type}-${offering.item.uuid}`
-                        )}
-                        onDelete={() => setDeleteTarget(offering)}
-                      />
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={8}
-                        className='text-muted-foreground h-32 text-center'
-                      >
-                        No results found matching your search or filter criteria.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-          {!loading && !failed && creatorUuid && (
-            <div className='text-muted-foreground flex items-center justify-between gap-3 border-t px-4 py-3 text-xs'>
-              <span aria-live='polite'>
-                {total === 0
-                  ? '0 offerings'
-                  : `Showing ${consumed + 1}–${consumed + offerings.length} of ${total} offerings`}
-              </span>
-              <nav className='flex shrink-0 items-center gap-1' aria-label='Library pagination'>
-                <Button
-                  variant='outline'
-                  size='icon'
-                  className='size-8 rounded-md'
-                  aria-label='Previous page'
-                  disabled={page === 0}
-                  onClick={() => setPage(page - 1)}
-                >
-                  <ChevronLeft className='size-4' />
-                </Button>
-                <span
-                  aria-current='page'
-                  className='bg-foreground text-background flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-mono'
-                >
-                  {page + 1}
-                </span>
-                <span className='px-1'>of {totalPages}</span>
-                <Button
-                  variant='outline'
-                  size='icon'
-                  className='size-8 rounded-md'
-                  aria-label='Next page'
-                  disabled={page + 1 >= totalPages}
-                  onClick={() => setPage(page + 1)}
-                >
-                  <ChevronRight className='size-4' />
-                </Button>
-              </nav>
-            </div>
+              <TableBody>
+                {filteredOfferings.length ? (
+                  filteredOfferings.map(offering => (
+                    <OfferingRow
+                      key={`${offering.type}-${offering.item.uuid ?? titleOf(offering)}`}
+                      offering={offering}
+                      revenueShares={
+                        offering.type === 'courses'
+                          ? courseRevenueShares(offering.item)
+                          : programShares.shares.get(offering.item.uuid ?? '')
+                      }
+                      revenueSharesPending={offering.type === 'programs' && programShares.pending}
+                      onRetryRevenueShares={
+                        offering.type === 'programs'
+                          ? programShares.retry
+                          : () => void coursesQuery.refetch()
+                      }
+                      counts={offeringCounts.get(
+                        `${offering.type}-${offering.item.uuid}`
+                      )}
+                      onDelete={() => setDeleteTarget(offering)}
+                    />
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className='text-muted-foreground h-32 text-center'
+                    >
+                      No results found matching your search or filter criteria.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           )}
-        </Card>
-      )}
+        </CardContent>
+        {!loading && !failed && creatorUuid && (
+          <div className='text-muted-foreground flex items-center justify-between gap-3 border-t px-4 py-3 text-xs'>
+            <span aria-live='polite'>
+              {total === 0
+                ? '0 offerings'
+                : `Showing ${consumed + 1}–${consumed + offerings.length} of ${total} offerings`}
+            </span>
+            <nav className='flex shrink-0 items-center gap-1' aria-label='Library pagination'>
+              <Button
+                variant='outline'
+                size='icon'
+                className='size-8 rounded-md'
+                aria-label='Previous page'
+                disabled={page === 0}
+                onClick={() => setPage(page - 1)}
+              >
+                <ChevronLeft className='size-4' />
+              </Button>
+              <span
+                aria-current='page'
+                className='bg-foreground text-background flex h-8 min-w-8 items-center justify-center rounded-md px-2 font-mono'
+              >
+                {page + 1}
+              </span>
+              <span className='px-1'>of {totalPages}</span>
+              <Button
+                variant='outline'
+                size='icon'
+                className='size-8 rounded-md'
+                aria-label='Next page'
+                disabled={page + 1 >= totalPages}
+                onClick={() => setPage(page + 1)}
+              >
+                <ChevronRight className='size-4' />
+              </Button>
+            </nav>
+          </div>
+        )}
+      </Card>
 
       {deleteTarget?.item.uuid && (
         <OfferingDeletionDialog
@@ -908,11 +882,11 @@ function OfferingDeletionDialog({
               : checkFailed
                 ? 'Could not verify linked classes and enrollments. Retry before deleting.'
                 : (blocked ?? (
-                    <>
-                      This will permanently delete <strong>{titleOf(target)}</strong>. This action
-                      cannot be undone.
-                    </>
-                  ))}
+                  <>
+                    This will permanently delete <strong>{titleOf(target)}</strong>. This action
+                    cannot be undone.
+                  </>
+                ))}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

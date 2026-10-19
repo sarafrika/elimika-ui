@@ -73,6 +73,17 @@ function TrainingDashboardSkeleton() {
         <Skeleton className='h-7 w-32' />
         <Skeleton className='h-5 w-full max-w-xl' />
       </div>
+      <div className='space-y-2'>
+        <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-5'>
+          {['all', 'complete', 'cancelled', 'incomplete', 'refunds'].map(stat => (
+            <Card key={stat} className='gap-2 p-4'>
+              <Skeleton className='h-4 w-24 max-w-full' />
+              <Skeleton className='h-8 w-28 max-w-full' />
+            </Card>
+          ))}
+        </div>
+        <Skeleton className='h-3 w-64 max-w-full' />
+      </div>
       <div className='grid gap-3 sm:grid-cols-3'>
         {['classes', 'paid', 'lessons'].map(stat => (
           <Card key={stat} className='gap-2 p-4'>

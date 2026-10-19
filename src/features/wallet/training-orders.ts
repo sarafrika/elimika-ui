@@ -78,6 +78,28 @@ export function orderPaymentState(status?: string) {
   }
 }
 
+/** Sum class sale amounts by payment status without repeating lines or whole-cart totals. */
+export function trainingOrderKpis(sales: readonly RevenueSaleLineItemDto[], currency: string) {
+  const currencyCode = currency.trim().toUpperCase();
+  const lines = uniqueSaleLines(
+    sales.filter(sale => sale.order_currency_code?.trim().toUpperCase() === currencyCode)
+  );
+  const statusesAvailable = lines.every(line => orderPaymentState(line.payment_status) !== 'unknown');
+  const all = sumAmounts(lines);
+  const amount = (state: ReturnType<typeof orderPaymentState>) =>
+    statusesAvailable
+      ? sumAmounts(lines.filter(line => orderPaymentState(line.payment_status) === state))
+      : null;
+  return {
+    all,
+    complete: amount('paid'),
+    cancelled: amount('cancelled'),
+    incomplete: amount('unpaid'),
+    refunds: amount('refunded'),
+    totalsAvailable: statusesAvailable && all != null,
+  };
+}
+
 export function uniqueSaleLines(sales: readonly RevenueSaleLineItemDto[]) {
   const seen = new Set<string>();
   return sales.filter(sale => {

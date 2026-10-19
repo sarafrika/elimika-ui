@@ -518,7 +518,7 @@ export function EvaluationPanel({
 
       {showAssignments && (
         <section className='space-y-4'>
-          {!assignmentRows.length && <EmptyState title='No assignments available' />}
+          {!assignmentRows.length && <EmptyState title='' description='No assignments available' />}
           {assignmentRows.map(({ id, assignment, schedule, submission }) => {
             const uuid = schedule?.assignment_uuid ?? assignment?.uuid;
             const submissionTypes = formatSubmissionTypes(assignment?.submission_types);

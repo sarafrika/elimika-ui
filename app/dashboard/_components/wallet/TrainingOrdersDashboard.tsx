@@ -24,7 +24,11 @@ import {
 import { useTimeZone } from '@/context/timezone-context';
 import { formatDate, formatTime } from '@/lib/date';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
-import type { RateRange, TrainingWalletRole } from '@/src/features/wallet/training-orders';
+import {
+  trainingOrderKpis,
+  type RateRange,
+  type TrainingWalletRole,
+} from '@/src/features/wallet/training-orders';
 import { formatWalletMoney } from '@/src/features/wallet/wallet-accounts';
 import { ArrowUpRight, ReceiptText } from 'lucide-react';
 import Link from 'next/link';
@@ -47,10 +51,22 @@ export function TrainingOrdersDashboard({ role }: { role: TrainingWalletRole }) 
   const data = useTrainingOrders(role, page);
   const { zone } = useTimeZone();
   const currencies = useMemo(
-    () => [...new Set(data.rows.map(row => row.currency))].sort(),
-    [data.rows]
+    () =>
+      [
+        ...new Set(
+          data.sales.flatMap(sale => {
+            const code = sale.order_currency_code?.trim().toUpperCase();
+            return code ? [code] : [];
+          })
+        ),
+      ].sort(),
+    [data.sales]
   );
   const selectedCurrency = currencies.includes(currency) ? currency : (currencies[0] ?? 'KES');
+  const orderKpis = useMemo(
+    () => trainingOrderKpis(data.sales, selectedCurrency),
+    [data.sales, selectedCurrency]
+  );
   const rows = useMemo(
     () =>
       data.rows.filter(
@@ -122,7 +138,29 @@ export function TrainingOrdersDashboard({ role }: { role: TrainingWalletRole }) 
           </Select>
         )}
       </div>
-      <div className='grid gap-3 sm:grid-cols-3'>
+      <div className='space-y-2'>
+        <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-5'>
+          {[
+            { label: 'All orders', value: orderKpis.all },
+            { label: 'Complete', value: orderKpis.complete },
+            { label: 'Cancelled', value: orderKpis.cancelled },
+            { label: 'Incomplete', value: orderKpis.incomplete },
+            { label: 'Refunds', value: orderKpis.refunds },
+          ].map(tile => (
+            <Card key={tile.label} className='min-w-0 gap-2 p-4'>
+              <p className='text-muted-foreground text-xs'>{tile.label}</p>
+              <p className='text-xl font-semibold break-words tabular-nums 2xl:text-2xl'>
+                {formatWalletMoney(tile.value, selectedCurrency)}
+              </p>
+            </Card>
+          ))}
+        </div>
+        <p className='text-muted-foreground text-xs'>
+          Order amounts · {selectedCurrency} · {data.complete ? 'All sales loaded' : 'Loaded so far'}
+          {!orderKpis.totalsAvailable && ' · Some amounts or payment statuses are unavailable'}
+        </p>
+      </div>
+      {/* <div className='grid gap-3 sm:grid-cols-3'>
         {[
           { label: 'Classes shown', value: rows.length },
           {
@@ -141,7 +179,7 @@ export function TrainingOrdersDashboard({ role }: { role: TrainingWalletRole }) 
             <p className='text-2xl font-semibold tabular-nums'>{tile.value}</p>
           </Card>
         ))}
-      </div>
+      </div> */}
       {!data.complete && (
         <EmptyState
           variant='compact'
