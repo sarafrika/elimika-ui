@@ -1,27 +1,27 @@
 'use client';
 
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { BookOpen } from 'lucide-react';
-import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Input } from '@/components/ui/input';
 import RichTextRenderer from '@/components/editors/richTextRenders';
-import { WorkbookLoading } from '@/components/lesson/WorkbookLoading';
 import { WorkbookError } from '@/components/lesson/WorkbookError';
+import { WorkbookLoading } from '@/components/lesson/WorkbookLoading';
 import {
   hasApiError,
   nextWorkbookPage,
   WORKBOOK_PAGE_SIZE,
   type WorkbookRole,
 } from '@/components/lesson/workbook-data';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { Input } from '@/components/ui/input';
+import { STALE_TIMES } from '@/lib/query-client';
 import { getPracticeActivitiesInfiniteOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { Lesson } from '@/services/client/types.gen';
-import { STALE_TIMES } from '@/lib/query-client';
-export { MaterialsPanel as ResourcesPanel } from './MaterialsPanel';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { BookOpen } from 'lucide-react';
+import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
 export * from '@/components/lesson/EvaluationPanel';
+export { MaterialsPanel as ResourcesPanel } from './MaterialsPanel';
 
 export type LessonTabKey =
   | 'lesson'
@@ -135,7 +135,7 @@ export function PracticePanel({
   return (
     <div className='space-y-4'>
       <h2 className='text-lg font-semibold'>Practice activities</h2>
-      {!activities.length && <EmptyState title='No practice activities available' />}
+      {!activities.length && <EmptyState title='' description='No practice activities available' />}
       {activities.map((activity, index) => (
         <Card key={activity.uuid ?? index}>
           <CardHeader>

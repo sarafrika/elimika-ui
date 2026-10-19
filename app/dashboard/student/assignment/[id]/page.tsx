@@ -16,6 +16,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmissionAttachment } from '@/services/client/types.gen';
 import { getErrorMessage } from '@/src/features/dashboard/courses/types';
+import { getSubmissionInputRules } from '@/src/features/dashboard/student-assessment/submission-input-rules';
 import {
   getDueSummary,
   getStudentAssignmentSubmissionState,
@@ -64,18 +65,6 @@ function getGradeTone(percentage?: number | null) {
   return 'text-destructive';
 }
 
-function normalizeSubmissionTypes(value: unknown): string[] {
-  if (!value) return [];
-  if (Array.isArray(value)) return value.map(item => String(item).toUpperCase());
-  return [String(value).toUpperCase()];
-}
-
-function acceptsFileSubmission(submissionTypes: string[]) {
-  return submissionTypes.some(type =>
-    ['DOCUMENT', 'IMAGE', 'AUDIO', 'VIDEO'].includes(type.toUpperCase())
-  );
-}
-
 function MetaTile({
   label,
   value,
@@ -117,13 +106,16 @@ export default function StudentAssignmentSubmissionPage() {
     selectedAssignment?.classMeta.courseEnrollmentUuid ??
     selectedAssignment?.classMeta.enrollmentUuid;
 
-  const selectedSubmissionTypes = normalizeSubmissionTypes(
-    selectedAssignment?.assignment?.submission_types
-  );
+  const {
+    submissionTypes: selectedSubmissionTypes,
+    canSubmitText,
+    canUploadFiles,
+    fileAccept,
+    acceptsFile,
+  } = getSubmissionInputRules(selectedAssignment?.assignment?.submission_types);
   const selectedStatus = selectedAssignment
     ? getStudentAssignmentSubmissionState(selectedAssignment)
     : null;
-  const canUploadFiles = acceptsFileSubmission(selectedSubmissionTypes);
 
   const submissionStatus = String(selectedAssignment?.latestSubmission?.status ?? '').toUpperCase();
   const hasSubmission = !!selectedAssignment?.latestSubmission;
@@ -164,6 +156,10 @@ export default function StudentAssignmentSubmissionPage() {
 
   // ── File helpers ────────────────────────────────────────────────────────
   const handleFilesAdded = (files: File[]) => {
+    if (!files.every(acceptsFile)) {
+      toast.error('Only upload files matching the accepted submission types.');
+      return;
+    }
     const existingKeys = new Set(queuedFiles.map(f => `${f.name}-${f.size}`));
     setQueuedFiles(prev => [
       ...prev,
@@ -187,20 +183,53 @@ export default function StudentAssignmentSubmissionPage() {
       toast.error('This assignment is missing an active student enrollment.');
       return;
     }
-    const submissionContent = submissionText.trim();
-    if (!submissionContent && queuedFiles.length === 0) {
-      toast.error('Add a written response or at least one attachment before submitting.');
+    const submissionContent = canSubmitText ? submissionText.trim() : '';
+    if (!queuedFiles.every(acceptsFile)) {
+      toast.error('Only upload files matching the accepted submission types.');
       return;
     }
+    if (!submissionContent && queuedFiles.length === 0) {
+      toast.error(canSubmitText
+        ? canUploadFiles
+          ? 'Add a written response or at least one attachment before submitting.'
+          : 'Add a written response before submitting.'
+        : 'Attach at least one file before submitting.');
+      return;
+    }
+
+    const placeholderFileUrls = queuedFiles.length > 0
+      ? selectedSubmissionTypes.flatMap(type => {
+          switch (type) {
+            case 'DOCUMENT':
+              return ['https://storage.sarafrika.com/submissions/written_analysis.pdf'];
+            case 'AUDIO':
+              return ['https://storage.sarafrika.com/submissions/audio_example.mp3'];
+            default:
+              return [];
+          }
+        })
+      : [];
 
     try {
       const response = await submitAssignmentMut.mutateAsync({
         path: { assignmentUuid: selectedAssignment.assignment.uuid },
-        query: { enrollmentUuid: activeEnrollmentUuid },
+        query: {
+          enrollmentUuid: activeEnrollmentUuid,
+          enrollment_uuid: activeEnrollmentUuid,
+          ...(canSubmitText
+            ? { content: submissionContent, submission_text: submissionContent }
+            : {}),
+          studentUuid: selectedAssignment.classMeta.studentUuid,
+          student_uuid: selectedAssignment.classMeta.studentUuid,
+          ...(placeholderFileUrls.length > 0
+            ? { file_urls: placeholderFileUrls, fileUrls: placeholderFileUrls }
+            : {}),
+        },
         body: {
           enrollment_uuid: activeEnrollmentUuid,
           student_uuid: selectedAssignment.classMeta.studentUuid,
-          submission_text: submissionContent,
+          ...(canSubmitText ? { submission_text: submissionContent } : {}),
+          ...(placeholderFileUrls.length > 0 ? { file_urls: placeholderFileUrls } : {}),
         },
       });
 
@@ -497,24 +526,12 @@ export default function StudentAssignmentSubmissionPage() {
                   onRemoveFile={handleRemoveFile}
                   onSubmit={handleSubmitAssignment}
                   canSubmit={canSubmitSelected}
+                  canSubmitText={canSubmitText}
                   canUploadFiles={canUploadFiles}
                   isSubmitting={isSubmitting}
                   isResubmit
                   activeEnrollmentUuid={activeEnrollmentUuid}
-                  accept={selectedSubmissionTypes.length ? selectedSubmissionTypes.map(type => {
-                    switch (type.toUpperCase()) {
-                      case 'DOCUMENT':
-                        return '.pdf,.doc,.docx,.txt,.rtf';
-                      case 'IMAGE':
-                        return 'image/*';
-                      case 'AUDIO':
-                        return 'audio/*';
-                      case 'VIDEO':
-                        return 'video/*';
-                      default:
-                        return '*/*';
-                    }
-                  }).join(',') : 'audio/*,.pdf,image/*,video/*,.doc,.docx,.txt'}
+                  accept={fileAccept}
                 />
               </div>
             )}
@@ -537,24 +554,12 @@ export default function StudentAssignmentSubmissionPage() {
               onRemoveFile={handleRemoveFile}
               onSubmit={handleSubmitAssignment}
               canSubmit={canSubmitSelected}
+              canSubmitText={canSubmitText}
               canUploadFiles={canUploadFiles}
               isSubmitting={isSubmitting}
               isResubmit={false}
               activeEnrollmentUuid={activeEnrollmentUuid}
-              accept={selectedSubmissionTypes.length ? selectedSubmissionTypes.map(type => {
-                switch (type.toUpperCase()) {
-                  case 'DOCUMENT':
-                    return '.pdf,.doc,.docx,.txt,.rtf';
-                  case 'IMAGE':
-                    return 'image/*';
-                  case 'AUDIO':
-                    return 'audio/*';
-                  case 'VIDEO':
-                    return 'video/*';
-                  default:
-                    return '*/*';
-                }
-              }).join(',') : 'audio/*,.pdf,image/*,video/*,.doc,.docx,.txt'}
+              accept={fileAccept}
             />
           </CardContent>
         </Card>
@@ -573,6 +578,7 @@ function SubmissionForm({
   onRemoveFile,
   onSubmit,
   canSubmit,
+  canSubmitText,
   canUploadFiles,
   isSubmitting,
   isResubmit,
@@ -586,6 +592,7 @@ function SubmissionForm({
   onRemoveFile: (file: File) => void;
   onSubmit: () => void;
   canSubmit: boolean;
+  canSubmitText: boolean;
   canUploadFiles: boolean;
   isSubmitting: boolean;
   isResubmit: boolean;
@@ -594,87 +601,89 @@ function SubmissionForm({
 }) {
   return (
     <div className='space-y-4'>
-      <div className='space-y-2'>
-        <label className='text-foreground text-sm font-medium' htmlFor='submission-text'>
-          Written response
-        </label>
-        <Textarea
-          className='min-h-32'
-          disabled={!canSubmit || isSubmitting}
-          id='submission-text'
-          onChange={e => setSubmissionText(e.target.value)}
-          placeholder='Paste your answer, notes, or submission links here.'
-          value={submissionText}
-        />
-      </div>
-
-      <div className='space-y-3'>
-        <div className='flex items-center justify-between gap-3'>
-          <div>
-            <p className='text-foreground text-sm font-medium'>Attachments</p>
-            <p className='text-muted-foreground text-xs'>
-              {canUploadFiles
-                ? 'Accepted file uploads can be added before you submit.'
-                : 'This assignment primarily expects text or link-based responses.'}
-            </p>
-          </div>
-          <Badge variant='outline'>{queuedFiles.length} queued</Badge>
+      {canSubmitText && (
+        <div className='space-y-2'>
+          <label className='text-foreground text-sm font-medium' htmlFor='submission-text'>
+            Written response
+          </label>
+          <Textarea
+            className='min-h-32'
+            disabled={!canSubmit || isSubmitting}
+            id='submission-text'
+            onChange={e => setSubmissionText(e.target.value)}
+            placeholder='Paste your answer, notes, or submission links here.'
+            value={submissionText}
+          />
         </div>
+      )}
 
-        <DragDropUpload
-          className={cn(
-            'border-border/70 bg-background/60 hover:border-primary/40 rounded-xl border-2 border-dashed p-6 transition',
-            !canUploadFiles || !canSubmit || isSubmitting ? 'pointer-events-none opacity-60' : ''
-          )}
-          multiple
-          accept={accept}
-          onFilesAdded={onFilesAdded}
-        >
-          <div className='flex flex-col items-center gap-2 text-center'>
-            <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-full'>
-              <Upload className='h-5 w-5' />
-            </div>
+      {canUploadFiles && (
+        <div className='space-y-3'>
+          <div className='flex items-center justify-between gap-3'>
             <div>
-              <p className='text-foreground text-sm font-medium'>
-                Drop files here or click to browse
-              </p>
+              <p className='text-foreground text-sm font-medium'>Attachments</p>
               <p className='text-muted-foreground text-xs'>
-                Documents and supporting media upload right after the submission is created.
+                Accepted file uploads can be added before you submit.
               </p>
             </div>
+            <Badge variant='outline'>{queuedFiles.length} queued</Badge>
           </div>
-        </DragDropUpload>
 
-        {queuedFiles.length > 0 && (
-          <div className='space-y-2'>
-            {queuedFiles.map(file => (
-              <div
-                key={`${file.name}-${file.size}`}
-                className='border-border/60 bg-background/60 flex items-center justify-between gap-3 rounded-xl border p-3'
-              >
-                <div className='flex min-w-0 items-center gap-3'>
-                  <FileText className='text-muted-foreground h-4 w-4 shrink-0' />
-                  <div className='min-w-0'>
-                    <p className='text-foreground truncate text-sm font-medium'>{file.name}</p>
-                    <p className='text-muted-foreground text-xs'>
-                      {(file.size / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  disabled={isSubmitting}
-                  onClick={() => onRemoveFile(file)}
-                  size='icon'
-                  type='button'
-                  variant='ghost'
-                >
-                  <X className='h-4 w-4' />
-                </Button>
+          <DragDropUpload
+            className={cn(
+              'border-border/70 bg-background/60 hover:border-primary/40 rounded-xl border-2 border-dashed p-6 transition',
+              !canUploadFiles || !canSubmit || isSubmitting ? 'pointer-events-none opacity-60' : ''
+            )}
+            multiple
+            accept={accept}
+            onFilesAdded={onFilesAdded}
+          >
+            <div className='flex flex-col items-center gap-2 text-center'>
+              <div className='bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-full'>
+                <Upload className='h-5 w-5' />
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <div>
+                <p className='text-foreground text-sm font-medium'>
+                  Drop files here or click to browse
+                </p>
+                <p className='text-muted-foreground text-xs'>
+                  Documents and supporting media upload right after the submission is created.
+                </p>
+              </div>
+            </div>
+          </DragDropUpload>
+
+          {queuedFiles.length > 0 && (
+            <div className='space-y-2'>
+              {queuedFiles.map(file => (
+                <div
+                  key={`${file.name}-${file.size}`}
+                  className='border-border/60 bg-background/60 flex items-center justify-between gap-3 rounded-xl border p-3'
+                >
+                  <div className='flex min-w-0 items-center gap-3'>
+                    <FileText className='text-muted-foreground h-4 w-4 shrink-0' />
+                    <div className='min-w-0'>
+                      <p className='text-foreground truncate text-sm font-medium'>{file.name}</p>
+                      <p className='text-muted-foreground text-xs'>
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    disabled={isSubmitting}
+                    onClick={() => onRemoveFile(file)}
+                    size='icon'
+                    type='button'
+                    variant='ghost'
+                  >
+                    <X className='h-4 w-4' />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className='border-border/60 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between'>
         <p className='text-muted-foreground text-xs'>

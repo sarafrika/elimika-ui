@@ -51,6 +51,7 @@ export type LessonGradingTask = {
   uuid: string;
   title: string;
   maxPoints?: number;
+  rubricId?: string | null;
   dueAt?: Date;
 };
 

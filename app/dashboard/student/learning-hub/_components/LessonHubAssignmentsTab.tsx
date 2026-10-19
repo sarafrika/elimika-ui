@@ -17,6 +17,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmission } from '@/services/client/types.gen';
 import { getErrorMessage } from '@/src/features/dashboard/courses/types';
+import { getSubmissionInputRules } from '@/src/features/dashboard/student-assessment/submission-input-rules';
 import {
     getDueSummary,
     getStudentAssignmentSubmissionState,
@@ -38,7 +39,8 @@ import {
     Upload
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Component, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { AttachmentResourceList } from '../../../../../components/assessment/AttachmentResourceList';
 import { Card, CardContent } from '../../../../../components/ui/card';
@@ -60,6 +62,25 @@ function formatDate(value?: string | Date | null) {
     return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
 
+class AssignmentDetailSheetBoundary extends Component<
+    { children: ReactNode; onError: () => void },
+    { hasError: boolean }
+> {
+    state = { hasError: false };
+
+    static getDerivedStateFromError() {
+        return { hasError: true };
+    }
+
+    componentDidCatch() {
+        this.props.onError();
+    }
+
+    render() {
+        return this.state.hasError ? null : this.props.children;
+    }
+}
+
 function AssignmentDetailSheet({
     payload,
     onClose,
@@ -75,7 +96,11 @@ function AssignmentDetailSheet({
 
     const row = payload?.row;
     const assignment = row?.assignment;
-    const submissionTypes = assignment?.submission_types ? [assignment.submission_types] : [];
+    const { submissionTypes, canSubmitText, canUploadFiles, fileAccept, acceptsFile } =
+        getSubmissionInputRules(assignment?.submission_types);
+    const assignmentHref = assignment?.uuid && row
+        ? `/dashboard/student/assignment/${assignment.uuid}?classId=${encodeURIComponent(row.classMeta.classUuid)}`
+        : '/dashboard/student/learning-hub?tab=assignments';
     const schedule = row?.schedule;
     const submission = row?.latestSubmission as AssignmentSubmission | null | undefined;
     const activeEnrollmentUuid = row?.classMeta.courseEnrollmentUuid ?? row?.classMeta.enrollmentUuid;
@@ -106,6 +131,10 @@ function AssignmentDetailSheet({
     const handleFiles = (files: FileList | null) => {
         if (!files) return;
         const incoming = Array.from(files);
+        if (!incoming.every(acceptsFile)) {
+            toast.error('Only upload files matching the accepted submission types.');
+            return;
+        }
         setQueuedFiles(prev => {
             const existing = new Set(prev.map(file => `${file.name}-${file.size}`));
             return [...prev, ...incoming.filter(file => !existing.has(`${file.name}-${file.size}`))];
@@ -128,20 +157,51 @@ function AssignmentDetailSheet({
             return;
         }
 
-        const submissionText = content.trim();
-        if (!submissionText && queuedFiles.length === 0) {
-            toast.error('Add a written response or attach at least one file.');
+        const submissionText = canSubmitText ? content.trim() : '';
+        if (!queuedFiles.every(acceptsFile)) {
+            toast.error('Only upload files matching the accepted submission types.');
             return;
         }
+        if (!submissionText && queuedFiles.length === 0) {
+            toast.error(canSubmitText
+                ? canUploadFiles
+                    ? 'Add a written response or attach at least one file.'
+                    : 'Add a written response before submitting.'
+                : 'Attach at least one file before submitting.');
+            return;
+        }
+
+        const placeholderFileUrls = queuedFiles.length > 0
+            ? submissionTypes.flatMap(type => {
+                switch (type) {
+                    case 'DOCUMENT':
+                        return ['https://storage.sarafrika.com/submissions/written_analysis.pdf'];
+                    case 'AUDIO':
+                        return ['https://storage.sarafrika.com/submissions/audio_example.mp3'];
+                    default:
+                        return [];
+                }
+            })
+            : [];
 
         try {
             const response = await submitAssignmentMut.mutateAsync({
                 path: { assignmentUuid: assignment?.uuid },
-                query: { enrollmentUuid: activeEnrollmentUuid },
+                query: {
+                    enrollmentUuid: activeEnrollmentUuid,
+                    enrollment_uuid: activeEnrollmentUuid,
+                    ...(canSubmitText ? { content: submissionText, submission_text: submissionText } : {}),
+                    studentUuid: row?.classMeta.studentUuid ?? student?.uuid,
+                    student_uuid: row?.classMeta.studentUuid ?? student?.uuid,
+                    ...(placeholderFileUrls.length > 0
+                        ? { file_urls: placeholderFileUrls, fileUrls: placeholderFileUrls }
+                        : {}),
+                },
                 body: {
                     enrollment_uuid: activeEnrollmentUuid,
                     student_uuid: row?.classMeta.studentUuid ?? student?.uuid,
-                    submission_text: submissionText,
+                    ...(canSubmitText ? { submission_text: submissionText } : {}),
+                    ...(placeholderFileUrls.length > 0 ? { file_urls: placeholderFileUrls } : {}),
                 },
             });
 
@@ -264,87 +324,78 @@ function AssignmentDetailSheet({
                         </div>
                     )}
 
-                    <div className='space-y-2'>
-                        <label className='text-sm font-medium'>Your response</label>
-                        <Textarea
-                            rows={8}
-                            value={content}
-                            onChange={event => setContent(event.target.value)}
-                            disabled={!canEdit}
-                            placeholder='Type your answer or notes about your attached file.'
-                        />
-                    </div>
-
-                    <div className='space-y-2'>
-                        <label className='text-sm font-medium'>Attachments</label>
-                        {submission?.file_urls?.length ? (
-                            <div className='space-y-2 rounded-sm border p-3 text-sm'>
-                                {submission.file_urls.map((url, index) => (
-                                    <a
-                                        key={`${url}-${index}`}
-                                        href={url}
-                                        target='_blank'
-                                        rel='noreferrer'
-                                        className='text-primary block truncate underline'
-                                    >
-                                        Existing file {index + 1}
-                                    </a>
-                                ))}
-                            </div>
-                        ) : null}
-
-                        {queuedFiles.length > 0 ? (
-                            <div className='space-y-2 rounded-xl border p-3 text-sm'>
-                                {queuedFiles.map(file => (
-                                    <div key={`${file.name}-${file.size}`} className='flex items-center justify-between gap-3'>
-                                        <div className='flex min-w-0 items-center gap-2'>
-                                            <Paperclip className='text-muted-foreground h-4 w-4 shrink-0' />
-                                            <span className='truncate'>{file.name}</span>
-                                        </div>
-                                        <button
-                                            type='button'
-                                            className='text-muted-foreground hover:text-foreground text-xs'
-                                            onClick={() => removeFile(file)}
-                                        >
-                                            Remove
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : null}
-
-                        {canEdit ? (
-                            <Input
-                                type='file'
-                                multiple
-                                accept={submissionTypes.length ? submissionTypes.map(type => {
-                                    switch (type.toUpperCase()) {
-                                        case 'DOCUMENT':
-                                            return '.pdf,.doc,.docx,.txt,.rtf';
-                                        case 'IMAGE':
-                                            return 'image/*';
-                                        case 'AUDIO':
-                                            return 'audio/*';
-                                        case 'VIDEO':
-                                            return 'video/*';
-                                        default:
-                                            return '*/*';
-                                    }
-                                }).join(',') : 'audio/*,.pdf,image/*,video/*,.doc,.docx,.txt'}
-                                disabled={isSubmitting}
-                                onChange={event => handleFiles(event.target.files)}
+                    {canSubmitText && (
+                        <div className='space-y-2'>
+                            <label className='text-sm font-medium'>Your response</label>
+                            <Textarea
+                                rows={8}
+                                value={content}
+                                onChange={event => setContent(event.target.value)}
+                                disabled={!canEdit || isSubmitting}
+                                placeholder='Type your answer or notes about your attached file.'
                             />
-                        ) : (
-                            <p className='text-muted-foreground text-xs'>
-                                This submission is locked for review.
-                            </p>
-                        )}
-                    </div>
+                        </div>
+                    )}
+
+                    {canUploadFiles && (
+                        <div className='space-y-2'>
+                            <label className='text-sm font-medium'>Attachments</label>
+                            {submission?.file_urls?.length ? (
+                                <div className='space-y-2 rounded-sm border p-3 text-sm'>
+                                    {submission.file_urls.map((url, index) => (
+                                        <a
+                                            key={`${url}-${index}`}
+                                            href={url}
+                                            target='_blank'
+                                            rel='noreferrer'
+                                            className='text-primary block truncate underline'
+                                        >
+                                            Existing file {index + 1}
+                                        </a>
+                                    ))}
+                                </div>
+                            ) : null}
+
+                            {queuedFiles.length > 0 ? (
+                                <div className='space-y-2 rounded-xl border p-3 text-sm'>
+                                    {queuedFiles.map(file => (
+                                        <div key={`${file.name}-${file.size}`} className='flex items-center justify-between gap-3'>
+                                            <div className='flex min-w-0 items-center gap-2'>
+                                                <Paperclip className='text-muted-foreground h-4 w-4 shrink-0' />
+                                                <span className='truncate'>{file.name}</span>
+                                            </div>
+                                            <button
+                                                type='button'
+                                                className='text-muted-foreground hover:text-foreground text-xs'
+                                                onClick={() => removeFile(file)}
+                                            >
+                                                Remove
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : null}
+
+                            {canEdit ? (
+                                <Input
+                                    type='file'
+                                    multiple
+                                    accept={fileAccept}
+                                    disabled={isSubmitting}
+                                    onChange={event => handleFiles(event.target.files)}
+                                />
+                            ) : (
+                                <p className='text-muted-foreground text-xs'>
+                                    This submission is locked for review.
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {canEdit ? (
                         <div className='flex justify-end gap-2 pt-2'>
                             <Button variant='outline' asChild>
-                                <Link href={`/dashboard/student/assignment/${assignment?.uuid}`} className='inline-flex items-center gap-2'>
+                                <Link href={assignmentHref} className='inline-flex items-center gap-2'>
                                     Go to assignment page
                                     <ArrowRight className='h-4 w-4' />
                                 </Link>
@@ -366,7 +417,7 @@ function AssignmentDetailSheet({
                     ) : (
                         <div className='flex justify-end'>
                             <Button variant='outline' asChild>
-                                <Link href={`/dashboard/student/assignment/${assignment?.uuid}`} className='inline-flex items-center gap-2'>
+                                <Link href={assignmentHref} className='inline-flex items-center gap-2'>
                                     Open full assignments page
                                     <ArrowRight className='h-4 w-4' />
                                 </Link>
@@ -424,6 +475,7 @@ function AssignmentCard({
                     </p>
                 </div>
 
+
                 <Button size='sm' className='text-xs' onClick={() => onOpen(item)}>
                     {status === 'graded' ? (
                         <>
@@ -434,7 +486,7 @@ function AssignmentCard({
                     ) : status === 'returned' ? (
                         'Revise submission'
                     ) : status === 'pending' ? (
-                        'Continue draft'
+                        'Continue submission'
                     ) : (
                         'Start'
                     )}
@@ -445,6 +497,7 @@ function AssignmentCard({
 }
 
 export default function LessonHubAssignmentsTab() {
+    const router = useRouter();
     const [filter, setFilter] = useState<StudentAssignmentFilterTab>('all');
     const [courseFilter, setCourseFilter] = useState<string>('all');
     const [sortBy, setSortBy] = useState<SortKey>('due');
@@ -643,7 +696,16 @@ export default function LessonHubAssignmentsTab() {
                 </div>
             )}
 
-            <AssignmentDetailSheet payload={active} onClose={() => setActive(null)} />
+            {active?.row.assignment.uuid && (
+                <AssignmentDetailSheetBoundary
+                    key={`${active.row.classMeta.classUuid}-${active.row.assignment.uuid}`}
+                    onError={() => router.push(
+                        `/dashboard/student/assignment/${active.row.assignment.uuid}?classId=${encodeURIComponent(active.row.classMeta.classUuid)}`
+                    )}
+                >
+                    <AssignmentDetailSheet payload={active} onClose={() => setActive(null)} />
+                </AssignmentDetailSheetBoundary>
+            )}
         </div>
     );
 }

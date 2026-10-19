@@ -13,6 +13,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAssignmentsByIds, useQuizzesByIds } from '@/hooks/use-batched-lookups';
 import { dayjs } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
@@ -26,18 +27,33 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type {
   Assignment,
+  AssignmentSubmission,
   ClassAssignmentSchedule,
   ClassQuizSchedule,
   Quiz,
+  QuizAttempt,
   ScheduledInstance,
 } from '@/services/client/types.gen';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { Award, CalendarDays, ClipboardCheck, FileText, LucideIcon, Repeat, Target, Timer } from 'lucide-react';
+import {
+  Award,
+  CalendarDays,
+  ClipboardCheck,
+  ExternalLink,
+  FileText,
+  type LucideIcon,
+  Repeat,
+  Target,
+  Timer,
+} from 'lucide-react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { type ReactNode, useMemo, useState } from 'react';
+import { Separator } from '../ui/separator';
 import { belongsToSession, gradingDeadline } from './assessment-scheduling';
+import { isTaskGraded, taskGradeLabel } from './grading';
 import type { AssessmentToSchedule } from './ScheduleAssessmentDialog';
+import { useStudentLessonGrades } from './useStudentLessonGrades';
 import {
   hasApiError,
   nextWorkbookPage,
@@ -68,11 +84,15 @@ const QuizQuestions = dynamic(
   () => import('./QuizQuestions').then(module => module.QuizQuestions),
   { loading: () => <WorkbookLoading /> }
 );
-const RubricSummaryPreview = dynamic(
+const StudentAssessmentDetails = dynamic(
+  () => import('./StudentAssessmentDetails').then(module => module.StudentAssessmentDetails),
+  { loading: () => <WorkbookLoading /> }
+);
+const RubricGradingMatrix = dynamic(
   () =>
     import(
       '@/app/dashboard/instructor/classes/class-training/[id]/_components/RubricGradingMatrix'
-    ).then(module => module.RubricSummaryPreview),
+    ).then(module => module.RubricGradingMatrix),
   { loading: () => <WorkbookLoading /> }
 );
 
@@ -151,7 +171,7 @@ function LessonTaskCard({
 
       {(footerNote || actions) && (
         <div className='bg-muted/40 flex flex-wrap items-center justify-between gap-3 border-t px-6 py-3'>
-          <p className='text-muted-foreground text-sm'>{footerNote}</p>
+          <div className='text-muted-foreground text-sm'>{footerNote}</div>
           <div className='flex flex-wrap items-center gap-2'>{actions}</div>
         </div>
       )}
@@ -301,6 +321,40 @@ export function EvaluationPanel({
     isError: quizLookupError,
     refetch: retryQuizzes,
   } = useQuizzesByIds(missingQuizIds);
+  const studentTasks = useMemo(
+    () => [
+      ...(showAssignments
+        ? scopedAssignments.flatMap(schedule =>
+          schedule.assignment_uuid
+            ? [
+              {
+                id: schedule.uuid ?? schedule.assignment_uuid,
+                kind: 'assignment' as const,
+                uuid: schedule.assignment_uuid,
+                title: 'Assignment',
+              },
+            ]
+            : []
+        )
+        : []),
+      ...(showQuizzes
+        ? scopedQuizzes.flatMap(schedule =>
+          schedule.quiz_uuid
+            ? [
+              {
+                id: schedule.uuid ?? schedule.quiz_uuid,
+                kind: 'quiz' as const,
+                uuid: schedule.quiz_uuid,
+                title: 'Quiz',
+              },
+            ]
+            : []
+        )
+        : []),
+    ],
+    [showAssignments, showQuizzes, scopedAssignments, scopedQuizzes]
+  );
+  const studentGrades = useStudentLessonGrades(courseId, studentTasks, role === 'student');
   if (assignmentsLoading || quizzesLoading) return <WorkbookLoading />;
   const activeQueries = [
     ...(showAssignments ? [assignmentSchedules, ...(!instructorGrading ? [assignments] : [])] : []),
@@ -330,6 +384,7 @@ export function EvaluationPanel({
     id: string;
     assignment?: Assignment;
     schedule?: ClassAssignmentSchedule;
+    submission?: AssignmentSubmission;
   }[] = scopedAssignments.flatMap(schedule =>
     schedule.assignment_uuid
       ? [
@@ -339,25 +394,36 @@ export function EvaluationPanel({
             assignmentItems.find(item => item.uuid === schedule.assignment_uuid) ??
             assignmentMap[schedule.assignment_uuid],
           schedule,
+          submission: studentGrades.enrollmentId
+            ? studentGrades.submissionMap.get(
+              `${studentGrades.enrollmentId}-${schedule.assignment_uuid}`
+            )
+            : undefined,
         },
       ]
       : []
   );
-  const quizRows: { id: string; quiz?: Quiz; schedule?: ClassQuizSchedule }[] =
-    scopedQuizzes.flatMap(schedule =>
-      schedule.quiz_uuid
-        ? [
-          {
-            id: schedule.uuid ?? schedule.quiz_uuid,
-            quiz:
-              quizItems.find(item => item.uuid === schedule.quiz_uuid) ??
-              quizMap[schedule.quiz_uuid],
-            schedule,
-          },
-        ]
-        : []
-    );
-
+  const quizRows: {
+    id: string;
+    quiz?: Quiz;
+    schedule?: ClassQuizSchedule;
+    attempt?: QuizAttempt;
+  }[] = scopedQuizzes.flatMap(schedule =>
+    schedule.quiz_uuid
+      ? [
+        {
+          id: schedule.uuid ?? schedule.quiz_uuid,
+          quiz:
+            quizItems.find(item => item.uuid === schedule.quiz_uuid) ??
+            quizMap[schedule.quiz_uuid],
+          schedule,
+          attempt: studentGrades.enrollmentId
+            ? studentGrades.attemptMap.get(`${studentGrades.enrollmentId}-${schedule.quiz_uuid}`)
+            : undefined,
+        },
+      ]
+      : []
+  );
   if (instructorGrading) {
     return (
       <LessonGradingPanel
@@ -375,9 +441,10 @@ export function EvaluationPanel({
                   uuid: schedule.assignment_uuid,
                   title: assignment?.title ?? 'Assignment',
                   maxPoints: assignment?.max_points,
+                  rubricId: assignment?.rubric_uuid,
                   dueAt: gradingDeadline(schedule),
                   ...assignment,
-                  schedule
+                  schedule,
                 },
               ]
               : []
@@ -392,7 +459,7 @@ export function EvaluationPanel({
                   title: quiz?.title ?? 'Quiz',
                   dueAt: gradingDeadline(schedule),
                   ...quiz,
-                  schedule
+                  schedule,
                 },
               ]
               : []
@@ -452,7 +519,7 @@ export function EvaluationPanel({
       {showAssignments && (
         <section className='space-y-4'>
           {!assignmentRows.length && <EmptyState title='No assignments available' />}
-          {assignmentRows.map(({ id, assignment, schedule }) => {
+          {assignmentRows.map(({ id, assignment, schedule, submission }) => {
             const uuid = schedule?.assignment_uuid ?? assignment?.uuid;
             const submissionTypes = formatSubmissionTypes(assignment?.submission_types);
             const meta: TaskMetaItem[] = [
@@ -506,15 +573,24 @@ export function EvaluationPanel({
                   ) : null
                 }
                 footerNote={
-                  role === 'instructor' && schedule
-                    ? [
+                  role === 'student' ? (
+                    <StudentGradeStatus
+                      record={submission}
+                      maxPoints={assignment?.max_points}
+                      loading={studentGrades.assignmentLoading}
+                      error={studentGrades.assignmentError}
+                      enrollmentId={studentGrades.enrollmentId}
+                      retry={studentGrades.refetch}
+                    />
+                  ) : schedule ? (
+                    [
                       `Releases ${schedule.visible_at ? formatDeadline(schedule.visible_at) : 'immediately'}`,
                       `grading ${formatDeadline(gradingDeadline(schedule))}`,
                       schedule.notes,
                     ]
                       .filter(Boolean)
                       .join(', ')
-                    : null
+                  ) : null
                 }
                 actions={
                   <>
@@ -538,11 +614,13 @@ export function EvaluationPanel({
                             : 'Awaiting publication'}
                       </Button>
                     )}
+
                     {uuid &&
                       (isGrading ? (
                         <Button
                           size='sm'
                           variant='ghost'
+                          aria-expanded={expanded === id}
                           onClick={() => setExpanded(expanded === id ? null : id)}
                         >
                           {expanded === id ? 'Hide criteria' : 'View grading criteria'}
@@ -562,15 +640,40 @@ export function EvaluationPanel({
                           <AssignmentAttachments assignmentId={uuid} />
                         </AssessmentPreviewSheet>
                       ))}
-                    {role === 'student' && uuid && (
-                      <Button size='sm' asChild>
-                        <Link
-                          href={`/dashboard/student/assignment/${uuid}?classId=${encodeURIComponent(classId)}`}
+                    {role === 'student' &&
+                      uuid &&
+                      (isGrading ? (
+                        <AssessmentPreviewSheet
+                          title={assignment?.title ?? 'Assignment'}
+                          description='Review your submission, score and instructor feedback.'
+                          triggerLabel='View submission & feedback'
+                          detailsHref={`/dashboard/student/assignment/${uuid}?classId=${encodeURIComponent(classId)}`}
                         >
-                          {isGrading ? 'View submission & feedback' : 'Open assignment'}
-                        </Link>
-                      </Button>
-                    )}
+                          {assignment?.description && (
+                            <RichTextRenderer htmlString={assignment.description} />
+                          )}
+                          {assignment?.instructions && (
+                            <RichTextRenderer htmlString={assignment.instructions} />
+                          )}
+                          <StudentAssessmentDetails
+                            kind='assignment'
+                            submission={submission}
+                            maxPoints={assignment?.max_points}
+                            loading={studentGrades.assignmentLoading}
+                            error={studentGrades.assignmentError}
+                            enrollmentId={studentGrades.enrollmentId}
+                            retry={studentGrades.refetch}
+                          />
+                        </AssessmentPreviewSheet>
+                      ) : (
+                        <Button size='sm' asChild>
+                          <Link
+                            href={`/dashboard/student/assignment/${uuid}?classId=${encodeURIComponent(classId)}`}
+                          >
+                            Open assignment
+                          </Link>
+                        </Button>
+                      ))}
                   </>
                 }
               />
@@ -591,7 +694,7 @@ export function EvaluationPanel({
       {showQuizzes && (
         <section className='space-y-4'>
           {!quizRows.length && <EmptyState title='No quizzes available' />}
-          {quizRows.map(({ id, quiz, schedule }) => {
+          {quizRows.map(({ id, quiz, schedule, attempt }) => {
             const uuid = schedule?.quiz_uuid ?? quiz?.uuid;
             const timeLimit = schedule?.time_limit_override ?? quiz?.time_limit_minutes;
             const attempts = schedule?.attempt_limit_override ?? quiz?.attempts_allowed;
@@ -604,7 +707,9 @@ export function EvaluationPanel({
               },
               ...(timeLimit != null ? [{ icon: Timer, label: `${timeLimit} min` }] : []),
               ...(attempts != null ? [{ icon: Repeat, label: `${attempts} attempts` }] : []),
-              ...(passingScore != null ? [{ icon: Target, label: `Pass at ${passingScore}%` }] : []),
+              ...(passingScore != null
+                ? [{ icon: Target, label: `Pass at ${passingScore}%` }]
+                : []),
               ...(isGrading && schedule
                 ? [
                   {
@@ -633,20 +738,23 @@ export function EvaluationPanel({
                     </>
                   ) : null
                 }
-                expandedContent={
-                  isGrading && expanded === id ? (
-                    <GradingCriteria rubricId={quiz?.rubric_uuid} />
-                  ) : null
-                }
                 footerNote={
-                  role === 'instructor' && schedule
-                    ? [
+                  role === 'student' ? (
+                    <StudentGradeStatus
+                      record={attempt}
+                      loading={studentGrades.quizLoading}
+                      error={studentGrades.quizError}
+                      enrollmentId={studentGrades.enrollmentId}
+                      retry={studentGrades.refetch}
+                    />
+                  ) : schedule ? (
+                    [
                       `Releases ${schedule.visible_at ? formatDeadline(schedule.visible_at) : 'immediately'}`,
                       schedule.notes,
                     ]
                       .filter(Boolean)
                       .join(', ')
-                    : null
+                  ) : null
                 }
                 actions={
                   <>
@@ -670,34 +778,43 @@ export function EvaluationPanel({
                             : 'Awaiting publication'}
                       </Button>
                     )}
-                    {(role === 'instructor' || isGrading) &&
+                    {role === 'instructor' && !isGrading && uuid && (
+                      <AssessmentPreviewSheet
+                        title={quiz?.title ?? 'Quiz'}
+                        description='Preview quiz questions and answer options.'
+                        triggerLabel='Preview questions'
+                      >
+                        <QuizQuestions quizId={uuid} />
+                      </AssessmentPreviewSheet>
+                    )}
+                    {role === 'student' &&
                       uuid &&
                       (isGrading ? (
-                        <Button
-                          size='sm'
-                          variant='ghost'
-                          onClick={() => setExpanded(expanded === id ? null : id)}
-                        >
-                          {expanded === id ? 'Hide criteria' : 'View grading criteria'}
-                        </Button>
-                      ) : (
                         <AssessmentPreviewSheet
                           title={quiz?.title ?? 'Quiz'}
-                          description='Preview quiz questions and answer options.'
-                          triggerLabel='Preview questions'
+                          description='Review your quiz score and answers.'
+                          triggerLabel='View quiz results'
+                          detailsHref={`/dashboard/student/assignment/quiz/${uuid}?classId=${encodeURIComponent(classId)}`}
                         >
-                          <QuizQuestions quizId={uuid} />
+                          {quiz?.description && <RichTextRenderer htmlString={quiz.description} />}
+                          <StudentAssessmentDetails
+                            kind='quiz'
+                            attempt={attempt}
+                            loading={studentGrades.quizLoading}
+                            error={studentGrades.quizError}
+                            enrollmentId={studentGrades.enrollmentId}
+                            retry={studentGrades.refetch}
+                          />
                         </AssessmentPreviewSheet>
+                      ) : (
+                        <Button size='sm' asChild>
+                          <Link
+                            href={`/dashboard/student/assignment/quiz/${uuid}?classId=${encodeURIComponent(classId)}`}
+                          >
+                            Open quiz
+                          </Link>
+                        </Button>
                       ))}
-                    {role === 'student' && uuid && (
-                      <Button size='sm' asChild>
-                        <Link
-                          href={`/dashboard/student/assignment/quiz/${uuid}?classId=${encodeURIComponent(classId)}`}
-                        >
-                          {isGrading ? 'View quiz results' : 'Open quiz'}
-                        </Link>
-                      </Button>
-                    )}
                   </>
                 }
               />
@@ -722,11 +839,13 @@ function AssessmentPreviewSheet({
   title,
   description,
   triggerLabel,
+  detailsHref,
   children,
 }: {
   title: string;
   description: string;
   triggerLabel: string;
+  detailsHref?: string;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -736,14 +855,56 @@ function AssessmentPreviewSheet({
       <SheetTrigger asChild>
         <Button variant='outline'>{triggerLabel}</Button>
       </SheetTrigger>
-      <SheetContent side='right' className='w-full sm:max-w-3xl'>
+      <SheetContent side='right' className='w-full sm:max-w-5xl'>
         <SheetHeader className='shrink-0 border-b pr-12'>
           <SheetTitle className='break-words'>{title}</SheetTitle>
           <SheetDescription>{description}</SheetDescription>
+          {detailsHref && (
+            <Button asChild variant='outline' size='sm' className='mt-2 w-fit'>
+              <Link href={detailsHref} target='_blank' rel='noopener noreferrer'>
+                <ExternalLink className='h-4 w-4' />
+                Open details page
+                <span className='sr-only'> (opens in a new tab)</span>
+              </Link>
+            </Button>
+          )}
         </SheetHeader>
         <div className='min-h-0 flex-1 space-y-4 overflow-y-auto px-4 pb-6'>{open && children}</div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function StudentGradeStatus({
+  record,
+  maxPoints,
+  loading,
+  error,
+  enrollmentId,
+  retry,
+}: {
+  record?: AssignmentSubmission | QuizAttempt;
+  maxPoints?: number;
+  loading: boolean;
+  error: boolean;
+  enrollmentId?: string;
+  retry: () => void;
+}) {
+  if (loading) return <Skeleton className='h-5 w-28' aria-label='Loading score' />;
+  if (error)
+    return (
+      <Button variant='ghost' size='sm' onClick={retry}>
+        Retry score
+      </Button>
+    );
+  if (!enrollmentId) return <span>Grade unavailable</span>;
+  return isTaskGraded(record) ? (
+    <span className='text-foreground flex items-center gap-2 font-semibold'>
+      <Award className='h-4 w-4' />
+      Score: {taskGradeLabel(record, maxPoints)}
+    </span>
+  ) : (
+    <span>{taskGradeLabel(record, maxPoints)}</span>
   );
 }
 
@@ -761,26 +922,51 @@ function RubricPreview({ rubricId }: { rubricId: string }) {
     enabled: Boolean(rubricId),
     staleTime: STALE_TIMES.entity,
   });
+  const matrix = useMemo(() => {
+    const data = hasApiError(query.data) ? undefined : query.data?.data;
+    if (!data?.rubric.uuid) return undefined;
+    return {
+      ...data,
+      rubric: { ...data.rubric, uuid: data.rubric.uuid },
+      criteria: data.criteria.flatMap(item =>
+        item.uuid ? [{ ...item, uuid: item.uuid }] : []
+      ),
+      scoring_levels: data.scoring_levels.flatMap(item =>
+        item.uuid ? [{ ...item, uuid: item.uuid }] : []
+      ),
+    };
+  }, [query.data]);
   if (query.isLoading) return <WorkbookLoading />;
   if (query.isError || hasApiError(query.data))
     return (
       <WorkbookError title='Unable to load grading criteria' retry={() => void query.refetch()} />
     );
-  const matrix = query.data?.data;
-  if (!matrix?.rubric.uuid) return <EmptyState title='No grading criteria available' />;
+  if (!matrix) return <EmptyState title='No grading criteria available' />;
   return (
-    <RubricSummaryPreview
-      matrix={{
-        ...matrix,
-        rubric: { ...matrix.rubric, uuid: matrix.rubric.uuid },
-        criteria: matrix.criteria.flatMap(item =>
-          item.uuid ? [{ ...item, uuid: item.uuid }] : []
-        ),
-        scoring_levels: matrix.scoring_levels.flatMap(item =>
-          item.uuid ? [{ ...item, uuid: item.uuid }] : []
-        ),
-      }}
-    />
+    <>
+      <Separator />
+      <section className='space-y-4 border border-border p-3 rounded-sm' aria-label='Assignment grading rubric'>
+        <div className='space-y-2'>
+          <h3 className='font-semibold'>{matrix.rubric.title}</h3>
+          {matrix.rubric.description && (
+            <RichTextRenderer htmlString={matrix.rubric.description} />
+          )}
+          <div className='flex flex-wrap gap-2'>
+            <Badge variant='outline'>{matrix.criteria.length} criteria</Badge>
+            <Badge variant='outline'>{matrix.scoring_levels.length} scoring levels</Badge>
+            {matrix.rubric.max_score != null && (
+              <Badge variant='outline'>Maximum {matrix.rubric.max_score} points</Badge>
+            )}
+          </div>
+        </div>
+        <RubricGradingMatrix
+          matrix={matrix}
+          selections={{}}
+          readOnly
+          showScoreSummary={false}
+        />
+      </section>
+    </>
   );
 }
 
