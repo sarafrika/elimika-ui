@@ -97,7 +97,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { GraduationCap, Layers, type LucideIcon, SlidersHorizontal, Users } from 'lucide-react';
+import { type LucideIcon, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { PageHeader } from '../../../../../../components/page-header';
@@ -357,7 +357,7 @@ const createCatalogCards = (
     const ctaLabel = applicationStatusRefreshing
       ? 'Checking'
       : !isInstructorApplyCard
-        ? 'Enroll Classes'
+        ? 'Join Classes'
         : isOrganisationDomain && !canOrganisationApply
           ? 'Verify Organisation'
           : isOrganisationDomain && applicationStatus === 'approved'
@@ -711,10 +711,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
 
   const categoriesById = useMemo(
     () => new Map(categories.map(category => [category.uuid ?? category.name, category])),
-    [categories]
-  );
-  const rootCategories = useMemo(
-    () => categories.filter(category => !category.parent_uuid),
     [categories]
   );
 
@@ -1101,63 +1097,6 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     user?.courseCreator?.uuid,
   ]);
 
-  const filterSections = useMemo<CoursesFilterSection[]>(
-    () => [
-      {
-        key: 'contentType',
-        title: 'Content Type',
-        options: [
-          { label: 'All Courses & Programs', value: 'all-courses' },
-          { label: 'Program', value: 'programs' },
-          { label: 'Short Course', value: 'short-courses' },
-          // { label: 'My Courses', value: 'my-courses' },
-        ],
-      },
-      {
-        key: 'category',
-        title: 'Categories',
-        options: [
-          { label: 'All Categories', value: 'all' },
-          ...rootCategories.map(category => ({
-            label: category.name,
-            value: category.uuid ?? category.name,
-          })),
-        ],
-      },
-      {
-        key: 'level',
-        title: 'Level',
-        options: [
-          { label: 'All Levels', value: 'all' },
-          ...(difficultiesResponse?.data ?? []).map(level => ({
-            label: level.name,
-            value: level.uuid ?? level.name,
-          })),
-        ],
-      },
-      {
-        key: 'duration',
-        title: 'Duration',
-        options: [
-          { label: 'Any Duration', value: 'all' },
-          { label: '0 - 5 Hours', value: '0-5-hours' },
-          { label: '6 - 20 Hours', value: '6-20-hours' },
-          { label: '20+ Hours', value: '20-plus-hours' },
-        ],
-      },
-      {
-        key: 'price',
-        title: 'Price',
-        options: [
-          { label: 'Any Price', value: 'all' },
-          { label: 'Free', value: 'free' },
-          { label: 'Paid', value: 'paid' },
-        ],
-      },
-    ],
-    [rootCategories, difficultiesResponse]
-  );
-
   const allCoursesFeed = useMemo(() => {
     const items = [...mappedCourses, ...mappedPrograms];
     if (sortValue === 'price') {
@@ -1260,6 +1199,78 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const resultCount = catalogResultCount(
     facetMode && hasLocalCatalogFilters ? paginatedItems : filteredItems,
     facetMode && !hasLocalCatalogFilters ? courseResultCount : undefined
+  );
+
+  // Match the cards on this page, including ancestors of their assigned subjects.
+  const visibleCategories = useMemo(
+    () =>
+      categories.filter(category =>
+        paginatedItems.some(item =>
+          matchesCategoryFilter(item, category.uuid ?? category.name, categories, categoriesById)
+        )
+      ),
+    [categories, categoriesById, paginatedItems]
+  );
+  const rootCategories = useMemo(
+    () => visibleCategories.filter(category => !category.parent_uuid),
+    [visibleCategories]
+  );
+
+  const filterSections = useMemo<CoursesFilterSection[]>(
+    () => [
+      {
+        key: 'contentType',
+        title: 'Content Type',
+        options: [
+          { label: 'All Courses & Programs', value: 'all-courses' },
+          { label: 'Program', value: 'programs' },
+          { label: 'Short Course', value: 'short-courses' },
+          // { label: 'My Courses', value: 'my-courses' },
+        ],
+      },
+      {
+        key: 'category',
+        title: 'Categories',
+        options: [
+          { label: 'All Categories', value: 'all' },
+          ...rootCategories.map(category => ({
+            label: category.name,
+            value: category.uuid ?? category.name,
+          })),
+        ],
+      },
+      {
+        key: 'level',
+        title: 'Level',
+        options: [
+          { label: 'All Levels', value: 'all' },
+          ...(difficultiesResponse?.data ?? []).map(level => ({
+            label: level.name,
+            value: level.uuid ?? level.name,
+          })),
+        ],
+      },
+      {
+        key: 'duration',
+        title: 'Duration',
+        options: [
+          { label: 'Any Duration', value: 'all' },
+          { label: '0 - 5 Hours', value: '0-5-hours' },
+          { label: '6 - 20 Hours', value: '6-20-hours' },
+          { label: '20+ Hours', value: '20-plus-hours' },
+        ],
+      },
+      {
+        key: 'price',
+        title: 'Price',
+        options: [
+          { label: 'Any Price', value: 'all' },
+          { label: 'Free', value: 'free' },
+          { label: 'Paid', value: 'paid' },
+        ],
+      },
+    ],
+    [rootCategories, difficultiesResponse]
   );
 
   const instructorCourseApplicationMap = useMemo(() => {
@@ -1573,7 +1584,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           description={isStudentDomain ? 'Choose how you want to learn — join a class or find an instructor.' : `${catalogueSubtitle}`}
           actions={
             <div className='flex flex-wrap gap-2'>
-              <div className='flex flex-wrap gap-2'>
+              {/* <div className='flex flex-wrap gap-2'>
                 {[
                   {
                     icon: GraduationCap,
@@ -1604,7 +1615,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
                     <span className='text-muted-foreground text-sm'>{label}</span>
                   </span>
                 ))}
-              </div>
+              </div> */}
             </div>
           }
         />
@@ -1628,7 +1639,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         </div>
 
         <CategoryTabs
-          categories={categories}
+          categories={visibleCategories}
           activeCategory={filters.category === 'all' ? ALL_CATEGORIES : filters.category}
           onCategoryChange={category => {
             setFilterValue('category', category === ALL_CATEGORIES ? 'all' : category);

@@ -1,3 +1,4 @@
+import type { UserDomain } from '@/lib/types';
 import {
   BadgeCheck,
   BarChart3,
@@ -43,7 +44,6 @@ import {
   Wrench
 } from 'lucide-react';
 import type { ComponentType } from 'react';
-import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -291,29 +291,9 @@ export default {
           icon: LayoutDashboard,
         },
         {
-          title: 'Skills Wallet',
-          url: '/dashboard/skills-wallet',
-          icon: BadgeCheck,
-        },
-        {
           title: 'Calendar',
           url: '/dashboard/calendar',
           icon: CalendarClock,
-        },
-        {
-          title: 'Jobs',
-          url: '/dashboard/opportunities',
-          icon: Handshake,
-        },
-        {
-          title: 'Booking Requests',
-          url: '/dashboard/booking-requests',
-          icon: CalendarClock,
-        },
-        {
-          title: 'Courses',
-          url: '/dashboard/courses',
-          icon: GraduationCap,
         },
         {
           title: 'Training Hub',
@@ -321,24 +301,9 @@ export default {
           icon: ClipboardList,
         },
         {
-          title: 'Apply to Train',
-          url: '/dashboard/apply-to-train',
-          icon: Rocket,
-        },
-        {
           title: 'My Courses',
           url: '/dashboard/my-courses',
           icon: BookOpen,
-        },
-        {
-          title: 'Students',
-          url: '/dashboard/students',
-          icon: Users,
-        },
-        {
-          title: 'Waiting List',
-          url: '/dashboard/training-hub/waiting-list',
-          icon: UserRoundPlus,
         },
         {
           title: 'Assignments',
@@ -351,9 +316,39 @@ export default {
           icon: BarChart3,
         },
         {
-          title: 'Wallet',
-          url: '/dashboard/wallet',
-          icon: Wallet,
+          title: 'Students',
+          url: '/dashboard/students',
+          icon: Users,
+        },
+        {
+          title: 'Booking Requests',
+          url: '/dashboard/booking-requests',
+          icon: CalendarClock,
+        },
+        {
+          title: 'Waiting List',
+          url: '/dashboard/training-hub/waiting-list',
+          icon: UserRoundPlus,
+        },
+        {
+          title: 'Jobs',
+          url: '/dashboard/opportunities',
+          icon: Handshake,
+        },
+        {
+          title: 'Apply to Train',
+          url: '/dashboard/apply-to-train',
+          icon: Rocket,
+        },
+        {
+          title: 'Start Course',
+          url: '/dashboard/courses',
+          icon: GraduationCap,
+        },
+        {
+          title: 'Skills Wallet',
+          url: '/dashboard/skills-wallet',
+          icon: BadgeCheck,
         },
         {
           title: 'Skills Fund',
@@ -361,14 +356,19 @@ export default {
           icon: PiggyBank,
         },
         {
-          title: 'Analytics',
-          url: '/dashboard/analytics',
-          icon: LineChart,
+          title: 'Wallet',
+          url: '/dashboard/wallet',
+          icon: Wallet,
         },
         {
           title: 'Notifications',
           url: '/dashboard/notifications',
           icon: Bell,
+        },
+        {
+          title: 'Analytics',
+          url: '/dashboard/analytics',
+          icon: LineChart,
         },
         {
           title: 'Settings',
@@ -409,16 +409,6 @@ export default {
           icon: LayoutDashboard,
         },
         {
-          title: 'Skills Wallet',
-          url: '/dashboard/skills-wallet',
-          icon: BadgeCheck,
-        },
-        {
-          title: 'Courses',
-          url: '/dashboard/courses',
-          icon: GraduationCap,
-        },
-        {
           title: 'My Courses',
           url: '/dashboard/course-management',
           icon: BookAIcon,
@@ -429,7 +419,12 @@ export default {
           icon: Users,
         },
         {
-          title: 'Applications',
+          title: 'Enrollments',
+          url: '/dashboard/enrollments',
+          icon: BookOpen,
+        },
+        {
+          title: 'Approval Requests',
           url: '/dashboard/pending-approvals',
           icon: ListTodo,
         },
@@ -438,15 +433,10 @@ export default {
           url: '/dashboard/rubrics',
           icon: ClipboardList,
         },
-        // {
-        //   title: 'Assessments',
-        //   url: '/dashboard/assessments',
-        //   icon: ClipboardList,
-        // },
         {
-          title: 'Wallet',
-          url: '/dashboard/wallet',
-          icon: Wallet,
+          title: 'Start Course',
+          url: '/dashboard/courses',
+          icon: GraduationCap,
         },
         {
           title: 'Notifications',
@@ -457,6 +447,16 @@ export default {
           title: 'Analytics',
           url: '/dashboard/analytics',
           icon: ChartNoAxesCombined,
+        },
+        {
+          title: 'Wallet',
+          url: '/dashboard/wallet',
+          icon: Wallet,
+        },
+        {
+          title: 'Skills Wallet',
+          url: '/dashboard/skills-wallet',
+          icon: BadgeCheck,
         },
         {
           title: 'Settings',
@@ -472,11 +472,6 @@ export default {
         //   title: 'Profile',
         //   url: '/dashboard/profile',
         //   icon: UserCircle,
-        // },
-        // {
-        //   title: 'Students',
-        //   url: '/dashboard/enrollments',
-        //   icon: BookOpen,
         // },
         // {
         //   title: 'Credentials Vault',
