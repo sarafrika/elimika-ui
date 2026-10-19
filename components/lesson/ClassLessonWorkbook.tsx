@@ -25,6 +25,7 @@ import { STALE_TIMES } from '@/lib/query-client';
 import {
   endScheduledInstanceMutation,
   getAllContentTypesOptions,
+  getClassDefinitionQueryKey,
   getClassScheduleQueryKey,
   getLessonContentOptions,
   getScheduledInstanceQueryKey,
@@ -147,6 +148,9 @@ function SelectedLessonWorkbook({
       toast.success('Class completed.');
       await Promise.all([
         queryClient.invalidateQueries({
+          queryKey: getClassDefinitionQueryKey({ path: { uuid: classId } }),
+        }),
+        queryClient.invalidateQueries({
           queryKey: getClassScheduleQueryKey({ path: { uuid: classId } }),
         }),
         queryClient.invalidateQueries({
@@ -158,10 +162,10 @@ function SelectedLessonWorkbook({
   });
   const classCompleted = Boolean(
     sessionState.session?.concluded_at ||
-      sessionState.session?.status === 'COMPLETED' ||
-      (endClass.isSuccess &&
-        !hasApiError(endClass.data) &&
-        endClass.variables.path.instanceUuid === sessionState.session?.uuid)
+    sessionState.session?.status === 'COMPLETED' ||
+    (endClass.isSuccess &&
+      !hasApiError(endClass.data) &&
+      endClass.variables.path.instanceUuid === sessionState.session?.uuid)
   );
   const classActive = classStarted && !availability.closed && !classCompleted;
   const requestedTab = searchParams.get('tab');
@@ -240,7 +244,7 @@ function SelectedLessonWorkbook({
     />
   );
 
-  const progressPercentage = 0;
+  const progressPercentage = classDefinition.class_progress_percentage ?? 0;
 
   let body: ReactNode;
   if (showList)
@@ -444,6 +448,7 @@ function SelectedLessonWorkbook({
                   stroke='currentColor'
                   strokeWidth='3'
                   strokeLinecap='round'
+                  pathLength={100}
                   className='text-primary'
                   strokeDasharray={`${progressPercentage} 100`}
                 />

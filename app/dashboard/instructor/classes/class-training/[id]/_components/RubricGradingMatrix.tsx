@@ -1,6 +1,8 @@
 'use client';
 
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { calculateRubricGrade, type RubricGradeSelections } from '@/lib/rubric-grading';
 import { CheckCircle2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
@@ -70,11 +72,6 @@ type RubricMatrix = {
   is_complete?: boolean;
 };
 
-// Selections the instructor has made so far: one chosen scoring-level uuid
-// per criteria uuid. Lives in the parent (e.g. per-student grading state)
-// so it can be persisted/submitted; this component is controlled.
-type RubricGradeSelections = Record<string, string>;
-
 const cellKey = (criteriaUuid: string, levelUuid: string) => `${criteriaUuid}_${levelUuid}`;
 
 // Map a level's css_color_class / color_code to a safe, theme-friendly
@@ -101,11 +98,15 @@ export function RubricGradingMatrix({
   selections,
   onChange,
   readOnly = false,
+  maximum,
+  showScoreSummary = true,
 }: {
   matrix: RubricMatrix;
   selections: RubricGradeSelections;
   onChange?: (criteriaUuid: string, levelUuid: string) => void;
   readOnly?: boolean;
+  maximum?: number;
+  showScoreSummary?: boolean;
 }) {
   const sortedCriteria = useMemo(
     () => [...matrix.criteria].sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)),
@@ -120,37 +121,16 @@ export function RubricGradingMatrix({
     [matrix.scoring_levels]
   );
 
-  const { totalScore, maxScore, percentage, isPassing } = useMemo(() => {
-    let earned = 0;
-    let possible = 0;
-
-    sortedCriteria.forEach(criteria => {
-      const levelUuid = selections[criteria.uuid];
-      const level = sortedLevels.find(l => l.uuid === levelUuid);
-      possible += sortedLevels[0]?.points ?? 0; // top level = max points per criterion
-      if (level) earned += level.points;
-    });
-
-    const pct = possible > 0 ? Math.round((earned / possible) * 100) : 0;
-    const passingThreshold = matrix.rubric.min_passing_score ?? 0;
-    const scaledMax = matrix.rubric.max_score ?? possible;
-    const scaledEarned = possible > 0 ? (earned / possible) * scaledMax : 0;
-
-    return {
-      totalScore: Math.round(scaledEarned),
-      maxScore: scaledMax,
-      percentage: pct,
-      isPassing: scaledEarned >= passingThreshold,
-    };
-  }, [
-    selections,
-    sortedCriteria,
-    sortedLevels,
-    matrix.rubric.min_passing_score,
-    matrix.rubric.max_score,
-  ]);
-
-  const allRowsGraded = sortedCriteria.every(c => !!selections[c.uuid]);
+  const grade = useMemo(
+    () => calculateRubricGrade(matrix, selections, maximum ?? matrix.rubric.max_score),
+    [matrix, selections, maximum]
+  );
+  const { totalScore, maxScore, percentage, allRowsGraded } = grade;
+  const rubricScore =
+    grade.rawMaximum > 0
+      ? (grade.rawScore / grade.rawMaximum) * (matrix.rubric.max_score ?? maxScore)
+      : 0;
+  const isPassing = rubricScore >= (matrix.rubric.min_passing_score ?? 0);
 
   if (sortedCriteria.length === 0 || sortedLevels.length === 0) {
     return (
@@ -163,25 +143,29 @@ export function RubricGradingMatrix({
   return (
     <div className='space-y-3'>
       {/* ── Score summary ── */}
-      <div className='border-border/70 bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2'>
-        <div className='flex items-center gap-2'>
-          <span className='text-foreground text-sm font-semibold'>
-            {totalScore} / {maxScore} pts
-          </span>
-          <span className='text-muted-foreground text-xs'>({percentage}%)</span>
-        </div>
+      {showScoreSummary && (
+        <div
+          className='border-border/70 bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2'
+          aria-live='polite'
+        >
+          <div className='flex items-center gap-2'>
+            <span className='text-foreground text-sm font-semibold'>
+              {totalScore} / {maxScore} pts
+            </span>
+            <span className='text-muted-foreground text-xs'>({percentage}%)</span>
+          </div>
 
-        {allRowsGraded ? (
-          <Badge variant={isPassing ? 'success' : 'destructive'}>
-            {isPassing ? 'Passing' : 'Below passing'}
-          </Badge>
-        ) : (
-          <span className='text-muted-foreground text-[11px]'>
-            {sortedCriteria.filter(c => selections[c.uuid]).length}/{sortedCriteria.length} criteria
-            graded
-          </span>
-        )}
-      </div>
+          {allRowsGraded ? (
+            <Badge variant={isPassing ? 'success' : 'destructive'}>
+              {isPassing ? 'Passing' : 'Below passing'}
+            </Badge>
+          ) : (
+            <span className='text-muted-foreground text-[11px]'>
+              {grade.gradedCriteria}/{sortedCriteria.length} criteria graded
+            </span>
+          )}
+        </div>
+      )}
 
       {/* ── Grading grid ── */}
       <div className='w-full max-w-full overflow-x-auto overflow-y-hidden'>
@@ -239,12 +223,14 @@ export function RubricGradingMatrix({
                           key={level.uuid}
                           className='border-border/50 border-b px-2 py-2 align-top'
                         >
-                          <button
+                          <Button
                             type='button'
+                            variant='outline'
                             disabled={readOnly}
                             onClick={() => !readOnly && onChange?.(criteria.uuid, level.uuid)}
                             aria-pressed={isSelected}
-                            className={`flex w-full flex-col items-start gap-1 rounded-md border px-2.5 py-2 text-left text-[11px] transition disabled:cursor-default ${getLevelAccentClasses(level, isSelected)}`}
+                            aria-label={`${criteria.component_name}: ${level.name}, ${level.points} points`}
+                            className={`flex h-auto w-full flex-col items-start gap-1 px-2.5 py-2 text-left text-[11px] whitespace-normal transition disabled:cursor-default ${getLevelAccentClasses(level, isSelected)}`}
                           >
                             <span className='flex w-full items-center justify-between gap-1'>
                               <span className='font-medium'>
@@ -254,12 +240,12 @@ export function RubricGradingMatrix({
                                 <CheckCircle2 className='h-3.5 w-3.5 shrink-0' />
                               ) : null}
                             </span>
-                            {cell?.description ? (
-                              <span className='text-muted-foreground  max-w-[200px] text-wrap leading-snug'>
-                                {cell.description}
+                            {cell?.description || level.description ? (
+                              <span className='text-muted-foreground max-w-[200px] leading-snug text-wrap'>
+                                {cell?.description || level.description}
                               </span>
                             ) : null}
-                          </button>
+                          </Button>
                         </td>
                       );
                     })}
@@ -296,10 +282,11 @@ export function RubricSummaryPreview({ matrix }: { matrix: RubricMatrix }) {
         {sortedLevels.map(level => (
           <span
             key={level.uuid}
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${level.is_passing === false
-              ? 'border-destructive/30 bg-destructive/5 text-destructive'
-              : 'border-primary/20 bg-primary/5 text-primary'
-              }`}
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+              level.is_passing === false
+                ? 'border-destructive/30 bg-destructive/5 text-destructive'
+                : 'border-primary/20 bg-primary/5 text-primary'
+            }`}
           >
             {level.name}
             <span className='text-muted-foreground'>{level.points}pts</span>

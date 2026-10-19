@@ -10,3 +10,11 @@ export default async function ClassWorkbookPage({ params }: { params: Promise<{ 
     </Suspense>
   );
 }
+
+
+- Add rubric scoring tables and close assignment sheets after saving
+  - Show student scores, submission feedback and quiz results in sheets
+    - Display full assignment rubrics and remove quiz grading criteria
+      - Use actual class completion percentages and refresh after sessions end
+        - Refine workbook layouts, practice empty states and lesson plan actions
+          - Add rubric scoring regression tests

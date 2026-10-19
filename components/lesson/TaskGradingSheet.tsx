@@ -24,9 +24,11 @@ import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDateTime } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
+import { calculateRubricGrade, type RubricGradeSelections } from '@/lib/rubric-grading';
 import {
   getAssignmentSubmissionsQueryKey,
   getQuizAttemptsQueryKey,
+  getRubricMatrixOptions,
   getStudentQuizReviewOptions,
   getStudentQuizReviewQueryKey,
   getSubmissionAttachmentsOptions,
@@ -41,7 +43,7 @@ import type { AssignmentSubmission, QuizAttempt } from '@/services/client/types.
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   isTaskGraded,
@@ -61,6 +63,14 @@ const AttachmentPreview = dynamic(
     import('@/components/content-preview/AssignmentContentPreview').then(
       module => module.AssignmentContentPreview
     ),
+  { loading: () => <WorkbookLoading /> }
+);
+
+const RubricGradingMatrix = dynamic(
+  () =>
+    import(
+      '@/app/dashboard/instructor/classes/class-training/[id]/_components/RubricGradingMatrix'
+    ).then(module => module.RubricGradingMatrix),
   { loading: () => <WorkbookLoading /> }
 );
 
@@ -85,7 +95,7 @@ export function TaskGradingSheet({
         if (!open) onClose();
       }}
     >
-      <SheetContent className='w-full sm:max-w-3xl'>
+      <SheetContent className='w-full sm:max-w-7xl'>
         <SheetHeader className='shrink-0 border-b pr-12'>
           <SheetTitle>
             {studentName} · {props.task.title}
@@ -96,7 +106,13 @@ export function TaskGradingSheet({
         </SheetHeader>
         <div className='min-h-0 flex-1 space-y-5 overflow-y-auto p-4'>
           {props.task.kind === 'assignment' ? (
-            <AssignmentGrading {...props} />
+            <AssignmentGrading
+              {...props}
+              onGraded={grade => {
+                onClose();
+                props.onGraded(grade);
+              }}
+            />
           ) : (
             <QuizGrading {...props} />
           )}
@@ -144,7 +160,7 @@ function AssignmentGrading({ task, enrollmentId, onGraded }: GradingProps) {
       {submissions.length > 0 ? (
         <>
           <div className='flex flex-row items-center justify-between'>
-            <div className='flex flex-col gap-2' >
+            <div className='flex flex-col gap-2'>
               <Label>Submission</Label>
               <Select value={submission?.uuid} onValueChange={setSelectedId}>
                 <SelectTrigger aria-label='Choose submission'>
@@ -205,7 +221,7 @@ function AssignmentSubmissionGrade({
 }) {
   const client = useQueryClient();
   const mutation = useMutation(gradeSubmissionMutation());
-  const maxScore = submission.max_score ?? task.maxPoints ?? 100;
+  const maxScore = submission.max_score ?? task.maxPoints;
   const isReadOnly = isTaskGraded(submission);
 
   return (
@@ -229,14 +245,15 @@ function AssignmentSubmissionGrade({
       )}
 
       {isTaskSubmitted(submission) ? (
-        <GradeForm
+        <AssignmentGradeForm
           key={`${submission.uuid}-${submission.updated_date}-${submission.score}`}
+          rubricId={task.rubricId}
           maximum={maxScore}
           initialScore={submission.score}
           initialFeedback={submission.instructor_comments}
           isPending={mutation.isPending}
           isReadOnly={isReadOnly}
-          onSave={async (score, feedback) => {
+          onSave={async (score, feedback, maximum) => {
             if (
               !task.uuid ||
               !submission.uuid ||
@@ -246,11 +263,11 @@ function AssignmentSubmissionGrade({
               return;
             const response = await mutation.mutateAsync({
               path: { assignmentUuid: task.uuid, submissionUuid: submission.uuid },
-              query: { score, maxScore, comments: feedback },
+              query: { score, maxScore: maximum, comments: feedback },
             });
             if (hasApiError(response)) throw new Error(response.message || 'Unable to save grade.');
             onGraded(
-              response.data ? taskGradeLabel(response.data, maxScore) : `${score} / ${maxScore}`
+              response.data ? taskGradeLabel(response.data, maximum) : `${score} / ${maximum}`
             );
             toast.success('Assignment grade saved.');
             await Promise.all([
@@ -278,6 +295,101 @@ function AssignmentSubmissionGrade({
         />
       )}
     </div>
+  );
+}
+
+function AssignmentGradeForm({
+  rubricId,
+  maximum,
+  ...props
+}: Omit<GradeFormProps, 'maximum'> & { maximum?: number; rubricId?: string | null }) {
+  return rubricId ? (
+    <RubricGradeForm rubricId={rubricId} maximum={maximum} {...props} />
+  ) : (
+    <GradeForm maximum={maximum ?? 100} {...props} />
+  );
+}
+
+function RubricGradeForm({
+  rubricId,
+  maximum,
+  ...props
+}: Omit<GradeFormProps, 'maximum'> & { maximum?: number; rubricId: string }) {
+  const [selections, setSelections] = useState<RubricGradeSelections>({});
+  const query = useQuery({
+    ...getRubricMatrixOptions({ path: { rubricUuid: rubricId } }),
+    enabled: Boolean(rubricId),
+    staleTime: STALE_TIMES.entity,
+  });
+  const sourceMatrix = hasApiError(query.data) ? undefined : query.data?.data;
+  const matrix = useMemo(
+    () =>
+      sourceMatrix?.rubric.uuid
+        ? {
+          ...sourceMatrix,
+          rubric: { ...sourceMatrix.rubric, uuid: sourceMatrix.rubric.uuid },
+          criteria: sourceMatrix.criteria.flatMap(criterion =>
+            criterion.uuid ? [{ ...criterion, uuid: criterion.uuid }] : []
+          ),
+          scoring_levels: sourceMatrix.scoring_levels.flatMap(level =>
+            level.uuid ? [{ ...level, uuid: level.uuid }] : []
+          ),
+        }
+        : undefined,
+    [sourceMatrix]
+  );
+  const grade = useMemo(
+    () =>
+      sourceMatrix
+        ? calculateRubricGrade(sourceMatrix, selections, maximum ?? sourceMatrix.rubric.max_score)
+        : undefined,
+    [sourceMatrix, selections, maximum]
+  );
+
+  if (query.isLoading) return <WorkbookLoading />;
+  if (query.isError || hasApiError(query.data))
+    return (
+      <WorkbookError title='Unable to load assignment rubric' retry={() => void query.refetch()} />
+    );
+  if (!matrix || !grade?.isValid)
+    return (
+      <EmptyState
+        title='This rubric is not ready for grading'
+        description='The rubric needs identified criteria, scoring levels and a positive maximum score.'
+      />
+    );
+
+  return (
+    <GradeForm
+      {...props}
+      maximum={grade.maxScore}
+      calculatedScore={props.isReadOnly ? undefined : grade.totalScore}
+      saveAllowed={grade.allRowsGraded}
+      label={props.isReadOnly ? 'Score' : 'Calculated score'}
+    >
+      {readOnly => (
+        <section className='space-y-3'>
+          <h3 className='font-semibold'>{matrix.rubric.title}</h3>
+          {matrix.rubric.description && <RichTextRenderer htmlString={matrix.rubric.description} />}
+          {!props.isReadOnly && (
+            <p className='text-muted-foreground text-sm'>
+              Choose one scoring level for every criterion. Selected points are added and scaled to
+              the assignment's {grade.maxScore}-point total.
+            </p>
+          )}
+          <RubricGradingMatrix
+            matrix={matrix}
+            selections={selections}
+            maximum={grade.maxScore}
+            readOnly={readOnly}
+            showScoreSummary={!props.isReadOnly}
+            onChange={(criterionId, levelId) =>
+              setSelections(previous => ({ ...previous, [criterionId]: levelId }))
+            }
+          />
+        </section>
+      )}
+    </GradeForm>
   );
 }
 
@@ -524,6 +636,19 @@ function QuizAttemptGrade({
   );
 }
 
+type GradeFormProps = {
+  maximum: number;
+  initialScore?: number;
+  initialFeedback?: string;
+  isPending: boolean;
+  isReadOnly?: boolean;
+  label?: string;
+  calculatedScore?: number;
+  saveAllowed?: boolean;
+  children?: (readOnly: boolean) => ReactNode;
+  onSave: (score: number, feedback: string, maximum: number) => Promise<void>;
+};
+
 function GradeForm({
   maximum,
   initialScore,
@@ -531,25 +656,19 @@ function GradeForm({
   isPending,
   isReadOnly = false,
   label = 'Score',
+  calculatedScore,
+  saveAllowed = true,
+  children,
   onSave,
-}: {
-  maximum: number;
-  initialScore?: number;
-  initialFeedback?: string;
-  isPending: boolean;
-  isReadOnly?: boolean;
-  label?: string;
-  onSave: (score: number, feedback: string) => Promise<void>;
-}) {
-  const [score, setScore] = useState(
-    initialScore == null ? '' : String(initialScore)
-  );
+}: GradeFormProps) {
+  const [score, setScore] = useState(initialScore == null ? '' : String(initialScore));
   const [feedback, setFeedback] = useState(initialFeedback ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const pending = saving || isPending;
   const readOnly = isReadOnly || pending;
+  const scoreValue = calculatedScore == null ? score : String(calculatedScore);
 
   return (
     <form
@@ -557,11 +676,11 @@ function GradeForm({
       onSubmit={async event => {
         event.preventDefault();
 
-        if (readOnly) return;
+        if (readOnly || !saveAllowed) return;
 
         setError('');
 
-        if (!isValidGrade(score, maximum)) {
+        if (!isValidGrade(scoreValue, maximum)) {
           setError(`Enter a score between 0 and ${maximum}.`);
           return;
         }
@@ -569,18 +688,17 @@ function GradeForm({
         setSaving(true);
 
         try {
-          await onSave(Number(score), feedback);
+          await onSave(Number(scoreValue), feedback, maximum);
         } catch (error) {
           setError(
-            error instanceof Error
-              ? error.message
-              : 'Unable to save grade. Please try again.'
+            error instanceof Error ? error.message : 'Unable to save grade. Please try again.'
           );
         } finally {
           setSaving(false);
         }
       }}
     >
+      {children?.(readOnly)}
       <label className='block space-y-1'>
         <span className='text-sm font-medium'>
           {label} (out of {maximum})
@@ -594,7 +712,8 @@ function GradeForm({
           step='any'
           required
           disabled={readOnly}
-          value={score}
+          readOnly={calculatedScore != null}
+          value={scoreValue}
           onChange={event => setScore(event.target.value)}
           className='max-w-40'
         />
@@ -620,9 +739,7 @@ function GradeForm({
       <div className='flex justify-end'>
         <Button
           type='submit'
-          disabled={
-            readOnly || !isValidGrade(score, maximum)
-          }
+          disabled={readOnly || !saveAllowed || !isValidGrade(scoreValue, maximum)}
         >
           {pending && <Spinner />}
           Save grade

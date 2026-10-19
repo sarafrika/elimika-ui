@@ -1,5 +1,6 @@
 'use client';
 
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -43,7 +44,6 @@ import {
   UserPlus,
   Users
 } from 'lucide-react';
-import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -349,7 +349,7 @@ export function LiveClassCard({
                   </div>
                 </div>
 
-                <Button
+                {/* <Button
                   variant='ghost'
                   className='text-primary mt-2 border'
                   onClick={() => setLessonPlanOpen(true)}
@@ -359,7 +359,7 @@ export function LiveClassCard({
                   <p className='text-[13px]'>
                     {hasLessonPlan ? 'View Lesson Plan' : 'Add Lesson Plan'}
                   </p>
-                </Button>
+                </Button> */}
               </div>
 
               {bundledCourses.length > 0 && (
