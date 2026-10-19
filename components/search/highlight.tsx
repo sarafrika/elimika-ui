@@ -25,14 +25,12 @@ export function Highlight({
       {parts.map((part, index) =>
         part.match ? (
           <mark
-            // biome-ignore lint/suspicious/noArrayIndexKey: parts are positional and never reorder
             key={index}
             className={cn('text-foreground rounded-sm bg-primary/15 px-0.5 font-semibold', markClassName)}
           >
             {part.text}
           </mark>
         ) : (
-          // biome-ignore lint/suspicious/noArrayIndexKey: parts are positional and never reorder
           <span key={index}>{part.text}</span>
         )
       )}
