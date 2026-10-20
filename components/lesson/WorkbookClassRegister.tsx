@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   type AttendanceStudent,
@@ -37,6 +37,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ScheduledInstance } from '@/services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { useWorkbookNavigation } from './useWorkbookNavigation';
 import {
   getWorkbookSessionAvailability,
   useWorkbookSessionAvailability,
@@ -57,6 +58,14 @@ export function WorkbookClassRegister({
   const sessionId = session?.uuid;
   const { canAdmit } = useWorkbookSessionAvailability(session);
   const [open, setOpen] = useState(false);
+  const { searchParams, navigate } = useWorkbookNavigation();
+  const openRequested = searchParams.get('register') === '1';
+  // The session report's "Open register" lands here with ?register=1; open once, then drop the flag.
+  useEffect(() => {
+    if (!openRequested) return;
+    setOpen(true);
+    navigate({ register: null });
+  }, [openRequested, navigate]);
   const client = useQueryClient();
   const query = useQuery({
     ...getEnrollmentsForClassOptions({ path: { uuid: classId } }),

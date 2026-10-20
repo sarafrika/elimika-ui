@@ -93,4 +93,21 @@ test.describe('Instructor · Session report', () => {
     await expect(report.getByText(/Records for this session can no longer be changed/)).toBeVisible();
     await expect(report.getByRole('button', { name: 'Score' })).toHaveCount(0);
   });
+  test('the checklist opens the class register where attendance and the topic are captured', async ({ page }) => {
+    await mockInstructorWorkbook(new MockApi())
+      .get(
+        REPORT_PATH,
+        sessionReport({
+          can_submit: false,
+          checklist: [{ code: 'TOPIC_NOT_RECORDED', severity: 'blocker', message: 'Record what was taught' }],
+        })
+      )
+      .install(page);
+    await page.goto(WORKBOOK_URL);
+
+    await page.getByTestId('session-report').getByRole('button', { name: 'Open register' }).click();
+    await expect(page.getByRole('dialog', { name: 'Class register' })).toBeVisible();
+    await expect(page.getByRole('group', { name: 'Topic covered' })).toBeVisible();
+    await expect(page).not.toHaveURL(/register=1/);
+  });
 });

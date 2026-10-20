@@ -279,7 +279,7 @@ function SelectedLessonWorkbook({
     body = (
       <SessionReportPanel
         session={sessionState.session}
-        onFix={target => navigate({ tab: target === 'grading' ? 'grading' : 'lesson' })}
+        onFix={target => navigate(target === 'grading' ? { tab: 'grading' } : { tab: 'lesson', register: '1' })}
       />
     );
   else if (tab === 'summary')
