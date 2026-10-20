@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useClassDetails } from '@/hooks/use-class-details';
+import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { type RosterEntry, useClassRoster } from '@/hooks/use-class-roster';
 import { dayjs } from '@/lib/date';
 import {
@@ -35,7 +35,6 @@ import { buildTemplatePayload } from '../../../../../_components/certificate/Awa
 import CertificatePage from '../../../../../_components/certificate/CertificatePage';
 import type { CertificateData } from '../../../../../_components/certificate/CertificatePDF';
 import { getPreferredScheduleInstance } from '../../../_components/new-class-page.utils';
-import { TrainingSchedule } from '../_components/ClassTrainingPage';
 
 function getStudentAttendanceState(entry: RosterEntry | null | undefined) {
   if (entry?.enrollment?.is_attendance_marked) {
@@ -66,7 +65,7 @@ const AwardCertificatesPage = () => {
   const className = classData?.title ?? course?.name ?? 'Training class';
   const courseName = course?.name ?? classData?.title ?? 'Course';
 
-  const sortedSchedules = useMemo<TrainingSchedule[]>(
+  const sortedSchedules = useMemo<ClassDetailsScheduleItem[]>(
     () =>
       [...schedules].sort((left, right) => dayjs(left.start_time).diff(dayjs(right.start_time))),
     [schedules]

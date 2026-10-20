@@ -221,16 +221,6 @@ function SelectedLessonWorkbook({
     role === 'instructor'
       ? '/dashboard/instructor/training-hub'
       : '/dashboard/student/learning-hub';
-  const legacyPath =
-    role === 'instructor'
-      ? `/dashboard/instructor/classes/class-training/${classId}`
-      : `/dashboard/student/learning-hub/classes/${classId}`;
-  const contextParams = new URLSearchParams(searchParams.toString());
-  contextParams.set('course', lesson.course_uuid);
-  contextParams.set('lesson', lessonId);
-  contextParams.delete('view');
-  contextParams.delete('tab');
-  const managementHref = `${legacyPath}?${contextParams.toString()}`;
   const selectLesson = (id: string) =>
     navigate({ lesson: id, content: null, view: null, tab: 'lesson' });
   const nextLesson = lessons[lessons.findIndex(item => item.uuid === lessonId) + 1];
@@ -268,7 +258,6 @@ function SelectedLessonWorkbook({
         courseId={lesson.course_uuid}
         lessonId={lessonId}
         role={role}
-        managementHref={managementHref}
         section={tab}
         activeSession={sessionState.session}
       />
@@ -357,7 +346,7 @@ function SelectedLessonWorkbook({
               <Label htmlFor='workbook-session'>Class session</Label>
               <Select
                 value={sessionState.session?.uuid ?? ''}
-                onValueChange={schedule => navigate({ schedule })}
+                onValueChange={schedule => navigate({ schedule, enrollment: null })}
               >
                 <SelectTrigger id='workbook-session'>
                   <SelectValue placeholder='Select a session' />

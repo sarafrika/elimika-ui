@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useClassDetails } from '@/hooks/use-class-details';
+import { type ClassDetailsScheduleItem, useClassDetails } from '@/hooks/use-class-details';
 import { useClassRoster, type RosterEntry } from '@/hooks/use-class-roster';
 import { dayjs } from '@/lib/date';
 import {
@@ -29,7 +29,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { toAuthenticatedMediaUrl } from '../../../../src/lib/media-url';
 import { getPreferredScheduleInstance } from '../../instructor/classes/_components/new-class-page.utils';
-import { TrainingSchedule } from '../../instructor/classes/class-training/[id]/_components/ClassTrainingPage';
 import CertificatePage from './CertificatePage';
 import type { CertificateData } from './CertificatePDF';
 
@@ -73,7 +72,7 @@ const AwardCertificatesPage = () => {
   const className = classData?.title ?? course?.name ?? 'Training class';
   const courseName = course?.name ?? classData?.title ?? 'Course';
 
-  const sortedSchedules = useMemo<TrainingSchedule[]>(
+  const sortedSchedules = useMemo<ClassDetailsScheduleItem[]>(
     () =>
       [...schedules].sort((left, right) => dayjs(left.start_time).diff(dayjs(right.start_time))),
     [schedules]

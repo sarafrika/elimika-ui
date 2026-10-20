@@ -230,9 +230,9 @@ export function useOverviewCourses(source: OverviewClassesSource) {
         students: studentsByCourse.get(courseId)?.size ?? 0,
         progress: calculateProgress(scheduleOf(cls)),
         actionLabel: 'View Class',
-        viewHref: selectedInstance?.uuid
-          ? `/dashboard/class-instance/${selectedInstance.uuid}`
-          : `/dashboard/classes/class-training/${cls.uuid ?? ''}`,
+        viewHref: `/dashboard/classes/training/${cls.uuid ?? ''}${
+          selectedInstance?.uuid ? `?schedule=${selectedInstance.uuid}` : ''
+        }`,
         editHref: `/dashboard/classes/overview/${cls.uuid ?? ''}`,
         icon: COURSE_ICONS[index % COURSE_ICONS.length]!,
       });
@@ -354,10 +354,8 @@ export function useOverviewLiveClasses(source: OverviewClassesSource) {
             ? `/dashboard/classes/overview/${item.classDefinition.uuid}`
             : item.instance.uuid
               ? `/dashboard/class-instance/${item.instance.uuid}`
-              : `/dashboard/classes/class-training/${item.classDefinition.uuid ?? ''}`,
-          href: item.instance.uuid
-            ? `/dashboard/class-instance/${item.instance.uuid}`
-            : `/dashboard/classes/class-training/${item.classDefinition.uuid ?? ''}`,
+              : `/dashboard/classes/training/${item.classDefinition.uuid ?? ''}`,
+          href: `/dashboard/classes/training/${item.classDefinition.uuid ?? ''}?schedule=${item.instance.uuid}`,
           attendeeInitials: [],
         };
       }),
@@ -392,9 +390,7 @@ export function useOverviewUpcomingClasses(source: OverviewClassesSource) {
           formatSessionFormat(item.classDefinition.location_type) ||
           'Scheduled class',
         status: item.instance.status === 'ONGOING' ? 'Ongoing' : 'Scheduled',
-        href: item.classDefinition.uuid
-          ? `/dashboard/class-instance/${item.instance.uuid}`
-          : `/dashboard/classes/class-training/${item.classDefinition.uuid ?? ''}`,
+        href: `/dashboard/classes/training/${item.classDefinition.uuid ?? ''}?schedule=${item.instance.uuid}`,
       }));
   }, [futureInstances]);
 

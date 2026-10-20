@@ -63,8 +63,7 @@ export function ProgramEvaluation({
     <section className='space-y-4' aria-label='Program evaluation'>
       <h3 className='text-sm font-medium'>Evaluation per course</h3>
       <p className='text-muted-foreground text-sm'>
-        Review each course's lesson assignments and quizzes, then attach its evaluation rubric.
-        Rubric changes are saved to this program immediately.
+        Review each course's lesson assignments and quizzes.
       </p>
       {!courseUuid ? (
         <EmptyState

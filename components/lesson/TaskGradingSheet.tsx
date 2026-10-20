@@ -68,9 +68,7 @@ const AttachmentPreview = dynamic(
 
 const RubricGradingMatrix = dynamic(
   () =>
-    import(
-      '@/app/dashboard/instructor/classes/class-training/[id]/_components/RubricGradingMatrix'
-    ).then(module => module.RubricGradingMatrix),
+    import('@/components/assessment/RubricGradingMatrix').then(module => module.RubricGradingMatrix),
   { loading: () => <WorkbookLoading /> }
 );
 

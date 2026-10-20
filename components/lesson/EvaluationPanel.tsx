@@ -90,9 +90,7 @@ const StudentAssessmentDetails = dynamic(
 );
 const RubricGradingMatrix = dynamic(
   () =>
-    import(
-      '@/app/dashboard/instructor/classes/class-training/[id]/_components/RubricGradingMatrix'
-    ).then(module => module.RubricGradingMatrix),
+    import('@/components/assessment/RubricGradingMatrix').then(module => module.RubricGradingMatrix),
   { loading: () => <WorkbookLoading /> }
 );
 
@@ -184,7 +182,6 @@ export function EvaluationPanel({
   courseId,
   lessonId,
   role,
-  managementHref,
   section = 'evaluation',
   activeSession,
 }: {
@@ -192,7 +189,6 @@ export function EvaluationPanel({
   courseId: string;
   lessonId: string;
   role: WorkbookRole;
-  managementHref: string;
   section?: 'evaluation' | 'quiz' | 'assignment' | 'grading';
   activeSession?: ScheduledInstance;
 }) {
@@ -499,11 +495,6 @@ export function EvaluationPanel({
             </p>
           )}
         </div>
-        {role === 'instructor' && isGrading && (
-          <Button asChild variant='outline'>
-            <Link href={managementHref}>Manage schedules & grading</Link>
-          </Button>
-        )}
       </div>
 
       {taskToSchedule && activeSession && (

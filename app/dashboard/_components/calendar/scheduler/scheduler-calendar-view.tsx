@@ -276,6 +276,13 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
     // Blocked time and reservations have no instance page; their synthetic ids route nowhere.
     if (!event.instanceUuid) return;
 
+    if (activeDomain === 'instructor' && event.classDefinitionUuid) {
+      router.push(
+        `/dashboard/instructor/classes/training/${event.classDefinitionUuid}?schedule=${event.instanceUuid}`
+      );
+      return;
+    }
+
     router.push(
       roleScopedDashboardPath(activeDomain, `/dashboard/class-instance/${event.instanceUuid}`)
     );

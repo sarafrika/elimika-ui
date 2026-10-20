@@ -38,6 +38,7 @@ import { isTaskGraded, isTaskSubmitted, taskGradeLabel } from './grading';
 import { useLessonTaskGrades } from './useLessonTaskGrades';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
+import { useWorkbookNavigation } from './useWorkbookNavigation';
 import {
   hasApiError,
   nextWorkbookPage,
@@ -77,6 +78,8 @@ export function LessonGradingPanel({
   sessionId?: string;
   tasks: LessonGradingTask[];
 }) {
+  const { searchParams, navigate } = useWorkbookNavigation();
+  const focusedEnrollmentId = searchParams.get('enrollment');
   const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
 
@@ -134,6 +137,14 @@ export function LessonGradingPanel({
     ];
   }, [rosterQuery.data, sessionId]);
 
+  const visibleRoster = useMemo(
+    () =>
+      focusedEnrollmentId
+        ? roster.filter(entry => entry.uuid === focusedEnrollmentId)
+        : roster,
+    [roster, focusedEnrollmentId]
+  );
+
   const courseEnrollments = useMemo(
     () =>
       new Map(
@@ -149,8 +160,8 @@ export function LessonGradingPanel({
   );
 
   const studentIds = useMemo(
-    () => roster.map(entry => entry.student_uuid),
-    [roster]
+    () => visibleRoster.map(entry => entry.student_uuid),
+    [visibleRoster]
   );
 
   const students = useStudentsByIds(studentIds);
@@ -169,7 +180,7 @@ export function LessonGradingPanel({
 
   const rows = useMemo(
     () =>
-      roster
+      visibleRoster
         .map(entry => ({
           studentId: entry.student_uuid,
           enrollmentId: courseEnrollments.get(entry.student_uuid)?.uuid,
@@ -181,14 +192,15 @@ export function LessonGradingPanel({
             'Student',
         }))
         .filter(entry =>
-          entry.name.toLowerCase().includes(deferredSearch)
+          focusedEnrollmentId || entry.name.toLowerCase().includes(deferredSearch)
         ),
     [
-      roster,
+      visibleRoster,
       courseEnrollments,
       users.userMap,
       students.studentMap,
       deferredSearch,
+      focusedEnrollmentId,
     ]
   );
 
@@ -248,19 +260,42 @@ export function LessonGradingPanel({
           grades.
         </p>
 
-        <Input
-          aria-label='Search students for grading'
-          placeholder='Search students'
-          value={search}
-          onChange={event => setSearch(event.target.value)}
-          className='max-w-sm'
-        />
+        <div className='flex flex-wrap items-center gap-2'>
+          <Input
+            aria-label='Search students for grading'
+            placeholder='Search students'
+            value={focusedEnrollmentId ? (rows[0]?.name ?? '') : search}
+            onChange={event => {
+              setSearch(event.target.value);
+              if (focusedEnrollmentId) navigate({ enrollment: null });
+            }}
+            className='max-w-sm'
+          />
+          {(focusedEnrollmentId || search) && (
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => {
+                setSearch('');
+                if (focusedEnrollmentId) navigate({ enrollment: null });
+              }}
+            >
+              Show all students
+            </Button>
+          )}
+        </div>
       </div>
 
       {!roster.length ? (
         <EmptyState title='No students enrolled in this session' />
       ) : !rows.length ? (
-        <EmptyState title='No students match your search' />
+        <EmptyState
+          title={
+            focusedEnrollmentId
+              ? 'The selected student is not enrolled in this session'
+              : 'No students match your search'
+          }
+        />
       ) : (
         rows.map(student => (
           <Card key={student.studentId}>
