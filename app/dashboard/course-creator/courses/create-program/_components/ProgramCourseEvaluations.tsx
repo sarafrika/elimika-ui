@@ -59,7 +59,7 @@ function AssessmentRow({ item, onPreview }: { item: LessonAssessment; onPreview:
         onClick={onPreview}
         aria-haspopup='dialog'
         aria-label={`View ${label.toLowerCase()} details: ${item.title}`}
-        className='bg-card h-auto w-full flex-wrap justify-start gap-x-4 gap-y-2 rounded-lg border px-3 py-2.5 text-left whitespace-normal'
+        className='bg-card hover:bg-card hover:text-foreground h-auto w-full flex-wrap justify-start gap-x-4 gap-y-2 rounded-lg border px-3 py-2.5 text-left whitespace-normal'
       >
         <span
           className={cn(

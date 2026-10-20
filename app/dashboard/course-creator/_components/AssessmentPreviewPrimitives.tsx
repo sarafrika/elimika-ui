@@ -1,14 +1,11 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
-import { getAssessmentRubricByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
+import { EvaluationRubricPreview } from './evaluation-rubric-preview';
 
 export function previewResponseFailed(response?: { success?: boolean; error?: unknown }) {
   return response?.success === false || Boolean(response?.error);
@@ -31,7 +28,7 @@ export function PreviewSection({
   className?: string;
 }) {
   return (
-    <section className={cn('space-y-3', className)}>
+    <section className={cn('min-w-0 space-y-3', className)}>
       <h3 className='text-muted-foreground text-xs font-semibold tracking-wider uppercase'>
         {title}
       </h3>
@@ -76,36 +73,10 @@ export function PreviewError({ title, retry }: { title: string; retry: () => voi
 
 // Mount only when a rubric UUID is available so no placeholder URL is requested.
 export function PreviewRubric({ uuid }: { uuid: string }) {
-  const query = useQuery({
-    ...getAssessmentRubricByUuidOptions({ path: { uuid } }),
-    enabled: Boolean(uuid),
-    staleTime: STALE_TIMES.entity,
-  });
-  const failed = query.isError || previewResponseFailed(query.data);
-  const rubric = failed ? undefined : query.data?.data;
+  if (!uuid.trim()) return null;
   return (
     <PreviewSection title='Rubric'>
-      {query.isPending ? (
-        <PreviewLoading />
-      ) : failed || !rubric ? (
-        <PreviewError
-          title='Unable to load rubric'
-          retry={() => {
-            void query.refetch();
-          }}
-        />
-      ) : (
-        <Card>
-          <CardContent>
-            <p className='text-sm font-medium'>{rubric.title}</p>
-            {rubric.description && (
-              <p className='text-muted-foreground mt-1 text-sm whitespace-pre-wrap'>
-                {rubric.description}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
+      <EvaluationRubricPreview rubricUuid={uuid} />
     </PreviewSection>
   );
 }
