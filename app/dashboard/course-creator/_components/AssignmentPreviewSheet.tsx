@@ -73,7 +73,7 @@ export function AssignmentPreviewSheet({
                     <SheetTitle>{assignment?.title || 'Assignment preview'}</SheetTitle>
                     <SheetDescription>{lessonTitle || 'Assignment details'}</SheetDescription>
                 </SheetHeader>
-                <div className='space-y-6 px-4 pb-6'>
+                <div className='min-w-0 space-y-6 px-4 pb-6'>
                     {assignmentQuery.isPending ? (
                         <PreviewLoading />
                     ) : failed || !assignment ? (
@@ -136,7 +136,7 @@ export function AssignmentPreviewSheet({
                                     <EmptyState variant='compact' title='No submission types selected' />
                                 )}
                             </PreviewSection>
-                            {assignment.rubric_uuid && <PreviewRubric uuid={assignment.rubric_uuid} />}
+                            {open && assignment.rubric_uuid && <PreviewRubric uuid={assignment.rubric_uuid} />}
 
                             <PreviewSection title='Attachments'>
                                 <div className='space-y-3'>
