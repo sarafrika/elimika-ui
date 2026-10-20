@@ -51,3 +51,8 @@ next-env.d.ts
 
 # local opencode agent config
 opencode.json
+
+# playwright behaviour tests
+/test-results/
+/playwright-report/
+/blob-report/
