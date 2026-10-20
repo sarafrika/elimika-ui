@@ -218,6 +218,11 @@ export default {
           icon: BookOpen,
         },
         {
+          title: 'My grades',
+          url: '/dashboard/grades',
+          icon: GraduationCap,
+        },
+        {
           title: 'My Bookings',
           url: '/dashboard/my-bookings',
           icon: CalendarClock,

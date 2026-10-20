@@ -1,13 +1,20 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import type { GuardianCourseProgress } from '@/services/guardian';
+import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { BookOpenCheck } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import RichTextRenderer from '@/components/editors/richTextRenders';
+import { ReportView } from '@/components/grades/CourseGradesCard';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { STALE_TIMES } from '@/lib/query-client';
+import { getProgressReportOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { CourseProgressReport } from '@/services/client/types.gen';
+import type { GuardianCourseProgress } from '@/services/guardian';
 
 export type CourseProgressFilter = 'all' | 'ACTIVE' | 'COMPLETED';
 
@@ -15,6 +22,7 @@ interface GuardianCourseProgressGridProps {
   courses: GuardianCourseProgress[];
   filter: CourseProgressFilter;
   onFilterChange: (filter: CourseProgressFilter) => void;
+  studentName?: string;
 }
 
 const filterOptions: { label: string; value: CourseProgressFilter }[] = [
@@ -27,7 +35,9 @@ export function GuardianCourseProgressGrid({
   courses,
   filter,
   onFilterChange,
+  studentName = 'Learner',
 }: GuardianCourseProgressGridProps) {
+  const [openReport, setOpenReport] = useState<CourseProgressReport | null>(null);
   const filteredCourses = useMemo(() => {
     if (filter === 'all') {
       return courses;
@@ -115,10 +125,80 @@ export function GuardianCourseProgressGrid({
                 </div>
                 <Progress value={progressValue} className='h-2 rounded-full' />
               </div>
+              {course.enrollment_uuid && course.course_uuid && (
+                <CourseGradeSummary
+                  courseUuid={course.course_uuid}
+                  enrollmentUuid={course.enrollment_uuid}
+                  onOpen={setOpenReport}
+                />
+              )}
             </div>
           );
         })}
       </CardContent>
+      <Sheet open={Boolean(openReport)} onOpenChange={open => !open && setOpenReport(null)}>
+        <SheetContent className='w-full overflow-y-auto sm:max-w-3xl'>
+          <SheetHeader className='border-b pr-12'>
+            <SheetTitle>{openReport?.course_name ?? 'Course'} report</SheetTitle>
+            <SheetDescription>The lesson-by-lesson report {studentName} sees. Drafts are never shown.</SheetDescription>
+          </SheetHeader>
+          <div className='p-4'>{openReport && <ReportView report={openReport} studentName={studentName} />}</div>
+        </SheetContent>
+      </Sheet>
     </Card>
+  );
+}
+
+/** Grade, attendance and the latest instructor comment for one course; nothing when grades are unavailable. */
+function CourseGradeSummary({
+  courseUuid,
+  enrollmentUuid,
+  onOpen,
+}: {
+  courseUuid: string;
+  enrollmentUuid: string;
+  onOpen: (report: CourseProgressReport) => void;
+}) {
+  const query = useQuery({
+    ...getProgressReportOptions({ path: { courseUuid, enrollmentUuid } }),
+    enabled: Boolean(courseUuid && enrollmentUuid),
+    staleTime: STALE_TIMES.live,
+    retry: false,
+  });
+  const report = query.data?.success === false ? undefined : query.data?.data;
+  if (!report) return null;
+  const lessons = report.lessons ?? [];
+  const marked = lessons.filter(lesson => lesson.attendance);
+  const attended = marked.filter(lesson => lesson.attendance === 'ATTENDED').length;
+  const average =
+    report.average_lesson_score != null && report.lesson_max_score != null
+      ? `${report.average_lesson_score} / ${report.lesson_max_score}`
+      : '—';
+
+  return (
+    <div className='border-border mt-4 flex flex-col gap-3 border-t pt-4' data-testid='guardian-grade-summary'>
+      <div className='flex items-center justify-between gap-2'>
+        <span className='text-sm font-semibold'>Grades</span>
+        {report.final_grade_label && <Badge variant='success'>{report.final_grade_label}</Badge>}
+      </div>
+      <div className='grid grid-cols-2 gap-2'>
+        <div className='border-border rounded-xl border p-2'>
+          <p className='text-muted-foreground text-xs'>Average lesson</p>
+          <p className='text-lg font-bold'>{average}</p>
+        </div>
+        <div className='border-border rounded-xl border p-2'>
+          <p className='text-muted-foreground text-xs'>Attendance</p>
+          <p className='text-lg font-bold'>{marked.length ? `${attended} of ${marked.length}` : '—'}</p>
+        </div>
+      </div>
+      {report.instructor_comments && (
+        <div className='bg-muted/50 rounded-xl p-3 text-sm'>
+          <RichTextRenderer htmlString={report.instructor_comments} />
+        </div>
+      )}
+      <Button size='sm' onClick={() => onOpen(report)}>
+        View full report
+      </Button>
+    </div>
   );
 }

@@ -51,6 +51,7 @@ import type {
 } from '../../../../services/client/types.gen';
 import { ASSESSMENT_TYPES } from '../rubrics/rubric-manager';
 import { CATEGORY_META, LinkItemsModal, TaskItemType } from './assesment-link-items';
+import { CourseGradeBandsForm } from './course-grade-bands-form';
 import { CoursePassMarkForm } from './course-pass-mark-form';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -712,7 +713,10 @@ export const CourseAssessmentStructure = ({
   return (
     <>
       <div className='mb-4'>
-        <CoursePassMarkForm courseUuid={courseUuid} />
+        <div className='flex flex-col gap-4'>
+          <CoursePassMarkForm courseUuid={courseUuid} />
+          <CourseGradeBandsForm courseUuid={courseUuid} />
+        </div>
       </div>
 
       <Card className='gap-0 py-0'>

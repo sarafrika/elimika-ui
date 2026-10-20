@@ -161,6 +161,7 @@ export function ParentOverviewContent() {
                 courses={courseProgress}
                 filter={courseFilter}
                 onFilterChange={setCourseFilter}
+                studentName={snapshot.student_name ?? activeStudent?.student_name}
               />
               <GuardianProgramTimeline programs={programProgress} />
             </div>
