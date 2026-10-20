@@ -9,7 +9,7 @@ const note = (type: string, action_url: string, metadata: Record<string, string>
 test('payment receipts fall through to the role’s normalised transactions page', () => {
   const receipt = note('ORDER_PAYMENT_RECEIPT', '/dashboard/transactions');
   assert.equal(getNotificationUrlPath(receipt, 'student'), '/dashboard/student/wallet');
-  assert.equal(getNotificationUrlPath(receipt, 'organisation'), '/dashboard/organisation/revenue');
+  assert.equal(getNotificationUrlPath(receipt, 'organisation'), '/dashboard/organisation/wallet');
 });
 
 test('non-student class reminders use the normalised action url', () => {

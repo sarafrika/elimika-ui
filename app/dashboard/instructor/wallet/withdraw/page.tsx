@@ -1,7 +1,6 @@
-'use client';
+import { redirect } from 'next/navigation';
 
-import { RoleWalletWithdrawPage } from '@/app/dashboard/_components/wallet/RoleWalletWithdrawPage';
-
-export default function InstructorWalletWithdrawPage() {
-  return <RoleWalletWithdrawPage />;
+/** Retired: transfers open from the Wallet page. */
+export default function Page() {
+  redirect('/dashboard/instructor/wallet');
 }

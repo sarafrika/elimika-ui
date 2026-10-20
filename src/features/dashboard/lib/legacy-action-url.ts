@@ -54,10 +54,10 @@ function classAssignment(domain: UserDomain, classUuid: string, assignmentUuid: 
 const TRANSACTIONS_PATH: Record<UserDomain, string> = {
   student: 'wallet',
   parent: 'billing',
-  instructor: 'revenue/transaction-list',
+  instructor: 'wallet',
   course_creator: 'wallet',
-  organisation: 'revenue',
-  organisation_user: 'revenue',
+  organisation: 'wallet',
+  organisation_user: 'wallet',
   admin: 'sales',
 };
 

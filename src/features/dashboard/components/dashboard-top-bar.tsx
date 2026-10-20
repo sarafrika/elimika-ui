@@ -2,27 +2,23 @@
 
 import { type UseQueryOptions, useQuery } from '@tanstack/react-query';
 import {
-  ArrowLeftRight,
   Check,
   ChevronDown,
-  Download,
   ExternalLink,
   Eye,
   EyeOff,
   Laptop2,
   LayoutDashboard,
   MoonStar,
-  Send,
   ShoppingCart,
   Sparkles,
   SunMedium,
-  Upload,
   Wallet,
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AsyncSection } from '@/components/data/async-section';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -35,19 +31,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useSavedCart } from '@/hooks/use-saved-cart';
 import type { UserDomain } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import type { ApiResponseWallet, CartResponse } from '@/services/client';
-import { getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getOrganisationWalletOptions, getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useLogout } from '@/src/features/auth/logout';
 import {
   type CreateAction,
@@ -64,7 +53,6 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { LazyGlobalSearchSheet } from '@/src/features/search/components/global-search-sheet-lazy';
 import { GlobalSearchTrigger } from '@/src/features/search/components/global-search-trigger';
 import { useGlobalSearchShortcut } from '@/src/features/search/hooks/use-global-search-shortcut';
-import { buildWalletAccounts } from '@/src/features/wallet/wallet-accounts';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { DashboardNotifications } from './dashboard-notifications';
 
@@ -155,7 +143,6 @@ export default function DashboardTopBar() {
   const profileName = getProfileName(profile);
   const profileInitials = getInitials(profileName);
   const [walletBalanceVisible, setWalletBalanceVisible] = useState(true);
-  const [isDepositSheetOpen, setIsDepositSheetOpen] = useState(false);
 
   useEffect(() => {
     const stored = window.localStorage.getItem('dashboard-wallet-balance-visible');
@@ -168,9 +155,17 @@ export default function DashboardTopBar() {
     window.localStorage.setItem('dashboard-wallet-balance-visible', String(nextVisible));
   };
 
-  const walletOptions = profile?.uuid
-    ? getWalletOptions({ path: { userUuid: profile.uuid } })
-    : null;
+  // An organisation's chip shows the organisation's wallet; everyone else sees their own.
+  const isOrganisation = activeDomain === 'organisation_user' || activeDomain === 'organisation';
+  const affiliations = profile?.organisation_affiliations ?? [];
+  const organisationUuid = (affiliations.find(a => a.active) ?? affiliations[0])?.organisation_uuid;
+  const walletOptions = isOrganisation
+    ? organisationUuid
+      ? getOrganisationWalletOptions({ path: { organisationUuid } })
+      : null
+    : profile?.uuid
+      ? getWalletOptions({ path: { userUuid: profile.uuid } })
+      : null;
 
   const walletQueryOptions = (walletOptions ?? {
     queryKey: ['getWallet', 'disabled'],
@@ -192,10 +187,6 @@ export default function DashboardTopBar() {
   );
   const balance = walletData?.data?.balance_amount;
   const walletBalanceDisplay = walletBalanceVisible ? walletBalance : '••••••';
-  const walletAccounts = useMemo(
-    () => buildWalletAccounts(walletData?.data ?? undefined),
-    [walletData?.data]
-  );
 
   const activeDomainLabel = activeDomainConfig?.title ?? dashboardLabelByDomain(activeDomain);
   const roleLabel = activeDomainLabel.replace(' Dashboard', '');
@@ -210,8 +201,9 @@ export default function DashboardTopBar() {
   };
 
   const notificationHref = roleScopedDashboardPath(activeDomain, '/dashboard/notifications');
-  const walletHref = roleScopedDashboardPath(activeDomain, '/dashboard/wallet');
-  const withdrawHref = `${walletHref}/withdraw`;
+  // Each role's money page: a parent's is Billing, everyone else's is Wallet.
+  const isParent = activeDomain === 'parent';
+  const walletHref = roleScopedDashboardPath(activeDomain, isParent ? '/dashboard/billing' : '/dashboard/wallet');
 
   return (
     <header className='bg-background/90 sticky top-0 z-50 backdrop-blur-md'>
@@ -235,13 +227,9 @@ export default function DashboardTopBar() {
               walletBalance={walletBalanceDisplay as string}
               balance={balance as number}
               walletCurrency={walletData?.data?.currency_code}
-              accounts={walletAccounts}
               walletHref={walletHref}
-              withdrawHref={withdrawHref}
+              openLabel={isParent ? 'Open billing' : 'Open wallet'}
               onToggleBalance={() => setWalletBalanceVisiblePersisted(!walletBalanceVisible)}
-              onDeposit={() => setIsDepositSheetOpen(true)}
-              onTransfer={() => router.push(`${withdrawHref}?section=transfer`)}
-              onWithdraw={() => router.push(`${withdrawHref}?section=withdraw`)}
             />
 
             <AsyncSection
@@ -278,11 +266,6 @@ export default function DashboardTopBar() {
 
       <LazyGlobalSearchSheet open={paletteOpen} onOpenChange={setPaletteOpen} domain={activeDomain} />
 
-      <DepositMethodSheet
-        open={isDepositSheetOpen}
-        onOpenChange={setIsDepositSheetOpen}
-        walletHref={`${walletHref}?tab=top-up`}
-      />
     </header>
   );
 }
@@ -513,25 +496,17 @@ function DashboardWalletMenu({
   walletBalance,
   balance,
   walletCurrency,
-  accounts,
   walletHref,
-  withdrawHref,
+  openLabel,
   onToggleBalance,
-  onDeposit,
-  onTransfer,
-  onWithdraw,
 }: {
   compact?: boolean;
   walletBalance: string;
   balance: number | string;
   walletCurrency?: string | null;
-  accounts: ReturnType<typeof buildWalletAccounts>;
   walletHref: string;
-  withdrawHref: string;
+  openLabel: string;
   onToggleBalance: () => void;
-  onDeposit: () => void;
-  onTransfer: () => void;
-  onWithdraw: () => void;
 }) {
   return (
     <DropdownMenu>
@@ -569,149 +544,37 @@ function DashboardWalletMenu({
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align='end' className='border-border/70 w-96 rounded-md p-3 shadow-lg'>
+      <DropdownMenuContent align='end' className='border-border/70 w-80 rounded-md p-3 shadow-lg'>
         <div className='bg-muted/60 flex items-start justify-between gap-3 rounded-md p-3'>
           <div className='min-w-0'>
             <div className='flex flex-row items-center gap-4'>
-              <p className='text-muted-foreground text-xs tracking-wide'>Wallet Overview</p>
+              <p className='text-muted-foreground text-xs tracking-wide'>Balance</p>
               <button
                 type='button'
+                aria-label={walletBalance === '••••••' ? 'Show balance' : 'Hide balance'}
                 className='text-muted-foreground hover:text-foreground rounded-full p-2 transition'
                 onClick={onToggleBalance}
               >
-                {walletBalance === '••••••' ? (
-                  <Eye className='h-4 w-4' />
-                ) : (
-                  <EyeOff className='h-4 w-4' />
-                )}
+                {walletBalance === '••••••' ? <Eye className='h-4 w-4' /> : <EyeOff className='h-4 w-4' />}
               </button>
             </div>
-
-            <div className='flex flex-row items-end gap-2'>
-              <p className='text-foreground truncate text-3xl font-bold'>{balance}</p>
-              <p className='text-foreground truncate text-lg font-semibold'>{walletCurrency}</p>
-            </div>
-
-            <p className='text-muted-foreground mt-1 text-xs'>
-              {walletCurrency?.toUpperCase() ?? 'KES'} available across your accounts
+            <p className='text-foreground truncate text-2xl font-bold tabular-nums'>
+              {walletBalance === '••••••' ? walletBalance : `${walletCurrency ?? 'KES'} ${balance ?? 0}`}
             </p>
+            <p className='text-muted-foreground mt-1 text-xs'>What the platform holds for you</p>
           </div>
         </div>
 
-        <p className='text-muted-foreground mt-2 px-1 text-[11px]'>* Data may be delayed.</p>
-
-        <div className='mt-3 grid grid-cols-3 gap-2'>
-          <button
-            type='button'
-            className='border-border bg-background hover:border-primary/40 hover:bg-primary/10 flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition'
-            onClick={onDeposit}
-          >
-            <Upload className='text-warning h-4 w-4' />
-            Deposit
-          </button>
-          <button
-            type='button'
-            className='border-border bg-background hover:border-primary/40 hover:bg-primary/10 flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition'
-            onClick={onWithdraw}
-          >
-            <Download className='text-warning h-4 w-4' />
-            Withdraw
-          </button>
-          <button
-            type='button'
-            className='border-border bg-background hover:border-primary/40 hover:bg-primary/10 flex items-center justify-center gap-2 rounded-full border px-3 py-2 text-sm font-medium transition'
-            onClick={onTransfer}
-          >
-            <ArrowLeftRight className='text-warning h-4 w-4' />
-            Transfer
-          </button>
-        </div>
-
         <DropdownMenuSeparator className='my-3' />
 
-        <DropdownMenuLabel className='px-2 text-[11px] tracking-wide uppercase'>
-          Accounts
-        </DropdownMenuLabel>
-
-        <div className='mt-2 space-y-1'>
-          {accounts.slice(0, 4).map(account => (
-            <div
-              key={account.id}
-              className='hover:bg-muted/60 flex items-center justify-between rounded-md px-2 py-2 text-sm transition'
-            >
-              <div className='min-w-0'>
-                <p className='text-foreground truncate font-medium'>{account.label}</p>
-                <p className='text-muted-foreground truncate text-[11px]'>
-                  {account.bucket.replace(/_/g, ' ')}
-                </p>
-              </div>
-              <div className='shrink-0 text-right'>
-                <p className='text-foreground font-medium'>
-                  {new Intl.NumberFormat('en-KE', {
-                    maximumFractionDigits: 0,
-                  }).format(account.balance_kes)}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <DropdownMenuSeparator className='my-3' />
-
-        <button
-          type='button'
-          className='hover:bg-muted/60 flex w-full items-center justify-between rounded-md px-2 py-2 text-sm transition'
-          onClick={() => window.location.assign(walletHref)}
-        >
-          <span>Open wallet</span>
-          <ExternalLink className='h-4 w-4' />
-        </button>
+        <DropdownMenuItem asChild>
+          <Link href={walletHref} className='flex w-full items-center justify-between'>
+            <span>{openLabel}</span>
+            <ExternalLink className='h-4 w-4' />
+          </Link>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
-}
-
-function DepositMethodSheet({
-  open,
-  onOpenChange,
-  walletHref,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  walletHref: string;
-}) {
-  const router = useRouter();
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='right' className='w-auto max-w-xl'>
-        <SheetHeader>
-          <SheetTitle>Choose payment method</SheetTitle>
-          <SheetDescription>
-            M-Pesa is the only available deposit option right now.
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className='mt-6 space-y-3 px-4'>
-          <button
-            type='button'
-            className='border-border bg-card hover:border-primary/40 hover:bg-primary/10 flex w-full items-center justify-between rounded-2xl border p-4 text-left transition'
-            onClick={() => {
-              onOpenChange(false);
-              router.push(walletHref);
-            }}
-          >
-            <div>
-              <p className='text-foreground text-sm font-semibold'>Pay with M-Pesa</p>
-              <p className='text-muted-foreground mt-1 text-xs'>
-                Continue to the wallet top-up tab.
-              </p>
-            </div>
-            <Send className='text-primary h-4 w-4' />
-          </button>
-        </div>
-      </SheetContent>
-    </Sheet>
   );
 }
 

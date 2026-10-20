@@ -14,6 +14,7 @@ import {
   ClipboardList,
   Clock,
   DollarSign,
+  HandCoins,
   FileText,
   GraduationCap,
   Handshake,
@@ -448,11 +449,6 @@ export default {
           icon: Bell,
         },
         {
-          title: 'Revenue',
-          url: '/dashboard/revenue',
-          icon: DollarSign,
-        },
-        {
           title: 'Analytics',
           url: '/dashboard/analytics',
           icon: ChartNoAxesCombined,
@@ -619,7 +615,8 @@ export default {
     {
       label: 'Finance',
       items: [
-        { title: 'Skills Wallet', url: '/dashboard/skills-wallet', icon: Wallet },
+        { title: 'Wallet', url: '/dashboard/wallet', icon: Wallet },
+        { title: 'Learner funding', url: '/dashboard/skills-wallet', icon: HandCoins },
         { title: 'Skills Fund', url: '/dashboard/skills-fund', icon: PiggyBank },
         { title: 'Earnings', url: '/dashboard/revenue', icon: Tag },
         { title: 'Approvals', url: '/dashboard/approvals', icon: ClipboardCheck },
