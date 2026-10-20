@@ -1,5 +1,6 @@
 'use client';
 
+import { ReportsDueSection } from '@/app/dashboard/instructor/training-hub/_components/ReportsDueSection';
 import { AsyncSection } from '@/components/data/async-section';
 import { WelcomeBanner } from '../../../../components/dashboard';
 import { Skeleton } from '../../../../components/ui/skeleton';
@@ -167,6 +168,7 @@ export function InstructorOverviewPage({ firstName }: InstructorOverviewPageProp
             className='bg-primary/95'
           />
 
+          <ReportsDueSection />
           <StatsSection source={source} />
 
           <section className='grid min-w-0 gap-4 overflow-x-hidden xl:grid-cols-2'>

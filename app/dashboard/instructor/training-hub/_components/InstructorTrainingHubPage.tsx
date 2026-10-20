@@ -1,9 +1,10 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { Card, CardContent } from '@/components/ui/card';
 import { useMemo, useState } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { LiveClassCard } from './LiveClassCard';
+import { ReportsDueSection } from './ReportsDueSection';
 import { TrainingHubSectionHeader } from './TrainingHubSectionHeader';
 import { TrainingHubToolbar } from './TrainingHubToolbar';
 import { useInstructorTrainingHubData } from './useInstructorTrainingHubData';
@@ -210,6 +211,10 @@ export function InstructorTrainingHubPage() {
         searchTerm={searchTerm}
         selectedType={selectedType}
       />
+
+      <div className='w-full 2xl:max-w-[80%]'>
+        <ReportsDueSection />
+      </div>
 
       <section className='grid w-full max-w-full min-w-0 gap-4 overflow-hidden sm:w-full 2xl:max-w-[80%]'>
         <div className='min-w-0 space-y-3 overflow-hidden'>
