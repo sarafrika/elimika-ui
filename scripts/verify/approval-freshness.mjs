@@ -371,9 +371,7 @@ async function runOrgCheck(browser) {
       fail(
         'reload reaches the API, not the proxy cache',
         `${CACHE_STATE_HEADER}: ${reloadCacheStates.join(', ')} — app/api/proxy answered the reload ` +
-          'from its own per-user store. getPrivateBffCacheTtlMs in lib/api/private-bff-cache.ts ' +
-          'matches this path to neither pattern list, so it holds the answer fresh for five ' +
-          'minutes and an approval decided inside that window stays invisible.'
+          'without asking the API. The proxy must not cache API reads.'
       );
     }
 

@@ -181,6 +181,13 @@ const workflowQueryIds = {
     'getPendingGrading',
     'getEnrollmentGradeBook',
     'getStudentDashboard',
+    // Other people's writes change these too (a trainer scoring, a creator editing a rubric).
+    'getProgressReport',
+    'getLineItemRubricEvaluation',
+    'getLineItemRevisions',
+    'getRubricMatrix',
+    'getGradeBands',
+    'getCourseEvaluationPlan',
   ],
   certificate: [
     'getStudentCertificates',

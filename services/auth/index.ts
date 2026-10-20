@@ -1,7 +1,6 @@
 import NextAuth, { type NextAuthConfig } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import Keycloak from 'next-auth/providers/keycloak';
-import { clearPrivateBffCacheForUser } from '@/lib/api/private-bff-cache';
 
 /**
  * Decode JWT token to extract claims
@@ -56,28 +55,6 @@ function getSessionIdToken(session: unknown): string | undefined {
 
   const idToken = user.id_token;
   return typeof idToken === 'string' ? idToken : undefined;
-}
-
-function getSessionCacheUserId(session: unknown): string | undefined {
-  if (!session || typeof session !== 'object') {
-    return undefined;
-  }
-
-  const user = (session as SessionWithUser).user;
-  if (!user || typeof user !== 'object') {
-    return undefined;
-  }
-
-  return getFirstString(user.id, user.email);
-}
-
-function getTokenCacheUserId(token: unknown): string | undefined {
-  if (!token || typeof token !== 'object') {
-    return undefined;
-  }
-
-  const typedToken = token as { email?: unknown; id?: unknown };
-  return getFirstString(typedToken.id, typedToken.email);
 }
 
 // Lets the client start the organisation fetch alongside `/me` instead of after it.
@@ -322,17 +299,6 @@ const config: NextAuthConfig = {
   },
   events: {
     async signOut(event) {
-      const cacheUserId =
-        'token' in event
-          ? getTokenCacheUserId(event.token)
-          : 'session' in event
-            ? getSessionCacheUserId(event.session)
-            : undefined;
-
-      if (cacheUserId) {
-        clearPrivateBffCacheForUser(cacheUserId);
-      }
-
       // Try to get ID token from either source
       let idToken: string | undefined;
 

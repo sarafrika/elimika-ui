@@ -10,16 +10,13 @@ import { retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { scopeQueryOptionsToActingDomain } from '@/src/features/dashboard/lib/acting-domain-query-scope';
 
 /**
- * staleTime tiers cap how long an answer is reused before the next mount refetches it
- * behind the paint — not how long it may be shown unasked. Pick the slowest tier that fits.
+ * Every API answer is stale the moment it arrives: each mount and focus asks the server again.
+ * The tiers stay as names so call sites read the same; none of them reuses an answer.
  */
 export const STALE_TIMES = {
-  /** Reference data that rarely changes: categories, difficulty levels, course catalog. */
-  reference: 1000 * 60 * 30,
-  /** Entity data edited by its owner: profiles, course details. */
-  entity: 1000 * 60 * 5,
-  /** Live operational data: enrollments, schedules, notifications. */
-  live: 1000 * 60,
+  reference: 0,
+  entity: 0,
+  live: 0,
 } as const;
 
 /** Approval state changes on someone else's click; approval reads re-ask this often. */
@@ -31,50 +28,18 @@ export const APPROVAL_QUERY_FRESHNESS = {
   refetchOnWindowFocus: true,
 } as const;
 
+/** Where older builds stored a snapshot of API answers; only ever cleared now. */
 export const CLIENT_QUERY_CACHE_STORAGE_KEY = 'elimika-query-cache-v1';
-export const CLIENT_QUERY_CACHE_MAX_AGE_MS = 1000 * 60 * 30;
-export const CLIENT_QUERY_CACHE_BUSTER = 'elimika-query-cache:2026-10-10';
-/** Newest successful queries kept in the persisted snapshot; older ones refetch on demand. */
-export const MAX_PERSISTED_QUERIES = 120;
-/** Snapshot length cap; a longer snapshot is halved once, then dropped. */
-export const MAX_PERSISTED_CHARS = 1_000_000;
+/** How long an unmounted query's last answer is kept in memory to paint while it refetches. */
+export const CLIENT_QUERY_CACHE_MAX_AGE_MS = 1000 * 60 * 5;
 
 /** One quick retry for a network blip or 5xx, instead of React Query's 1s/2s/4s backoff. */
 export const QUERY_RETRY_DELAY_MS = 500;
 
-/** Reference reads that default to the reference tier when the call site sets no staleTime. */
-const REFERENCE_QUERY_IDS: ReadonlySet<string> = new Set([
-  'getAllCategories',
-  'getCategoryByUuid',
-  'getRootCategories',
-  'getSubCategories',
-  'searchCategories',
-  'getAllGradingLevels',
-  'getAllDifficultyLevels',
-  'getAllContentTypes',
-  'searchContentTypes',
-  'getMediaContentTypes',
-  'checkMimeTypeSupport',
-  'listDocumentTypes',
-  'listCurrencies',
-  'getDefaultCurrency',
-  'listTiers',
-  'listRules',
-  'getRule',
-]);
-
-function withReferenceStaleTime<T extends { queryKey?: QueryKey; staleTime?: unknown }>(
-  options: T
-): T {
-  if (options.staleTime !== undefined) return options;
-  const head = options.queryKey?.[0] as { _id?: unknown } | undefined;
-  const id = head && typeof head === 'object' ? head._id : undefined;
-  return typeof id === 'string' && REFERENCE_QUERY_IDS.has(id)
-    ? { ...options, staleTime: STALE_TIMES.reference }
-    : options;
-}
-
-/** Every query passes through here, so a domain switch needs no cache wipe. */
+/**
+ * Every query passes through here, so a domain switch needs no cache wipe, and no call site's
+ * own staleTime can make the app reuse an answer instead of asking the server.
+ */
 class ActingDomainQueryClient extends QueryClient {
   override defaultQueryOptions<
     TQueryFnData = unknown,
@@ -88,11 +53,10 @@ class ActingDomainQueryClient extends QueryClient {
       | QueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey, TPageParam>
       | DefaultedQueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey>
   ): DefaultedQueryObserverOptions<TQueryFnData, TError, TData, TQueryData, TQueryKey> {
-    return super.defaultQueryOptions(
-      options._defaulted
-        ? options
-        : scopeQueryOptionsToActingDomain(withReferenceStaleTime(options))
+    const defaulted = super.defaultQueryOptions(
+      options._defaulted ? options : scopeQueryOptionsToActingDomain(options)
     );
+    return { ...defaulted, staleTime: 0 };
   }
 }
 
@@ -120,7 +84,7 @@ export function makeQueryClient() {
     defaultOptions: {
       queries: {
         gcTime: CLIENT_QUERY_CACHE_MAX_AGE_MS,
-        staleTime: STALE_TIMES.entity,
+        staleTime: 0,
         retry: retryUnlessClientOrSearchError,
         retryDelay: QUERY_RETRY_DELAY_MS,
       },

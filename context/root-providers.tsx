@@ -1,22 +1,14 @@
 'use client';
 
-import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { QueryClientProvider } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { usePathname } from 'next/navigation';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { RumReporter } from '@/components/perf/rum-reporter';
 import { AuthSessionProvider } from '@/context/auth-session-provider';
 import { TimeZoneProvider } from '@/context/timezone-context';
-import {
-  CLIENT_QUERY_CACHE_BUSTER,
-  CLIENT_QUERY_CACHE_MAX_AGE_MS,
-  CLIENT_QUERY_CACHE_STORAGE_KEY,
-  makeQueryClient,
-  STALE_TIMES,
-} from '@/lib/query-client';
-import { createQueryPersister, shouldPersistQuery } from '@/lib/query-persister';
+import { CLIENT_QUERY_CACHE_STORAGE_KEY, makeQueryClient } from '@/lib/query-client';
 import { noteRenderedPathname } from '@/src/features/dashboard/lib/active-domain-storage';
-import { isVolatileGeneratedQuery } from '@/src/features/dashboard/workflow-query-invalidation';
 
 const ReactQueryDevtools =
   process.env.NODE_ENV === 'development'
@@ -34,34 +26,17 @@ export function RootProviders({ children }: { children: ReactNode }) {
   noteRenderedPathname(pathname || null);
   const ownsSession = pathname !== '/dashboard' && !pathname.startsWith('/dashboard/');
   const [queryClient] = useState(makeQueryClient);
-  const [persister] = useState(() =>
-    createQueryPersister({
-      queryClient,
-      key: CLIENT_QUERY_CACHE_STORAGE_KEY,
-      storage: typeof window === 'undefined' ? undefined : window.sessionStorage,
-    })
-  );
+  // API answers are never stored in the browser; drop any snapshot an older build left behind.
+  useEffect(() => {
+    try {
+      window.sessionStorage.removeItem(CLIENT_QUERY_CACHE_STORAGE_KEY);
+    } catch {
+      // Storage can be unavailable (private mode); there is nothing to clear then.
+    }
+  }, []);
 
   return (
-    <PersistQueryClientProvider
-      client={queryClient}
-      persistOptions={{
-        buster: CLIENT_QUERY_CACHE_BUSTER,
-        maxAge: CLIENT_QUERY_CACHE_MAX_AGE_MS,
-        persister,
-        dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
-      }}
-      onSuccess={() => {
-        // Restored workflow state older than the live tier is painted but not counted as
-        // fresh; every other entry keeps its own staleTime tier.
-        const liveCutoff = Date.now() - STALE_TIMES.live;
-        void queryClient.invalidateQueries({
-          predicate: query =>
-            isVolatileGeneratedQuery(query.queryKey) && query.state.dataUpdatedAt < liveCutoff,
-          refetchType: 'none',
-        });
-      }}
-    >
+    <QueryClientProvider client={queryClient}>
       {ownsSession ? (
         <AuthSessionProvider>
           <TimeZoneProvider>{children}</TimeZoneProvider>
@@ -71,6 +46,6 @@ export function RootProviders({ children }: { children: ReactNode }) {
       )}
       <RumReporter />
       {ReactQueryDevtools ? <ReactQueryDevtools initialIsOpen={false} /> : null}
-    </PersistQueryClientProvider>
+    </QueryClientProvider>
   );
 }

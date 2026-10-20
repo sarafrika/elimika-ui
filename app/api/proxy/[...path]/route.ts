@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Session } from 'next-auth';
-import {
-  buildPrivateBffCacheKey,
-  deletePrivateBffCacheEntry,
-  getPrivateBffCacheEntry,
-  getPrivateBffCacheTtlMs,
-  invalidatePrivateBffCacheForWrite,
-  isPrivateBffCacheBypassed,
-  PRIVATE_BFF_CACHE_MAX_BODY_BYTES,
-  type PrivateBffCacheEntry,
-  refreshPrivateBffCacheEntry,
-  storePrivateBffCacheEntry,
-} from '@/lib/api/private-bff-cache';
 import { getApiHedgeDispatcher, getApiReadDispatcher } from '@/lib/server/api-dispatcher';
 import { hedgedRead } from '@/lib/server/hedged-read';
 import {
@@ -29,7 +17,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 type AuthSession = Session | null;
-type CacheState = 'BYPASS' | 'HIT' | 'MISS' | 'STALE';
+type CacheState = 'BYPASS';
 
 // Wall-clock budget for body-less requests only: with a streamed body it would
 // also cover the upload, so those rely on the dispatcher's per-phase timeouts.
@@ -302,39 +290,6 @@ async function proxyPublicFile(request: NextRequest, upstreamUrl: URL) {
   });
 }
 
-function getCacheUserId(session: AuthSession) {
-  const userId = session?.user?.id ?? session?.user?.email;
-  return typeof userId === 'string' && userId.trim().length > 0 ? userId : null;
-}
-
-function isJsonResponse(response: Response) {
-  return response.headers.get('content-type')?.toLowerCase().includes('json') ?? false;
-}
-
-function canAttemptCache(response: Response) {
-  if (response.status !== 200 || !isJsonResponse(response)) {
-    return false;
-  }
-
-  const contentLength = response.headers.get('content-length');
-  if (!contentLength) {
-    return true;
-  }
-
-  const parsedContentLength = Number(contentLength);
-  return (
-    Number.isFinite(parsedContentLength) && parsedContentLength <= PRIVATE_BFF_CACHE_MAX_BODY_BYTES
-  );
-}
-
-function buildCachedResponse(entry: PrivateBffCacheEntry, cacheState: CacheState) {
-  const headers = applyPrivateResponseHeaders(new Headers(entry.headers), cacheState);
-  return new NextResponse(entry.body, {
-    status: entry.status,
-    headers,
-  });
-}
-
 const buildUpstreamUrl = (request: NextRequest, path: string[]) => {
   const upstream = new URL(getServerApiBaseUrl());
   const requestedPath = `/${path.join('/')}`;
@@ -368,57 +323,6 @@ const getForwardHeaders = (request: NextRequest, session: AuthSession) => {
   return headers;
 };
 
-async function cacheGetResponse(
-  upstreamUrl: URL,
-  upstreamResponse: Response,
-  responseHeaders: Headers,
-  cacheUserId: string,
-  cacheKey: string
-) {
-  const body = await upstreamResponse.text();
-  const stored = storePrivateBffCacheEntry({
-    body,
-    headers: responseHeaders,
-    key: cacheKey,
-    status: upstreamResponse.status,
-    ttlMs: getPrivateBffCacheTtlMs(upstreamUrl),
-    url: upstreamUrl.toString(),
-    userId: cacheUserId,
-  });
-
-  return new NextResponse(body, {
-    status: upstreamResponse.status,
-    headers: applyPrivateResponseHeaders(responseHeaders, stored ? 'MISS' : 'BYPASS'),
-  });
-}
-
-async function refreshCachedGet(
-  upstreamUrl: URL,
-  headers: Headers,
-  cacheUserId: string,
-  cacheKey: string
-) {
-  const upstreamResponse = await fetchUpstream(upstreamUrl, {
-    headers: new Headers(headers),
-    method: 'GET',
-    redirect: 'manual',
-  });
-
-  const responseHeaders = new Headers(upstreamResponse.headers);
-  sanitizeHeaders(responseHeaders);
-
-  if (canAttemptCache(upstreamResponse)) {
-    await cacheGetResponse(upstreamUrl, upstreamResponse, responseHeaders, cacheUserId, cacheKey);
-    return;
-  }
-
-  if (upstreamResponse.ok) {
-    deletePrivateBffCacheEntry(cacheKey);
-  }
-
-  await upstreamResponse.body?.cancel().catch(() => undefined);
-}
-
 const proxyRequest = async (request: NextRequest, path: string[]) => {
   try {
     const upstreamUrl = buildUpstreamUrl(request, path);
@@ -427,35 +331,7 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
     }
 
     const session = await auth();
-    const cacheUserId = getCacheUserId(session);
     const headers = getForwardHeaders(request, session);
-    // Decision queues and platform counts are read fresh every time: a cached answer
-    // would show one admin work that another has already cleared.
-    const isCacheableRead =
-      request.method === 'GET' && Boolean(cacheUserId) && !isPrivateBffCacheBypassed(upstreamUrl);
-    // The acting dashboard varies the upstream answer, so it has to vary the key
-    // as well: one user, one URL, two dashboards, two cache entries.
-    const actingDomain = headers.get(ACTING_DOMAIN_HEADER);
-    const cacheKey =
-      isCacheableRead && cacheUserId
-        ? buildPrivateBffCacheKey(cacheUserId, upstreamUrl, actingDomain)
-        : null;
-
-    if (cacheKey && cacheUserId) {
-      const cachedResponse = getPrivateBffCacheEntry(cacheKey);
-
-      if (cachedResponse.state === 'fresh') {
-        return buildCachedResponse(cachedResponse.entry, 'HIT');
-      }
-
-      if (cachedResponse.state === 'stale') {
-        refreshPrivateBffCacheEntry(cacheKey, () =>
-          refreshCachedGet(upstreamUrl, headers, cacheUserId, cacheKey)
-        );
-
-        return buildCachedResponse(cachedResponse.entry, 'STALE');
-      }
-    }
 
     const init: RequestInit & { duplex?: 'half' } = {
       method: request.method,
@@ -472,20 +348,6 @@ const proxyRequest = async (request: NextRequest, path: string[]) => {
     const upstreamResponse = await fetchUpstream(upstreamUrl, init, request.signal);
     const responseHeaders = new Headers(upstreamResponse.headers);
     sanitizeHeaders(responseHeaders);
-
-    if (request.method === 'GET' && cacheKey && cacheUserId && canAttemptCache(upstreamResponse)) {
-      return cacheGetResponse(
-        upstreamUrl,
-        upstreamResponse,
-        responseHeaders,
-        cacheUserId,
-        cacheKey
-      );
-    }
-
-    if (isMutatingRequest && cacheUserId) {
-      invalidatePrivateBffCacheForWrite(cacheUserId, upstreamUrl);
-    }
 
     return new NextResponse(upstreamResponse.body, {
       status: upstreamResponse.status,
