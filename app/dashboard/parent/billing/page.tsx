@@ -1,132 +1,119 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { Coins, Receipt, ShoppingCart, Wallet } from 'lucide-react';
-import { extractEntity } from '@/lib/api-helpers';
-import type { RevenueAmountDto, RevenueDashboardDto } from '@/services/client';
-import { getRevenueDashboardOptions } from '@/services/client/@tanstack/react-query.gen';
-import { DetailGrid, SectionCard, StatCard, StatCardSkeleton, surfaceTheme } from '@/components/data-display';
-import { PageHeader } from '@/components/page-header';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useMemo, useState } from 'react';
+import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
+import { formatMoney } from '@/components/money/format';
+import { type LedgerEntry, type OrderLike, orderEntries } from '@/components/money/ledger';
+import { LedgerPanel } from '@/components/money/ledger-panel';
+import { MoneyPage } from '@/components/money/money-page';
+import { CompletePaymentSheet, ReceiptSheet } from '@/components/money/money-sheets';
+import { useStudentsByIds } from '@/hooks/use-batched-lookups';
+import { STALE_TIMES } from '@/lib/query-client';
+import { listMyOrdersOptions, listMyOrdersQueryKey } from '@/services/client/@tanstack/react-query.gen';
 
-/** Format the first (primary-currency) amount from a revenue amount list. */
-const money = (amounts?: RevenueAmountDto[]): string => {
-  const primary = amounts?.[0];
-  if (!primary || primary.amount === undefined || primary.amount === null) return '—';
-  const value = Number(primary.amount).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return `${primary.currency_code ?? ''} ${value}`.trim();
-};
+const TABS = ['payments', 'children'] as const;
+const PAGE = { pageable: { page: 0, size: 100 } };
 
-const count = (value?: bigint | number | null): string =>
-  value === undefined || value === null ? '—' : Number(value).toLocaleString();
+const childOf = (order: OrderLike) =>
+  (order.items ?? []).map(item => item.metadata?.student_uuid).find(v => typeof v === 'string') as string | undefined;
 
+/** What a parent paid, child by child. Orders the parent placed are theirs; each line names its learner. */
 export default function ParentBillingPage() {
-  const dashboardQuery = useQuery({
-    ...getRevenueDashboardOptions({ query: { domain: 'parent' } }),
+  const queryClient = useQueryClient();
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'payments');
+  const [receipt, setReceipt] = useState<OrderLike | null>(null);
+  const [paying, setPaying] = useState<OrderLike | null>(null);
+
+  const orders = useQuery({ ...listMyOrdersOptions({ query: PAGE }), staleTime: STALE_TIMES.live });
+  const orderList = (orders.data?.data?.content ?? []) as OrderLike[];
+  const childUuids = useMemo(() => [...new Set(orderList.map(childOf).filter(Boolean) as string[])], [orderList]);
+  const { studentMap } = useStudentsByIds(childUuids);
+  const childName = useCallback(
+    (uuid: string) => (studentMap[uuid] as { full_name?: string } | undefined)?.full_name,
+    [studentMap]
+  );
+
+  const payments = useMemo(() => orderEntries(orderList, { childName }), [orderList, childName]);
+  const paid = orderList.filter(order => order.payment_status?.toUpperCase() === 'CAPTURED');
+  const waiting = orderList.filter(order => order.payment_status?.toUpperCase() !== 'CAPTURED');
+  const sum = (list: OrderLike[]) => list.reduce((total, order) => total + Number(order.total ?? 0), 0);
+
+  const byChild: LedgerEntry<OrderLike[]>[] = childUuids.map(uuid => {
+    const theirs = paid.filter(order => childOf(order) === uuid);
+    return {
+      id: uuid,
+      kind: 'payment',
+      title: childName(uuid) ?? 'Learner',
+      meta: `${theirs.length} ${theirs.length === 1 ? 'payment' : 'payments'}`,
+      amount: sum(theirs),
+      currency: theirs[0]?.currency_code ?? 'KES',
+      groups: ['all'],
+      source: theirs,
+    };
   });
 
-  const dashboard = extractEntity<RevenueDashboardDto>(dashboardQuery.data) ?? {};
-  const isLoading = dashboardQuery.isLoading;
-  const scopes = dashboard.scope_breakdown ?? [];
-
-  const kpis = [
-    {
-      label: 'Total billed',
-      value: money(dashboard.gross_totals),
-      hint: "Across your children's learning",
-      icon: Coins,
-      tone: 'info' as const,
-    },
-    {
-      label: 'Orders',
-      value: count(dashboard.order_count),
-      hint: 'Completed payments',
-      icon: ShoppingCart,
-      tone: 'neutral' as const,
-    },
-    {
-      label: 'Items purchased',
-      value: count(dashboard.units_sold),
-      hint: 'Courses & classes',
-      icon: Receipt,
-      tone: 'success' as const,
-    },
-    {
-      label: 'Average order',
-      value: money(dashboard.average_order_value),
-      hint: 'Per transaction',
-      icon: Wallet,
-      tone: 'warning' as const,
-    },
+  const filters = [
+    { id: 'all', label: 'All children' },
+    ...childUuids.map(uuid => ({ id: `child:${uuid}`, label: childName(uuid) ?? 'Learner' })),
   ];
 
+  const onAction = (entry: LedgerEntry) => {
+    const order = entry.source as OrderLike;
+    if (entry.action === 'receipt') setReceipt(order);
+    if (entry.action === 'pay') setPaying(order);
+  };
+
+  const refreshOrders = useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: listMyOrdersQueryKey({ query: PAGE }) });
+  }, [queryClient]);
+
   return (
-    <div className={surfaceTheme.page}>
-      <div className={surfaceTheme.pageStack}>
-        <PageHeader
-          title='Billing'
-          description='What your children have paid for across their learning journey.'
-        />
-
-        <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
-          {isLoading
-            ? kpis.map(kpi => <StatCardSkeleton key={kpi.label} />)
-            : kpis.map(kpi => (
-                <StatCard
-                  key={kpi.label}
-                  label={kpi.label}
-                  value={kpi.value}
-                  hint={kpi.hint}
-                  icon={kpi.icon}
-                  tone={kpi.tone}
-                />
-              ))}
-        </div>
-
-        <div className='grid gap-4 xl:grid-cols-2'>
-          <SectionCard title='Summary' description='Household spending for this period'>
-            <DetailGrid
-              items={[
-                { label: 'Total billed', value: money(dashboard.gross_totals) },
-                { label: 'Average order value', value: money(dashboard.average_order_value) },
-                { label: 'Orders', value: count(dashboard.order_count) },
-                { label: 'Line items', value: count(dashboard.line_item_count) },
-              ]}
-            />
-          </SectionCard>
-
-          <SectionCard title='Spending by category' description='Where the money went'>
-            {scopes.length === 0 ? (
-              <p className='text-muted-foreground text-sm'>
-                {isLoading ? 'Loading…' : 'No billing recorded yet.'}
-              </p>
-            ) : (
-              <ul className='divide-border/60 divide-y'>
-                {scopes.map((scope, index) => (
-                  <li
-                    key={`${scope.scope}-${index}`}
-                    className='flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0'
-                  >
-                    <div className='min-w-0'>
-                      <p className='text-foreground truncate text-sm font-medium'>
-                        {scope.scope ?? 'Unknown'}
-                      </p>
-                      <p className='text-muted-foreground text-xs'>
-                        {count(scope.units_sold)} items · {count(scope.line_item_count)} line items
-                      </p>
-                    </div>
-                    <span className='text-foreground shrink-0 text-sm font-semibold tabular-nums'>
-                      {money(scope.gross_totals)}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </SectionCard>
-        </div>
-      </div>
-    </div>
+    <>
+      <MoneyPage
+        eyebrow='Billing'
+        title='Billing'
+        description='What you have paid for your children’s classes, child by child.'
+        loadingStats={orders.isLoading}
+        stats={[
+          { label: 'Total paid', value: formatMoney(sum(paid)), hint: `${paid.length} ${paid.length === 1 ? 'payment' : 'payments'}` },
+          { label: 'Awaiting payment', value: formatMoney(sum(waiting)), hint: waiting.length ? `${waiting.length} held` : 'Nothing due' },
+          { label: 'Children', value: String(childUuids.length), hint: 'With paid classes' },
+          { label: 'Classes paid for', value: String(paid.reduce((n, order) => n + (order.items?.length ?? 0), 0)) },
+        ]}
+        tabs={[
+          { id: 'payments', label: 'Payments', count: orderList.length },
+          { id: 'children', label: 'By child', count: childUuids.length },
+        ]}
+        tab={tab}
+        onTabChange={setTab}
+        hrefFor={hrefFor}
+      >
+        <SectionTabPanel value='payments'>
+          <LedgerPanel
+            title='Payments'
+            description='Each order shows which child it was for.'
+            entries={payments}
+            loading={orders.isLoading}
+            filters={filters}
+            emptyTitle='No payments yet'
+            emptyDescription='Classes you pay for your children appear here with their receipts.'
+            onAction={onAction}
+          />
+        </SectionTabPanel>
+        <SectionTabPanel value='children'>
+          <LedgerPanel
+            title='By child'
+            description='What you have paid for each child.'
+            entries={byChild}
+            loading={orders.isLoading}
+            emptyTitle='No children with payments yet'
+            emptyDescription='Once you pay for a child’s class, their total appears here.'
+          />
+        </SectionTabPanel>
+      </MoneyPage>
+      <ReceiptSheet order={receipt} onOpenChange={open => !open && setReceipt(null)} />
+      <CompletePaymentSheet order={paying} onOpenChange={open => !open && setPaying(null)} onPaid={refreshOrders} />
+    </>
   );
 }
