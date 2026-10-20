@@ -1,9 +1,9 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Video } from 'lucide-react';
+import { Clock, Video } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { type ReactNode, useMemo, useState } from 'react';
+import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { LessonShell } from '@/app/dashboard/instructor/classes/training/components/LessonShell';
 import {
@@ -37,11 +37,6 @@ import {
   startScheduledInstanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, ContentType, Course, Lesson } from '@/services/client/types.gen';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Clock, Video } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { toast } from 'sonner';
 import { EvaluationPanel } from './EvaluationPanel';
 import { SessionReportPanel } from './SessionReportPanel';
 import { useWorkbookNavigation } from './useWorkbookNavigation';
@@ -158,7 +153,8 @@ function SelectedLessonWorkbook({
           queryKey: getClassDefinitionQueryKey({ path: { uuid: classId } }),
         }),
         queryClient.invalidateQueries({
-          queryKey: getClassScheduleQueryKey({ path: { uuid: classId } }),
+          // An empty pageable still prefix-matches every page size the workbook loaded.
+          queryKey: getClassScheduleQueryKey({ path: { uuid: classId }, query: { pageable: {} } }),
         }),
         queryClient.invalidateQueries({
           queryKey: getScheduledInstanceQueryKey({ path: variables.path }),

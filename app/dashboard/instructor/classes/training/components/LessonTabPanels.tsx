@@ -1,5 +1,8 @@
 'use client';
 
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { BookOpen } from 'lucide-react';
+import { type ReactNode, useDeferredValue, useMemo, useState } from 'react';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { WorkbookError } from '@/components/lesson/WorkbookError';
 import { WorkbookLoading } from '@/components/lesson/WorkbookLoading';
@@ -17,9 +20,7 @@ import { Input } from '@/components/ui/input';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getPracticeActivitiesInfiniteOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { Lesson } from '@/services/client/types.gen';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { BookOpen } from 'lucide-react';
-import { useDeferredValue, useMemo, useState, type ReactNode } from 'react';
+
 export * from '@/components/lesson/EvaluationPanel';
 export { MaterialsPanel as ResourcesPanel } from './MaterialsPanel';
 

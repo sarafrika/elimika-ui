@@ -91,7 +91,7 @@ export function LessonGradingPanel({
   // A lesson is scored on a rubric only when the course's evaluation plan has a per-lesson rubric component.
   const courseAssessments = useCourseAssessmentsByCourseUuids([courseId]);
   const hasLessonRubric = courseAssessments.items.some(
-    assessment => assessment.per_lesson && assessment.rubric_uuid && assessment.active !== false
+    assessment => assessment.per_lesson && assessment.rubric_uuid
   );
 
   const rosterQuery = useQuery({
