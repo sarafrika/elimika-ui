@@ -3910,6 +3910,13 @@ export const zCartLineItemRequest = z
       .gte(1)
       .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
       .describe('Quantity of the variant to add to the cart'),
+    student_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        'Optional. The learner this seat is for, when a guardian buys for a child they hold an active link to. Omit to buy for yourself.'
+      )
+      .optional(),
   })
   .describe(
     'Line item definition used when creating or updating a cart (metadata is system-managed)'
@@ -5307,6 +5314,18 @@ export const zWalletBalanceSummary = z
     wallet_uuid: z.string().uuid().optional(),
     currency_code: z.string().optional(),
     balance_amount: z.number().optional(),
+    shares_total: z.number().optional(),
+    platform_fees_total: z.number().optional(),
+    sales_count: z.coerce
+      .bigint()
+      .min(BigInt('-9223372036854775808'), {
+        message: 'Invalid value: Expected int64 to be >= -9223372036854775808',
+      })
+      .max(BigInt('9223372036854775807'), {
+        message: 'Invalid value: Expected int64 to be <= 9223372036854775807',
+      })
+      .optional(),
+    transferred_out_total: z.number().optional(),
   })
   .describe('Read-only wallet balance for one currency');
 
@@ -6813,16 +6832,16 @@ export const zCourseCategoryMapping = z
       )
       .readonly()
       .optional(),
+    has_names: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
+      .readonly()
+      .optional(),
     display_text: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable text representing this course-category relationship.'
       )
-      .readonly()
-      .optional(),
-    has_names: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
       .readonly()
       .optional(),
   })
@@ -9544,14 +9563,14 @@ export const zLesson = z
       )
       .readonly()
       .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the lesson is published and accessible to students.')
-      .readonly()
-      .optional(),
     lesson_sequence: z
       .string()
       .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
+      .readonly()
+      .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the lesson is published and accessible to students.')
       .readonly()
       .optional(),
   })
@@ -11920,13 +11939,6 @@ export const zInstructorProfessionalMembership = z
       .readonly()
       .optional(),
     formatted_duration: z.string().readonly().nullish(),
-    membership_duration_months: z
-      .number()
-      .int()
-      .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
-      .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
-      .readonly()
-      .nullish(),
     membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.string().readonly().nullish(),
     is_long_standing_member: z
@@ -11946,6 +11958,13 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
       .readonly()
       .optional(),
+    membership_duration_months: z
+      .number()
+      .int()
+      .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+      .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+      .readonly()
+      .nullish(),
   })
   .describe(
     'Professional membership record for instructors including associations, industry bodies, and certification organizations'
@@ -14880,6 +14899,34 @@ export const zWallet = z
       .describe('**[READ-ONLY]** Wallet last update timestamp.')
       .readonly()
       .optional(),
+    shares_total: z
+      .number()
+      .describe(
+        '**[READ-ONLY]** Lifetime sale shares credited, net of reversals. Null where not computed.'
+      )
+      .readonly()
+      .optional(),
+    platform_fees_total: z
+      .number()
+      .describe('**[READ-ONLY]** Lifetime platform fees charged on those shares.')
+      .readonly()
+      .optional(),
+    sales_count: z.coerce
+      .bigint()
+      .min(BigInt('-9223372036854775808'), {
+        message: 'Invalid value: Expected int64 to be >= -9223372036854775808',
+      })
+      .max(BigInt('9223372036854775807'), {
+        message: 'Invalid value: Expected int64 to be <= 9223372036854775807',
+      })
+      .describe('**[READ-ONLY]** Number of class sales credited, net of reversals.')
+      .readonly()
+      .optional(),
+    transferred_out_total: z
+      .number()
+      .describe('**[READ-ONLY]** Lifetime money transferred out to other users.')
+      .readonly()
+      .optional(),
   })
   .describe('User or organisation wallet summary for a specific currency');
 
@@ -16096,11 +16143,6 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
-      .readonly()
-      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -16109,6 +16151,11 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
+      .readonly()
+      .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
   })

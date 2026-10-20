@@ -271,6 +271,7 @@ import type {
   GetOrganisationSessionReportsResponse,
   GetOrganisationStatisticsResponse,
   GetOrganisationTimetableResponse,
+  GetOrganisationWalletResponse,
   GetOrganizationAdminUsersResponse,
   GetPassingScoringLevelsResponse,
   GetPendingEditResponse,
@@ -2963,6 +2964,9 @@ const walletSchemaResponseTransformer = (data: any) => {
   }
   if (data.updated_date) {
     data.updated_date = new Date(data.updated_date);
+  }
+  if (data.sales_count) {
+    data.sales_count = BigInt(data.sales_count.toString());
   }
   return data;
 };
@@ -7790,6 +7794,27 @@ export const getOrganisationDocumentsResponseTransformer = async (
   return data;
 };
 
+const walletBalanceSummarySchemaResponseTransformer = (data: any) => {
+  if (data.sales_count) {
+    data.sales_count = BigInt(data.sales_count.toString());
+  }
+  return data;
+};
+
+const apiResponseWalletBalanceSummarySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = walletBalanceSummarySchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getOrganisationWalletResponseTransformer = async (
+  data: any
+): Promise<GetOrganisationWalletResponse> => {
+  data = apiResponseWalletBalanceSummarySchemaResponseTransformer(data);
+  return data;
+};
+
 export const listOrganisationWalletTransactionsResponseTransformer = async (
   data: any
 ): Promise<ListOrganisationWalletTransactionsResponse> => {
@@ -8070,6 +8095,9 @@ const unreadNotificationSummarySchemaResponseTransformer = (data: any) => {
 const sessionBootstrapSchemaResponseTransformer = (data: any) => {
   if (data.user) {
     data.user = userSchemaResponseTransformer(data.user);
+  }
+  if (data.wallet) {
+    data.wallet = walletBalanceSummarySchemaResponseTransformer(data.wallet);
   }
   if (data.notifications) {
     data.notifications = unreadNotificationSummarySchemaResponseTransformer(data.notifications);

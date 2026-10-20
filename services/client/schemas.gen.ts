@@ -5259,14 +5259,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: '4 years, 3 months',
       readOnly: true,
     },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
-      readOnly: true,
-    },
     membership_status: {
       $ref: '#/components/schemas/MembershipStatusEnum',
     },
@@ -5305,6 +5297,14 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
       example: true,
+      readOnly: true,
+    },
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
   },
@@ -7491,17 +7491,17 @@ export const LessonSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    lesson_sequence: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted lesson sequence for display purposes.',
+      example: 'Lesson 3',
+      readOnly: true,
+    },
     is_published: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the lesson is published and accessible to students.',
       example: true,
-      readOnly: true,
-    },
-    lesson_sequence: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted lesson sequence for display purposes.',
-      example: 'Lesson 3',
       readOnly: true,
     },
   },
@@ -12540,6 +12540,28 @@ export const WalletSchema = {
       description: '**[READ-ONLY]** Wallet last update timestamp.',
       readOnly: true,
     },
+    shares_total: {
+      type: 'number',
+      description:
+        '**[READ-ONLY]** Lifetime sale shares credited, net of reversals. Null where not computed.',
+      readOnly: true,
+    },
+    platform_fees_total: {
+      type: 'number',
+      description: '**[READ-ONLY]** Lifetime platform fees charged on those shares.',
+      readOnly: true,
+    },
+    sales_count: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Number of class sales credited, net of reversals.',
+      readOnly: true,
+    },
+    transferred_out_total: {
+      type: 'number',
+      description: '**[READ-ONLY]** Lifetime money transferred out to other users.',
+      readOnly: true,
+    },
   },
 } as const;
 
@@ -16064,12 +16086,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    did_attend: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
-      readOnly: true,
-    },
     is_attendance_marked: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.',
@@ -16080,6 +16096,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
       readOnly: true,
     },
   },
@@ -16785,6 +16807,12 @@ export const CartLineItemRequestSchema = {
       description: 'Quantity of the variant to add to the cart',
       example: 2,
       minimum: 1,
+    },
+    student_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        'Optional. The learner this seat is for, when a guardian buys for a child they hold an active link to. Omit to buy for yourself.',
     },
   },
   required: ['quantity', 'variant_id'],
@@ -22482,6 +22510,19 @@ export const WalletBalanceSummarySchema = {
     balance_amount: {
       type: 'number',
     },
+    shares_total: {
+      type: 'number',
+    },
+    platform_fees_total: {
+      type: 'number',
+    },
+    sales_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    transferred_out_total: {
+      type: 'number',
+    },
   },
 } as const;
 
@@ -27312,17 +27353,17 @@ export const CourseCategoryMappingSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    has_names: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if both course and category names are populated.',
+      example: true,
+      readOnly: true,
+    },
     display_text: {
       type: 'string',
       description:
         '**[READ-ONLY]** Human-readable text representing this course-category relationship.',
       example: 'Advanced Java Programming → Programming',
-      readOnly: true,
-    },
-    has_names: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if both course and category names are populated.',
-      example: true,
       readOnly: true,
     },
   },

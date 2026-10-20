@@ -278,6 +278,7 @@ import {
   getOrganisationSessionReportsResponseTransformer,
   getOrganisationStatisticsResponseTransformer,
   getOrganisationTimetableResponseTransformer,
+  getOrganisationWalletResponseTransformer,
   getOrganizationAdminUsersResponseTransformer,
   getPassingScoringLevelsResponseTransformer,
   getPendingEditResponseTransformer,
@@ -16370,6 +16371,7 @@ export const getOrganisationWallet = <ThrowOnError extends boolean = false>(
     GetOrganisationWalletErrors,
     ThrowOnError
   >({
+    responseTransformer: getOrganisationWalletResponseTransformer,
     security: [
       { scheme: 'bearer', type: 'http' },
       { scheme: 'bearer', type: 'http' },

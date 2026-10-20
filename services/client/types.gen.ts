@@ -2511,10 +2511,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -2537,6 +2533,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -3616,13 +3616,13 @@ export type Lesson = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the lesson is published and accessible to students.
-   */
-  readonly is_published?: boolean;
-  /**
    * **[READ-ONLY]** Formatted lesson sequence for display purposes.
    */
   readonly lesson_sequence?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the lesson is published and accessible to students.
+   */
+  readonly is_published?: boolean;
 };
 
 export type ApiResponseLesson = {
@@ -5952,6 +5952,22 @@ export type Wallet = {
    * **[READ-ONLY]** Wallet last update timestamp.
    */
   readonly updated_date?: Date;
+  /**
+   * **[READ-ONLY]** Lifetime sale shares credited, net of reversals. Null where not computed.
+   */
+  readonly shares_total?: number;
+  /**
+   * **[READ-ONLY]** Lifetime platform fees charged on those shares.
+   */
+  readonly platform_fees_total?: number;
+  /**
+   * **[READ-ONLY]** Number of class sales credited, net of reversals.
+   */
+  readonly sales_count?: bigint;
+  /**
+   * **[READ-ONLY]** Lifetime money transferred out to other users.
+   */
+  readonly transferred_out_total?: number;
 };
 
 /**
@@ -7925,10 +7941,6 @@ export type Enrollment = {
    */
   readonly can_be_cancelled?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -7936,6 +7948,10 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
 };
 
 /**
@@ -8371,6 +8387,10 @@ export type CartLineItemRequest = {
    * Quantity of the variant to add to the cart
    */
   quantity: number;
+  /**
+   * Optional. The learner this seat is for, when a guardian buys for a child they hold an active link to. Omit to buy for yourself.
+   */
+  student_uuid?: string;
 };
 
 /**
@@ -11107,6 +11127,10 @@ export type WalletBalanceSummary = {
   wallet_uuid?: string;
   currency_code?: string;
   balance_amount?: number;
+  shares_total?: number;
+  platform_fees_total?: number;
+  sales_count?: bigint;
+  transferred_out_total?: number;
 };
 
 export type ApiResponseListStudentGroup = {
@@ -13787,13 +13811,13 @@ export type CourseCategoryMapping = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable text representing this course-category relationship.
-   */
-  readonly display_text?: string;
-  /**
    * **[READ-ONLY]** Indicates if both course and category names are populated.
    */
   readonly has_names?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable text representing this course-category relationship.
+   */
+  readonly display_text?: string;
 };
 
 export type ApiResponsePagedDtoCourseAssessment = {
