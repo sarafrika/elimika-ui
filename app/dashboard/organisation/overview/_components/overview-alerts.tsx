@@ -6,6 +6,7 @@ import {
   Bell,
   BellRing,
   ClipboardCheck,
+  ClipboardList,
   Info,
   Send,
   ShieldAlert,
@@ -15,8 +16,9 @@ import { AsyncSection } from '@/components/data/async-section';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useOrganisation, useOrganisationId } from '@/context/organisation-context';
 import { extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
-import type { NotificationDto } from '@/services/client';
+import type { NotificationDto, SessionReportSummary } from '@/services/client';
 import {
+  getOrganisationSessionReportsOptions,
   listNotificationsOptions,
   listSentOptions,
   searchTrainingApplicationsOptions,
@@ -73,6 +75,15 @@ export function OverviewAlerts() {
     enabled: Boolean(organisationUuid),
   });
 
+  // Drafts past their due time are overdue; the trainer has already been reminded.
+  const reportsQuery = useQuery({
+    ...getOrganisationSessionReportsOptions({
+      path: { organisationUuid },
+      query: { status: ['draft'], pageable: { page: 0, size: 100 } },
+    }),
+    enabled: Boolean(organisationUuid),
+  });
+
   const sentQuery = useQuery({
     ...listSentOptions({ path: { organisationUuid }, query: { limit: 2 } }),
     enabled: Boolean(organisationUuid),
@@ -114,6 +125,21 @@ export function OverviewAlerts() {
     });
   }
 
+  const overdueReports = extractPage<SessionReportSummary>(reportsQuery.data).items.filter(
+    report => report.overdue
+  ).length;
+  if (overdueReports > 0) {
+    alerts.push({
+      id: 'session-reports-overdue',
+      severity: 'high',
+      title: `${overdueReports} session ${overdueReports === 1 ? 'report is' : 'reports are'} overdue`,
+      description: 'Trainers must submit a report within 24 hours of each session. They have been reminded.',
+      icon: ClipboardList,
+      actionLabel: 'View',
+      href: '/dashboard/organisation/session-reports',
+    });
+  }
+
   for (const d of sentQuery.data?.data ?? []) {
     const count = d.recipient_count ?? 0;
     alerts.push({
@@ -140,7 +166,7 @@ export function OverviewAlerts() {
     });
   }
 
-  const queries = [applicationsQuery, notificationsQuery, sentQuery];
+  const queries = [applicationsQuery, notificationsQuery, sentQuery, reportsQuery];
 
   // Each source adds its own alerts; the panel only fails when every source failed.
   return (

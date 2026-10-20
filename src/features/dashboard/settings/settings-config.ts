@@ -154,6 +154,7 @@ export function getSettingsVariantConfig(
       { value: 'groups', label: 'Student Groups' },
       { value: 'age-groups', label: 'Age groups' },
       { value: 'roles', label: 'Roles & Permissions' },
+      { value: 'session-reports', label: 'Session reports' },
       { value: 'support', label: 'Support' },
       { value: 'advanced-settings', label: 'Advanced Settings' },
     ],

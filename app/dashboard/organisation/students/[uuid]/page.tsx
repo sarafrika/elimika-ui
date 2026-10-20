@@ -24,6 +24,16 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ComponentType, ReactNode } from 'react';
 import { useMemo } from 'react';
+import {
+  type SectionTab,
+  SectionTabPanel,
+  SectionTabs,
+  StatusBadge,
+  type StatusTone,
+  statusToneClass,
+  surfaceTheme,
+  useSectionTab,
+} from '@/components/data-display';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -54,16 +64,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { generateWalletId, institutionRef } from '@/src/lib/wallet-id';
-import {
-  type SectionTab,
-  SectionTabPanel,
-  SectionTabs,
-  StatusBadge,
-  type StatusTone,
-  statusToneClass,
-  surfaceTheme,
-  useSectionTab,
-} from '@/components/data-display';
+import { StudentGradesSection } from './_components/StudentGradesSection';
 
 const STUDENT_TABS = ['overview', 'performance', 'guardians', 'certificates', 'audit'] as const;
 type StudentTab = (typeof STUDENT_TABS)[number];
@@ -816,6 +817,12 @@ export default function OrganisationStudentDetailPage() {
                 </table>
               </div>
             )}
+          </SectionPanel>
+          <SectionPanel title='Grades' description='Lesson marks, final grade and trainer comments for each course.'>
+            <StudentGradesSection
+              studentUuid={studentProfileUuid}
+              studentName={student?.full_name ?? 'Student'}
+            />
           </SectionPanel>
         </SectionTabPanel>
 

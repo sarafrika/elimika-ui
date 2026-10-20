@@ -607,6 +607,7 @@ export default {
       label: 'Assessment',
       items: [
         { title: 'Attendance', url: '/dashboard/attendance', icon: ClipboardCheck },
+        { title: 'Session reports', url: '/dashboard/session-reports', icon: ClipboardList },
         { title: 'Assignments', url: '/dashboard/assignments', icon: FileText },
         { title: 'Competition', url: '/dashboard/competition', icon: Trophy },
         { title: 'Exams', url: '/dashboard/exams', icon: GraduationCap },

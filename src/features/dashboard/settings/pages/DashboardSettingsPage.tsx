@@ -59,6 +59,7 @@ import { AcademicGroupsPanel } from '../panels/academic-groups-panel';
 import { AgeGroupsPanel } from '../panels/age-groups-panel';
 import { InstitutionProfilePanel } from '../panels/institution-profile-panel';
 import { RolesPermissionsPanel } from '../panels/roles-permissions-panel';
+import { SessionReportsPanel } from '../panels/session-reports-panel';
 import {
   type DashboardSettingsVariant,
   formatDate,
@@ -1032,6 +1033,10 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
 
               <SectionTabPanel value='roles'>
                 {activeTab === 'roles' ? <RolesPermissionsPanel /> : null}
+              </SectionTabPanel>
+
+              <SectionTabPanel value='session-reports'>
+                {activeTab === 'session-reports' ? <SessionReportsPanel /> : null}
               </SectionTabPanel>
             </>
           ) : null}
