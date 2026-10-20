@@ -1,5 +1,15 @@
-import ClassTrainingPage from './_components/ClassTrainingPage';
+import { redirect } from 'next/navigation';
 
-export default function TrainingInterfacePage() {
-  return <ClassTrainingPage />;
+// The old training console is retired: its notes and grading grid never saved.
+// Every link still landing here opens the class workbook on the same session.
+export default async function TrainingInterfacePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const schedule = typeof query.schedule === 'string' ? query.schedule : undefined;
+  redirect(`/dashboard/instructor/classes/training/${id}${schedule ? `?schedule=${encodeURIComponent(schedule)}` : ''}`);
 }

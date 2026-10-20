@@ -1,12 +1,11 @@
 'use client';
 
-import { useParams } from 'next/navigation';
-import { useMemo } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useInstructor } from '@/context/instructor-context';
 import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
-import ClassTrainingPage from '../../classes/class-training/[id]/_components/ClassTrainingPage';
 
 export default function ClassInstanceDetailsRoute() {
   const params = useParams<{ id: string }>();
@@ -57,7 +56,14 @@ export default function ClassInstanceDetailsRoute() {
     );
   }
 
-  return (
-    <ClassTrainingPage classId={selectedClass.uuid} requestedScheduleId={requestedScheduleId} />
-  );
+  return <OpenWorkbook classId={selectedClass.uuid} scheduleId={requestedScheduleId} />;
+}
+
+/** The old console is retired; the class workbook opens on this session instead. */
+function OpenWorkbook({ classId, scheduleId }: { classId: string; scheduleId: string }) {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace(`/dashboard/instructor/classes/training/${classId}?schedule=${encodeURIComponent(scheduleId)}`);
+  }, [router, classId, scheduleId]);
+  return <Skeleton className='m-4 h-[520px] rounded-xl' />;
 }
