@@ -11,9 +11,13 @@ export default async function ClassWorkbookPage({ params }: { params: Promise<{ 
   );
 }
 
-// ft: improve enrollments, assessment previews and scheduler filters
-
 // - Show class enrollment counts, course filters and training rates
 // - Add quiz and assignment previews to program evaluations
 // - Add scheduler event-type toggles and remove the KPI strip
 // - Open the Grading tab from attendance evaluation actions
+// - Replace legacy training routes and update navigation links
+// - Redirect old URLs while preserving lesson and session context
+// - Move certificate awarding under the new training route
+// - Extract shared rubric grading and rich-text preview components
+// - Filter grading to the evaluated student with a show-all option
+// - Update routing tests and simplify program evaluation copy

@@ -10,12 +10,12 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/ui/empty-state';
 import { STALE_TIMES } from '@/lib/query-client';
+import type { QuizQuestion } from '@/services/client/types.gen';
 import { WorkbookLoading } from './WorkbookLoading';
 import { WorkbookError } from './WorkbookError';
 import { hasApiError, nextWorkbookPage, WORKBOOK_PAGE_SIZE } from './workbook-data';
 
 export function QuizQuestions({ quizId }: { quizId: string }) {
-  const [selected, setSelected] = useState('');
   const query = useInfiniteQuery({
     ...searchQuestionsInfiniteOptions({
       query: { searchParams: { quiz_uuid_eq: quizId }, pageable: { size: WORKBOOK_PAGE_SIZE } },
@@ -31,29 +31,7 @@ export function QuizQuestions({ quizId }: { quizId: string }) {
   const questions = query.data?.pages.flatMap(page => page.data?.content ?? []) ?? [];
   return (
     <div className='space-y-4'>
-      {!questions.length && <EmptyState title='No quiz questions' />}
-      {questions.map((question, index) => (
-        <div key={question.uuid ?? index} className='border-border space-y-3 rounded-lg border p-4'>
-          <div className='flex gap-2'>
-            <Badge variant='outline'>{question.question_type.replaceAll('_', ' ')}</Badge>
-            <Badge variant='secondary'>{question.points} points</Badge>
-          </div>
-          <p className='whitespace-pre-wrap'>
-            {index + 1}. {question.question_text}
-          </p>
-          {question.uuid && (
-            <Button
-              variant='ghost'
-              onClick={() => setSelected(selected === question.uuid ? '' : question.uuid!)}
-            >
-              {selected === question.uuid ? 'Hide answer options' : 'Show answer options'}
-            </Button>
-          )}
-          {question.uuid && selected === question.uuid && (
-            <QuestionOptions quizId={quizId} questionId={question.uuid} />
-          )}
-        </div>
-      ))}
+      <QuizQuestionList key={quizId} quizId={quizId} questions={questions} />
       {query.hasNextPage && (
         <Button
           variant='outline'
@@ -63,6 +41,49 @@ export function QuizQuestions({ quizId }: { quizId: string }) {
           Load more questions
         </Button>
       )}
+    </div>
+  );
+}
+
+// Shared by the instructor training preview and course/program assessment sheets.
+// Keep one answer panel open so displaying a quiz never starts a query per question.
+export function QuizQuestionList({
+  quizId,
+  questions,
+}: {
+  quizId: string;
+  questions: QuizQuestion[];
+}) {
+  const [selected, setSelected] = useState('');
+  return (
+    <div className='space-y-4'>
+      {!questions.length && <EmptyState title='No quiz questions' />}
+      {questions.map((question, index) => {
+        const questionId = question.uuid;
+        const expanded = selected === questionId;
+        return (
+          <div key={questionId ?? index} className='border-border space-y-3 rounded-lg border p-4'>
+            <div className='flex flex-wrap gap-2'>
+              <Badge variant='outline'>{question.question_type.replaceAll('_', ' ')}</Badge>
+              <Badge variant='secondary'>{question.points} points</Badge>
+            </div>
+            <p className='break-words whitespace-pre-wrap'>
+              {index + 1}. {question.question_text}
+            </p>
+            {questionId && (
+              <Button
+                type='button'
+                variant='ghost'
+                aria-expanded={expanded}
+                onClick={() => setSelected(current => (current === questionId ? '' : questionId))}
+              >
+                {expanded ? 'Hide answer options' : 'Show answer options'}
+              </Button>
+            )}
+            {questionId && expanded && <QuestionOptions quizId={quizId} questionId={questionId} />}
+          </div>
+        );
+      })}
     </div>
   );
 }

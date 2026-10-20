@@ -59,6 +59,18 @@ export function ProgramEvaluation({
   const [chosenCourse, setChosenCourse] = useState('');
   const courseUuid = courseIds.includes(chosenCourse) ? chosenCourse : courseIds[0];
 
+
+  // - recheck the programEvaluation for different courses in the program and allow users to see details of quizzes and assignments
+  // whenn i hover a quiz/assignment, dont show a background effect
+  // in the details sheet, rubrics is not showing properly.... you are to show the matrix of the scoring level and criteria of the rubrics. if there are no rubrics attached, no need to show the rubric section at all
+  // for quiz questions, there is a way the quiz questions is shown to instructors when they are trying to schedule a quiz in the training dashboard section, use the same template to show quiz on this page
+
+
+
+  // i see that the course-management (create program, create courses) was kept under the /courses folder for course-creators
+  // is it possible to move those files to course-management, and update all the routes such that it points to my-courses tab (which is course-managemen?)
+  // after the update, do not run build, typecheck or lint
+
   return (
     <section className='space-y-4' aria-label='Program evaluation'>
       <h3 className='text-sm font-medium'>Evaluation per course</h3>
