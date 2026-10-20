@@ -2,8 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Behaviour specs run against `next dev` with every API call answered from fixtures:
 // browser calls are intercepted with page.route, server-side calls hit the mock API below.
-const APP_PORT = 3100;
-const MOCK_API_PORT = 4010;
+// Separate checkouts or worktrees can run side by side on their own ports.
+const APP_PORT = Number(process.env.E2E_APP_PORT ?? 3100);
+const MOCK_API_PORT = Number(process.env.E2E_MOCK_API_PORT ?? 4010);
 
 export const E2E_AUTH_SECRET = 'e2e-only-secret-not-used-anywhere-else-0123456789';
 
