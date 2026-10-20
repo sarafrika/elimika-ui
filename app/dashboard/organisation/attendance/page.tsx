@@ -3,9 +3,9 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, ClipboardCheck, Clock, Search, XCircle } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-
+import { surfaceTheme } from '@/components/data-display';
 import { PageHeader } from '@/components/page-header';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +29,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
+import { useStudentsByIds } from '@/hooks/use-batched-lookups';
 import { extractList, extractPage } from '@/lib/api-helpers';
 import type { ClassDefinition, Enrollment, User } from '@/services/client';
 import {
@@ -38,7 +39,6 @@ import {
   getUsersByOrganisationAndDomainOptions,
   markAttendanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { surfaceTheme } from '@/components/data-display';
 
 type Status = 'Present' | 'Absent' | 'Not marked';
 
@@ -99,6 +99,18 @@ export default function AttendancePage() {
   });
   const enrollments = extractList<Enrollment>(enrollmentsQuery.data);
 
+  // Enrolments carry student ids; organisation members are keyed by user id, so bridge via the student.
+  const enrolledStudentIds = useMemo(
+    () => enrollments.flatMap(e => (e.student_uuid ? [e.student_uuid] : [])),
+    [enrollments]
+  );
+  const enrolledStudents = useStudentsByIds(enrolledStudentIds);
+  const userOfStudent = useCallback(
+    (studentUuid?: string) =>
+      studentsByUuid.get(enrolledStudents.studentMap[studentUuid ?? '']?.user_uuid ?? ''),
+    [studentsByUuid, enrolledStudents.studentMap]
+  );
+
   const mark = useMutation({
     ...markAttendanceMutation(),
     onSuccess: () => {
@@ -116,12 +128,12 @@ export default function AttendancePage() {
       enrollments.filter(e => {
         if (status !== 'all' && statusOf(e) !== status) return false;
         if (query) {
-          const name = fullName(studentsByUuid.get(e.student_uuid ?? ''));
+          const name = fullName(userOfStudent(e.student_uuid));
           if (!name.toLowerCase().includes(query.toLowerCase())) return false;
         }
         return true;
       }),
-    [enrollments, status, query, studentsByUuid]
+    [enrollments, status, query, userOfStudent]
   );
 
   const totals = useMemo(() => {
@@ -143,7 +155,7 @@ export default function AttendancePage() {
       {
         onSuccess: () =>
           toast.success(attended ? 'Marked present' : 'Marked absent', {
-            description: fullName(studentsByUuid.get(e.student_uuid ?? '')),
+            description: fullName(userOfStudent(e.student_uuid)),
           }),
         onError: () => toast.error('Could not update attendance'),
       }
@@ -259,7 +271,7 @@ export default function AttendancePage() {
                 <TableBody>
                   {rows.map(e => {
                     const st = statusOf(e);
-                    const student = studentsByUuid.get(e.student_uuid ?? '');
+                    const student = userOfStudent(e.student_uuid);
                     return (
                       <TableRow key={e.uuid}>
                         <TableCell className='whitespace-nowrap'>
