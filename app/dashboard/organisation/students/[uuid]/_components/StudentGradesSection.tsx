@@ -4,11 +4,11 @@ import { useQuery } from '@tanstack/react-query';
 import { ProgressReportCard } from '@/components/lesson/ProgressReportCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { STALE_TIMES } from '@/lib/query-client';
-import { getCourseEnrollmentsForStudentOptions } from '@/services/client/@tanstack/react-query.gen';
+import { getStudentCourseEnrollmentsOptions } from '@/services/client/@tanstack/react-query.gen';
 
 function useStudentCourseEnrollments(studentUuid: string) {
   return useQuery({
-    ...getCourseEnrollmentsForStudentOptions({
+    ...getStudentCourseEnrollmentsOptions({
       path: { studentUuid },
       query: { pageable: { page: 0, size: 50 } },
     }),
@@ -22,7 +22,7 @@ function useStudentCourseEnrollments(studentUuid: string) {
 export function StudentGradesSection({ studentUuid, studentName }: { studentUuid: string; studentName: string }) {
   const query = useStudentCourseEnrollments(studentUuid);
   if (query.isLoading) return <Skeleton className='h-40 w-full rounded-md' />;
-  const enrollments = (query.data ?? []).filter(enrollment => enrollment.enrollment_uuid && enrollment.course_uuid);
+  const enrollments = (query.data ?? []).filter(enrollment => enrollment.uuid && enrollment.course_uuid);
   return (
     <section className='space-y-4' aria-label='Grades'>
       <p className='bg-primary/10 rounded-xl px-4 py-3 text-sm'>
@@ -33,9 +33,9 @@ export function StudentGradesSection({ studentUuid, studentName }: { studentUuid
       ) : (
         enrollments.map(enrollment => (
           <ProgressReportCard
-            key={enrollment.enrollment_uuid}
+            key={enrollment.uuid}
             courseUuid={enrollment.course_uuid ?? ''}
-            enrollmentUuid={enrollment.enrollment_uuid ?? ''}
+            enrollmentUuid={enrollment.uuid ?? ''}
             studentName={studentName}
             allowFeedback={false}
           />

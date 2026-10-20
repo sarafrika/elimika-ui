@@ -14,7 +14,7 @@ test('the school sees a learner’s submitted grades read-only, never drafts', a
     ])
     .get(new RegExp(`^/api/v1/enrollment/organisations/${ORG}/students/${amani.uuid}/performance$`), [])
     .get(new RegExp(`^/api/v1/courses/enrollments/students/${amani.uuid}$`), paged([
-      { enrollment_uuid: ENROLMENT, course_uuid: COURSE, course_name: 'Violin Foundations', enrollment_status: 'ACTIVE' },
+      { uuid: ENROLMENT, student_uuid: amani.uuid, course_uuid: COURSE, status: 'ACTIVE' },
     ]))
     .get(new RegExp(`^/api/v1/courses/${COURSE}/gradebook/enrollments/${ENROLMENT}/progress-report$`), {
       course_name: 'Violin Foundations',
