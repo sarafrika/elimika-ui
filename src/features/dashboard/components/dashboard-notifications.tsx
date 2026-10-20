@@ -107,12 +107,12 @@ export const getNotificationUrlPath = (
     case 'NEW_STUDENT_ENROLLMENT':
       if (activeDomain === 'instructor') {
         return metadata.class_definition_uuid
-          ? `${INSTRUCTOR_PATH}/classes/class-training/${metadata.class_definition_uuid}`
+          ? `${INSTRUCTOR_PATH}/classes/training/${metadata.class_definition_uuid}`
           : `${INSTRUCTOR_PATH}/training-hub`;
       }
 
       return metadata.class_definition_uuid
-        ? `${INSTRUCTOR_PATH}/classes/class-training/${metadata.class_definition_uuid}`
+        ? `${INSTRUCTOR_PATH}/classes/training/${metadata.class_definition_uuid}`
         : action_url || '';
 
     case 'UPCOMING_CLASS_REMINDER':
@@ -123,7 +123,7 @@ export const getNotificationUrlPath = (
       }
 
       if (activeDomain === 'instructor' && metadata.class_definition_uuid) {
-        return `${INSTRUCTOR_PATH}/classes/class-training/${metadata.class_definition_uuid}`;
+        return `${INSTRUCTOR_PATH}/classes/training/${metadata.class_definition_uuid}`;
       }
 
       return action_url;

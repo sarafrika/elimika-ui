@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { calculateRubricGrade, type RubricGradeSelections } from '@/lib/rubric-grading';
 import { CheckCircle2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 // ════════════════════════════════════════════════════════════════════════
 // Types — shaped to match the rubricMatrices[uuid] object as it comes back
@@ -258,73 +258,4 @@ export function RubricGradingMatrix({
       </div>
     </div>
   );
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// Compact read-only preview (used where the full grading grid is too much
-// — e.g. inside the assessment list before an instructor opens grading).
-// Keeps the original "rubric attached" summary but adds scoring levels.
-// ════════════════════════════════════════════════════════════════════════
-
-export function RubricSummaryPreview({ matrix }: { matrix: RubricMatrix }) {
-  const sortedLevels = useMemo(
-    () => [...matrix.scoring_levels].sort((a, b) => (b.points ?? 0) - (a.points ?? 0)),
-    [matrix.scoring_levels]
-  );
-
-  return (
-    <div className='space-y-2'>
-      <p className='text-muted-foreground text-xs'>
-        {matrix.criteria.length} criteria · {matrix.scoring_levels.length} scoring levels
-      </p>
-
-      <div className='flex flex-wrap gap-1.5'>
-        {sortedLevels.map(level => (
-          <span
-            key={level.uuid}
-            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-              level.is_passing === false
-                ? 'border-destructive/30 bg-destructive/5 text-destructive'
-                : 'border-primary/20 bg-primary/5 text-primary'
-            }`}
-          >
-            {level.name}
-            <span className='text-muted-foreground'>{level.points}pts</span>
-          </span>
-        ))}
-      </div>
-
-      <div className='space-y-1.5'>
-        {[...matrix.criteria]
-          .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
-          .slice(0, 3)
-          .map(criteria => (
-            <div key={criteria.uuid}>
-              <p className='text-xs font-medium'>{criteria.component_name}</p>
-              <p className='text-muted-foreground text-[11px]'>
-                {criteria.description || criteria.weight_suggestion || 'Criteria'}
-              </p>
-            </div>
-          ))}
-      </div>
-    </div>
-  );
-}
-
-// ════════════════════════════════════════════════════════════════════════
-// Hook: simple controlled-selections state for one assessment's rubric.
-// Optional convenience — parents can also manage selections themselves
-// (e.g. as part of a larger per-student grading form) and skip this.
-// ════════════════════════════════════════════════════════════════════════
-
-export function useRubricGradeSelections(initial: RubricGradeSelections = {}) {
-  const [selections, setSelections] = useState<RubricGradeSelections>(initial);
-
-  const setSelection = (criteriaUuid: string, levelUuid: string) => {
-    setSelections(prev => ({ ...prev, [criteriaUuid]: levelUuid }));
-  };
-
-  const reset = (next: RubricGradeSelections = {}) => setSelections(next);
-
-  return { selections, setSelection, reset };
 }

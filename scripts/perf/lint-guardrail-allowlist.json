@@ -29,7 +29,6 @@
     "app/dashboard/instructor/analytics/_components/useInstructorAnalyticsData.ts": 1,
     "app/dashboard/instructor/assignment/_components/AssignmentPageClient.tsx": 5,
     "app/dashboard/instructor/assignment/_components/AssignmentSubmissionOverlay.tsx": 1,
-    "app/dashboard/instructor/classes/class-training/[id]/_components/ClassTrainingPage.tsx": 3,
     "app/dashboard/instructor/enrollments/[id]/page.tsx": 2,
     "app/dashboard/instructor/enrollments/page.tsx": 2,
     "app/dashboard/instructor/learning/instructor/[id]/page.tsx": 1,

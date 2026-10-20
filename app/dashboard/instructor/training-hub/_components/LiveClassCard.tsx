@@ -65,7 +65,7 @@ import {
   deactivateClassDefinitionMutation,
   getClassDefinitionsForInstructorQueryKey,
 } from '../../../../../services/client/@tanstack/react-query.gen';
-import { RichTextPreview } from '../../classes/class-training/[id]/_components/ClassTrainingPage';
+import { RichTextPreview } from '@/components/content-preview/RichTextPreview';
 import { socialShareActions } from '../../classes/overview/[id]/page';
 import { InviteStudentsSheetContent } from './InviteStudentsSheetContent';
 import { LessonPlanModal } from './LessonPlanModal';
@@ -204,7 +204,7 @@ export function LiveClassCard({
 
   const handleStartClass = (schedule: (typeof schedules)[number]) => {
     router.push(
-      `/dashboard/instructor/classes/class-training/${liveClass.classUuid}?schedule=${schedule.uuid}`
+      `/dashboard/instructor/classes/training/${liveClass.classUuid}?schedule=${schedule.uuid}`
     );
   };
 
@@ -435,14 +435,14 @@ export function LiveClassCard({
 
               <div className='flex w-full max-w-md flex-col gap-3 md:flex-row lg:w-auto'>
                 <Link
-                  href={`/dashboard/instructor/classes/class-training/${liveClass.classUuid}`}
+                  href={`/dashboard/instructor/classes/training/${liveClass.classUuid}`}
                   className='bg-success text-success-foreground hover:bg-success/90 focus:ring-success inline-flex h-10 w-full min-w-fit items-center justify-center rounded-md px-5 text-sm font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none'
                 >
                   View Class
                 </Link>
 
                 <Link
-                  href={`/dashboard/instructor/classes/class-training/${liveClass.classUuid}/award-certificates`}
+                  href={`/dashboard/instructor/classes/training/${liveClass.classUuid}/award-certificates`}
                   className='bg-success text-success-foreground hover:bg-success/90 focus:ring-success inline-flex h-10 w-full min-w-fit items-center justify-center rounded-md px-5 text-center text-sm font-semibold transition-colors focus:ring-2 focus:ring-offset-2 focus:outline-none'
                 >
                   Certificates
@@ -480,7 +480,6 @@ export function LiveClassCard({
                 {/* ACTIONS */}
                 <div className='flex items-center gap-2'>
                   <Link
-                    // href={`/dashboard/instructor/classes/class-training/${liveClass.classUuid}`}
                     href={`/dashboard/instructor/classes/training/${liveClass.classUuid}`}
                     className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 min-w-[120px] items-center justify-center gap-2 rounded-md px-5 text-sm font-semibold transition'
                   >

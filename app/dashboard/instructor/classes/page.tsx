@@ -249,7 +249,7 @@ export default function NewClassPage() {
     }
 
     const queryString = params.toString();
-    return `/dashboard/instructor/classes/class-training/${selectedClassUuid}${
+    return `/dashboard/instructor/classes/training/${selectedClassUuid}${
       queryString ? `?${queryString}` : ''
     }`;
   }, [
@@ -283,7 +283,7 @@ export default function NewClassPage() {
       }
 
       const queryString = params.toString();
-      return `/dashboard/instructor/classes/class-training/${selectedClassUuid}${
+      return `/dashboard/instructor/classes/training/${selectedClassUuid}${
         queryString ? `?${queryString}` : ''
       }`;
     },

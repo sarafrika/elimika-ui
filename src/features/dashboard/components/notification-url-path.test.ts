@@ -18,10 +18,23 @@ test('non-student class reminders use the normalised action url', () => {
   });
   assert.equal(
     getNotificationUrlPath(reminder, 'instructor'),
-    '/dashboard/instructor/classes/class-training/c1'
+    '/dashboard/instructor/classes/training/c1'
   );
   assert.equal(
     getNotificationUrlPath(reminder, 'organisation_user'),
     '/dashboard/organisation/classes?highlight=c1'
   );
+});
+
+test('instructor enrollment notifications open the new training workspace', () => {
+  for (const type of [
+    'INSTRUCTOR_CLASS_ENROLLMENT_MILESTONE',
+    'INSTRUCTOR_CLASS_ENROLLMENT_NOTICE',
+    'NEW_STUDENT_ENROLLMENT',
+  ]) {
+    assert.equal(
+      getNotificationUrlPath(note(type, '', { class_definition_uuid: 'c1' }), 'instructor'),
+      '/dashboard/instructor/classes/training/c1'
+    );
+  }
 });
