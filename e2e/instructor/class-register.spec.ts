@@ -30,7 +30,8 @@ test.describe('Instructor · Class register', () => {
     await register.getByRole('combobox', { name: 'Instrument condition for Amani Wekesa' }).click();
     // Keyboard choice: the list re-positions while the rich-text editors below it finish loading.
     await expect(page.getByRole('option', { name: 'Needs repair' })).toBeVisible();
-    await page.keyboard.press('ArrowDown');
+    // Typeahead picks by name, whichever option the list focused first.
+    await page.keyboard.type('Needs');
     await page.keyboard.press('Enter');
     const comment = register.getByRole('group', { name: 'Comment on Amani Wekesa' }).locator('[contenteditable="true"]');
     await comment.click();
