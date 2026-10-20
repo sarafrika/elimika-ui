@@ -2,6 +2,7 @@
 
 import type React from 'react';
 import { useEffect } from 'react';
+import RichTextRenderer from './richTextRenders';
 
 interface HTMLTextPreviewProps {
   htmlContent: string;
@@ -82,8 +83,9 @@ const HTMLTextPreview: React.FC<HTMLTextPreviewProps> = ({ htmlContent, classNam
         whiteSpace: 'normal',
         ...style,
       }}
-      dangerouslySetInnerHTML={{ __html: htmlContent }}
-    />
+    >
+      <RichTextRenderer htmlString={htmlContent} />
+    </div>
   );
 };
 

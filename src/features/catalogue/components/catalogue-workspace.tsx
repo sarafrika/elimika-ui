@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { AsyncSection } from '@/components/data/async-section';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -1000,13 +1001,11 @@ function CatalogueDetailsBody({
               <BookOpen className='h-3.5 w-3.5' />
               Description
             </p>
-            <div
+            {/* Sanitised first, then cut to plain text; a regex strip lets unclosed tags through. */}
+            <RichTextRenderer
               className='prose prose-sm text-foreground max-w-none'
-              dangerouslySetInnerHTML={{
-                __html:
-                  description.replace(/<[^>]*>/g, '').substring(0, 300) +
-                  (description.length > 300 ? '...' : ''),
-              }}
+              htmlString={description}
+              maxChars={300}
             />
           </div>
         ) : null;

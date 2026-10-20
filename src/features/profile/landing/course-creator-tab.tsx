@@ -1,5 +1,25 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Briefcase,
+  FileText,
+  GraduationCap,
+  Grip,
+  Paperclip,
+  Pencil,
+  PlusCircle,
+  Trash2,
+  Upload,
+  X,
+  XCircle,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { WatchedText, WatchedValue } from '@/components/form/watched-value';
 import {
   AlertDialog,
@@ -36,6 +56,7 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { isForbidden } from '@/lib/api-errors';
 import { CAREER_COLORS } from '@/lib/color-themes';
 import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
@@ -62,26 +83,6 @@ import type {
   CourseCreatorExperience,
   DocumentTypeOption,
 } from '@/services/client/types.gen';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { isForbidden } from '@/lib/api-errors';
-import {
-  Briefcase,
-  FileText,
-  GraduationCap,
-  Grip,
-  Paperclip,
-  Pencil,
-  PlusCircle,
-  Trash2,
-  Upload,
-  X,
-  XCircle,
-} from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useFieldArray, useForm, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import type { DomainTabProps, TabDefinition } from './types';
 
 function TabShell({ children }: { children: React.ReactNode }) {
@@ -125,9 +126,9 @@ function CreatorAboutTab({ sharedProfile }: DomainTabProps) {
             <CardTitle className='text-sm font-semibold'>About Me</CardTitle>
           </CardHeader>
           <CardContent className='pt-0'>
-            <p
+            <RichTextRenderer
               className='text-muted-foreground text-sm leading-relaxed'
-              dangerouslySetInnerHTML={{ __html: sharedProfile.bio }}
+              htmlString={sharedProfile.bio ?? ''}
             />
           </CardContent>
         </Card>

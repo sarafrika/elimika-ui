@@ -1,6 +1,26 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  Briefcase,
+  FileText,
+  GraduationCap,
+  Grip,
+  Paperclip,
+  Pencil,
+  PlusCircle,
+  Trash2,
+  Upload,
+  X,
+  XCircle,
+} from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import * as z from 'zod';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { WatchedText, WatchedValue } from '@/components/form/watched-value';
 import {
   AlertDialog,
@@ -60,25 +80,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { DocumentTypeOption, InstructorEducation, InstructorExperience } from '@/services/client/types.gen';
 import CoursesPage from '@/src/features/profile/components/instructor/rate-card/CoursesPage';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import {
-  Briefcase,
-  FileText,
-  GraduationCap,
-  Grip,
-  Paperclip,
-  Pencil,
-  PlusCircle,
-  Trash2,
-  Upload,
-  X,
-  XCircle,
-} from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useFieldArray, useForm, useWatch } from 'react-hook-form';
-import { toast } from 'sonner';
-import * as z from 'zod';
 import type { DomainTabProps, TabDefinition } from './types';
 
 function TabShell({ children }: { children: React.ReactNode }) {
@@ -108,9 +109,9 @@ function InstructorAboutTab({ sharedProfile }: DomainTabProps) {
             <CardTitle className='text-sm font-semibold'>About Me</CardTitle>
           </CardHeader>
           <CardContent className='pt-0'>
-            <p
+            <RichTextRenderer
               className='text-muted-foreground text-sm leading-relaxed'
-              dangerouslySetInnerHTML={{ __html: sharedProfile.bio }}
+              htmlString={sharedProfile.bio ?? ''}
             />
           </CardContent>
         </Card>

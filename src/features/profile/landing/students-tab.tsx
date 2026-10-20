@@ -1,14 +1,15 @@
 'use client';
 
-import { dateWindow } from '@/lib/date';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { FileText, Mail, Phone, Shield, Tag, User, Users, VenusIcon } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
+import { dateWindow } from '@/lib/date';
 import {
   getClassDefinitionOptions,
   getCourseByUuidOptions,
@@ -117,11 +118,9 @@ function StudentAboutTab({ sharedProfile, userUuid }: DomainTabProps) {
             </CardContent>
 
             <CardContent>
-              <p
+              <RichTextRenderer
                 className='text-muted-foreground text-sm leading-relaxed'
-                dangerouslySetInnerHTML={{
-                  __html: sharedProfile?.student_profile?.bio || 'No bio info',
-                }}
+                htmlString={sharedProfile?.student_profile?.bio || 'No bio info'}
               />
             </CardContent>
           </Card>

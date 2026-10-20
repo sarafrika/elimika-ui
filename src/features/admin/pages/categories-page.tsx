@@ -2,7 +2,6 @@
 
 import { ChevronDown, ChevronRight, Plus, ShieldAlert, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-
 import {
   DetailGrid,
   SectionCard,
@@ -10,6 +9,7 @@ import {
   StatusBadge,
   surfaceTheme,
 } from '@/components/data-display';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { PageHeader } from '@/components/page-header';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,7 +22,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { useSearchState } from '@/hooks/use-search-state';
 import { formatDate } from '@/lib/date';
+import { stringParam } from '@/lib/search-state';
 import { cn } from '@/lib/utils';
 import type { Category } from '@/services/client';
 import { ConfirmDialog } from '../components/confirm-dialog';
@@ -39,8 +41,6 @@ import {
   useSaveCategory,
   useSubCategories,
 } from '../hooks/use-categories';
-import { stringParam } from '@/lib/search-state';
-import { useSearchState } from '@/hooks/use-search-state';
 
 const searchParam = stringParam();
 const activeParam = stringParam('any');
@@ -239,10 +239,9 @@ export function CategoriesPage() {
                   ancestry.
                 </p>
                 {selected.description ? (
-                  <div
+                  <RichTextRenderer
                     className='prose prose-sm text-muted-foreground max-w-none text-sm'
-                    // The description is written in the rich text editor and stored as markup.
-                    dangerouslySetInnerHTML={{ __html: selected.description }}
+                    htmlString={selected.description}
                   />
                 ) : (
                   <p className='text-muted-foreground text-sm'>No description.</p>

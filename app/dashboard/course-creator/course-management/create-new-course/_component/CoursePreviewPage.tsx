@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
 import illustration from '@/assets/illustration.jpg';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { getCourseByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { CourseTrainingRequirement } from '@/services/client/types.gen';
@@ -164,11 +165,9 @@ export default function CustomCoursePreview() {
                 {activeTab === 'overview' && (
                   <div className='space-y-4'>
                     <h2 className='text-foreground text-2xl font-bold'>Course Description</h2>
-                    <div
+                    <RichTextRenderer
                       className='prose prose-sm text-foreground dark:prose-invert max-w-none'
-                      dangerouslySetInnerHTML={{
-                        __html: course?.description ?? '',
-                      }}
+                      htmlString={course?.description ?? ''}
                     />
                   </div>
                 )}
@@ -176,11 +175,9 @@ export default function CustomCoursePreview() {
                 {activeTab === 'objectives' && (
                   <div className='space-y-4'>
                     <h2 className='text-foreground text-2xl font-bold'>Learning Objectives</h2>
-                    <div
+                    <RichTextRenderer
                       className='prose prose-sm text-foreground dark:prose-invert max-w-none'
-                      dangerouslySetInnerHTML={{
-                        __html: course?.objectives ?? '',
-                      }}
+                      htmlString={course?.objectives ?? ''}
                     />
                   </div>
                 )}
@@ -188,11 +185,9 @@ export default function CustomCoursePreview() {
                 {activeTab === 'prerequisites' && (
                   <div className='space-y-4'>
                     <h2 className='text-foreground text-2xl font-bold'>Prerequisites</h2>
-                    <div
+                    <RichTextRenderer
                       className='prose prose-sm text-foreground dark:prose-invert max-w-none'
-                      dangerouslySetInnerHTML={{
-                        __html: course?.prerequisites ?? '',
-                      }}
+                      htmlString={course?.prerequisites ?? ''}
                     />
                   </div>
                 )}

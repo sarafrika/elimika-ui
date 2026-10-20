@@ -23,6 +23,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { CourseTrainingRequirements } from '@/app/dashboard/_components/course-training-requirements';
+import RichTextRenderer from '@/components/editors/richTextRenders';
 import { PublicTopNav } from '@/components/PublicTopNav';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -696,9 +697,9 @@ export function CourseDetailedCard({ course }: CourseProps) {
         {course?.objectives && (
           <div className='bg-muted/30 border-border/60 rounded-2xl border p-4'>
             <h3 className='font-semibold'>Objectives</h3>
-            <div
+            <RichTextRenderer
               className='text-muted-foreground mt-2 text-sm leading-7'
-              dangerouslySetInnerHTML={{ __html: course?.objectives }}
+              htmlString={course?.objectives ?? ''}
             />
           </div>
         )}
@@ -707,9 +708,9 @@ export function CourseDetailedCard({ course }: CourseProps) {
         {course?.prerequisites && (
           <div className='bg-muted/30 border-border/60 rounded-2xl border p-4'>
             <h3 className='font-semibold'>Prerequisites</h3>
-            <div
+            <RichTextRenderer
               className='text-muted-foreground mt-2 text-sm leading-7'
-              dangerouslySetInnerHTML={{ __html: course?.prerequisites }}
+              htmlString={course?.prerequisites ?? ''}
             />
           </div>
         )}
@@ -732,9 +733,9 @@ export function ProgramDetailsCard({
         {program?.objectives && (
           <div className='bg-muted/30 border-border/60 rounded-2xl border p-4'>
             <h3 className='font-semibold'>Objectives</h3>
-            <div
+            <RichTextRenderer
               className='text-muted-foreground mt-2 text-sm leading-7'
-              dangerouslySetInnerHTML={{ __html: program?.objectives }}
+              htmlString={program?.objectives ?? ''}
             />
           </div>
         )}
@@ -743,9 +744,9 @@ export function ProgramDetailsCard({
         {program?.prerequisites && (
           <div className='bg-muted/30 border-border/60 rounded-2xl border p-4'>
             <h3 className='font-semibold'>Prerequisites</h3>
-            <div
+            <RichTextRenderer
               className='text-muted-foreground mt-2 text-sm leading-7'
-              dangerouslySetInnerHTML={{ __html: program?.prerequisites }}
+              htmlString={program?.prerequisites ?? ''}
             />
           </div>
         )}
