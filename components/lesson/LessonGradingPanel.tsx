@@ -1,5 +1,8 @@
 'use client';
 
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -19,26 +22,32 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
+import {
+  useCourseAssessmentsByCourseUuids,
+  useStudentsByIds,
+  useUsersByIds,
+} from '@/hooks/use-batched-lookups';
 import { formatDateTime } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getCourseEnrollmentsInfiniteOptions,
   getEnrollmentsForClassOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import dynamic from 'next/dynamic';
-import { useDeferredValue, useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { isTaskGraded, isTaskSubmitted, taskGradeLabel } from './grading';
 import { useLessonTaskGrades } from './useLessonTaskGrades';
+import { WorkbookError } from './WorkbookError';
+import { WorkbookLoading } from './WorkbookLoading';
 import {
   hasApiError,
   nextWorkbookPage,
   WORKBOOK_PAGE_SIZE,
 } from './workbook-data';
-import { WorkbookError } from './WorkbookError';
-import { WorkbookLoading } from './WorkbookLoading';
+
+const LessonScoringSheet = dynamic(
+  () => import('./LessonScoringSheet').then(module => module.LessonScoringSheet),
+  { loading: () => <WorkbookLoading /> }
+);
 
 const TaskGradingSheet = dynamic(
   () => import('./TaskGradingSheet').then(module => module.TaskGradingSheet),
@@ -58,11 +67,13 @@ export type LessonGradingTask = {
 export function LessonGradingPanel({
   classId,
   courseId,
+  lessonId,
   sessionId,
   tasks,
 }: {
   classId: string;
   courseId: string;
+  lessonId?: string;
   sessionId?: string;
   tasks: LessonGradingTask[];
 }) {
@@ -75,6 +86,13 @@ export function LessonGradingPanel({
     enrollmentId: string;
     task: LessonGradingTask;
   } | null>(null);
+  const [scoring, setScoring] = useState<{ enrollmentId: string; studentName: string } | null>(null);
+
+  // A lesson is scored on a rubric only when the course's evaluation plan has a per-lesson rubric component.
+  const courseAssessments = useCourseAssessmentsByCourseUuids([courseId]);
+  const hasLessonRubric = courseAssessments.items.some(
+    assessment => assessment.per_lesson && assessment.rubric_uuid && assessment.active !== false
+  );
 
   const rosterQuery = useQuery({
     ...getEnrollmentsForClassOptions({
@@ -271,6 +289,21 @@ export function LessonGradingPanel({
                     {tasks.length === 1 ? 'task' : 'tasks'}
                   </p>
                 </div>
+
+                {hasLessonRubric && lessonId && (
+                  <Button
+                    size='sm'
+                    className='ml-auto'
+                    disabled={!student.enrollmentId}
+                    onClick={() => {
+                      if (!student.enrollmentId) return;
+                      setScoring({ enrollmentId: student.enrollmentId, studentName: student.name });
+                    }}
+                    aria-label={`Score this lesson for ${student.name}`}
+                  >
+                    Score lesson
+                  </Button>
+                )}
               </div>
             </CardHeader>
 
@@ -449,6 +482,17 @@ export function LessonGradingPanel({
         >
           Load more student records
         </Button>
+      )}
+
+      {scoring && lessonId && (
+        <LessonScoringSheet
+          key={`${scoring.enrollmentId}-${lessonId}`}
+          courseId={courseId}
+          lessonId={lessonId}
+          enrollmentId={scoring.enrollmentId}
+          studentName={scoring.studentName}
+          onClose={() => setScoring(null)}
+        />
       )}
 
       {selected && (

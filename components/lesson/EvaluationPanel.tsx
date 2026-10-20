@@ -431,6 +431,7 @@ export function EvaluationPanel({
         classId={classId}
         courseId={courseId}
         sessionId={activeSession?.uuid}
+        lessonId={lessonId}
         tasks={[
           ...assignmentRows.flatMap(({ id, assignment, schedule }) =>
             schedule?.assignment_uuid
