@@ -191,6 +191,12 @@ const workflowQueryIds = {
     'searchCertificates',
     'getStudentDashboard',
   ],
+  sessionReport: [
+    'getSessionReport',
+    'getMySessionReports',
+    'getOrganisationSessionReports',
+    'getClassReport',
+  ],
   invitation: [
     'getGuardians',
     'getMine',
@@ -212,6 +218,7 @@ const reviewQueryIds = workflowQueryIds.review;
 const assessmentQueryIds = workflowQueryIds.assessment;
 const certificateQueryIds = workflowQueryIds.certificate;
 const invitationQueryIds = workflowQueryIds.invitation;
+const sessionReportQueryIds = workflowQueryIds.sessionReport;
 
 /** Course and program reads keyed by the uuid that moderation and application events name. */
 const COURSE_DETAIL_QUERY_IDS: ReadonlySet<string> = new Set([
@@ -432,6 +439,17 @@ async function invalidateInvitationWorkflowQueries(
   ]);
 }
 
+/** Due and overdue session reports move the instructor's queue and the school's compliance list. */
+async function invalidateSessionReportWorkflowQueries(
+  queryClient: QueryClient,
+  scope?: WorkflowInvalidationScope
+) {
+  await Promise.all([
+    invalidateGeneratedQueryIds(queryClient, sessionReportQueryIds, scope),
+    invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey]),
+  ]);
+}
+
 /** Grading events that move a mark or a queue; the reminders that share their prefix do not. */
 const GRADING_NOTIFICATION_TYPES = new Set([
   'ASSIGNMENT_GRADED',
@@ -494,6 +512,10 @@ export function invalidateWorkflowQueriesForNotification(
 
   if (type.includes('REVIEW') || type.includes('RATING')) {
     return invalidateReviewWorkflowQueries(queryClient);
+  }
+
+  if (type.startsWith('SESSION_REPORT')) {
+    return invalidateSessionReportWorkflowQueries(queryClient, scope);
   }
 
   if (GRADING_NOTIFICATION_TYPES.has(type)) {
