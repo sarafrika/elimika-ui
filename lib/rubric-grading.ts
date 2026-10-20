@@ -5,17 +5,15 @@ type ScoringMatrix = {
   scoring_levels: ReadonlyArray<{ uuid?: string; points: number }>;
 };
 
-/** Each criterion contributes its selected level's points, scaled to the task maximum. */
-export function calculateRubricGrade(
-  matrix: ScoringMatrix,
-  selections: RubricGradeSelections,
-  maximum?: number
-) {
+/**
+ * The workbook rule: each criterion adds its selected level's points, out of the rubric's own maximum
+ * (top level x criteria). Never scaled to another maximum; the server keeps the same plain sum.
+ */
+export function calculateRubricGrade(matrix: ScoringMatrix, selections: RubricGradeSelections) {
   const { criteria, scoring_levels: levels } = matrix;
   const validLevels = levels.filter(level => Number.isFinite(level.points) && level.points >= 0);
   const highestPoints = validLevels.reduce((highest, level) => Math.max(highest, level.points), 0);
   const rawMaximum = highestPoints * criteria.length;
-  const maxScore = maximum ?? rawMaximum;
   const isValid =
     criteria.length > 0 &&
     criteria.every(criterion => Boolean(criterion.uuid)) &&
@@ -25,9 +23,7 @@ export function calculateRubricGrade(
     levels.every(level => Boolean(level.uuid)) &&
     new Set(levels.map(level => level.uuid)).size === levels.length &&
     Number.isFinite(rawMaximum) &&
-    rawMaximum > 0 &&
-    Number.isFinite(maxScore) &&
-    maxScore > 0;
+    rawMaximum > 0;
   let rawScore = 0;
   let gradedCriteria = 0;
   for (const criterion of criteria) {
@@ -43,9 +39,9 @@ export function calculateRubricGrade(
     isValid,
     rawScore,
     rawMaximum,
-    maxScore,
-    // Preserve fractional points while keeping floating-point artifacts out of saved grades.
-    totalScore: isValid ? Math.min(maxScore, Math.round(ratio * maxScore * 100) / 100) : 0,
+    maxScore: rawMaximum,
+    // Keep floating-point artifacts out of saved grades.
+    totalScore: isValid ? Math.round(rawScore * 100) / 100 : 0,
     percentage: Math.round(ratio * 100),
     gradedCriteria,
     allRowsGraded: isValid && gradedCriteria === criteria.length,

@@ -1,5 +1,9 @@
 'use client';
 
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
+import { type ReactNode, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -41,10 +45,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { AssignmentSubmission, QuizAttempt } from '@/services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import dynamic from 'next/dynamic';
-import { type ReactNode, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import {
   isTaskGraded,
   isTaskSubmitted,
@@ -54,9 +54,9 @@ import {
   taskGradeLabel,
 } from './grading';
 import type { LessonGradingTask } from './LessonGradingPanel';
-import { hasApiError, nextWorkbookPage, WORKBOOK_PAGE_SIZE } from './workbook-data';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
+import { hasApiError, nextWorkbookPage, WORKBOOK_PAGE_SIZE } from './workbook-data';
 
 const AttachmentPreview = dynamic(
   () =>
@@ -304,17 +304,14 @@ function AssignmentGradeForm({
   ...props
 }: Omit<GradeFormProps, 'maximum'> & { maximum?: number; rubricId?: string | null }) {
   return rubricId ? (
-    <RubricGradeForm rubricId={rubricId} maximum={maximum} {...props} />
+    <RubricGradeForm rubricId={rubricId} {...props} />
   ) : (
     <GradeForm maximum={maximum ?? 100} {...props} />
   );
 }
 
-function RubricGradeForm({
-  rubricId,
-  maximum,
-  ...props
-}: Omit<GradeFormProps, 'maximum'> & { maximum?: number; rubricId: string }) {
+// A rubric's score is its plain sum out of its own maximum, never the assignment's configured maximum.
+function RubricGradeForm({ rubricId, ...props }: Omit<GradeFormProps, 'maximum'> & { rubricId: string }) {
   const [selections, setSelections] = useState<RubricGradeSelections>({});
   const query = useQuery({
     ...getRubricMatrixOptions({ path: { rubricUuid: rubricId } }),
@@ -341,9 +338,9 @@ function RubricGradeForm({
   const grade = useMemo(
     () =>
       sourceMatrix
-        ? calculateRubricGrade(sourceMatrix, selections, maximum ?? sourceMatrix.rubric.max_score)
+        ? calculateRubricGrade(sourceMatrix, selections)
         : undefined,
-    [sourceMatrix, selections, maximum]
+    [sourceMatrix, selections]
   );
 
   if (query.isLoading) return <WorkbookLoading />;
@@ -380,7 +377,6 @@ function RubricGradeForm({
           <RubricGradingMatrix
             matrix={matrix}
             selections={selections}
-            maximum={grade.maxScore}
             readOnly={readOnly}
             showScoreSummary={!props.isReadOnly}
             onChange={(criterionId, levelId) =>

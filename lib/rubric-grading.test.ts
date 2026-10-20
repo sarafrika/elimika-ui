@@ -11,12 +11,12 @@ const matrix = {
   ],
 };
 
-test('adds selected levels and scales the total to the assignment maximum', () => {
-  const grade = calculateRubricGrade(matrix, { analysis: 'excellent', presentation: 'good' }, 20);
+test('adds the selected levels as a plain sum out of the rubric maximum, as the workbook does', () => {
+  const grade = calculateRubricGrade(matrix, { analysis: 'excellent', presentation: 'good' });
   assert.equal(grade.rawScore, 7);
-  assert.equal(grade.rawMaximum, 8);
-  assert.equal(grade.totalScore, 17.5);
-  assert.equal(grade.maxScore, 20);
+  assert.equal(grade.totalScore, 7);
+  assert.equal(grade.maxScore, 8);
+  assert.equal(grade.percentage, 88);
   assert.equal(grade.allRowsGraded, true);
 });
 
@@ -32,27 +32,21 @@ test('requires a valid selection for every criterion and ignores unrelated selec
 });
 
 test('zero-point selections count as graded and can produce a saved zero', () => {
-  const grade = calculateRubricGrade(matrix, { analysis: 'missing', presentation: 'missing' }, 100);
+  const grade = calculateRubricGrade(matrix, { analysis: 'missing', presentation: 'missing' });
   assert.equal(grade.totalScore, 0);
   assert.equal(grade.allRowsGraded, true);
 });
 
-test('falls back to raw rubric points when there is no configured maximum', () => {
-  const grade = calculateRubricGrade(matrix, { analysis: 'excellent', presentation: 'excellent' });
-  assert.equal(grade.maxScore, 8);
-  assert.equal(grade.totalScore, 8);
-});
-
-test('rounds fractional results without exceeding the maximum', () => {
-  assert.equal(
-    calculateRubricGrade(matrix, { analysis: 'excellent', presentation: 'good' }, 3).totalScore,
-    2.63
-  );
-  assert.equal(
-    calculateRubricGrade(matrix, { analysis: 'excellent', presentation: 'excellent' }, 0.005)
-      .totalScore,
-    0.005
-  );
+test('half points add without rounding drift, like 27.5 out of 30', () => {
+  const halves = {
+    criteria: [{ uuid: 'a' }, { uuid: 'b' }],
+    scoring_levels: [
+      { uuid: 'five', points: 5 },
+      { uuid: 'half', points: 4.5 },
+    ],
+  };
+  assert.equal(calculateRubricGrade(halves, { a: 'half', b: 'half' }).totalScore, 9);
+  assert.equal(calculateRubricGrade(halves, { a: 'five', b: 'half' }).totalScore, 9.5);
 });
 
 test('blocks saving for empty, unidentified, duplicate, or invalid rubric data', () => {
@@ -77,8 +71,5 @@ test('blocks saving for empty, unidentified, duplicate, or invalid rubric data',
     const grade = calculateRubricGrade(invalidMatrix, {});
     assert.equal(grade.isValid, false);
     assert.equal(grade.allRowsGraded, false);
-  }
-  for (const maximum of [0, -1, Number.NaN, Number.POSITIVE_INFINITY]) {
-    assert.equal(calculateRubricGrade(matrix, {}, maximum).isValid, false);
   }
 });

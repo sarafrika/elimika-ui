@@ -100,14 +100,12 @@ export function RubricGradingMatrix({
   selections,
   onChange,
   readOnly = false,
-  maximum,
   showScoreSummary = true,
 }: {
   matrix: RubricMatrix;
   selections: RubricGradeSelections;
   onChange?: (criteriaUuid: string, levelUuid: string) => void;
   readOnly?: boolean;
-  maximum?: number;
   showScoreSummary?: boolean;
 }) {
   const sortedCriteria = useMemo(
@@ -124,8 +122,8 @@ export function RubricGradingMatrix({
   );
 
   const grade = useMemo(
-    () => calculateRubricGrade(matrix, selections, maximum ?? matrix.rubric.max_score),
-    [matrix, selections, maximum]
+    () => calculateRubricGrade(matrix, selections),
+    [matrix, selections]
   );
   const { totalScore, maxScore, percentage, allRowsGraded } = grade;
   const rubricScore =
