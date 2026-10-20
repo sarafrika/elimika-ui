@@ -30,6 +30,7 @@ export type LessonTabKey =
   | 'assignment'
   | 'grading'
   | 'summary'
+  | 'report'
   | 'resources';
 
 export function LessonsListPanel({

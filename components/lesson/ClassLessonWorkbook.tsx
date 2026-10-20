@@ -1,11 +1,16 @@
 'use client';
 
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Video } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { type ReactNode, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { LessonShell } from '@/app/dashboard/instructor/classes/training/components/LessonShell';
 import {
   LessonsListPanel,
+  type LessonTabKey,
   PracticePanel,
   ResourcesPanel,
-  type LessonTabKey,
 } from '@/app/dashboard/instructor/classes/training/components/LessonTabPanels';
 import { WorkbookPage } from '@/app/dashboard/instructor/classes/training/components/WorkbookPage';
 import RichTextRenderer from '@/components/editors/richTextRenders';
@@ -38,16 +43,17 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { toast } from 'sonner';
 import { EvaluationPanel } from './EvaluationPanel';
+import { SessionReportPanel } from './SessionReportPanel';
 import { useWorkbookNavigation } from './useWorkbookNavigation';
 import { useWorkbookSession } from './useWorkbookSession';
 import {
   getWorkbookSessionAvailability,
   useWorkbookSessionAvailability,
 } from './useWorkbookSessionAvailability';
-import { hasApiError, type WorkbookRole } from './workbook-data';
 import { WorkbookClassRegister } from './WorkbookClassRegister';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
+import { hasApiError, type WorkbookRole } from './workbook-data';
 
 export function ClassLessonWorkbook(props: {
   classId: string;
@@ -124,7 +130,8 @@ function SelectedLessonWorkbook({
       toast.success('Class started.');
       await Promise.all([
         queryClient.invalidateQueries({
-          queryKey: getClassScheduleQueryKey({ path: { uuid: classId } }),
+          // An empty pageable still prefix-matches every page size the workbook loaded.
+          queryKey: getClassScheduleQueryKey({ path: { uuid: classId }, query: { pageable: {} } }),
         }),
         queryClient.invalidateQueries({
           queryKey: getScheduledInstanceQueryKey({ path: variables.path }),
@@ -180,7 +187,8 @@ function SelectedLessonWorkbook({
           requestedTab === 'quiz' ||
           requestedTab === 'assignment' ||
           requestedTab === 'grading' ||
-          requestedTab === 'resources'
+          requestedTab === 'resources' ||
+          (requestedTab === 'report' && role === 'instructor')
           ? requestedTab
           : 'lesson';
   const showList = searchParams.get('view') === 'lessons';
@@ -271,6 +279,13 @@ function SelectedLessonWorkbook({
         activeSession={sessionState.session}
       />
     );
+  else if (tab === 'report')
+    body = (
+      <SessionReportPanel
+        session={sessionState.session}
+        onFix={target => navigate({ tab: target === 'grading' ? 'grading' : 'lesson' })}
+      />
+    );
   else if (tab === 'summary')
     body = (
       <div className='space-y-6'>
@@ -340,6 +355,7 @@ function SelectedLessonWorkbook({
     );
   return (
     <LessonShell
+      showReportTab={role === 'instructor'}
       attendanceRail={
         role === 'instructor' ? (
           <>

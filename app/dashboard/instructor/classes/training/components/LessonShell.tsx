@@ -1,23 +1,10 @@
 'use client';
 
+import { BookOpen, ChevronLeft, ChevronRight, ClipboardCheck, Dumbbell, FileCheck2, FileQuestion, FileText, FolderOpen, Home, List, ListChecks, Menu } from 'lucide-react';
+import Link from 'next/link';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  BookOpen,
-  ChevronLeft,
-  ChevronRight,
-  ClipboardCheck,
-  Dumbbell,
-  FileQuestion,
-  FileText,
-  FolderOpen,
-  Home,
-  List,
-  ListChecks,
-  Menu,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useRef, type ReactNode } from 'react';
 import { Card } from '../../../../../../components/ui/card';
 import type { LessonTabKey } from './LessonTabPanels';
 
@@ -28,6 +15,7 @@ const TABS = [
   { key: 'assignment', label: 'Assignment', icon: FileText },
   { key: 'grading', label: 'Grading', icon: ClipboardCheck },
   { key: 'summary', label: 'Summary', icon: ListChecks },
+  { key: 'report', label: 'Session report', icon: FileCheck2 },
   { key: 'resources', label: 'Resources', icon: FolderOpen },
 ] as const;
 
@@ -67,6 +55,7 @@ export function LessonShell({
   isCompleted,
   onComplete,
   attendanceRail,
+  showReportTab = false,
 }: {
   classTitle: string;
   courseTitle: string;
@@ -88,6 +77,8 @@ export function LessonShell({
   isCompleted: boolean;
   onComplete: () => void;
   attendanceRail?: ReactNode;
+  /** The session report is the instructor's; learners never see the tab. */
+  showReportTab?: boolean;
 }) {
   const showPagination = tab === 'lesson' && !showList && pageCount > 0;
   const showNavigation = !showList && tab !== 'resources' && (tab !== 'lesson' || contentReady);
@@ -160,7 +151,9 @@ export function LessonShell({
               aria-label='Lesson sections'
               className='flex min-w-0 flex-1 gap-1 overflow-x-auto'
             >
-              {TABS.filter(item => item.key !== 'summary' || isCompleted).map(
+              {TABS.filter(
+                item => (item.key !== 'summary' || isCompleted) && (item.key !== 'report' || showReportTab)
+              ).map(
                 ({ key, label, icon: Icon }) => (
                   <Button
                     key={key}
