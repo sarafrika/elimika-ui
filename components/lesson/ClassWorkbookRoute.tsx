@@ -1,17 +1,9 @@
 'use client';
 
-import { useMemo } from 'react';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import {
-  getClassDefinitionOptions,
-  getCourseByUuidOptions,
-  getCourseLessonsInfiniteOptions,
-  getCourseLessonOptions,
-  getProgramCoursesOptions,
-} from '@/services/client/@tanstack/react-query.gen';
-import type { ClassDefinition, Course, Lesson } from '@/services/client/types.gen';
+import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import {
@@ -22,6 +14,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { STALE_TIMES } from '@/lib/query-client';
+import {
+  getClassDefinitionOptions,
+  getCourseByUuidOptions,
+  getCourseLessonOptions,
+  getCourseLessonsInfiniteOptions,
+  getProgramCoursesOptions,
+} from '@/services/client/@tanstack/react-query.gen';
+import type { ClassDefinition, Course, Lesson } from '@/services/client/types.gen';
+import { ClassLessonWorkbook } from './ClassLessonWorkbook';
+import { useSessionLesson } from './useSessionLesson';
+import { useWorkbookNavigation } from './useWorkbookNavigation';
+import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
 import {
   hasApiError,
@@ -29,9 +33,6 @@ import {
   WORKBOOK_PAGE_SIZE,
   type WorkbookRole,
 } from './workbook-data';
-import { WorkbookError } from './WorkbookError';
-import { useWorkbookNavigation } from './useWorkbookNavigation';
-import { ClassLessonWorkbook } from './ClassLessonWorkbook';
 
 export function ClassWorkbookRoute({
   role,
@@ -174,6 +175,12 @@ function CourseWorkspace({ courseId, ...props }: WorkspaceProps & { courseId: st
         .sort((a, b) => a.lesson_number - b.lesson_number),
     [lessonsQuery.data, props.role]
   );
+  // A link to a session without a lesson opens the lesson that session teaches.
+  const sessionLesson = useSessionLesson(
+    props.classId,
+    searchParams.get('lesson') ? null : searchParams.get('schedule'),
+    lessons
+  );
   if (courseQuery.isLoading || lessonsQuery.isLoading) return <WorkbookLoading />;
   if (
     courseQuery.isError ||
@@ -213,7 +220,7 @@ function CourseWorkspace({ courseId, ...props }: WorkspaceProps & { courseId: st
         lessonId={requestedLessonId}
       />
     );
-  return <ClassLessonWorkbook {...workbookProps} lesson={requestedLesson ?? lessons[0]} />;
+  return <ClassLessonWorkbook {...workbookProps} lesson={requestedLesson ?? sessionLesson ?? lessons[0]} />;
 }
 
 function RequestedLessonWorkspace({
