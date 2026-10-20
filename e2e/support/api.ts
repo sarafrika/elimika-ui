@@ -11,13 +11,18 @@ export class MockApi {
   readonly calls: ApiCall[] = [];
   readonly unmatched: string[] = [];
 
-  on(method: string, pattern: RegExp, handler: Handler | unknown) {
+  // Overloads keep the request typed when a handler function is passed.
+  on(method: string, pattern: RegExp, handler: Handler): this;
+  on(method: string, pattern: RegExp, data: unknown): this;
+  on(method: string, pattern: RegExp, handler: unknown) {
     const fn: Handler = typeof handler === 'function' ? (handler as Handler) : () => handler;
     this.routes.unshift({ method: method.toUpperCase(), pattern, handler: fn });
     return this;
   }
 
-  get(pattern: RegExp, handler: Handler | unknown) {
+  get(pattern: RegExp, handler: Handler): this;
+  get(pattern: RegExp, data: unknown): this;
+  get(pattern: RegExp, handler: unknown) {
     return this.on('GET', pattern, handler);
   }
 
@@ -48,8 +53,18 @@ export class MockApi {
   }
 }
 
-/** Wraps data in the backend's ApiResponse envelope unless it already is one. */
+const RAW = Symbol('raw');
+
+/** Sends the body exactly as given, for the few endpoints that do not use the ApiResponse envelope. */
+export function raw(data: unknown) {
+  return { [RAW]: data };
+}
+
+/** Wraps data in the backend's ApiResponse envelope unless it already is one, or is raw(). */
 export function ok(data: unknown) {
+  if (data && typeof data === 'object' && RAW in (data as Record<symbol, unknown>)) {
+    return (data as Record<symbol, unknown>)[RAW];
+  }
   if (data && typeof data === 'object' && 'success' in (data as Record<string, unknown>)) return data;
   return { success: true, data, message: 'ok' };
 }
