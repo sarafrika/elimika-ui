@@ -37,12 +37,10 @@ export default function CourseCreatorWalletPage() {
 
   const txns = transactions.data?.data?.content ?? [];
   const entries = useMemo(() => statementEntries(txns), [txns]);
-  const totals = earnerTotals(txns);
+  const totals = earnerTotals(wallet.data?.data);
   const balance = Number(wallet.data?.data?.balance_amount ?? 0);
   const currency = wallet.data?.data?.currency_code ?? 'KES';
-  const withdrawn = txns
-    .filter(txn => txn.transaction_type === 'TRANSFER_OUT')
-    .reduce((sum, txn) => sum + Number(txn.amount ?? 0), 0);
+  const withdrawn = totals.transferredOut;
 
   const courseRows = earnings.data?.data ?? [];
   const { courseMap } = useCoursesByIds(courseRows.map(row => row.course_uuid ?? ''));

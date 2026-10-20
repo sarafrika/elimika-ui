@@ -44,7 +44,7 @@ export default function InstructorWalletPage() {
 
   const txns = transactions.data?.data?.content ?? [];
   const entries = useMemo(() => statementEntries(txns), [txns]);
-  const totals = earnerTotals(txns);
+  const totals = earnerTotals(wallet.data?.data);
   const obligationList = (obligations.data?.data?.content ?? []) as Obligation[];
   const { classDefinitionMap } = useClassDefinitionsByIds(obligationList.map(o => o.class_definition_uuid ?? ''));
   const { organisationMap } = useOrganisationsByIds(obligationList.map(o => o.organisation_uuid ?? ''));
