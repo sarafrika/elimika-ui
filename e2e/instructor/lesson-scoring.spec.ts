@@ -137,12 +137,14 @@ test.describe('Instructor · Lesson scoring drawer', () => {
     }
   });
 
-  test('level descriptions sit once in the header and each cell shows only its points, centred', async ({ page }) => {
+  test('level descriptions alone head the columns and each cell shows only its points, centred', async ({ page }) => {
     await mockLessonScoring(mockInstructorWorkbook(new MockApi()), null, { described: true }).install(page);
     const drawer = await openDrawer(page);
-    const header = drawer.getByRole('columnheader', { name: /Level 4/ });
-    await expect(header.locator('[data-part="level-description"]')).toHaveText('Mostly accurate');
+    const header = drawer.getByRole('columnheader', { name: 'Mostly accurate' });
+    await expect(header).toBeVisible();
     await expect(drawer.getByText('Mostly accurate')).toHaveCount(1);
+    // Headers carry only descriptions, never "Level n".
+    await expect(drawer.getByRole('columnheader').filter({ hasText: /Level \d/ })).toHaveCount(0);
 
     const cell = drawer.getByRole('row', { name: /Posture/ }).getByRole('button', { name: /Level 4/ });
     await expect(cell).toHaveText(/^4\s*pts$/);

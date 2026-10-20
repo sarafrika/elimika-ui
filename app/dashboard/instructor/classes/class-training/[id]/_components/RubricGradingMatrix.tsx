@@ -183,15 +183,13 @@ export function RubricGradingMatrix({
                     key={level.uuid}
                     className='border-border/70 text-foreground border-b px-3 py-2 text-xs font-semibold'
                   >
-                    {/* The level's meaning is said once, here; the cells below only carry its points. */}
-                    <div className='flex max-w-[220px] min-w-[140px] flex-col gap-0.5'>
-                      <span>{level.name}</span>
-                      {level.description || level.performance_indicator ? (
-                        <span data-part='level-description' className='text-muted-foreground text-[11px] leading-snug font-normal'>
-                          {level.description || level.performance_indicator}
-                        </span>
-                      ) : null}
-                    </div>
+                    {/* Only the level's description heads its column; the cells below carry its points. */}
+                    <span
+                      data-part='level-description'
+                      className='block max-w-[220px] min-w-[140px] text-[11px] leading-snug font-medium'
+                    >
+                      {level.description || level.performance_indicator || level.name}
+                    </span>
                   </th>
                 ))}
               </tr>
