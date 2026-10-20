@@ -29,6 +29,8 @@ const FILTERS: { value: Filter; label: string }[] = [
 ];
 
 const isOverdue = (report: SessionReportSummary) => report.status === 'draft' && Boolean(report.overdue);
+const STATUS_LABELS: Record<string, string> = { draft: 'Draft', submitted: 'Submitted', locked: 'Locked' };
+const statusLabel = (status?: string) => STATUS_LABELS[status ?? ''] ?? 'Draft';
 
 export default function OrganisationSessionReportsPage() {
   const organisation = useOrganisation();
@@ -72,7 +74,7 @@ export default function OrganisationSessionReportsPage() {
   return (
     <div className={`${surfaceTheme.pageWide} space-y-6 py-4`}>
       <PageHeader
-        eyebrow='Music programme'
+        eyebrow='Assessment'
         title='Session reports'
         description='Each class session needs a report within 24 hours. You see reports once trainers submit them.'
       />
@@ -165,7 +167,7 @@ export default function OrganisationSessionReportsPage() {
                     </p>
                   </div>
                   <Badge variant={isOverdue(report) ? 'destructive' : report.status === 'locked' ? 'secondary' : 'outline'}>
-                    {isOverdue(report) ? 'Overdue' : report.status}
+                    {isOverdue(report) ? 'Overdue' : statusLabel(report.status)}
                   </Badge>
                   {report.status !== 'draft' && report.instance_uuid && (
                     <Button size='sm' variant='outline' onClick={() => setOpenInstance(report.instance_uuid ?? null)}>

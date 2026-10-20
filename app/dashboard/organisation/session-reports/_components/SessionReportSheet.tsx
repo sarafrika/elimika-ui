@@ -23,6 +23,13 @@ const num = (value?: number | null) =>
   value == null ? '—' : Number.isInteger(value) ? String(value) : value.toFixed(1);
 
 /** The school's read-only view of one submitted session report. */
+const STATUS_LABELS: Record<string, string> = { draft: 'Draft', submitted: 'Submitted', locked: 'Locked' };
+const INSTRUMENT_LABELS: Record<string, string> = {
+  GOOD: 'Good',
+  NEEDS_REPAIR: 'Needs repair',
+  NO_EQUIPMENT: 'No equipment',
+};
+
 export function SessionReportSheet({
   instanceUuid,
   studentName,
@@ -46,7 +53,8 @@ export function SessionReportSheet({
         <SheetHeader className='shrink-0 border-b pr-12'>
           <SheetTitle>
             {report?.class_title ?? 'Session report'}
-            {report?.lesson_number ? ` · Class ${report.lesson_number}` : ''}
+            {report?.lesson_number ? ` · Lesson ${report.lesson_number}` : ''}
+            {report?.lesson_title ? ` — ${report.lesson_title}` : ''}
           </SheetTitle>
           <SheetDescription>
             {report?.start_time ? formatDateTime(report.start_time) : ''}
@@ -63,17 +71,20 @@ export function SessionReportSheet({
           ) : (
             <>
               <div className='flex flex-wrap items-center gap-2'>
-                <Badge variant='outline'>{report?.status}</Badge>
+                <Badge variant='outline'>{STATUS_LABELS[report?.status ?? ''] ?? 'Draft'}</Badge>
                 {report?.submitted_at && (
                   <span className='text-muted-foreground text-xs'>Submitted {formatDateTime(report.submitted_at)}</span>
                 )}
               </div>
               <section className='bg-muted/40 space-y-2 rounded-xl border p-4 text-sm'>
                 <div>
-                  <span className='font-semibold'>What was taught: </span>
-                  {report?.lesson_title}
+                  <span className='font-semibold'>What was taught</span>
+                  {report?.topic_covered ? (
+                    <RichTextRenderer htmlString={report.topic_covered} />
+                  ) : (
+                    <p className='text-muted-foreground'>Not recorded</p>
+                  )}
                 </div>
-                {report?.topic_covered && <RichTextRenderer htmlString={report.topic_covered} />}
                 {report?.instructor_remarks && (
                   <div className='text-muted-foreground'>
                     <RichTextRenderer htmlString={report.instructor_remarks} />
@@ -123,8 +134,8 @@ export function SessionReportSheet({
                       <tr key={row.class_enrollment_uuid ?? row.student_uuid} className='border-t'>
                         <td className='px-3 py-2 font-medium'>{studentName(row.student_uuid)}</td>
                         <td className='px-3 py-2'>{attendanceLabel(row.attendance)}</td>
-                        <td className='px-3 py-2'>{row.instrument_condition?.replace('_', ' ').toLowerCase() ?? '—'}</td>
-                        <td className='px-3 py-2 font-mono'>
+                        <td className='px-3 py-2'>{INSTRUMENT_LABELS[row.instrument_condition ?? ''] ?? '—'}</td>
+                        <td className='px-3 py-2 font-semibold whitespace-nowrap'>
                           {row.score_status === 'submitted' && row.score != null ? `${num(row.score)} / ${num(row.max_score)}` : '—'}
                         </td>
                         <td className='text-muted-foreground px-3 py-2 text-xs'>
