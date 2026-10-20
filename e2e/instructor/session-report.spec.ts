@@ -33,7 +33,7 @@ test.describe('Instructor · Session report', () => {
     const report = page.getByTestId('session-report');
     await expect(report.getByText('2 to do')).toBeVisible();
     await expect(report.getByText('Amani Wekesa: No score yet')).toBeVisible();
-    await expect(report.getByRole('button', { name: 'Preview & submit' })).toBeDisabled();
+    await expect(report.getByRole('button', { name: 'Submit report' })).toBeDisabled();
     await report.getByRole('button', { name: 'Score' }).click();
     await expect(page).toHaveURL(/tab=grading/);
   });
@@ -63,14 +63,18 @@ test.describe('Instructor · Session report', () => {
     await api.install(page);
     await page.goto(WORKBOOK_URL);
 
-    await page.getByRole('button', { name: 'Preview & submit' }).click();
-    const preview = page.getByRole('dialog', { name: 'Preview session report' });
-    await expect(preview.getByText('Attendance 1 of 2 · Class average 27.5 / 30')).toBeVisible();
-    await preview.getByRole('button', { name: 'Submit report' }).click();
+    const report = page.getByTestId('session-report');
+    // The tab is the preview: what is shown is what gets submitted, confirmed inline.
+    await expect(report.getByText('Paradiddles')).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await report.getByRole('button', { name: 'Submit report' }).click();
+    const confirm = report.getByRole('alert');
+    await expect(confirm).toContainText('Submit this report as shown below?');
+    await confirm.getByRole('button', { name: 'Yes, submit' }).click();
 
     await expect.poll(() => api.callsTo('POST', SUBMIT_PATH).length).toBe(1);
     await expect(page.getByText('Session report submitted.')).toBeVisible();
-    await expect(page.getByTestId('session-report').getByText('Submitted', { exact: true })).toBeVisible();
+    await expect(report.getByText('Submitted', { exact: true })).toBeVisible();
     await expect(page.getByRole('status').filter({ hasText: 'You can still change anything until' })).toBeVisible();
   });
 
@@ -89,7 +93,8 @@ test.describe('Instructor · Session report', () => {
     await page.goto(WORKBOOK_URL);
 
     const report = page.getByTestId('session-report');
-    await expect(report.getByRole('button', { name: 'Report locked' })).toBeDisabled();
+    await expect(report.getByText('Locked', { exact: true })).toBeVisible();
+    await expect(report.getByRole('button', { name: /Submit report|Resubmit report/ })).toHaveCount(0);
     await expect(report.getByText(/Records for this session can no longer be changed/)).toBeVisible();
     await expect(report.getByRole('button', { name: 'Score' })).toHaveCount(0);
   });
@@ -109,5 +114,29 @@ test.describe('Instructor · Session report', () => {
     await expect(page.getByRole('dialog', { name: 'Class register' })).toBeVisible();
     await expect(page.getByRole('group', { name: 'Topic covered' })).toBeVisible();
     await expect(page).not.toHaveURL(/register=1/);
+  });
+  test('an overdue report says so, and a draft score reads against the lesson maximum', async ({ page }) => {
+    await mockInstructorWorkbook(new MockApi())
+      .get(
+        REPORT_PATH,
+        sessionReport({
+          overdue: true,
+          rows: [
+            {
+              student_uuid: LEARNERS.amani.uuid,
+              class_enrollment_uuid: '00000000-0000-4000-8000-000000000601',
+              attendance: 'ATTENDED',
+              score_status: 'draft',
+              score: 26,
+            },
+          ],
+        })
+      )
+      .install(page);
+    await page.goto(WORKBOOK_URL);
+
+    const report = page.getByTestId('session-report');
+    await expect(report.getByRole('status')).toContainText('the school has been told it is overdue');
+    await expect(report.getByRole('row', { name: /Amani Wekesa/ })).toContainText('26 / 30 (draft)');
   });
 });
