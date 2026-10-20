@@ -1,134 +1,151 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  ArrowLeftRight,
-  Banknote,
-  BarChart3,
-  ClipboardList,
-  Compass,
-  FileText,
-  LayoutDashboard,
-  PieChart,
-  ShieldCheck,
-  Wallet,
-} from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Banknote, Clock, Landmark, Wallet } from 'lucide-react';
+import { useMemo } from 'react';
+import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
+import { formatMoney, formatMoneyDate } from '@/components/money/format';
+import type { LedgerEntry, LedgerKind } from '@/components/money/ledger';
+import { LedgerPanel } from '@/components/money/ledger-panel';
+import { MoneyPage } from '@/components/money/money-page';
+import type { SkillsFundSource, SkillsFundTransaction } from '@/services/client';
+import { useSkillsFundData } from './use-skills-fund-data';
 
-import { useStudentSkillsFundData as useSkillsFundData } from '@/app/dashboard/student/skills-fund/skillfund-component/shared';
-import { AllocationsTab } from '@/app/dashboard/student/skills-fund/skillfund-component/AllocationsTab';
-import { ApplicationsTab } from '@/app/dashboard/student/skills-fund/skillfund-component/ApplicationsTab';
-import { DisbursementsTab } from '@/app/dashboard/student/skills-fund/skillfund-component/DisbursementTab';
-import { DocumentsTab } from '@/app/dashboard/student/skills-fund/skillfund-component/DocumentsTab';
-import { MyFundingTab } from '@/app/dashboard/student/skills-fund/skillfund-component/MyFundingTab';
-import { OpportunitiesTab } from '@/app/dashboard/student/skills-fund/skillfund-component/OpportunitiesTab';
-import { OverviewTab } from '@/app/dashboard/student/skills-fund/skillfund-component/OverviewTab';
-import { ReportsTab } from '@/app/dashboard/student/skills-fund/skillfund-component/ReportsTab';
-import { TransactionsTab } from '@/app/dashboard/student/skills-fund/skillfund-component/TransactionsTab';
+const TABS = ['movements', 'sources'] as const;
 
-const TABS = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-  { id: 'my-funding', label: 'My Funding', icon: Wallet },
-  { id: 'opportunities', label: 'Opportunities', icon: Compass },
-  { id: 'applications', label: 'Applications', icon: ClipboardList },
-  { id: 'allocations', label: 'Allocations', icon: PieChart },
-  { id: 'disbursements', label: 'Disbursements', icon: Banknote },
-  { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
-  { id: 'documents', label: 'Documents', icon: FileText },
-  { id: 'reports', label: 'Reports', icon: BarChart3 },
-] as const;
+type MovementStatus = { label: string; kind: LedgerKind; group: string };
+const PENDING: MovementStatus = { label: 'Pending', kind: 'waiting', group: 'pending' };
+const STATUS: Record<string, MovementStatus> = {
+  PENDING,
+  ALLOCATED: { label: 'Allocated', kind: 'waiting', group: 'pending' },
+  APPROVED: { label: 'Approved', kind: 'waiting', group: 'pending' },
+  DISBURSED: { label: 'Disbursed', kind: 'payment', group: 'disbursed' },
+};
 
-type TabId = (typeof TABS)[number]['id'];
+const MOVEMENT_FILTERS = [
+  { id: 'all', label: 'All movements' },
+  { id: 'mine', label: 'For you' },
+  { id: 'disbursed', label: 'Disbursed' },
+  { id: 'pending', label: 'Not yet disbursed' },
+];
 
+function movementEntries(
+  transactions: SkillsFundTransaction[],
+  userUuid: string | null
+): LedgerEntry<SkillsFundTransaction>[] {
+  return transactions.map((txn, index) => {
+    const status = STATUS[String(txn.status ?? 'PENDING').toUpperCase()] ?? PENDING;
+    const meta = [txn.target_name, txn.transaction_type, formatMoneyDate(txn.transaction_date ?? txn.created_date)];
+    const mine = Boolean(userUuid) && txn.beneficiary_user_uuid === userUuid;
+    return {
+      id: txn.uuid ?? `movement-${index}`,
+      kind: status.kind,
+      title: txn.description || txn.transaction_type || 'Fund movement',
+      meta: meta.filter(Boolean).join(' · '),
+      amount: Number(txn.amount ?? 0),
+      currency: txn.currency_code ?? 'KES',
+      status: status.label,
+      groups: [status.group, ...(mine ? ['mine'] : [])],
+      source: txn,
+    };
+  });
+}
+
+function sourceEntries(sources: SkillsFundSource[]): LedgerEntry<SkillsFundSource>[] {
+  return sources.map((source, index) => ({
+    id: source.uuid ?? `source-${index}`,
+    kind: 'in',
+    direction: 'in',
+    title: source.name || 'Funding source',
+    meta: [source.source_type, formatMoneyDate(source.created_date)].filter(Boolean).join(' · '),
+    amount: Number(source.amount ?? 0),
+    currency: source.currency_code ?? 'KES',
+    groups: [],
+    source,
+  }));
+}
+
+/** The Skills Fund of the caller's organisation; shared by learners, instructors and course creators. */
 export function SkillsFundRoutePage() {
-  const [tab, setTab] = useState<TabId>('overview');
-  const data = useSkillsFundData();
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'movements');
+  const fund = useSkillsFundData();
+  const { summary, currencyCode } = fund;
+
+  const movements = useMemo(
+    () => movementEntries(fund.transactions, fund.userUuid),
+    [fund.transactions, fund.userUuid]
+  );
+  const sources = useMemo(() => sourceEntries(fund.sources), [fund.sources]);
+  const mineCount = movements.filter(entry => entry.groups.includes('mine')).length;
+
+  const noOrganisation = !fund.profileLoading && !fund.organisationUuid;
+  const emptyHint = noOrganisation ? 'Join an organisation to see the Skills Fund that supports you.' : undefined;
 
   return (
-    <div className='min-h-screen bg-muted/30'>
-      <Tabs value={tab} onValueChange={value => setTab(value as TabId)} className='gap-0'>
-        <div className='border-b bg-card'>
-          <div className='px-4 py-5'>
-            <div className='flex flex-wrap items-start justify-between gap-3'>
-              <div>
-                <h1 className='flex items-center gap-2 text-2xl font-bold text-foreground'>
-                  Skills Fund
-                  <ShieldCheck className='h-5 w-5 text-accent' />
-                </h1>
-                <p className='text-sm text-muted-foreground'>
-                  Live funding activity for {data.organisationName}.
-                </p>
-              </div>
-
-              <div className='hidden items-center gap-2 rounded-full border bg-card px-3 py-1.5 text-sm md:flex'>
-                <Wallet className='h-4 w-4 text-primary' />
-                <span className='text-muted-foreground'>Available Balance</span>
-                <span className='font-semibold tabular-nums'>
-                  {data.currencyCode}{' '}
-                  {Number(data.summary?.remaining ?? data.wallet?.balance_amount ?? 0).toLocaleString()}
-                </span>
-              </div>
-            </div>
-
-            <div className='mt-4 -mx-4 overflow-x-auto px-4 no-scrollbar'>
-              <TabsList className='h-auto w-max gap-2 bg-transparent p-0'>
-                {TABS.map(tabConfig => {
-                  const Icon = tabConfig.icon;
-
-                  return (
-                    <TabsTrigger
-                      key={tabConfig.id}
-                      value={tabConfig.id}
-                      className='inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm whitespace-nowrap data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground'
-                    >
-                      <Icon className='h-3.5 w-3.5' />
-                      {tabConfig.label}
-                    </TabsTrigger>
-                  );
-                })}
-              </TabsList>
-            </div>
-          </div>
-        </div>
-
-        <div className='px-4 py-6'>
-          <TabsContent value='overview'>
-            <OverviewTab />
-          </TabsContent>
-
-          <TabsContent value='my-funding'>
-            <MyFundingTab />
-          </TabsContent>
-
-          <TabsContent value='opportunities'>
-            <OpportunitiesTab />
-          </TabsContent>
-
-          <TabsContent value='applications'>
-            <ApplicationsTab />
-          </TabsContent>
-
-          <TabsContent value='allocations'>
-            <AllocationsTab />
-          </TabsContent>
-
-          <TabsContent value='disbursements'>
-            <DisbursementsTab />
-          </TabsContent>
-
-          <TabsContent value='transactions'>
-            <TransactionsTab />
-          </TabsContent>
-
-          <TabsContent value='documents'>
-            <DocumentsTab />
-          </TabsContent>
-
-          <TabsContent value='reports'>
-            <ReportsTab />
-          </TabsContent>
-        </div>
-      </Tabs>
-    </div>
+    <MoneyPage
+      eyebrow='Skills Fund'
+      title='Skills Fund'
+      description={
+        noOrganisation
+          ? 'You are not affiliated with an organisation yet.'
+          : `Funding held for learners at ${fund.organisationName}: where it came from and where it went.`
+      }
+      loadingStats={fund.profileLoading || fund.summaryLoading}
+      stats={[
+        {
+          label: 'Available',
+          value: formatMoney(summary?.remaining ?? 0, currencyCode),
+          hint: 'Contributed less disbursed',
+          icon: Wallet,
+        },
+        {
+          label: 'Total contributed',
+          value: formatMoney(summary?.total_balance ?? 0, currencyCode),
+          hint: `${fund.sources.length} ${fund.sources.length === 1 ? 'source' : 'sources'}`,
+          icon: Landmark,
+        },
+        {
+          label: 'Disbursed',
+          value: formatMoney(summary?.disbursed ?? 0, currencyCode),
+          hint: mineCount ? `${mineCount} ${mineCount === 1 ? 'movement' : 'movements'} for you` : undefined,
+          icon: Banknote,
+          tone: 'success',
+        },
+        {
+          label: 'Pending requests',
+          value: formatMoney(summary?.pending ?? 0, currencyCode),
+          icon: Clock,
+          tone: 'warning',
+        },
+      ]}
+      tabs={[
+        { id: 'movements', label: 'Movements', count: movements.length },
+        { id: 'sources', label: 'Sources', count: sources.length },
+      ]}
+      tab={tab}
+      onTabChange={setTab}
+      hrefFor={hrefFor}
+    >
+      <SectionTabPanel value='movements'>
+        <LedgerPanel
+          title='Movements'
+          description='Allocations and disbursements from the fund.'
+          entries={movements}
+          loading={fund.profileLoading || fund.transactionsLoading}
+          filters={MOVEMENT_FILTERS}
+          emptyTitle='No movements yet'
+          emptyDescription={emptyHint ?? 'Allocations and disbursements from the fund appear here.'}
+        />
+      </SectionTabPanel>
+      <SectionTabPanel value='sources'>
+        <LedgerPanel
+          title='Sources'
+          description='Grants, sponsors and donors that have contributed to the fund.'
+          entries={sources}
+          loading={fund.profileLoading || fund.sourcesLoading}
+          emptyTitle='No sources yet'
+          emptyDescription={emptyHint ?? 'Contributions to the fund appear here.'}
+        />
+      </SectionTabPanel>
+    </MoneyPage>
   );
 }
