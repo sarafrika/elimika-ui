@@ -78,6 +78,41 @@ export function orderPaymentState(status?: string) {
   }
 }
 
+/** Distinct paid learners and their courses across all loaded class sales. */
+export function trainingEnrollmentKpis(
+  sales: readonly RevenueSaleLineItemDto[],
+  salesComplete: boolean,
+  courseUuid?: string
+) {
+  const students = new Set<string>();
+  const courses = new Set<string>();
+  let studentsComplete = salesComplete;
+  let coursesComplete = salesComplete;
+  for (const sale of sales) {
+    if (courseUuid && sale.course_uuid && sale.course_uuid !== courseUuid) continue;
+    if (!sale.class_definition_uuid || !sale.course_uuid) {
+      studentsComplete = false;
+      coursesComplete = false;
+      continue;
+    }
+    const state = orderPaymentState(sale.payment_status);
+    if (state === 'unknown') {
+      studentsComplete = false;
+      coursesComplete = false;
+    }
+    if (state !== 'paid') continue;
+    courses.add(sale.course_uuid);
+    if (sale.student_uuid) students.add(sale.student_uuid);
+    else studentsComplete = false;
+  }
+  return {
+    students: students.size,
+    courses: courses.size,
+    studentsComplete,
+    coursesComplete,
+  };
+}
+
 /** Sum class sale amounts by payment status without repeating lines or whole-cart totals. */
 export function trainingOrderKpis(sales: readonly RevenueSaleLineItemDto[], currency: string) {
   const currencyCode = currency.trim().toUpperCase();

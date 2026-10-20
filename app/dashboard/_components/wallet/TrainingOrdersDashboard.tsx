@@ -377,8 +377,7 @@ export function TrainingOrdersDashboard({ role }: { role: TrainingWalletRole }) 
 
       <div className='flex items-center justify-between gap-3'>
         <p className='text-muted-foreground text-xs'>
-          Page {page + 1} of {data.totalPages} · up to 20 classes per page. Search applies to this
-          page.
+          Page {page + 1} of {data.totalPages}
         </p>
         <div className='flex gap-2'>
           <Button

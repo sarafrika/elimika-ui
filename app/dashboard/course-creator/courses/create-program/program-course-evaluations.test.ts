@@ -72,12 +72,14 @@ test('groups assessments under their lessons, orders lessons, and scopes to the 
   assert.deepEqual(result[0]?.assessments, [
     {
       id: 'assignment:assignment-1',
+      uuid: 'assignment-1',
       type: 'assignment',
       title: 'First assignment',
       totalMarks: 20,
     },
     {
       id: 'quiz:quiz-1',
+      uuid: 'quiz-1',
       type: 'quiz',
       title: 'First quiz',
       maxAttempts: 3,

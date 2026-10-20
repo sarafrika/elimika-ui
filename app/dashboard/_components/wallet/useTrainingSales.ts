@@ -8,13 +8,19 @@ import { useMemo } from 'react';
 
 const SALES_PAGE_SIZE = 100;
 
-export function useTrainingSales(role: TrainingWalletRole, enabled: boolean, classUuid?: string) {
+export function useTrainingSales(
+  role: TrainingWalletRole,
+  enabled: boolean,
+  classUuid?: string,
+  courseUuid?: string
+) {
   const query = useInfiniteQuery({
     ...listSalesInfiniteOptions({
       query: {
         domain: role,
         scope: 'CLASS',
         ...(classUuid ? { class_definition_uuid: classUuid } : {}),
+        ...(courseUuid ? { course_uuid: courseUuid } : {}),
         pageable: { page: 0, size: SALES_PAGE_SIZE },
       },
     }),

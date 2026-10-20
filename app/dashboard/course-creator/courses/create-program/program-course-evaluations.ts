@@ -8,6 +8,7 @@ import type {
 
 export type LessonAssessment = {
   id: string;
+  uuid: string;
   type: 'assignment' | 'quiz';
   title: string;
   maxAttempts?: number;
@@ -66,9 +67,11 @@ export function buildCourseEvaluationLessons(
     assessmentsByLesson.set(lessonUuid, rows);
   };
   for (const assignment of uniqueRows(assignments)) {
-    if (assignment.scope === 'CLASS_CLONE' || assignment.class_definition_uuid) continue;
+    if (!assignment.uuid || assignment.scope === 'CLASS_CLONE' || assignment.class_definition_uuid)
+      continue;
     append(assignment.lesson_uuid, {
       id: `assignment:${assignment.uuid}`,
+      uuid: assignment.uuid,
       type: 'assignment',
       title: assignment.title,
       totalMarks: assignment.max_points,
@@ -76,10 +79,11 @@ export function buildCourseEvaluationLessons(
     });
   }
   for (const quiz of uniqueRows(quizzes)) {
-    if (quiz.scope === 'CLASS_CLONE' || quiz.class_definition_uuid) continue;
+    if (!quiz.uuid || quiz.scope === 'CLASS_CLONE' || quiz.class_definition_uuid) continue;
     const summary = questionsByQuiz.get(quiz.uuid ?? '') ?? { count: 0, marks: 0 };
     append(quiz.lesson_uuid, {
       id: `quiz:${quiz.uuid}`,
+      uuid: quiz.uuid,
       type: 'quiz',
       title: quiz.title,
       maxAttempts: quiz.attempts_allowed,

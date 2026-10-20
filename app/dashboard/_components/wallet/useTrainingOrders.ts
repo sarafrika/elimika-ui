@@ -19,21 +19,23 @@ import { useTrainingSales } from './useTrainingSales';
 
 export const ORDERS_PAGE_SIZE = 20;
 
-export function useTrainingOrders(role: TrainingWalletRole, page: number) {
+export function useTrainingOrders(role: TrainingWalletRole, page: number, courseUuid?: string) {
   const profile = useUserProfile();
   const profileUuid =
     role === 'instructor' ? profile?.instructor?.uuid : profile?.courseCreator?.uuid;
-  const salesQuery = useTrainingSales(role, Boolean(profileUuid));
+  const salesQuery = useTrainingSales(role, Boolean(profileUuid), undefined, courseUuid);
   // Pagination is by class, while each class retains every loaded checkout line.
   const allIds = useMemo(
     () => [
       ...new Set(
         salesQuery.sales.flatMap(sale =>
-          sale.class_definition_uuid ? [sale.class_definition_uuid] : []
+          sale.class_definition_uuid && (!courseUuid || sale.course_uuid === courseUuid)
+            ? [sale.class_definition_uuid]
+            : []
         )
       ),
     ],
-    [salesQuery.sales]
+    [salesQuery.sales, courseUuid]
   );
   const classIds = useMemo(
     () => allIds.slice(page * ORDERS_PAGE_SIZE, (page + 1) * ORDERS_PAGE_SIZE),
@@ -42,9 +44,12 @@ export function useTrainingOrders(role: TrainingWalletRole, page: number) {
   const visibleSales = useMemo(() => {
     const ids = new Set(classIds);
     return salesQuery.sales.filter(
-      sale => sale.class_definition_uuid && ids.has(sale.class_definition_uuid)
+      sale =>
+        sale.class_definition_uuid &&
+        ids.has(sale.class_definition_uuid) &&
+        (!courseUuid || sale.course_uuid === courseUuid)
     );
-  }, [classIds, salesQuery.sales]);
+  }, [classIds, salesQuery.sales, courseUuid]);
   const classes = useClassesByIds(classIds);
   // The listing documents uuid_in even though its generated query type omits it.
   // Scope full pricing metadata to visible classes for both wallet roles.
