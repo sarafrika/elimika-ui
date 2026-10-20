@@ -39,15 +39,12 @@ import {
   persistSchedulerPreferences,
   readSchedulerPreferences,
 } from './calendar-utils';
-import { schedulerMetrics } from './data';
 import { SchedulerFilters } from './scheduler-filters';
 import { SchedulerGrid } from './scheduler-grid';
-import { SchedularKpiStrip } from './scheduler-kpi-strip';
 import { SchedulerRightRail } from './scheduler-right-rail';
 import type {
   SchedulerEvent,
   SchedulerFilterSection,
-  SchedulerMetric,
   SchedulerProfile,
   SchedulerView,
 } from './types';
@@ -61,6 +58,7 @@ type Props = {
 
 type FilterSelection =
   | { id: 'all'; kind: 'all' }
+  | { id: 'exam' | 'event' | 'competition'; kind: 'event-type' }
   | { id: string; kind: 'class' | 'booking' | 'venue' | 'equipment' | 'instructor' };
 
 const normalizeText = (value?: string | null) => value?.trim().toLowerCase() ?? '';
@@ -148,6 +146,8 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
   const filteredEvents = useMemo(
     () =>
       allEvents.filter(event => {
+        if (selectedFilter.kind === 'event-type' && event.eventType !== selectedFilter.id)
+          return false;
         if (selectedFilter.kind === 'class' && event.classDefinitionUuid !== selectedFilter.id)
           return false;
         if (selectedFilter.kind === 'booking' && event.eventType !== 'booking_request')
@@ -270,50 +270,6 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
     }
   }, [currentDate, filteredEvents, hasActiveFilters]);
 
-  const metrics = useMemo<SchedulerMetric[]>(() => {
-    const classCount = new Set(
-      visibleEvents.map(event => event.classDefinitionUuid).filter(Boolean)
-    ).size;
-    const eventCount = visibleEvents.length;
-    const instructorCount = new Set(
-      visibleEvents.map(event => event.instructorUuid || event.instructor).filter(Boolean)
-    ).size;
-    const venueCount = new Set(
-      visibleEvents
-        .filter(event => !isEquipmentEvent(event))
-        .map(event => event.location)
-        .filter(Boolean)
-    ).size;
-    const equipmentCount = new Set(
-      visibleEvents.filter(isEquipmentEvent).map(event => event.location).filter(Boolean)
-    ).size;
-    const zeroCount = 0;
-
-    return schedulerMetrics.map(metric => {
-      if (metric.label === 'Classes') {
-        return { ...metric, value: String(classCount) };
-      }
-
-      if (metric.label === 'Events') {
-        return { ...metric, value: String(eventCount) };
-      }
-
-      if (metric.label === 'Instructors') {
-        return { ...metric, value: String(instructorCount) };
-      }
-
-      if (metric.label === 'Venues') {
-        return { ...metric, value: String(venueCount) };
-      }
-
-      if (metric.label === 'Equipment') {
-        return { ...metric, value: String(equipmentCount) };
-      }
-
-      return { ...metric, value: String(zeroCount) };
-    });
-  }, [visibleEvents]);
-
   const isLoading = data.isLoading;
 
   const handleEventClick = (event: SchedulerEvent) => {
@@ -376,12 +332,44 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
         key: 'classes',
         label: 'Classes',
         onItemClick: id => {
-          setSelectedFilter({ id, kind: 'class' });
+          setSelectedFilter(current =>
+            current.kind === 'class' && current.id === id
+              ? { id: 'all', kind: 'all' }
+              : { id, kind: 'class' }
+          );
           setFiltersOpen(false);
         },
-        onToggle: () => {},
+        onToggle: () => { },
         selectedId: selectedFilter.kind === 'class' ? selectedFilter.id : null,
       },
+
+      ...([
+        ['exams', 'Exams', 'exam'],
+        ['events', 'Events', 'event'],
+        ['competitions', 'Competitions', 'competition'],
+      ] as const).map(([key, label, eventType]): SchedulerFilterSection => ({
+        key,
+        label,
+        mode: 'toggle',
+        count: allEvents.filter(
+          event =>
+            event.eventType === eventType &&
+            (view !== 'day' || isSameCalendarDay(event.startTime, currentDate))
+        ).length,
+        isOpen: false,
+        items: [],
+        selectedId:
+          selectedFilter.kind === 'event-type' && selectedFilter.id === eventType ? eventType : null,
+        onItemClick: () => {},
+        onToggle: () => {
+          setSelectedFilter(current =>
+            current.kind === 'event-type' && current.id === eventType
+              ? { id: 'all', kind: 'all' }
+              : { id: eventType, kind: 'event-type' }
+          );
+          setFiltersOpen(false);
+        },
+      })),
 
       {
         count: venueFilterItems.length,
@@ -390,10 +378,14 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
         key: 'venues',
         label: 'Classrooms',
         onItemClick: id => {
-          setSelectedFilter({ id, kind: 'venue' });
+          setSelectedFilter(current =>
+            current.kind === 'venue' && current.id === id
+              ? { id: 'all', kind: 'all' }
+              : { id, kind: 'venue' }
+          );
           setFiltersOpen(false);
         },
-        onToggle: () => {},
+        onToggle: () => { },
         selectedId: selectedFilter.kind === 'venue' ? selectedFilter.id : null,
       },
       {
@@ -403,10 +395,14 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
         key: 'equipment',
         label: 'Equipment',
         onItemClick: id => {
-          setSelectedFilter({ id, kind: 'equipment' });
+          setSelectedFilter(current =>
+            current.kind === 'equipment' && current.id === id
+              ? { id: 'all', kind: 'all' }
+              : { id, kind: 'equipment' }
+          );
           setFiltersOpen(false);
         },
-        onToggle: () => {},
+        onToggle: () => { },
         selectedId: selectedFilter.kind === 'equipment' ? selectedFilter.id : null,
       },
     ];
@@ -420,10 +416,14 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
         key: 'instructors',
         label: 'Instructors',
         onItemClick: id => {
-          setSelectedFilter({ id, kind: 'instructor' });
+          setSelectedFilter(current =>
+            current.kind === 'instructor' && current.id === id
+              ? { id: 'all', kind: 'all' }
+              : { id, kind: 'instructor' }
+          );
           setFiltersOpen(false);
         },
-        onToggle: () => {},
+        onToggle: () => { },
         selectedId: selectedFilter.kind === 'instructor' ? selectedFilter.id : null,
       });
     }
@@ -447,12 +447,15 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
 
     return sections;
   }, [
+    allEvents,
     classFilterItems,
+    currentDate,
     equipmentFilterItems,
     instructorFilterItems,
     profile,
     selectedFilter,
     venueFilterItems,
+    view,
   ]);
 
   return (
@@ -526,16 +529,6 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
         </div>
       </header>
 
-      <div>
-        {/* <div className='grid w-full gap-3 sm:grid-cols-2 xl:grid-cols-4'>
-          {metrics.map(metric => (
-            <SchedulerStatCard key={metric.label} metric={metric} rangeLabel='' />
-          ))}
-        </div> */}
-
-        <SchedularKpiStrip metrics={metrics} rangeLabel={formatDateRange(currentDate, view)} />
-      </div>
-
       <div className='flex flex-row items-center gap-2'>
         <SchedulerFilters
           activeFilterCount={Number(selectedFilter.kind !== 'all')}
@@ -583,7 +576,7 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
                 canCreateClass={
                   activeDomain === 'instructor' || activeDomain === 'organisation_user'
                 }
-                onClassCreated={() => {}}
+                onClassCreated={() => { }}
                 onSelectDate={handleSelectDate}
               />
             )}

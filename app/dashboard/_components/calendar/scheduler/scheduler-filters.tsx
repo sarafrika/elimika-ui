@@ -51,8 +51,8 @@ export function SchedulerFilters({
 
       {/* Pills */}
       <div className='-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
-        <button
-          type='button'
+        <Button
+          variant='outline'
           onClick={onClearFilters}
           aria-pressed={isAllActive}
           aria-label={isAllActive ? 'All filter, active' : 'Clear all filters'}
@@ -66,17 +66,41 @@ export function SchedulerFilters({
           <LayoutGrid className='h-4 w-4 shrink-0' aria-hidden='true' />
           <span>All</span>
           {isAllActive && <Check className='h-4 w-4 shrink-0 opacity-70' aria-hidden='true' />}
-        </button>
+        </Button>
 
-        {sections.map((section, index) => (
-          <SchedulerFilterPill
-            key={section.key}
-            section={section}
-            dotColor={DOT_COLORS[index % DOT_COLORS.length] as string}
-            searchQuery={searchQuery}
-            onSearchChange={onSearchChange}
-          />
-        ))}
+        {sections.map((section, index) =>
+          section.mode === 'toggle' ? (
+            <Button
+              key={section.key}
+              variant='outline'
+              aria-pressed={Boolean(section.selectedId)}
+              onClick={section.onToggle}
+              className={cn(
+                'h-9 shrink-0 gap-2 rounded-full px-3.5 text-sm',
+                section.selectedId
+                  ? 'border-primary bg-primary/10 text-primary hover:bg-primary/15 font-semibold shadow-sm'
+                  : 'border-border bg-card text-foreground hover:bg-muted font-medium'
+              )}
+            >
+              <span
+                className='h-2 w-2 shrink-0 rounded-full'
+                style={{ backgroundColor: DOT_COLORS[index % DOT_COLORS.length] }}
+                aria-hidden='true'
+              />
+              <span>{section.label}</span>
+              <span className='opacity-60'>({section.count})</span>
+              {section.selectedId && <Check className='h-4 w-4' aria-hidden='true' />}
+            </Button>
+          ) : (
+            <SchedulerFilterPill
+              key={section.key}
+              section={section}
+              dotColor={DOT_COLORS[index % DOT_COLORS.length] as string}
+              searchQuery={searchQuery}
+              onSearchChange={onSearchChange}
+            />
+          )
+        )}
       </div>
 
       {activeFilterCount > 0 && (

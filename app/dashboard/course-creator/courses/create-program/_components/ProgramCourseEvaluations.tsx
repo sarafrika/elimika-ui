@@ -4,18 +4,21 @@ import {
   BookOpen,
   ChevronDown,
   ClipboardList,
+  Eye,
   ListChecks,
   RotateCw,
   Target,
   type LucideIcon,
 } from 'lucide-react';
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { AssignmentPreviewSheet } from '../../../_components/AssignmentPreviewSheet';
+import { QuizPreviewSheet } from '../../../_components/QuizPreviewSheet';
 import type { LessonAssessment } from '../program-course-evaluations';
 import { useCourseEvaluationOverview } from './use-course-evaluation-overview';
 
@@ -46,38 +49,51 @@ function Meta({ icon: Icon, children }: { icon: LucideIcon; children: ReactNode 
   );
 }
 
-function AssessmentRow({ item }: { item: LessonAssessment }) {
+function AssessmentRow({ item, onPreview }: { item: LessonAssessment; onPreview: () => void }) {
   const { label, icon: Icon } = ASSESSMENT_TYPES[item.type];
   return (
-    <li className='bg-card flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border px-3 py-2.5'>
-      <div
-        className={cn(
-          'flex size-8 shrink-0 items-center justify-center rounded-md',
-          item.type === 'quiz' ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground'
-        )}
+    <li>
+      <Button
+        type='button'
+        variant='ghost'
+        onClick={onPreview}
+        aria-haspopup='dialog'
+        aria-label={`View ${label.toLowerCase()} details: ${item.title}`}
+        className='bg-card h-auto w-full flex-wrap justify-start gap-x-4 gap-y-2 rounded-lg border px-3 py-2.5 text-left whitespace-normal'
       >
-        <Icon aria-hidden='true' className='size-4' />
-      </div>
-      <div className='min-w-0 flex-1'>
-        <p className='text-sm font-medium break-words'>{item.title}</p>
-        <p className='text-muted-foreground text-xs'>{label}</p>
-      </div>
-      <div className='flex w-full flex-wrap items-center gap-x-4 gap-y-1 sm:w-auto'>
-        {typeof item.questionCount === 'number' && (
-          <Meta icon={ListChecks}>{plural(item.questionCount, 'question')}</Meta>
-        )}
-        <Meta icon={RotateCw}>
-          {typeof item.maxAttempts === 'number'
-            ? plural(item.maxAttempts, 'allowed attempt')
-            : 'Attempt limit not specified'}
-        </Meta>
-        <Meta icon={Target}>
-          {typeof item.totalMarks === 'number'
-            ? `${item.totalMarks} obtainable marks`
-            : 'Marks not specified'}
-          {typeof item.passPercentage === 'number' ? ` · pass ${item.passPercentage}%` : ''}
-        </Meta>
-      </div>
+        <span
+          className={cn(
+            'flex size-8 shrink-0 items-center justify-center rounded-md',
+            item.type === 'quiz' ? 'bg-primary/10 text-primary' : 'bg-muted text-foreground'
+          )}
+        >
+          <Icon aria-hidden='true' className='size-4' />
+        </span>
+        <span className='min-w-0 flex-1'>
+          <span className='block text-sm font-medium break-words'>{item.title}</span>
+          <span className='text-muted-foreground block text-xs'>{label}</span>
+        </span>
+        <span className='flex w-full flex-wrap items-center gap-x-4 gap-y-1 sm:w-auto'>
+          {typeof item.questionCount === 'number' && (
+            <Meta icon={ListChecks}>{plural(item.questionCount, 'question')}</Meta>
+          )}
+          <Meta icon={RotateCw}>
+            {typeof item.maxAttempts === 'number'
+              ? plural(item.maxAttempts, 'allowed attempt')
+              : 'Attempt limit not specified'}
+          </Meta>
+          <Meta icon={Target}>
+            {typeof item.totalMarks === 'number'
+              ? `${item.totalMarks} obtainable marks`
+              : 'Marks not specified'}
+            {typeof item.passPercentage === 'number' ? ` · pass ${item.passPercentage}%` : ''}
+          </Meta>
+        </span>
+        <span className='text-primary inline-flex shrink-0 items-center gap-1 text-xs font-medium'>
+          <Eye aria-hidden='true' className='size-3.5' />
+          View details
+        </span>
+      </Button>
     </li>
   );
 }
@@ -90,6 +106,10 @@ export function ProgramCourseEvaluations({
   courseTitle: string;
 }) {
   const { lessons, loading, failed, retry } = useCourseEvaluationOverview(courseUuid);
+  const [preview, setPreview] = useState<{
+    assessment: LessonAssessment;
+    lessonTitle: string;
+  } | null>(null);
   const stats = useMemo(() => {
     const assessments = lessons.flatMap(lesson => lesson.assessments);
     return {
@@ -191,7 +211,16 @@ export function ProgramCourseEvaluations({
                     ) : (
                       <ul className='space-y-2'>
                         {lesson.assessments.map(item => (
-                          <AssessmentRow key={item.id} item={item} />
+                          <AssessmentRow
+                            key={item.id}
+                            item={item}
+                            onPreview={() =>
+                              setPreview({
+                                assessment: item,
+                                lessonTitle: `${courseTitle} · Lesson ${lesson.number}: ${lesson.title}`,
+                              })
+                            }
+                          />
                         ))}
                       </ul>
                     )}
@@ -201,6 +230,28 @@ export function ProgramCourseEvaluations({
             })}
           </div>
         </>
+      )}
+      {preview?.assessment.type === 'quiz' && (
+        <QuizPreviewSheet
+          key={preview.assessment.uuid}
+          open
+          onOpenChange={open => {
+            if (!open) setPreview(null);
+          }}
+          quizUuid={preview.assessment.uuid}
+          lessonTitle={preview.lessonTitle}
+        />
+      )}
+      {preview?.assessment.type === 'assignment' && (
+        <AssignmentPreviewSheet
+          key={preview.assessment.uuid}
+          open
+          onOpenChange={open => {
+            if (!open) setPreview(null);
+          }}
+          assignmentUuid={preview.assessment.uuid}
+          lessonTitle={preview.lessonTitle}
+        />
       )}
     </section>
   );
