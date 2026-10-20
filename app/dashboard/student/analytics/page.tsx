@@ -128,7 +128,20 @@ function getAssignmentPassingScore(assignment?: Assignment | null) {
       })
     | null;
 
-  return assignmentWithThreshold?.passing_score ?? assignmentWithThreshold?.min_passing_score ?? 50;
+  // No pass mark set means no pass or fail verdict; never invent one.
+  return assignmentWithThreshold?.passing_score ?? assignmentWithThreshold?.min_passing_score ?? null;
+}
+
+function passVerdict(percentage?: number | null, passingScore?: number | null): boolean | null {
+  if (percentage == null || passingScore == null) return null;
+  return percentage >= passingScore;
+}
+
+function VerdictBadge({ verdict, graded }: { verdict: boolean | null; graded: boolean }) {
+  if (verdict === null) {
+    return <Badge variant='outline'>{graded ? 'Graded' : 'Not graded'}</Badge>;
+  }
+  return <Badge variant={verdict ? 'success' : 'destructive'}>{verdict ? 'Pass' : 'Fail'}</Badge>;
 }
 
 function formatStatusLabel(status?: string | null) {
@@ -786,7 +799,7 @@ export default function StudentAnalyticsDashboard() {
             : undefined);
 
         const passingScore = getAssignmentPassingScore(assignment);
-        const isPassing = gradePercentage != null ? gradePercentage >= passingScore : false;
+        const isPassing = passVerdict(gradePercentage, passingScore);
 
         return {
           id:
@@ -1366,9 +1379,7 @@ export default function StudentAnalyticsDashboard() {
                         {row.gradePercentage != null ? formatPercent(row.gradePercentage) : '—'}
                       </td>
                       <td className='py-3 pr-4'>
-                        <Badge variant={row.isPassing ? 'success' : 'destructive'}>
-                          {row.isPassing ? 'Pass' : 'Fail'}
-                        </Badge>
+                        <VerdictBadge verdict={row.isPassing} graded={row.gradePercentage != null} />
                       </td>
                       <td className='text-muted-foreground py-3 pr-4'>
                         {formatDateTime(row.submission.submitted_at)}
@@ -1475,21 +1486,13 @@ export default function StudentAnalyticsDashboard() {
             <div className='flex flex-wrap items-center gap-2'>
               <Badge variant='outline'>{selectedSubmission?.courseName ?? 'Assignment'}</Badge>
               {selectedSubmission && (
-                <Badge
-                  variant={
-                    selectedSubmission.submission.percentage != null &&
-                    selectedSubmission.submission.percentage >=
-                      getAssignmentPassingScore(selectedSubmission.assignment)
-                      ? 'success'
-                      : 'destructive'
-                  }
-                >
-                  {selectedSubmission.submission.percentage != null &&
-                  selectedSubmission.submission.percentage >=
+                <VerdictBadge
+                  verdict={passVerdict(
+                    selectedSubmission.submission.percentage,
                     getAssignmentPassingScore(selectedSubmission.assignment)
-                    ? 'Pass'
-                    : 'Fail'}
-                </Badge>
+                  )}
+                  graded={selectedSubmission.submission.percentage != null}
+                />
               )}
             </div>
             <SheetTitle className='text-2xl'>

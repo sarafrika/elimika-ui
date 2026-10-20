@@ -30,8 +30,10 @@ import {
   surfaceTheme,
   useSectionTab,
 } from '@/components/data-display';
+import { ProgressReportCard } from '@/components/lesson/ProgressReportCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -128,12 +130,13 @@ type StudentDetail = {
   latestActivityAt: string;
 };
 
-const STUDENT_TABS = ['overview', 'courses', 'attendance', 'guardians', 'activity'] as const;
+const STUDENT_TABS = ['overview', 'courses', 'grades', 'attendance', 'guardians', 'activity'] as const;
 type StudentTab = (typeof STUDENT_TABS)[number];
 
 const STUDENT_TAB_LABELS: Record<StudentTab, string> = {
   overview: 'Overview',
   courses: 'Courses',
+  grades: 'Grades',
   attendance: 'Attendance',
   guardians: 'Guardians',
   activity: 'Activity',
@@ -142,6 +145,7 @@ const STUDENT_TAB_LABELS: Record<StudentTab, string> = {
 const STUDENT_TAB_ICONS = {
   overview: LayoutGrid,
   courses: BookOpen,
+  grades: GraduationCap,
   attendance: CalendarCheck,
   guardians: ShieldCheck,
   activity: Activity,
@@ -349,6 +353,7 @@ const InstructorStudentsDetailPage = () => {
 
   const counts: Partial<Record<StudentTab, number>> = {
     courses: totalCourses,
+    grades: totalCourses,
     attendance: student.classes?.length ?? 0,
     guardians: guardians.length,
     activity: recentActivity.length,
@@ -538,6 +543,22 @@ const InstructorStudentsDetailPage = () => {
               ))}
             </div>
           </div>
+        </SectionTabPanel>
+
+        <SectionTabPanel value='grades' className='flex flex-col gap-4'>
+          {student.courseEnrollments.length === 0 ? (
+            <EmptyState title='No course enrolments to grade yet' />
+          ) : (
+            student.courseEnrollments.map(enrollment => (
+              <ProgressReportCard
+                key={enrollment.enrollment_uuid}
+                courseUuid={enrollment.course_uuid}
+                enrollmentUuid={enrollment.enrollment_uuid}
+                studentName={student.student.full_name}
+                allowFeedback
+              />
+            ))
+          )}
         </SectionTabPanel>
 
         <SectionTabPanel value='attendance'>

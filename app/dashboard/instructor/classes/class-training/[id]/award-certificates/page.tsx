@@ -238,7 +238,8 @@ const AwardCertificatesPage = () => {
         score: lineItem?.score?.score,
         percentage: lineItem?.score?.percentage,
         maxScore: lineItem?.score?.max_score,
-        passed: false,
+        // The course decides pass or fail as a whole; an item only shows whether it is graded.
+        graded: lineItem?.score?.score != null,
         gradedAt: lineItem?.score?.graded_at,
         grade_display: lineItem?.score?.grade_display,
       }));
@@ -250,7 +251,7 @@ const AwardCertificatesPage = () => {
           score: aggregateScore.score,
           maxScore: aggregateScore.max_score,
           percentage: aggregateScore.percentage,
-          passed: Boolean(aggregateScore.percentage && aggregateScore.percentage >= 50),
+          graded: aggregateScore.score != null,
           gradedAt: aggregateScore.graded_at,
           grade_display: aggregateScore.grade_display,
         });
@@ -707,7 +708,7 @@ const AwardCertificatesPage = () => {
                                   </p>
                                 </div>
 
-                                <Badge variant={item?.passed ? 'success' : 'outline'}>
+                                <Badge variant={item?.graded ? 'success' : 'outline'}>
                                   {item?.score != null
                                     ? `${item.score}${
                                         item.maxScore != null ? `/${item.maxScore}` : ''
