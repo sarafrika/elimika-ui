@@ -28,7 +28,10 @@ test.describe('Instructor · Class register', () => {
     const api = (page as unknown as { api: MockApi }).api;
     const register = page.getByRole('dialog', { name: 'Class register' });
     await register.getByRole('combobox', { name: 'Instrument condition for Amani Wekesa' }).click();
-    await page.getByRole('option', { name: 'Needs repair' }).click();
+    // Keyboard choice: the list re-positions while the rich-text editors below it finish loading.
+    await expect(page.getByRole('option', { name: 'Needs repair' })).toBeVisible();
+    await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
     const comment = register.getByRole('group', { name: 'Comment on Amani Wekesa' }).locator('[contenteditable="true"]');
     await comment.click();
     await comment.pressSequentially('Loose snare');

@@ -1,10 +1,10 @@
 'use client';
 
+import { CheckCircle2 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { calculateRubricGrade, type RubricGradeSelections } from '@/lib/rubric-grading';
-import { CheckCircle2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
 
 // ════════════════════════════════════════════════════════════════════════
 // Types — shaped to match the rubricMatrices[uuid] object as it comes back
@@ -76,14 +76,16 @@ const cellKey = (criteriaUuid: string, levelUuid: string) => `${criteriaUuid}_${
 
 // Map a level's css_color_class / color_code to a safe, theme-friendly
 // accent. Falls back to primary if the rubric didn't define a color.
+// Labels keep the body text colour, hovered or not: the outline button's hover text is white, which
+// vanished on these light cells, and brand-coloured text was too faint. Border, ring and tick mark the pick.
 function getLevelAccentClasses(level: RubricScoringLevel, isSelected: boolean) {
   if (isSelected) {
     if (level.is_passing === false) {
-      return 'border-destructive bg-destructive/10 text-destructive ring-1 ring-destructive/40';
+      return 'border-destructive bg-destructive/10 text-foreground hover:bg-destructive/10 hover:text-foreground ring-1 ring-destructive/40';
     }
-    return 'border-primary bg-primary/10 text-primary ring-1 ring-primary/40';
+    return 'border-primary bg-primary/10 text-foreground hover:bg-primary/10 hover:text-foreground ring-1 ring-primary/40';
   }
-  return 'border-border/70 bg-background hover:border-primary/40 hover:bg-muted/50';
+  return 'border-border/70 bg-background text-foreground hover:border-primary/40 hover:bg-muted/50 hover:text-foreground';
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -181,11 +183,14 @@ export function RubricGradingMatrix({
                     key={level.uuid}
                     className='border-border/70 text-foreground border-b px-3 py-2 text-xs font-semibold'
                   >
-                    <div className='flex flex-col gap-0.5'>
+                    {/* The level's meaning is said once, here; the cells below only carry its points. */}
+                    <div className='flex max-w-[220px] min-w-[140px] flex-col gap-0.5'>
                       <span>{level.name}</span>
-                      <span className='text-muted-foreground text-[10px] font-normal'>
-                        {level.points} pts
-                      </span>
+                      {level.description || level.performance_indicator ? (
+                        <span data-part='level-description' className='text-muted-foreground text-[11px] leading-snug font-normal'>
+                          {level.description || level.performance_indicator}
+                        </span>
+                      ) : null}
                     </div>
                   </th>
                 ))}
@@ -221,7 +226,7 @@ export function RubricGradingMatrix({
                       return (
                         <td
                           key={level.uuid}
-                          className='border-border/50 border-b px-2 py-2 align-top'
+                          className='border-border/50 h-px border-b px-2 py-2 align-top'
                         >
                           <Button
                             type='button'
@@ -230,21 +235,19 @@ export function RubricGradingMatrix({
                             onClick={() => !readOnly && onChange?.(criteria.uuid, level.uuid)}
                             aria-pressed={isSelected}
                             aria-label={`${criteria.component_name}: ${level.name}, ${level.points} points`}
-                            className={`flex h-auto w-full flex-col items-start gap-1 px-2.5 py-2 text-left text-[11px] whitespace-normal transition disabled:cursor-default ${getLevelAccentClasses(level, isSelected)}`}
+                            title={cell?.description || undefined}
+                            className={`relative flex h-full min-h-14 w-full items-center justify-center gap-1 px-2.5 py-2 transition disabled:cursor-default ${getLevelAccentClasses(level, isSelected)}`}
                           >
-                            <span className='flex w-full items-center justify-between gap-1'>
-                              <span className='font-medium'>
-                                {level.performance_indicator || level.name}
-                              </span>
-                              {isSelected ? (
-                                <CheckCircle2 className='h-3.5 w-3.5 shrink-0' />
-                              ) : null}
-                            </span>
-                            {cell?.description || level.description ? (
-                              <span className='text-muted-foreground max-w-[200px] leading-snug text-wrap'>
-                                {cell?.description || level.description}
-                              </span>
+                            {isSelected ? (
+                              <CheckCircle2
+                                aria-hidden
+                                className={`absolute top-1.5 right-1.5 h-3.5 w-3.5 ${level.is_passing === false ? 'text-destructive' : 'text-primary'}`}
+                              />
                             ) : null}
+                            <span data-part='points' className='text-2xl leading-none font-bold'>
+                              {level.points}
+                            </span>
+                            <span className='text-muted-foreground text-[10px]'>pts</span>
                           </Button>
                         </td>
                       );

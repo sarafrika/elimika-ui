@@ -146,10 +146,17 @@ export const EVALUATION_PATH = new RegExp(
 export const GRADING_URL = `/dashboard/instructor/classes/training/${CLASS_ID}?lesson=${LESSON_ID}&schedule=${SESSION_ID}&tab=grading`;
 
 /** A six-criterion lesson rubric scored 1–5, so a lesson is out of 30 as in the workbook. */
-export function mockLessonScoring(api: MockApi, evaluation: Record<string, unknown> | null = null) {
+const LEVEL_DESCRIPTIONS = ['Not yet', 'Beginning', 'Developing', 'Mostly accurate', 'Fully accurate'];
+
+export function mockLessonScoring(
+  api: MockApi,
+  evaluation: Record<string, unknown> | null = null,
+  options: { described?: boolean } = {}
+) {
   const levels = [1, 2, 3, 4, 5].map(points => ({
     uuid: `00000000-0000-4000-8000-0000000008${String(points).padStart(2, '0')}`,
     name: `Level ${points}`,
+    description: options.described ? LEVEL_DESCRIPTIONS[points - 1] : undefined,
     points,
     level_order: points,
   }));
