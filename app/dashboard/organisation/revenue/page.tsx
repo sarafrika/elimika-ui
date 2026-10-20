@@ -1,76 +1,53 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Coins, HandCoins, Receipt, ShoppingCart, TrendingUp } from 'lucide-react';
+import { HandCoins, TrendingUp } from 'lucide-react';
 import { useMemo } from 'react';
-
-import { KpiCard, KpiCardSkeleton } from '@/components/dashboard';
-import { PageHeader } from '@/components/page-header';
-import { Card, CardContent } from '@/components/ui/card';
+import { SectionCard } from '@/components/data-display';
+import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
+import { formatMoney } from '@/components/money/format';
+import { MoneyPage } from '@/components/money/money-page';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { useInstructorsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { extractEntity } from '@/lib/api-helpers';
-import type {
-  OrganisationInstructorPayable,
-  RevenueAmountDto,
-  RevenueDashboardDto,
-} from '@/services/client';
+import type { OrganisationInstructorPayable, RevenueAmountDto, RevenueDashboardDto } from '@/services/client';
 import {
   getInstructorPayablesForOrganisationOptions,
   getPlatformFeeSummaryOptions,
   getRevenueDashboardOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { OrgPage } from '../_components/org-page';
-import { surfaceTheme } from '@/components/data-display';
 
-/** Format the first (primary-currency) amount from a revenue amount list. */
-const money = (amounts?: RevenueAmountDto[]): string => {
-  const primary = amounts?.[0];
-  if (!primary || primary.amount === undefined || primary.amount === null) return '—';
-  const value = Number(primary.amount).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-  return `${primary.currency_code ?? ''} ${value}`.trim();
+const TABS = ['overview', 'payables'] as const;
+
+/** Every currency in the list, never summed across them: "KES 12,500 · USD 40". */
+const amounts = (list?: RevenueAmountDto[]): string => {
+  const shown = (list ?? []).filter(a => a.amount !== undefined && a.amount !== null);
+  return shown.length ? shown.map(a => formatMoney(a.amount, a.currency_code)).join(' · ') : formatMoney(0);
 };
 
 const count = (value?: bigint | number | null): string =>
   value === undefined || value === null ? '—' : Number(value).toLocaleString();
 
-const amount = (value?: number | null): string =>
-  value === undefined || value === null
-    ? '—'
-    : Number(value).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      });
-
-/** A labelled figure inside the totals card. */
-function Stat({ label, value }: { label: string; value: string }) {
+/** One labelled figure in the totals list. */
+function Line({ label, value }: { label: string; value: string }) {
   return (
-    <div className='bg-muted/20 rounded-lg border px-3 py-2.5'>
-      <p className='text-muted-foreground text-xs tracking-wide uppercase'>{label}</p>
-      <div className='text-foreground mt-1 text-sm font-semibold tabular-nums'>{value}</div>
+    <div className='flex justify-between gap-4 px-5 py-3'>
+      <dt className='text-muted-foreground text-sm'>{label}</dt>
+      <dd className='text-right text-sm font-semibold tabular-nums'>{value}</dd>
     </div>
   );
 }
 
+/** Sales analytics for the organisation and what it owes its hired instructors. */
 export default function OrganisationEarningsPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'overview');
 
-  const dashboardQuery = useQuery({
-    ...getRevenueDashboardOptions({ query: { domain: 'organisation_user' } }),
-  });
+  const dashboardQuery = useQuery({ ...getRevenueDashboardOptions({ query: { domain: 'organisation_user' } }) });
   const platformFeesQuery = useQuery({ ...getPlatformFeeSummaryOptions() });
   const payablesQuery = useQuery({
     ...getInstructorPayablesForOrganisationOptions({ path: { organisationUuid } }),
@@ -79,21 +56,23 @@ export default function OrganisationEarningsPage() {
 
   const dashboard = extractEntity<RevenueDashboardDto>(dashboardQuery.data) ?? {};
   const platformFees = (platformFeesQuery.data?.data ?? []) as RevenueAmountDto[];
-  const isLoading = dashboardQuery.isLoading;
+  const scopes = dashboard.scope_breakdown ?? [];
 
   const payables = useMemo(
     () => (payablesQuery.data?.data ?? []) as OrganisationInstructorPayable[],
     [payablesQuery.data]
   );
-  const totalOwed = useMemo(
-    () => payables.reduce((sum, p) => sum + Number(p.amount_owed ?? 0), 0),
-    [payables]
-  );
+  // Payables are grouped by instructor and currency, so the total is kept per currency.
+  const owed = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const p of payables) {
+      const code = p.currency_code ?? 'KES';
+      totals.set(code, (totals.get(code) ?? 0) + Number(p.amount_owed ?? 0));
+    }
+    return [...totals].map(([currency_code, amount]) => ({ currency_code, amount }));
+  }, [payables]);
 
-  const instructorIds = useMemo(
-    () => payables.map(p => p.instructor_uuid ?? '').filter(Boolean),
-    [payables]
-  );
+  const instructorIds = useMemo(() => payables.map(p => p.instructor_uuid ?? '').filter(Boolean), [payables]);
   const { instructorMap } = useInstructorsByIds(instructorIds);
   const userIds = useMemo(
     () => instructorIds.map(id => instructorMap[id]?.user_uuid ?? '').filter(Boolean),
@@ -109,172 +88,129 @@ export default function OrganisationEarningsPage() {
     return name || `${instructorUuid.slice(0, 8)}…`;
   };
 
-  const kpis = [
-    {
-      label: 'Gross revenue',
-      value: money(dashboard.gross_totals),
-      icon: Coins,
-      variant: 'green' as const,
-    },
-    {
-      label: 'Estimated earnings',
-      value: money(dashboard.estimated_earnings),
-      icon: TrendingUp,
-      variant: 'primary' as const,
-    },
-    {
-      label: 'Orders',
-      value: count(dashboard.order_count),
-      icon: ShoppingCart,
-      variant: 'indigo' as const,
-    },
-    {
-      label: 'Units sold',
-      value: count(dashboard.units_sold),
-      icon: Receipt,
-      variant: 'amber' as const,
-    },
-  ];
-
-  const scopes = dashboard.scope_breakdown ?? [];
-
   return (
-    <OrgPage className='space-y-6'>
-      <PageHeader
-        title='Earnings'
-        description='Sales, earnings and platform fees for your organisation.'
-      />
+    <MoneyPage
+      eyebrow='Finance'
+      title='Earnings'
+      description='Sales, earnings and platform fees for your organisation, and what you owe instructors.'
+      loadingStats={dashboardQuery.isLoading}
+      stats={[
+        {
+          label: 'Estimated earnings',
+          value: amounts(dashboard.estimated_earnings),
+          hint: 'For the period',
+          icon: TrendingUp,
+        },
+        { label: 'Gross revenue', value: amounts(dashboard.gross_totals), hint: 'What learners paid' },
+        { label: 'Orders', value: count(dashboard.order_count), hint: `${count(dashboard.units_sold)} units sold` },
+        {
+          label: 'Owed to instructors',
+          value: amounts(owed),
+          hint: `${payables.length} ${payables.length === 1 ? 'payable' : 'payables'}`,
+          icon: HandCoins,
+        },
+      ]}
+      tabs={[
+        { id: 'overview', label: 'Overview' },
+        { id: 'payables', label: 'Instructor payables', count: payables.length || null },
+      ]}
+      tab={tab}
+      onTabChange={setTab}
+      hrefFor={hrefFor}
+    >
+      <SectionTabPanel value='overview'>
+        <div className='grid gap-4 xl:grid-cols-2'>
+          <SectionCard title='Totals' description='Aggregate performance for the period.' bodyClassName='p-0'>
+            <dl className='divide-border/60 divide-y'>
+              <Line label='Gross revenue' value={amounts(dashboard.gross_totals)} />
+              <Line label='Estimated earnings' value={amounts(dashboard.estimated_earnings)} />
+              <Line label='Average order value' value={amounts(dashboard.average_order_value)} />
+              <Line label='Orders' value={count(dashboard.order_count)} />
+              <Line label='Line items' value={count(dashboard.line_item_count)} />
+              <Line label='Platform fees' value={amounts(platformFees)} />
+            </dl>
+          </SectionCard>
 
-      <div className={surfaceTheme.statGrid}>
-        {isLoading
-          ? kpis.map(kpi => <KpiCardSkeleton key={kpi.label} />)
-          : kpis.map(kpi => (
-              <KpiCard
-                key={kpi.label}
-                title={kpi.label}
-                value={kpi.value}
-                icon={<kpi.icon className='h-5 w-5' />}
-                variant={kpi.variant}
-              />
-            ))}
-      </div>
-
-      <div className='grid gap-4 xl:grid-cols-2'>
-        <Card>
-          <CardContent className='space-y-4 p-6'>
-            <div className='space-y-1'>
-              <h2 className='text-foreground text-base font-semibold'>Totals</h2>
-              <p className='text-muted-foreground text-sm'>Aggregate performance for the period</p>
-            </div>
-            <div className='grid gap-3 sm:grid-cols-2'>
-              <Stat label='Gross revenue' value={money(dashboard.gross_totals)} />
-              <Stat label='Estimated earnings' value={money(dashboard.estimated_earnings)} />
-              <Stat label='Average order value' value={money(dashboard.average_order_value)} />
-              <Stat label='Line items' value={count(dashboard.line_item_count)} />
-              <Stat label='Orders' value={count(dashboard.order_count)} />
-              <Stat label='Platform fees' value={money(platformFees)} />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardContent className='space-y-4 p-6'>
-            <div className='space-y-1'>
-              <h2 className='text-foreground text-base font-semibold'>Revenue by scope</h2>
-              <p className='text-muted-foreground text-sm'>Breakdown across sources</p>
-            </div>
-            {isLoading ? (
-              <div className='space-y-2'>
-                {[...Array(3)].map((_, i) => (
+          <SectionCard title='Revenue by scope' description='Breakdown across sources.' bodyClassName='p-0'>
+            {dashboardQuery.isLoading ? (
+              <div className='space-y-2 p-5'>
+                {[0, 1, 2].map(i => (
                   <Skeleton key={i} className='h-10 w-full' />
                 ))}
               </div>
             ) : scopes.length === 0 ? (
-              <p className='text-muted-foreground text-sm'>No revenue recorded for this period.</p>
+              <EmptyState
+                variant='plain'
+                icon={TrendingUp}
+                title='No revenue yet'
+                description='No revenue recorded for this period.'
+              />
             ) : (
-              <ul className='divide-y'>
+              <ul className='divide-border/60 divide-y'>
                 {scopes.map((scope, index) => (
-                  <li
-                    key={`${scope.scope}-${index}`}
-                    className='flex items-center justify-between gap-3 py-2.5 first:pt-0 last:pb-0'
-                  >
+                  <li key={`${scope.scope}-${index}`} className='flex items-center justify-between gap-3 px-5 py-3'>
                     <div className='min-w-0'>
-                      <p className='text-foreground truncate text-sm font-medium'>
-                        {scope.scope ?? 'Unknown'}
-                      </p>
+                      <p className='truncate text-sm font-medium'>{scope.scope ?? 'Unknown'}</p>
                       <p className='text-muted-foreground text-xs'>
                         {count(scope.units_sold)} units · {count(scope.line_item_count)} line items
                       </p>
                     </div>
-                    <span className='text-foreground shrink-0 text-sm font-semibold tabular-nums'>
-                      {money(scope.gross_totals)}
+                    <span className='shrink-0 text-right text-sm font-semibold tabular-nums'>
+                      {amounts(scope.gross_totals)}
                     </span>
                   </li>
                 ))}
               </ul>
             )}
-          </CardContent>
-        </Card>
-      </div>
+          </SectionCard>
+        </div>
+      </SectionTabPanel>
 
-      <Card>
-        <CardContent className='space-y-4 p-6'>
-          <div className='space-y-1'>
-            <h2 className='text-foreground text-base font-semibold'>Payables to instructors</h2>
-            <p className='text-muted-foreground text-sm'>
-              What your organisation owes instructors for delivered class sessions
-            </p>
-          </div>
-
-          <KpiCard
-            title='Total owed to instructors'
-            value={amount(totalOwed)}
-            icon={<HandCoins className='h-5 w-5' />}
-            variant='amber'
-          />
-
+      <SectionTabPanel value='payables'>
+        <SectionCard
+          title='Instructor payables'
+          description='What your organisation owes instructors for delivered class sessions.'
+          bodyClassName='p-0'
+        >
           {payablesQuery.isLoading ? (
-            <div className='space-y-2'>
-              {[...Array(4)].map((_, i) => (
+            <div className='space-y-2 p-5'>
+              {[0, 1, 2, 3].map(i => (
                 <Skeleton key={i} className='h-12 w-full' />
               ))}
             </div>
           ) : payables.length === 0 ? (
-            <p className='text-muted-foreground text-sm'>
-              Nothing owed yet — payables accrue as instructors complete class sessions.
-            </p>
+            <EmptyState
+              variant='plain'
+              icon={HandCoins}
+              title='Nothing owed'
+              description='Payables accrue as instructors complete class sessions.'
+            />
           ) : (
-            <div className='overflow-x-auto rounded-lg border'>
-              <Table className='min-w-[640px]'>
+            <div className='overflow-x-auto'>
+              <Table className='min-w-[560px]'>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className='whitespace-nowrap'>Instructor</TableHead>
-                    <TableHead className='whitespace-nowrap'>Classes</TableHead>
-                    <TableHead className='whitespace-nowrap'>Sessions delivered</TableHead>
-                    <TableHead className='text-right whitespace-nowrap'>Amount owed</TableHead>
+                    <TableHead className='pl-5 whitespace-nowrap'>Instructor</TableHead>
+                    <TableHead className='text-right whitespace-nowrap'>Classes</TableHead>
+                    <TableHead className='text-right whitespace-nowrap'>Sessions delivered</TableHead>
+                    <TableHead className='pr-5 text-right whitespace-nowrap'>Amount owed</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {payables.map(payable => (
-                    // Keyed by instructor *and* currency: the backend groups obligations by both, so
-                    // one instructor owed in two currencies is two rows, not one. The cast goes away
-                    // at the next client regen — `currency_code` is already on the deployed DTO.
-                    <TableRow
-                      key={`${payable.instructor_uuid}-${
-                        (payable as { currency_code?: string }).currency_code ?? ''
-                      }`}
-                    >
-                      <TableCell className='font-medium whitespace-nowrap'>
+                    // One row per instructor and currency, as the backend groups them.
+                    <TableRow key={`${payable.instructor_uuid}-${payable.currency_code ?? ''}`}>
+                      <TableCell className='pl-5 font-medium whitespace-nowrap'>
                         {instructorName(payable.instructor_uuid)}
                       </TableCell>
-                      <TableCell className='text-muted-foreground tabular-nums'>
+                      <TableCell className='text-muted-foreground text-right tabular-nums'>
                         {count(payable.class_count)}
                       </TableCell>
-                      <TableCell className='text-muted-foreground tabular-nums'>
+                      <TableCell className='text-muted-foreground text-right tabular-nums'>
                         {count(payable.session_count)}
                       </TableCell>
-                      <TableCell className='text-right font-semibold tabular-nums'>
-                        {amount(payable.amount_owed)}
+                      <TableCell className='pr-5 text-right font-semibold whitespace-nowrap tabular-nums'>
+                        {formatMoney(payable.amount_owed, payable.currency_code ?? 'KES')}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -282,8 +218,8 @@ export default function OrganisationEarningsPage() {
               </Table>
             </div>
           )}
-        </CardContent>
-      </Card>
-    </OrgPage>
+        </SectionCard>
+      </SectionTabPanel>
+    </MoneyPage>
   );
 }
