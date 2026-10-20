@@ -27,6 +27,7 @@ import {
 import Spinner from '@/components/ui/spinner';
 import { useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
 import { STALE_TIMES } from '@/lib/query-client';
+import { richTextOrUndefined } from '@/lib/rich-text';
 import {
   getEnrollmentsForClassOptions,
   getEnrollmentsForClassQueryKey,
@@ -160,7 +161,7 @@ export function WorkbookClassRegister({
       body: {
         attended,
         instrument_condition: note.condition || undefined,
-        comment: note.comment?.trim() || undefined,
+        comment: richTextOrUndefined(note.comment),
       },
     });
   };
@@ -329,7 +330,10 @@ function SessionRecordForm({ sessionId }: { sessionId: string }) {
           onClick={async () => {
             const response = await mutation.mutateAsync({
               path: { instanceUuid: sessionId },
-              body: { topic_covered: topicValue, instructor_remarks: remarksValue },
+              body: {
+                topic_covered: richTextOrUndefined(topicValue),
+                instructor_remarks: richTextOrUndefined(remarksValue),
+              },
             });
             if (hasApiError(response)) {
               toast.error(response.message || 'Unable to save the session record.');

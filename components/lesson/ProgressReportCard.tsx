@@ -20,6 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { STALE_TIMES } from '@/lib/query-client';
+import { isBlankRichText } from '@/lib/rich-text';
 import {
   addEnrollmentFeedbackMutation,
   getEnrollmentGradeBookQueryKey,
@@ -168,7 +169,7 @@ function FeedbackSection({
   const [editorKey, setEditorKey] = useState(0);
   const mutation = useMutation(addEnrollmentFeedbackMutation());
   const fieldId = `feedback-${enrollmentUuid}`;
-  const hasText = draft.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim().length > 0;
+  const hasText = !isBlankRichText(draft);
 
   return (
     <section className='space-y-2'>

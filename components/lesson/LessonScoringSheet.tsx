@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/sheet';
 import { formatDateTime } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
+import { richTextOrUndefined } from '@/lib/rich-text';
 import {
   getEnrollmentGradeBookOptions,
   getEnrollmentGradeBookQueryKey,
@@ -198,7 +199,7 @@ function RubricCell({
       path: cellPath,
       body: {
         status,
-        comments: comments.trim() || undefined,
+        comments: richTextOrUndefined(comments),
         criteria_selections: Object.entries(selections).map(([criteria_uuid, scoring_level_uuid]) => ({
           criteria_uuid,
           scoring_level_uuid,
