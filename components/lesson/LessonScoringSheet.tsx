@@ -18,6 +18,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { formatDateTime } from '@/lib/date';
+import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import { richTextOrUndefined } from '@/lib/rich-text';
 import {
@@ -157,7 +158,11 @@ function RubricCell({
     enabled: Boolean(lineItemUuid && enrollmentId),
     staleTime: STALE_TIMES.live,
   });
-  const mutation = useMutation(upsertLineItemRubricEvaluationMutation());
+  const mutation = useMutation({
+    ...upsertLineItemRubricEvaluationMutation(),
+    // A locked session report answers 409 with the reason; say it rather than fail silently.
+    onError: error => toast.error(getErrorMessage(error, 'Unable to save the lesson score.')),
+  });
 
   if (matrixQuery.isLoading || evaluationQuery.isLoading) return <WorkbookLoading />;
   if (
@@ -195,7 +200,8 @@ function RubricCell({
     selections: Record<string, string>,
     comments: string
   ) => {
-    const response = await mutation.mutateAsync({
+    const response = await mutation
+      .mutateAsync({
       path: cellPath,
       body: {
         status,
@@ -205,7 +211,9 @@ function RubricCell({
           scoring_level_uuid,
         })),
       },
-    });
+      })
+      .catch(() => null);
+    if (!response) return;
     if (hasApiError(response)) {
       toast.error(response.message || 'Unable to save the lesson score.');
       return;

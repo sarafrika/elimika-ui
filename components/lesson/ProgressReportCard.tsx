@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import { isBlankRichText } from '@/lib/rich-text';
 import {
@@ -167,7 +168,10 @@ function FeedbackSection({
   const [draft, setDraft] = useState('');
   // Bumped after a save so the editor remounts empty.
   const [editorKey, setEditorKey] = useState(0);
-  const mutation = useMutation(addEnrollmentFeedbackMutation());
+  const mutation = useMutation({
+    ...addEnrollmentFeedbackMutation(),
+    onError: error => toast.error(getErrorMessage(error, 'The comment could not be saved.')),
+  });
   const fieldId = `feedback-${enrollmentUuid}`;
   const hasText = !isBlankRichText(draft);
 
@@ -193,7 +197,8 @@ function FeedbackSection({
                 const response = await mutation.mutateAsync({
                   path: { courseUuid, enrollmentUuid },
                   body: { comments: draft },
-                });
+                }).catch(() => null);
+                if (!response) return;
                 if (hasApiError(response)) {
                   toast.error(response.message || 'Only the class instructor can comment on this student.');
                   return;

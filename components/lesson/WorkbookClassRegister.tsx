@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { useStudentsByIds, useUsersByIds } from '@/hooks/use-batched-lookups';
+import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import { richTextOrUndefined } from '@/lib/rich-text';
 import {
@@ -131,6 +132,7 @@ export function WorkbookClassRegister({
   );
   const mutation = useMutation({
     ...recordAttendanceMutation(),
+    onError: error => toast.error(getErrorMessage(error, 'Unable to mark attendance.')),
     onSuccess: async response => {
       if (hasApiError(response)) {
         toast.error(response.message || 'Unable to mark attendance.');
@@ -141,7 +143,6 @@ export function WorkbookClassRegister({
       });
       toast.success('Attendance updated.');
     },
-    onError: () => toast.error('Unable to mark attendance. Please try again.'),
   });
   const [notes, setNotes] = useState<Record<string, { condition?: string; comment?: string }>>({});
   const noteFor = (studentId: string) => {
@@ -302,7 +303,10 @@ function SessionRecordForm({ sessionId }: { sessionId: string }) {
     enabled: Boolean(sessionId),
     staleTime: STALE_TIMES.live,
   });
-  const mutation = useMutation(recordSessionMutation());
+  const mutation = useMutation({
+    ...recordSessionMutation(),
+    onError: error => toast.error(getErrorMessage(error, 'Unable to save the session record.')),
+  });
   const record = query.data?.data;
   const [topic, setTopic] = useState<string | undefined>(undefined);
   const [remarks, setRemarks] = useState<string | undefined>(undefined);
@@ -334,7 +338,8 @@ function SessionRecordForm({ sessionId }: { sessionId: string }) {
                 topic_covered: richTextOrUndefined(topicValue),
                 instructor_remarks: richTextOrUndefined(remarksValue),
               },
-            });
+            }).catch(() => null);
+            if (!response) return;
             if (hasApiError(response)) {
               toast.error(response.message || 'Unable to save the session record.');
               return;
