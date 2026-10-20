@@ -7,7 +7,7 @@ test('role-less backend class links map onto each role’s live class route', ()
   assert.equal(normalizeLegacyActionUrl(url, 'student'), '/dashboard/student/schedule/classes/c1');
   assert.equal(
     normalizeLegacyActionUrl(url, 'instructor'),
-    '/dashboard/instructor/classes/class-training/c1'
+    '/dashboard/instructor/classes/training/c1'
   );
   assert.equal(
     normalizeLegacyActionUrl(url, 'organisation_user'),
@@ -33,6 +33,23 @@ test('schedule, assignment and transaction links resolve per role', () => {
     normalizeLegacyActionUrl('/dashboard/transactions', 'student'),
     '/dashboard/student/wallet'
   );
+});
+
+test('retired training links preserve lesson, session and certificate context', () => {
+  for (const prefix of ['/dashboard/instructor', '/dashboard']) {
+    const suffix = '?course=c1&lesson=l1&content=p1&schedule=s1&tab=grading#student';
+    assert.equal(
+      normalizeLegacyActionUrl(`${prefix}/classes/class-training/c1${suffix}`, 'instructor'),
+      `/dashboard/instructor/classes/training/c1${suffix}`
+    );
+    assert.equal(
+      normalizeLegacyActionUrl(
+        `${prefix}/classes/class-training/c1/award-certificates?schedule=s1`,
+        'instructor'
+      ),
+      '/dashboard/instructor/classes/training/c1/award-certificates?schedule=s1'
+    );
+  }
 });
 
 test('current, external and unscoped urls pass through', () => {

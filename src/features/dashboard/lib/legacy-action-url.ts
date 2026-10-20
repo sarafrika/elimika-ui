@@ -29,7 +29,7 @@ const orgDomain = (domain: UserDomain) =>
 // Older notifications stored role-less `/dashboard/...` links that now 404 or bounce.
 function classDetail(domain: UserDomain, classUuid: string): string {
   if (domain === 'student') return dashboardUrl(domain, `schedule/classes/${classUuid}`);
-  if (domain === 'instructor') return dashboardUrl(domain, `classes/class-training/${classUuid}`);
+  if (domain === 'instructor') return dashboardUrl(domain, `classes/training/${classUuid}`);
   if (orgDomain(domain)) return dashboardUrl(domain, `classes?highlight=${classUuid}`);
   if (domain === 'admin') return dashboardUrl(domain, `classes?class=${classUuid}`);
   return dashboardUrl(domain);
@@ -62,8 +62,8 @@ const TRANSACTIONS_PATH: Record<UserDomain, string> = {
 };
 
 /**
- * Map a notification `action_url` onto a live route for `domain`. Role-scoped,
- * non-dashboard and absolute urls pass through unchanged.
+ * Map a notification `action_url` onto a live route for `domain`. Retired instructor
+ * training URLs are migrated even when scoped; other scoped and external URLs pass through.
  */
 export function normalizeLegacyActionUrl(
   url: string | null | undefined,
@@ -71,6 +71,15 @@ export function normalizeLegacyActionUrl(
 ): string {
   const raw = url?.trim() ?? '';
   if (!raw.startsWith('/dashboard/') || raw.startsWith('//')) return raw;
+  if (raw.startsWith('/dashboard/instructor/classes/class-training/')) {
+    return raw.replace('/classes/class-training/', '/classes/training/');
+  }
+  if (domain === 'instructor' && raw.startsWith('/dashboard/classes/class-training/')) {
+    return raw.replace(
+      '/dashboard/classes/class-training/',
+      '/dashboard/instructor/classes/training/'
+    );
+  }
   if (routeSegmentFromPath(raw) || !isUserDomain(domain)) return raw;
 
   const [path = ''] = raw.split(/[?#]/);

@@ -1,69 +1,57 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { skipToken, useQuery } from '@tanstack/react-query';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect } from 'react';
+import { WorkbookError } from '@/components/lesson/WorkbookError';
+import { WorkbookLoading } from '@/components/lesson/WorkbookLoading';
+import { hasApiError } from '@/components/lesson/workbook-data';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useInstructor } from '@/context/instructor-context';
-import { useInstructorClassesWithSchedules } from '@/hooks/use-instructor-classes-with-schedules';
+import { STALE_TIMES } from '@/lib/query-client';
+import {
+  getScheduledInstanceOptions,
+  getScheduledInstanceQueryKey,
+} from '@/services/client/@tanstack/react-query.gen';
 
 export default function ClassInstanceDetailsRoute() {
-  const params = useParams<{ id: string }>();
-  const instanceId = params?.id;
+  const { id: instanceId } = useParams<{ id: string }>();
   const instructor = useInstructor();
-  const { classes, isLoading, isError } = useInstructorClassesWithSchedules(instructor?.uuid);
-
-  const selectedClass = useMemo(
-    () =>
-      classes.find(classItem =>
-        (classItem.schedule ?? []).some(instance => instance.uuid === instanceId)
-      ) ?? null,
-    [classes, instanceId]
-  );
-
-  const requestedScheduleId = useMemo(() => instanceId ?? '', [instanceId]);
-
-  if (isLoading && !selectedClass) {
-    return (
-      <div className='space-y-4 px-4 py-6'>
-        <div className='flex items-center justify-between gap-4'>
-          <div className='space-y-2'>
-            <Skeleton className='h-6 w-56' />
-            <Skeleton className='h-4 w-40' />
-          </div>
-          <Skeleton className='h-9 w-28' />
-        </div>
-        <div className='grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px]'>
-          <Skeleton className='h-[520px] rounded-xl' />
-          <Skeleton className='h-[520px] rounded-xl' />
-        </div>
-      </div>
-    );
-  }
-
-  if (isError || !selectedClass?.uuid) {
-    return (
-      <div className='flex min-h-[60vh] items-center justify-center px-4 py-10'>
-        <Card className='w-full max-w-xl'>
-          <CardContent className='px-6 py-8 text-center'>
-            <p className='text-foreground text-lg font-semibold'>Class instance not found</p>
-            <p className='text-muted-foreground mt-2 text-sm'>
-              We could not match that instance to one of your instructor classes.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return <OpenWorkbook classId={selectedClass.uuid} scheduleId={requestedScheduleId} />;
-}
-
-/** The old console is retired; the class workbook opens on this session instead. */
-function OpenWorkbook({ classId, scheduleId }: { classId: string; scheduleId: string }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const query = useQuery({
+    ...(instanceId
+      ? getScheduledInstanceOptions({ path: { instanceUuid: instanceId } })
+      : {
+          queryKey: getScheduledInstanceQueryKey({ path: { instanceUuid: '' } }),
+          queryFn: skipToken,
+        }),
+    enabled: Boolean(instanceId && instructor?.uuid),
+    staleTime: STALE_TIMES.live,
+  });
+  const instance = hasApiError(query.data) ? undefined : query.data?.data;
+  const classId =
+    instance?.instructor_uuid === instructor?.uuid ? instance?.class_definition_uuid : undefined;
+
   useEffect(() => {
-    router.replace(`/dashboard/instructor/classes/training/${classId}?schedule=${encodeURIComponent(scheduleId)}`);
-  }, [router, classId, scheduleId]);
-  return <Skeleton className='m-4 h-[520px] rounded-xl' />;
+    if (!classId || !instanceId) return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('schedule', instanceId);
+    router.replace(`/dashboard/instructor/classes/training/${classId}?${params.toString()}`);
+  }, [classId, instanceId, router, searchParams]);
+
+  if (query.isError || hasApiError(query.data)) {
+    return (
+      <WorkbookError title='Unable to load class instance' retry={() => void query.refetch()} />
+    );
+  }
+  if (query.isSuccess && !classId) {
+    return (
+      <EmptyState
+        title='Class instance not found'
+        description='We could not match that instance to one of your instructor classes.'
+      />
+    );
+  }
+  return <WorkbookLoading />;
 }

@@ -61,7 +61,18 @@ const removedDashboardRoutes: Array<[string, string]> = [
   ['/dashboard/instructor/trainings/overview', '/dashboard/instructor/classes'],
   ['/dashboard/instructor/trainings/overview/:id', '/dashboard/instructor/classes/overview/:id'],
   ['/dashboard/instructor/trainings/create-new', '/dashboard/instructor/classes/new'],
-  ['/dashboard/instructor/trainings/instructor-console/:id', '/dashboard/instructor/classes/class-training/:id'],
+  [
+    '/dashboard/instructor/trainings/instructor-console/:id',
+    '/dashboard/instructor/classes/training/:id',
+  ],
+  [
+    '/dashboard/instructor/classes/class-training/:id/:path*',
+    '/dashboard/instructor/classes/training/:id/:path*',
+  ],
+  [
+    '/dashboard/classes/class-training/:id/:path*',
+    '/dashboard/instructor/classes/training/:id/:path*',
+  ],
   ['/dashboard/instructor/trainings/students', '/dashboard/instructor/students'],
   ['/dashboard/instructor/trainings/timetable', '/dashboard/instructor/calendar'],
   ['/dashboard/instructor/learning/:path*', '/dashboard/instructor/courses'],
