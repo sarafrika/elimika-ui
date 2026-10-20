@@ -30,6 +30,7 @@ import {
   addCourseRequirementResponseTransformer,
   addCourseTrainingRequirementResponseTransformer,
   addEducationResponseTransformer,
+  addEnrollmentFeedbackResponseTransformer,
   addExperienceResponseTransformer,
   addInstructorDocumentResponseTransformer,
   addInstructorEducationResponseTransformer,
@@ -178,6 +179,7 @@ import {
   getClassEnrolmentEligibilityResponseTransformer,
   getClassesBatchResponseTransformer,
   getClassRatingSummaryResponseTransformer,
+  getClassReportResponseTransformer,
   getClassReviewsResponseTransformer,
   getClassScheduleResponseTransformer,
   getClassSchedulesResponseTransformer,
@@ -224,6 +226,7 @@ import {
   getDomainOnboardingResponseTransformer,
   getDownloadableCertificatesResponseTransformer,
   getEnrollmentCountResponseTransformer,
+  getEnrollmentFeedbackResponseTransformer,
   getEnrollmentGradeBookResponseTransformer,
   getEnrollmentOverviewForStudentResponseTransformer,
   getEnrollmentResponseTransformer,
@@ -258,17 +261,21 @@ import {
   getLearnerSkillGoalsResponseTransformer,
   getLessonContentResponseTransformer,
   getLessonsForCoursesResponseTransformer,
+  getLineItemRevisionsResponseTransformer,
   getLineItemRubricEvaluationResponseTransformer,
   getLineItemsResponseTransformer,
   getMediaContentTypesResponseTransformer,
   getMineResponseTransformer,
+  getMyCourseEarningsResponseTransformer,
   getMyOnboardingResponseTransformer,
+  getMySessionReportsResponseTransformer,
   getOptionalCoursesResponseTransformer,
   getOrderResponseTransformer,
   getOrganisationByUuidResponseTransformer,
   getOrganisationCourseContentResponseTransformer,
   getOrganisationDocumentsResponseTransformer,
   getOrganisationInstructorSummariesResponseTransformer,
+  getOrganisationSessionReportsResponseTransformer,
   getOrganisationStatisticsResponseTransformer,
   getOrganisationTimetableResponseTransformer,
   getOrganizationAdminUsersResponseTransformer,
@@ -293,6 +300,7 @@ import {
   getProgramsByCourseCreatorResponseTransformer,
   getProgramTrainingApplicationHistoryResponseTransformer,
   getProgramTrainingApplicationResponseTransformer,
+  getProgressReportResponseTransformer,
   getPublicRubricsResponseTransformer,
   getPublishedCoursesResponseTransformer,
   getPublishedProgramsResponseTransformer,
@@ -324,10 +332,13 @@ import {
   getScoringLevelResponseTransformer,
   getScoringLevelsByRubricResponseTransformer,
   getSessionBootstrapResponseTransformer,
+  getSessionRecordResponseTransformer,
+  getSessionReportResponseTransformer,
   getStatementResponseTransformer,
   getStudentBookingsResponseTransformer,
   getStudentByIdResponseTransformer,
   getStudentCertificatesResponseTransformer,
+  getStudentCourseEnrollmentsResponseTransformer,
   getStudentCourseOverviewResponseTransformer,
   getStudentDashboardResponseTransformer,
   getStudentPerformanceResponseTransformer,
@@ -382,9 +393,11 @@ import {
   listMembersResponseTransformer,
   listMyApplicationsResponseTransformer,
   listMyInvitationsResponseTransformer,
+  listMyOrdersResponseTransformer,
   listNotificationsResponseTransformer,
   listObligationsResponseTransformer,
   listOrganisationInvitationsResponseTransformer,
+  listOrganisationWalletTransactionsResponseTransformer,
   listPaymentsResponseTransformer,
   listPendingCourseEditsResponseTransformer,
   listPendingCoursesResponseTransformer,
@@ -417,9 +430,11 @@ import {
   publishCourseResponseTransformer,
   publishProgramResponseTransformer,
   recalculateScoresResponseTransformer,
+  recordSessionResponseTransformer,
   registerAndAcceptResponseTransformer,
   removeAdminDomainResponseTransformer,
   removeItemResponseTransformer,
+  reopenSessionReportResponseTransformer,
   replaceLearnerSkillGoalsResponseTransformer,
   requestOrganisationVerificationResponseTransformer,
   requestPaymentResponseTransformer,
@@ -493,6 +508,7 @@ import {
   submitProgramTrainingApplicationResponseTransformer,
   submitProgramTrainingRateUpdateResponseTransformer,
   submitQuizAttemptResponseTransformer,
+  submitSessionReportResponseTransformer,
   submitTrainingApplicationResponseTransformer,
   submitTrainingRateUpdateResponseTransformer,
   summaryResponseTransformer,
@@ -678,6 +694,9 @@ import type {
   AddEducationData,
   AddEducationErrors,
   AddEducationResponses,
+  AddEnrollmentFeedbackData,
+  AddEnrollmentFeedbackErrors,
+  AddEnrollmentFeedbackResponses,
   AddExperienceData,
   AddExperienceErrors,
   AddExperienceResponses,
@@ -1422,6 +1441,12 @@ import type {
   GetClassRatingSummaryData,
   GetClassRatingSummaryErrors,
   GetClassRatingSummaryResponses,
+  GetClassReportCsvData,
+  GetClassReportCsvErrors,
+  GetClassReportCsvResponses,
+  GetClassReportData,
+  GetClassReportErrors,
+  GetClassReportResponses,
   GetClassReviewsData,
   GetClassReviewsErrors,
   GetClassReviewsResponses,
@@ -1578,6 +1603,7 @@ import type {
   GetDashboardStatisticsData,
   GetDashboardStatisticsErrors,
   GetDashboardStatisticsResponses,
+  GetData,
   GetDefaultCurrencyData,
   GetDefaultCurrencyErrors,
   GetDefaultCurrencyResponses,
@@ -1595,6 +1621,9 @@ import type {
   GetEnrollmentCountResponses,
   GetEnrollmentData,
   GetEnrollmentErrors,
+  GetEnrollmentFeedbackData,
+  GetEnrollmentFeedbackErrors,
+  GetEnrollmentFeedbackResponses,
   GetEnrollmentGradeBookData,
   GetEnrollmentGradeBookErrors,
   GetEnrollmentGradeBookResponses,
@@ -1611,6 +1640,7 @@ import type {
   GetEnrolmentTrendsData,
   GetEnrolmentTrendsErrors,
   GetEnrolmentTrendsResponses,
+  GetErrors,
   GetFileData,
   GetFileErrors,
   GetFileResponses,
@@ -1620,6 +1650,9 @@ import type {
   GetGeneralRubricsData,
   GetGeneralRubricsErrors,
   GetGeneralRubricsResponses,
+  GetGradeBandsData,
+  GetGradeBandsErrors,
+  GetGradeBandsResponses,
   GetGuardianInvitationByTokenData,
   GetGuardianInvitationByTokenErrors,
   GetGuardianInvitationByTokenResponses,
@@ -1704,6 +1737,9 @@ import type {
   GetLessonsForCoursesData,
   GetLessonsForCoursesErrors,
   GetLessonsForCoursesResponses,
+  GetLineItemRevisionsData,
+  GetLineItemRevisionsErrors,
+  GetLineItemRevisionsResponses,
   GetLineItemRubricEvaluationData,
   GetLineItemRubricEvaluationErrors,
   GetLineItemRubricEvaluationResponses,
@@ -1725,9 +1761,15 @@ import type {
   GetMonthlySettlementsData,
   GetMonthlySettlementsErrors,
   GetMonthlySettlementsResponses,
+  GetMyCourseEarningsData,
+  GetMyCourseEarningsErrors,
+  GetMyCourseEarningsResponses,
   GetMyOnboardingData,
   GetMyOnboardingErrors,
   GetMyOnboardingResponses,
+  GetMySessionReportsData,
+  GetMySessionReportsErrors,
+  GetMySessionReportsResponses,
   GetMyStudentsData,
   GetMyStudentsErrors,
   GetMyStudentsResponses,
@@ -1749,6 +1791,9 @@ import type {
   GetOrganisationInstructorSummariesData,
   GetOrganisationInstructorSummariesErrors,
   GetOrganisationInstructorSummariesResponses,
+  GetOrganisationSessionReportsData,
+  GetOrganisationSessionReportsErrors,
+  GetOrganisationSessionReportsResponses,
   GetOrganisationStatisticsData,
   GetOrganisationStatisticsErrors,
   GetOrganisationStatisticsResponses,
@@ -1758,6 +1803,9 @@ import type {
   GetOrganisationTimetableData,
   GetOrganisationTimetableErrors,
   GetOrganisationTimetableResponses,
+  GetOrganisationWalletData,
+  GetOrganisationWalletErrors,
+  GetOrganisationWalletResponses,
   GetOrganizationAdminUsersData,
   GetOrganizationAdminUsersErrors,
   GetOrganizationAdminUsersResponses,
@@ -1842,6 +1890,9 @@ import type {
   GetProgramTrainingApplicationHistoryErrors,
   GetProgramTrainingApplicationHistoryResponses,
   GetProgramTrainingApplicationResponses,
+  GetProgressReportData,
+  GetProgressReportErrors,
+  GetProgressReportResponses,
   GetPublicRubricsData,
   GetPublicRubricsErrors,
   GetPublicRubricsResponses,
@@ -1884,6 +1935,7 @@ import type {
   GetResourceData,
   GetResourceErrors,
   GetResourceResponses,
+  GetResponses,
   GetRevenueDashboard1Data,
   GetRevenueDashboard1Errors,
   GetRevenueDashboard1Responses,
@@ -1938,6 +1990,12 @@ import type {
   GetSessionBootstrapData,
   GetSessionBootstrapErrors,
   GetSessionBootstrapResponses,
+  GetSessionRecordData,
+  GetSessionRecordErrors,
+  GetSessionRecordResponses,
+  GetSessionReportData,
+  GetSessionReportErrors,
+  GetSessionReportResponses,
   GetSimilarCoursesData,
   GetSimilarCoursesErrors,
   GetSimilarCoursesResponses,
@@ -1956,6 +2014,9 @@ import type {
   GetStudentCertificatesData,
   GetStudentCertificatesErrors,
   GetStudentCertificatesResponses,
+  GetStudentCourseEnrollmentsData,
+  GetStudentCourseEnrollmentsErrors,
+  GetStudentCourseEnrollmentsResponses,
   GetStudentCourseOverviewData,
   GetStudentCourseOverviewErrors,
   GetStudentCourseOverviewResponses,
@@ -2172,6 +2233,9 @@ import type {
   ListMyInvitationsData,
   ListMyInvitationsErrors,
   ListMyInvitationsResponses,
+  ListMyOrdersData,
+  ListMyOrdersErrors,
+  ListMyOrdersResponses,
   ListNotificationsData,
   ListNotificationsErrors,
   ListNotificationsResponses,
@@ -2184,6 +2248,9 @@ import type {
   ListOrganisationInvitationsData,
   ListOrganisationInvitationsErrors,
   ListOrganisationInvitationsResponses,
+  ListOrganisationWalletTransactionsData,
+  ListOrganisationWalletTransactionsErrors,
+  ListOrganisationWalletTransactionsResponses,
   ListPaymentsData,
   ListPaymentsErrors,
   ListPaymentsResponses,
@@ -2310,9 +2377,15 @@ import type {
   ReconcileData,
   ReconcileErrors,
   ReconcileResponses,
+  RecordAttendanceData,
+  RecordAttendanceErrors,
+  RecordAttendanceResponses,
   RecordDiscoveryEventData,
   RecordDiscoveryEventErrors,
   RecordDiscoveryEventResponses,
+  RecordSessionData,
+  RecordSessionErrors,
+  RecordSessionResponses,
   RegisterAndAcceptData,
   RegisterAndAcceptErrors,
   RegisterAndAcceptResponses,
@@ -2343,6 +2416,9 @@ import type {
   RemoveUserFromBranchData,
   RemoveUserFromBranchErrors,
   RemoveUserFromBranchResponses,
+  ReopenSessionReportData,
+  ReopenSessionReportErrors,
+  ReopenSessionReportResponses,
   ReorderDifficultyLevelsData,
   ReorderDifficultyLevelsErrors,
   ReorderDifficultyLevelsResponses,
@@ -2364,6 +2440,9 @@ import type {
   ReplaceCourseSkillsData,
   ReplaceCourseSkillsErrors,
   ReplaceCourseSkillsResponses,
+  ReplaceGradeBandsData,
+  ReplaceGradeBandsErrors,
+  ReplaceGradeBandsResponses,
   ReplaceLearnerSkillGoalsData,
   ReplaceLearnerSkillGoalsErrors,
   ReplaceLearnerSkillGoalsResponses,
@@ -2600,6 +2679,9 @@ import type {
   SubmitQuizAttemptData,
   SubmitQuizAttemptErrors,
   SubmitQuizAttemptResponses,
+  SubmitSessionReportData,
+  SubmitSessionReportErrors,
+  SubmitSessionReportResponses,
   SubmitTrainingApplicationData,
   SubmitTrainingApplicationErrors,
   SubmitTrainingApplicationResponses,
@@ -2738,6 +2820,7 @@ import type {
   UpdateCurrencyData,
   UpdateCurrencyErrors,
   UpdateCurrencyResponses,
+  UpdateData,
   UpdateDifficultyLevelData,
   UpdateDifficultyLevelErrors,
   UpdateDifficultyLevelResponses,
@@ -2747,6 +2830,7 @@ import type {
   UpdateEducationData,
   UpdateEducationErrors,
   UpdateEducationResponses,
+  UpdateErrors,
   UpdateExperienceData,
   UpdateExperienceErrors,
   UpdateExperienceResponses,
@@ -2825,6 +2909,7 @@ import type {
   UpdateResourceData,
   UpdateResourceErrors,
   UpdateResourceResponses,
+  UpdateResponses,
   UpdateRubricCriterionData,
   UpdateRubricCriterionErrors,
   UpdateRubricCriterionResponses,
@@ -3094,6 +3179,46 @@ export const updateTrainingBranch = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/training-branches/{uuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Get what was taught in a session
+ *
+ * Topic covered, instructor remarks and duration.
+ */
+export const getSessionRecord = <ThrowOnError extends boolean = false>(
+  options: Options<GetSessionRecordData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetSessionRecordResponses, GetSessionRecordErrors, ThrowOnError>({
+    responseTransformer: getSessionRecordResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/record',
+    ...options,
+  });
+
+/**
+ * Record what was taught in a session
+ *
+ * Saves the topic covered and the instructor's remarks.
+ */
+export const recordSession = <ThrowOnError extends boolean = false>(
+  options: Options<RecordSessionData, ThrowOnError>
+) =>
+  (options.client ?? client).put<RecordSessionResponses, RecordSessionErrors, ThrowOnError>({
+    responseTransformer: recordSessionResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/record',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -4173,6 +4298,44 @@ export const updateTrainingBranch1 = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Get organisation settings
+ *
+ * Includes how long submitted session reports stay editable.
+ */
+export const get = <ThrowOnError extends boolean = false>(
+  options: Options<GetData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetResponses, GetErrors, ThrowOnError>({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/settings',
+    ...options,
+  });
+
+/**
+ * Update organisation settings
+ *
+ * Only the organisation's managers may change its settings.
+ */
+export const update = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateData, ThrowOnError>
+) =>
+  (options.client ?? client).put<UpdateResponses, UpdateErrors, ThrowOnError>({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/settings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Deactivate a resource
  *
  * Rejected while the resource still has future holds or confirmed bookings
@@ -4995,6 +5158,42 @@ export const updateAvailabilitySlot = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Mark attendance for a student enrollment
+ */
+export const markAttendance = <ThrowOnError extends boolean = false>(
+  options: Options<MarkAttendanceData, ThrowOnError>
+) =>
+  (options.client ?? client).patch<MarkAttendanceResponses, MarkAttendanceErrors, ThrowOnError>({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/enrollment/{enrollmentUuid}/attendance',
+    ...options,
+  });
+
+/**
+ * Record attendance for a student enrollment
+ *
+ * Same as the PATCH, but the rich-text comment travels in the body instead of the URL.
+ */
+export const recordAttendance = <ThrowOnError extends boolean = false>(
+  options: Options<RecordAttendanceData, ThrowOnError>
+) =>
+  (options.client ?? client).put<RecordAttendanceResponses, RecordAttendanceErrors, ThrowOnError>({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/enrollment/{enrollmentUuid}/attendance',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Delete course
  *
  * Permanently removes a course, its category associations, and all associated data.
@@ -5616,6 +5815,46 @@ export const updateLessonContent = <ThrowOnError extends boolean = false>(
       ...options.headers,
     },
   });
+
+/**
+ * List course grade bands
+ *
+ * The labels the course awards by final grade, highest minimum first.
+ */
+export const getGradeBands = <ThrowOnError extends boolean = false>(
+  options: Options<GetGradeBandsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetGradeBandsResponses, GetGradeBandsErrors, ThrowOnError>({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/courses/{courseUuid}/grade-bands',
+    ...options,
+  });
+
+/**
+ * Replace course grade bands
+ *
+ * Sets the course's grade bands; an empty list removes them. Only the course author may change grading policy.
+ */
+export const replaceGradeBands = <ThrowOnError extends boolean = false>(
+  options: Options<ReplaceGradeBandsData, ThrowOnError>
+) =>
+  (options.client ?? client).put<ReplaceGradeBandsResponses, ReplaceGradeBandsErrors, ThrowOnError>(
+    {
+      security: [
+        { scheme: 'bearer', type: 'http' },
+        { scheme: 'bearer', type: 'http' },
+      ],
+      url: '/api/v1/courses/{courseUuid}/grade-bands',
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        ...options.headers,
+      },
+    }
+  );
 
 /**
  * Get the lesson x component evaluation plan
@@ -7182,6 +7421,50 @@ export const startScheduledInstance = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/timetable/schedule/{instanceUuid}/start',
+    ...options,
+  });
+
+/**
+ * Submit a session's report
+ *
+ * Final submission: refused while anything on the checklist blocks it. Complete draft scores are submitted with it. Editable until the school's grace period ends.
+ */
+export const submitSessionReport = <ThrowOnError extends boolean = false>(
+  options: Options<SubmitSessionReportData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    SubmitSessionReportResponses,
+    SubmitSessionReportErrors,
+    ThrowOnError
+  >({
+    responseTransformer: submitSessionReportResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/report/submit',
+    ...options,
+  });
+
+/**
+ * Reopen a locked session report
+ *
+ * Platform admins only: opens one more grace period.
+ */
+export const reopenSessionReport = <ThrowOnError extends boolean = false>(
+  options: Options<ReopenSessionReportData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    ReopenSessionReportResponses,
+    ReopenSessionReportErrors,
+    ThrowOnError
+  >({
+    responseTransformer: reopenSessionReportResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/report/reopen',
     ...options,
   });
 
@@ -11230,6 +11513,54 @@ export const reorderLessonContent = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * List instructor feedback
+ *
+ * Every instructor comment on a learner's progress, newest first.
+ */
+export const getEnrollmentFeedback = <ThrowOnError extends boolean = false>(
+  options: Options<GetEnrollmentFeedbackData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetEnrollmentFeedbackResponses,
+    GetEnrollmentFeedbackErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getEnrollmentFeedbackResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/courses/{courseUuid}/gradebook/enrollments/{enrollmentUuid}/feedback',
+    ...options,
+  });
+
+/**
+ * Add instructor feedback
+ *
+ * Records the class instructor's comment on a learner's progress. Earlier comments are kept.
+ */
+export const addEnrollmentFeedback = <ThrowOnError extends boolean = false>(
+  options: Options<AddEnrollmentFeedbackData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    AddEnrollmentFeedbackResponses,
+    AddEnrollmentFeedbackErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addEnrollmentFeedbackResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/courses/{courseUuid}/gradebook/enrollments/{enrollmentUuid}/feedback',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Get course assessments
  *
  * Retrieves all assessments for a specific course.
@@ -13954,21 +14285,6 @@ export const reorderScoringLevels = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Mark attendance for a student enrollment
- */
-export const markAttendance = <ThrowOnError extends boolean = false>(
-  options: Options<MarkAttendanceData, ThrowOnError>
-) =>
-  (options.client ?? client).patch<MarkAttendanceResponses, MarkAttendanceErrors, ThrowOnError>({
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/enrollment/{enrollmentUuid}/attendance',
-    ...options,
-  });
-
-/**
  * Retrieve cart details
  *
  * Fetches the latest cart representation
@@ -14465,6 +14781,28 @@ export const getStudentSchedule = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * List my session reports
+ *
+ * The signed-in instructor's session reports, soonest due first.
+ */
+export const getMySessionReports = <ThrowOnError extends boolean = false>(
+  options: Options<GetMySessionReportsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetMySessionReportsResponses,
+    GetMySessionReportsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getMySessionReportsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/timetable/session-reports',
+    ...options,
+  });
+
+/**
  * Cancel a scheduled class instance
  */
 export const cancelScheduledClass = <ThrowOnError extends boolean = false>(
@@ -14500,6 +14838,24 @@ export const getScheduledInstance = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/timetable/schedule/{instanceUuid}',
+    ...options,
+  });
+
+/**
+ * Get a session's report
+ *
+ * The session's instructors get the live report with its checklist; the school's managers get the last submitted version.
+ */
+export const getSessionReport = <ThrowOnError extends boolean = false>(
+  options: Options<GetSessionReportData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetSessionReportResponses, GetSessionReportErrors, ThrowOnError>({
+    responseTransformer: getSessionReportResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/timetable/schedule/{instanceUuid}/report',
     ...options,
   });
 
@@ -14566,6 +14922,41 @@ export const getInstructorSchedule = <ThrowOnError extends boolean = false>(
     url: '/api/v1/timetable/instructor/{instructorUuid}',
     ...options,
   });
+
+/**
+ * Get a class report
+ *
+ * Every learner's lesson marks across the class's sessions. School managers see submitted session reports only.
+ */
+export const getClassReport = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassReportData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetClassReportResponses, GetClassReportErrors, ThrowOnError>({
+    responseTransformer: getClassReportResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/timetable/classes/{classDefinitionUuid}/report',
+    ...options,
+  });
+
+/**
+ * Download a class report as CSV
+ */
+export const getClassReportCsv = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassReportCsvData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetClassReportCsvResponses, GetClassReportCsvErrors, ThrowOnError>(
+    {
+      security: [
+        { scheme: 'bearer', type: 'http' },
+        { scheme: 'bearer', type: 'http' },
+      ],
+      url: '/api/v1/timetable/classes/{classDefinitionUuid}/report.csv',
+      ...options,
+    }
+  );
 
 /**
  * List a student's guardians
@@ -15201,6 +15592,28 @@ export const getRevenueDashboard1 = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/revenue/analytics/domain',
+    ...options,
+  });
+
+/**
+ * My earnings per course
+ *
+ * The signed-in course creator's net earnings from class sales, per course, highest first.
+ */
+export const getMyCourseEarnings = <ThrowOnError extends boolean = false>(
+  options?: Options<GetMyCourseEarningsData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    GetMyCourseEarningsResponses,
+    GetMyCourseEarningsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getMyCourseEarningsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/revenue/analytics/course-earnings',
     ...options,
   });
 
@@ -15943,6 +16356,47 @@ export const getOrganisationDocuments = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/organisations/{uuid}/documents',
+    ...options,
+  });
+
+/**
+ * Get an organisation's wallet balance
+ */
+export const getOrganisationWallet = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrganisationWalletData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetOrganisationWalletResponses,
+    GetOrganisationWalletErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet',
+    ...options,
+  });
+
+/**
+ * List an organisation's wallet statement
+ *
+ * Newest first. A class sale share appears as a SALE row followed by its PLATFORM_FEE row.
+ */
+export const listOrganisationWalletTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<ListOrganisationWalletTransactionsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListOrganisationWalletTransactionsResponses,
+    ListOrganisationWalletTransactionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listOrganisationWalletTransactionsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/transactions',
     ...options,
   });
 
@@ -17065,6 +17519,28 @@ export const getStudentSummaries = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * List an organisation's session reports
+ *
+ * Session reports for the organisation's classes, soonest due first; filter by status to see overdue ones.
+ */
+export const getOrganisationSessionReports = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrganisationSessionReportsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetOrganisationSessionReportsResponses,
+    GetOrganisationSessionReportsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getOrganisationSessionReportsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/enrollment/organisations/{organisationUuid}/session-reports',
+    ...options,
+  });
+
+/**
  * Get organisation enrolment trends
  *
  * Monthly enrolment counts across all classes owned by the organisation, oldest month first.
@@ -17660,6 +18136,26 @@ export const getEnrollmentGradeBook = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Get learner progress report
+ *
+ * Lesson-by-lesson report for one learner: what was taught, attendance, marks with criteria, final grade and label, and instructor feedback.
+ */
+export const getProgressReport = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgressReportData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetProgressReportResponses, GetProgressReportErrors, ThrowOnError>(
+    {
+      responseTransformer: getProgressReportResponseTransformer,
+      security: [
+        { scheme: 'bearer', type: 'http' },
+        { scheme: 'bearer', type: 'http' },
+      ],
+      url: '/api/v1/courses/{courseUuid}/gradebook/enrollments/{enrollmentUuid}/progress-report',
+      ...options,
+    }
+  );
+
+/**
  * Get course enrollments
  *
  * Retrieves enrollment data for a specific course with analytics.
@@ -17831,6 +18327,28 @@ export const getCourseCategories = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/courses/{courseUuid}/categories',
+    ...options,
+  });
+
+/**
+ * List line item grade revisions
+ *
+ * Every grade given to a learner on a gradebook line item, oldest first, including regrades and earlier attempts.
+ */
+export const getLineItemRevisions = <ThrowOnError extends boolean = false>(
+  options: Options<GetLineItemRevisionsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetLineItemRevisionsResponses,
+    GetLineItemRevisionsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getLineItemRevisionsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/courses/{courseUuid}/assessments/{assessmentUuid}/line-items/{lineItemUuid}/revisions/{enrollmentUuid}',
     ...options,
   });
 
@@ -18054,6 +18572,28 @@ export const getCoursesByInstructor = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/courses/instructor/{instructorUuid}',
+    ...options,
+  });
+
+/**
+ * List a learner's course enrolments
+ *
+ * For the learner, managers of an organisation they belong to, and platform admins. Opening each enrolment's grades is checked separately.
+ */
+export const getStudentCourseEnrollments = <ThrowOnError extends boolean = false>(
+  options: Options<GetStudentCourseEnrollmentsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetStudentCourseEnrollmentsResponses,
+    GetStudentCourseEnrollmentsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getStudentCourseEnrollmentsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/courses/enrollments/students/{studentUuid}',
     ...options,
   });
 
@@ -18605,6 +19145,24 @@ export const getPaymentStatus = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/commerce/orders/{orderId}/payment-status',
+    ...options,
+  });
+
+/**
+ * List my orders
+ *
+ * The signed-in buyer's own orders, paid or awaiting payment, newest first, with their items
+ */
+export const listMyOrders = <ThrowOnError extends boolean = false>(
+  options: Options<ListMyOrdersData, ThrowOnError>
+) =>
+  (options.client ?? client).get<ListMyOrdersResponses, ListMyOrdersErrors, ThrowOnError>({
+    responseTransformer: listMyOrdersResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/commerce/orders/mine',
     ...options,
   });
 

@@ -35,6 +35,7 @@ import {
   addCourseRequirement,
   addCourseTrainingRequirement,
   addEducation,
+  addEnrollmentFeedback,
   addExperience,
   addInstructorDocument,
   addInstructorEducation,
@@ -228,6 +229,7 @@ import {
   generateCertificateUrl,
   generateCourseCertificate,
   generateProgramCertificate,
+  get,
   getActiveCourses,
   getActivePrograms,
   getActivityFeed,
@@ -283,6 +285,8 @@ import {
   getClassesBatch,
   getClassMedia,
   getClassRatingSummary,
+  getClassReport,
+  getClassReportCsv,
   getClassReviews,
   getClassSchedule,
   getClassSchedules,
@@ -341,6 +345,7 @@ import {
   getDownloadableCertificates,
   getEnrollment,
   getEnrollmentCount,
+  getEnrollmentFeedback,
   getEnrollmentGradeBook,
   getEnrollmentOverviewForStudent,
   getEnrollmentsForClass,
@@ -349,6 +354,7 @@ import {
   getFile,
   getFreePrograms,
   getGeneralRubrics,
+  getGradeBands,
   getGuardianInvitationByToken,
   getGuardians,
   getHighestScoringLevel,
@@ -377,6 +383,7 @@ import {
   getLearnerSkillGoals,
   getLessonContent,
   getLessonsForCourses,
+  getLineItemRevisions,
   getLineItemRubricEvaluation,
   getLineItems,
   getMarketplaceJobRequiredSkills,
@@ -384,7 +391,9 @@ import {
   getMediaContentTypes,
   getMine,
   getMonthlySettlements,
+  getMyCourseEarnings,
   getMyOnboarding,
+  getMySessionReports,
   getMyStudents,
   getOptionalCourses,
   getOrder,
@@ -392,9 +401,11 @@ import {
   getOrganisationCourseContent,
   getOrganisationDocuments,
   getOrganisationInstructorSummaries,
+  getOrganisationSessionReports,
   getOrganisationStatistics,
   getOrganisationSupportedDomains,
   getOrganisationTimetable,
+  getOrganisationWallet,
   getOrganizationAdminUsers,
   getPassingScoringLevels,
   getPaymentMode,
@@ -423,6 +434,7 @@ import {
   getProgramsByCourseCreator,
   getProgramTrainingApplication,
   getProgramTrainingApplicationHistory,
+  getProgressReport,
   getPublicRubrics,
   getPublishedCourses,
   getPublishedPrograms,
@@ -455,12 +467,15 @@ import {
   getScoringLevel,
   getScoringLevelsByRubric,
   getSessionBootstrap,
+  getSessionRecord,
+  getSessionReport,
   getSimilarCourses,
   getStatement,
   getStatusTransitions,
   getStudentBookings,
   getStudentById,
   getStudentCertificates,
+  getStudentCourseEnrollments,
   getStudentCourseOverview,
   getStudentDashboard,
   getStudentPerformance,
@@ -533,10 +548,12 @@ import {
   listMyAgeGroups,
   listMyApplications,
   listMyInvitations,
+  listMyOrders,
   listNotifications,
   listObligations,
   listOrganisationAgeGroups,
   listOrganisationInvitations,
+  listOrganisationWalletTransactions,
   listPayments,
   listPendingCourseEdits,
   listPendingCourses,
@@ -580,7 +597,9 @@ import {
   rebuildIndex,
   recalculateScores,
   reconcile,
+  recordAttendance,
   recordDiscoveryEvent,
+  recordSession,
   register,
   registerAndAccept,
   removeAdminDomain,
@@ -591,6 +610,7 @@ import {
   removeProgramCourse,
   removeTeam,
   removeUserFromBranch,
+  reopenSessionReport,
   reorderDifficultyLevels,
   reorderLessonContent,
   reorderPracticeActivities,
@@ -598,6 +618,7 @@ import {
   reorderScoringLevels,
   replaceCoursePrerequisites,
   replaceCourseSkills,
+  replaceGradeBands,
   replaceLearnerSkillGoals,
   replaceMarketplaceJobRequiredSkills,
   requestOrganisationVerification,
@@ -677,6 +698,7 @@ import {
   submitProgramTrainingApplication,
   submitProgramTrainingRateUpdate,
   submitQuizAttempt,
+  submitSessionReport,
   submitTrainingApplication,
   submitTrainingRateUpdate,
   summary,
@@ -687,6 +709,7 @@ import {
   unpublishProgram,
   unverifyCourseCreator,
   unverifyInstructor,
+  update,
   updateAchievement,
   updateAgeGroup,
   updateAssessmentRubric,
@@ -876,6 +899,9 @@ import type {
   AddEducationData,
   AddEducationError,
   AddEducationResponse,
+  AddEnrollmentFeedbackData,
+  AddEnrollmentFeedbackError,
+  AddEnrollmentFeedbackResponse,
   AddExperienceData,
   AddExperienceError,
   AddExperienceResponse,
@@ -1576,6 +1602,12 @@ import type {
   GetClassRatingSummaryData,
   GetClassRatingSummaryError,
   GetClassRatingSummaryResponse,
+  GetClassReportCsvData,
+  GetClassReportCsvError,
+  GetClassReportCsvResponse,
+  GetClassReportData,
+  GetClassReportError,
+  GetClassReportResponse,
   GetClassReviewsData,
   GetClassReviewsError,
   GetClassReviewsResponse,
@@ -1732,6 +1764,7 @@ import type {
   GetDashboardStatisticsData,
   GetDashboardStatisticsError,
   GetDashboardStatisticsResponse,
+  GetData,
   GetDefaultCurrencyData,
   GetDefaultCurrencyError,
   GetDefaultCurrencyResponse,
@@ -1749,6 +1782,9 @@ import type {
   GetEnrollmentCountResponse,
   GetEnrollmentData,
   GetEnrollmentError,
+  GetEnrollmentFeedbackData,
+  GetEnrollmentFeedbackError,
+  GetEnrollmentFeedbackResponse,
   GetEnrollmentGradeBookData,
   GetEnrollmentGradeBookError,
   GetEnrollmentGradeBookResponse,
@@ -1765,6 +1801,7 @@ import type {
   GetEnrolmentTrendsData,
   GetEnrolmentTrendsError,
   GetEnrolmentTrendsResponse,
+  GetError,
   GetFileData,
   GetFileError,
   GetFileResponse,
@@ -1774,6 +1811,9 @@ import type {
   GetGeneralRubricsData,
   GetGeneralRubricsError,
   GetGeneralRubricsResponse,
+  GetGradeBandsData,
+  GetGradeBandsError,
+  GetGradeBandsResponse,
   GetGuardianInvitationByTokenData,
   GetGuardianInvitationByTokenError,
   GetGuardianInvitationByTokenResponse,
@@ -1858,6 +1898,9 @@ import type {
   GetLessonsForCoursesData,
   GetLessonsForCoursesError,
   GetLessonsForCoursesResponse,
+  GetLineItemRevisionsData,
+  GetLineItemRevisionsError,
+  GetLineItemRevisionsResponse,
   GetLineItemRubricEvaluationData,
   GetLineItemRubricEvaluationError,
   GetLineItemRubricEvaluationResponse,
@@ -1879,9 +1922,15 @@ import type {
   GetMonthlySettlementsData,
   GetMonthlySettlementsError,
   GetMonthlySettlementsResponse,
+  GetMyCourseEarningsData,
+  GetMyCourseEarningsError,
+  GetMyCourseEarningsResponse,
   GetMyOnboardingData,
   GetMyOnboardingError,
   GetMyOnboardingResponse,
+  GetMySessionReportsData,
+  GetMySessionReportsError,
+  GetMySessionReportsResponse,
   GetMyStudentsData,
   GetMyStudentsError,
   GetMyStudentsResponse,
@@ -1903,6 +1952,9 @@ import type {
   GetOrganisationInstructorSummariesData,
   GetOrganisationInstructorSummariesError,
   GetOrganisationInstructorSummariesResponse,
+  GetOrganisationSessionReportsData,
+  GetOrganisationSessionReportsError,
+  GetOrganisationSessionReportsResponse,
   GetOrganisationStatisticsData,
   GetOrganisationStatisticsError,
   GetOrganisationStatisticsResponse,
@@ -1912,6 +1964,9 @@ import type {
   GetOrganisationTimetableData,
   GetOrganisationTimetableError,
   GetOrganisationTimetableResponse,
+  GetOrganisationWalletData,
+  GetOrganisationWalletError,
+  GetOrganisationWalletResponse,
   GetOrganizationAdminUsersData,
   GetOrganizationAdminUsersError,
   GetOrganizationAdminUsersResponse,
@@ -1996,6 +2051,9 @@ import type {
   GetProgramTrainingApplicationHistoryError,
   GetProgramTrainingApplicationHistoryResponse,
   GetProgramTrainingApplicationResponse,
+  GetProgressReportData,
+  GetProgressReportError,
+  GetProgressReportResponse,
   GetPublicRubricsData,
   GetPublicRubricsError,
   GetPublicRubricsResponse,
@@ -2038,6 +2096,7 @@ import type {
   GetResourceData,
   GetResourceError,
   GetResourceResponse,
+  GetResponse,
   GetRevenueDashboard1Data,
   GetRevenueDashboard1Error,
   GetRevenueDashboard1Response,
@@ -2092,6 +2151,12 @@ import type {
   GetSessionBootstrapData,
   GetSessionBootstrapError,
   GetSessionBootstrapResponse,
+  GetSessionRecordData,
+  GetSessionRecordError,
+  GetSessionRecordResponse,
+  GetSessionReportData,
+  GetSessionReportError,
+  GetSessionReportResponse,
   GetSimilarCoursesData,
   GetSimilarCoursesError,
   GetSimilarCoursesResponse,
@@ -2110,6 +2175,9 @@ import type {
   GetStudentCertificatesData,
   GetStudentCertificatesError,
   GetStudentCertificatesResponse,
+  GetStudentCourseEnrollmentsData,
+  GetStudentCourseEnrollmentsError,
+  GetStudentCourseEnrollmentsResponse,
   GetStudentCourseOverviewData,
   GetStudentCourseOverviewError,
   GetStudentCourseOverviewResponse,
@@ -2326,6 +2394,9 @@ import type {
   ListMyInvitationsData,
   ListMyInvitationsError,
   ListMyInvitationsResponse,
+  ListMyOrdersData,
+  ListMyOrdersError,
+  ListMyOrdersResponse,
   ListNotificationsData,
   ListNotificationsError,
   ListNotificationsResponse,
@@ -2338,6 +2409,9 @@ import type {
   ListOrganisationInvitationsData,
   ListOrganisationInvitationsError,
   ListOrganisationInvitationsResponse,
+  ListOrganisationWalletTransactionsData,
+  ListOrganisationWalletTransactionsError,
+  ListOrganisationWalletTransactionsResponse,
   ListPaymentsData,
   ListPaymentsError,
   ListPaymentsResponse,
@@ -2464,8 +2538,14 @@ import type {
   ReconcileData,
   ReconcileError,
   ReconcileResponse,
+  RecordAttendanceData,
+  RecordAttendanceError,
+  RecordAttendanceResponse,
   RecordDiscoveryEventData,
   RecordDiscoveryEventError,
+  RecordSessionData,
+  RecordSessionError,
+  RecordSessionResponse,
   RegisterAndAcceptData,
   RegisterAndAcceptError,
   RegisterAndAcceptResponse,
@@ -2496,6 +2576,9 @@ import type {
   RemoveUserFromBranchData,
   RemoveUserFromBranchError,
   RemoveUserFromBranchResponse,
+  ReopenSessionReportData,
+  ReopenSessionReportError,
+  ReopenSessionReportResponse,
   ReorderDifficultyLevelsData,
   ReorderDifficultyLevelsError,
   ReorderDifficultyLevelsResponse,
@@ -2517,6 +2600,9 @@ import type {
   ReplaceCourseSkillsData,
   ReplaceCourseSkillsError,
   ReplaceCourseSkillsResponse,
+  ReplaceGradeBandsData,
+  ReplaceGradeBandsError,
+  ReplaceGradeBandsResponse,
   ReplaceLearnerSkillGoalsData,
   ReplaceLearnerSkillGoalsError,
   ReplaceLearnerSkillGoalsResponse,
@@ -2753,6 +2839,9 @@ import type {
   SubmitQuizAttemptData,
   SubmitQuizAttemptError,
   SubmitQuizAttemptResponse,
+  SubmitSessionReportData,
+  SubmitSessionReportError,
+  SubmitSessionReportResponse,
   SubmitTrainingApplicationData,
   SubmitTrainingApplicationError,
   SubmitTrainingApplicationResponse,
@@ -2891,6 +2980,7 @@ import type {
   UpdateCurrencyData,
   UpdateCurrencyError,
   UpdateCurrencyResponse,
+  UpdateData,
   UpdateDifficultyLevelData,
   UpdateDifficultyLevelError,
   UpdateDifficultyLevelResponse,
@@ -2900,6 +2990,7 @@ import type {
   UpdateEducationData,
   UpdateEducationError,
   UpdateEducationResponse,
+  UpdateError,
   UpdateExperienceData,
   UpdateExperienceError,
   UpdateExperienceResponse,
@@ -2978,6 +3069,7 @@ import type {
   UpdateResourceData,
   UpdateResourceError,
   UpdateResourceResponse,
+  UpdateResponse,
   UpdateRubricCriterionData,
   UpdateRubricCriterionError,
   UpdateRubricCriterionResponse,
@@ -3298,6 +3390,58 @@ export const updateTrainingBranchMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await updateTrainingBranch({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getSessionRecordQueryKey = (options: Options<GetSessionRecordData>) =>
+  createQueryKey('getSessionRecord', options);
+
+/**
+ * Get what was taught in a session
+ *
+ * Topic covered, instructor remarks and duration.
+ */
+export const getSessionRecordOptions = (options: Options<GetSessionRecordData>) =>
+  queryOptions<
+    GetSessionRecordResponse,
+    GetSessionRecordError,
+    GetSessionRecordResponse,
+    ReturnType<typeof getSessionRecordQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSessionRecord({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSessionRecordQueryKey(options),
+  });
+
+/**
+ * Record what was taught in a session
+ *
+ * Saves the topic covered and the instructor's remarks.
+ */
+export const recordSessionMutation = (
+  options?: Partial<Options<RecordSessionData>>
+): UseMutationOptions<RecordSessionResponse, RecordSessionError, Options<RecordSessionData>> => {
+  const mutationOptions: UseMutationOptions<
+    RecordSessionResponse,
+    RecordSessionError,
+    Options<RecordSessionData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await recordSession({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -4628,6 +4772,48 @@ export const updateTrainingBranch1Mutation = (
   return mutationOptions;
 };
 
+export const getQueryKey = (options: Options<GetData>) => createQueryKey('get', options);
+
+/**
+ * Get organisation settings
+ *
+ * Includes how long submitted session reports stay editable.
+ */
+export const getOptions = (options: Options<GetData>) =>
+  queryOptions<GetResponse, GetError, GetResponse, ReturnType<typeof getQueryKey>>({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await get({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getQueryKey(options),
+  });
+
+/**
+ * Update organisation settings
+ *
+ * Only the organisation's managers may change its settings.
+ */
+export const updateMutation = (
+  options?: Partial<Options<UpdateData>>
+): UseMutationOptions<UpdateResponse, UpdateError, Options<UpdateData>> => {
+  const mutationOptions: UseMutationOptions<UpdateResponse, UpdateError, Options<UpdateData>> = {
+    mutationFn: async fnOptions => {
+      const { data } = await update({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 /**
  * Deactivate a resource
  *
@@ -5668,6 +5854,58 @@ export const updateAvailabilitySlotMutation = (
 };
 
 /**
+ * Mark attendance for a student enrollment
+ */
+export const markAttendanceMutation = (
+  options?: Partial<Options<MarkAttendanceData>>
+): UseMutationOptions<MarkAttendanceResponse, MarkAttendanceError, Options<MarkAttendanceData>> => {
+  const mutationOptions: UseMutationOptions<
+    MarkAttendanceResponse,
+    MarkAttendanceError,
+    Options<MarkAttendanceData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await markAttendance({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Record attendance for a student enrollment
+ *
+ * Same as the PATCH, but the rich-text comment travels in the body instead of the URL.
+ */
+export const recordAttendanceMutation = (
+  options?: Partial<Options<RecordAttendanceData>>
+): UseMutationOptions<
+  RecordAttendanceResponse,
+  RecordAttendanceError,
+  Options<RecordAttendanceData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RecordAttendanceResponse,
+    RecordAttendanceError,
+    Options<RecordAttendanceData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await recordAttendance({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Delete course
  *
  * Permanently removes a course, its category associations, and all associated data.
@@ -6420,6 +6658,62 @@ export const updateLessonContentMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await updateLessonContent({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getGradeBandsQueryKey = (options: Options<GetGradeBandsData>) =>
+  createQueryKey('getGradeBands', options);
+
+/**
+ * List course grade bands
+ *
+ * The labels the course awards by final grade, highest minimum first.
+ */
+export const getGradeBandsOptions = (options: Options<GetGradeBandsData>) =>
+  queryOptions<
+    GetGradeBandsResponse,
+    GetGradeBandsError,
+    GetGradeBandsResponse,
+    ReturnType<typeof getGradeBandsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getGradeBands({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getGradeBandsQueryKey(options),
+  });
+
+/**
+ * Replace course grade bands
+ *
+ * Sets the course's grade bands; an empty list removes them. Only the course author may change grading policy.
+ */
+export const replaceGradeBandsMutation = (
+  options?: Partial<Options<ReplaceGradeBandsData>>
+): UseMutationOptions<
+  ReplaceGradeBandsResponse,
+  ReplaceGradeBandsError,
+  Options<ReplaceGradeBandsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReplaceGradeBandsResponse,
+    ReplaceGradeBandsError,
+    Options<ReplaceGradeBandsData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await replaceGradeBands({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -8449,6 +8743,64 @@ export const startScheduledInstanceMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await startScheduledInstance({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Submit a session's report
+ *
+ * Final submission: refused while anything on the checklist blocks it. Complete draft scores are submitted with it. Editable until the school's grace period ends.
+ */
+export const submitSessionReportMutation = (
+  options?: Partial<Options<SubmitSessionReportData>>
+): UseMutationOptions<
+  SubmitSessionReportResponse,
+  SubmitSessionReportError,
+  Options<SubmitSessionReportData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    SubmitSessionReportResponse,
+    SubmitSessionReportError,
+    Options<SubmitSessionReportData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await submitSessionReport({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Reopen a locked session report
+ *
+ * Platform admins only: opens one more grace period.
+ */
+export const reopenSessionReportMutation = (
+  options?: Partial<Options<ReopenSessionReportData>>
+): UseMutationOptions<
+  ReopenSessionReportResponse,
+  ReopenSessionReportError,
+  Options<ReopenSessionReportData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReopenSessionReportResponse,
+    ReopenSessionReportError,
+    Options<ReopenSessionReportData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await reopenSessionReport({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -14797,6 +15149,62 @@ export const reorderLessonContentMutation = (
   return mutationOptions;
 };
 
+export const getEnrollmentFeedbackQueryKey = (options: Options<GetEnrollmentFeedbackData>) =>
+  createQueryKey('getEnrollmentFeedback', options);
+
+/**
+ * List instructor feedback
+ *
+ * Every instructor comment on a learner's progress, newest first.
+ */
+export const getEnrollmentFeedbackOptions = (options: Options<GetEnrollmentFeedbackData>) =>
+  queryOptions<
+    GetEnrollmentFeedbackResponse,
+    GetEnrollmentFeedbackError,
+    GetEnrollmentFeedbackResponse,
+    ReturnType<typeof getEnrollmentFeedbackQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getEnrollmentFeedback({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getEnrollmentFeedbackQueryKey(options),
+  });
+
+/**
+ * Add instructor feedback
+ *
+ * Records the class instructor's comment on a learner's progress. Earlier comments are kept.
+ */
+export const addEnrollmentFeedbackMutation = (
+  options?: Partial<Options<AddEnrollmentFeedbackData>>
+): UseMutationOptions<
+  AddEnrollmentFeedbackResponse,
+  AddEnrollmentFeedbackError,
+  Options<AddEnrollmentFeedbackData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddEnrollmentFeedbackResponse,
+    AddEnrollmentFeedbackError,
+    Options<AddEnrollmentFeedbackData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await addEnrollmentFeedback({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getCourseAssessmentsQueryKey = (options: Options<GetCourseAssessmentsData>) =>
   createQueryKey('getCourseAssessments', options);
 
@@ -18997,29 +19405,6 @@ export const reorderScoringLevelsMutation = (
   return mutationOptions;
 };
 
-/**
- * Mark attendance for a student enrollment
- */
-export const markAttendanceMutation = (
-  options?: Partial<Options<MarkAttendanceData>>
-): UseMutationOptions<MarkAttendanceResponse, MarkAttendanceError, Options<MarkAttendanceData>> => {
-  const mutationOptions: UseMutationOptions<
-    MarkAttendanceResponse,
-    MarkAttendanceError,
-    Options<MarkAttendanceData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await markAttendance({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const getCartQueryKey = (options: Options<GetCartData>) =>
   createQueryKey('getCart', options);
 
@@ -19976,6 +20361,78 @@ export const getStudentScheduleInfiniteOptions = (options: Options<GetStudentSch
     }
   );
 
+export const getMySessionReportsQueryKey = (options: Options<GetMySessionReportsData>) =>
+  createQueryKey('getMySessionReports', options);
+
+/**
+ * List my session reports
+ *
+ * The signed-in instructor's session reports, soonest due first.
+ */
+export const getMySessionReportsOptions = (options: Options<GetMySessionReportsData>) =>
+  queryOptions<
+    GetMySessionReportsResponse,
+    GetMySessionReportsError,
+    GetMySessionReportsResponse,
+    ReturnType<typeof getMySessionReportsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMySessionReports({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMySessionReportsQueryKey(options),
+  });
+
+export const getMySessionReportsInfiniteQueryKey = (
+  options: Options<GetMySessionReportsData>
+): QueryKey<Options<GetMySessionReportsData>> =>
+  createQueryKey('getMySessionReports', options, true);
+
+/**
+ * List my session reports
+ *
+ * The signed-in instructor's session reports, soonest due first.
+ */
+export const getMySessionReportsInfiniteOptions = (options: Options<GetMySessionReportsData>) =>
+  infiniteQueryOptions<
+    GetMySessionReportsResponse,
+    GetMySessionReportsError,
+    InfiniteData<GetMySessionReportsResponse>,
+    QueryKey<Options<GetMySessionReportsData>>,
+    | number
+    | Pick<QueryKey<Options<GetMySessionReportsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetMySessionReportsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getMySessionReports({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getMySessionReportsInfiniteQueryKey(options),
+    }
+  );
+
 /**
  * Cancel a scheduled class instance
  */
@@ -20026,6 +20483,33 @@ export const getScheduledInstanceOptions = (options: Options<GetScheduledInstanc
       return data;
     },
     queryKey: getScheduledInstanceQueryKey(options),
+  });
+
+export const getSessionReportQueryKey = (options: Options<GetSessionReportData>) =>
+  createQueryKey('getSessionReport', options);
+
+/**
+ * Get a session's report
+ *
+ * The session's instructors get the live report with its checklist; the school's managers get the last submitted version.
+ */
+export const getSessionReportOptions = (options: Options<GetSessionReportData>) =>
+  queryOptions<
+    GetSessionReportResponse,
+    GetSessionReportError,
+    GetSessionReportResponse,
+    ReturnType<typeof getSessionReportQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getSessionReport({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getSessionReportQueryKey(options),
   });
 
 export const getOrganisationTimetableQueryKey = (options: Options<GetOrganisationTimetableData>) =>
@@ -20246,6 +20730,58 @@ export const getInstructorScheduleInfiniteOptions = (options: Options<GetInstruc
       queryKey: getInstructorScheduleInfiniteQueryKey(options),
     }
   );
+
+export const getClassReportQueryKey = (options: Options<GetClassReportData>) =>
+  createQueryKey('getClassReport', options);
+
+/**
+ * Get a class report
+ *
+ * Every learner's lesson marks across the class's sessions. School managers see submitted session reports only.
+ */
+export const getClassReportOptions = (options: Options<GetClassReportData>) =>
+  queryOptions<
+    GetClassReportResponse,
+    GetClassReportError,
+    GetClassReportResponse,
+    ReturnType<typeof getClassReportQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassReport({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassReportQueryKey(options),
+  });
+
+export const getClassReportCsvQueryKey = (options: Options<GetClassReportCsvData>) =>
+  createQueryKey('getClassReportCsv', options);
+
+/**
+ * Download a class report as CSV
+ */
+export const getClassReportCsvOptions = (options: Options<GetClassReportCsvData>) =>
+  queryOptions<
+    GetClassReportCsvResponse,
+    GetClassReportCsvError,
+    GetClassReportCsvResponse,
+    ReturnType<typeof getClassReportCsvQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassReportCsv({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassReportCsvQueryKey(options),
+  });
 
 export const getGuardiansQueryKey = (options: Options<GetGuardiansData>) =>
   createQueryKey('getGuardians', options);
@@ -21743,6 +22279,33 @@ export const getRevenueDashboard1Options = (options: Options<GetRevenueDashboard
       return data;
     },
     queryKey: getRevenueDashboard1QueryKey(options),
+  });
+
+export const getMyCourseEarningsQueryKey = (options?: Options<GetMyCourseEarningsData>) =>
+  createQueryKey('getMyCourseEarnings', options);
+
+/**
+ * My earnings per course
+ *
+ * The signed-in course creator's net earnings from class sales, per course, highest first.
+ */
+export const getMyCourseEarningsOptions = (options?: Options<GetMyCourseEarningsData>) =>
+  queryOptions<
+    GetMyCourseEarningsResponse,
+    GetMyCourseEarningsError,
+    GetMyCourseEarningsResponse,
+    ReturnType<typeof getMyCourseEarningsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getMyCourseEarnings({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getMyCourseEarningsQueryKey(options),
   });
 
 export const getQuizTotalPointsQueryKey = (options: Options<GetQuizTotalPointsData>) =>
@@ -23557,6 +24120,111 @@ export const getOrganisationDocumentsOptions = (options: Options<GetOrganisation
     },
     queryKey: getOrganisationDocumentsQueryKey(options),
   });
+
+export const getOrganisationWalletQueryKey = (options: Options<GetOrganisationWalletData>) =>
+  createQueryKey('getOrganisationWallet', options);
+
+/**
+ * Get an organisation's wallet balance
+ */
+export const getOrganisationWalletOptions = (options: Options<GetOrganisationWalletData>) =>
+  queryOptions<
+    GetOrganisationWalletResponse,
+    GetOrganisationWalletError,
+    GetOrganisationWalletResponse,
+    ReturnType<typeof getOrganisationWalletQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganisationWallet({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrganisationWalletQueryKey(options),
+  });
+
+export const listOrganisationWalletTransactionsQueryKey = (
+  options: Options<ListOrganisationWalletTransactionsData>
+) => createQueryKey('listOrganisationWalletTransactions', options);
+
+/**
+ * List an organisation's wallet statement
+ *
+ * Newest first. A class sale share appears as a SALE row followed by its PLATFORM_FEE row.
+ */
+export const listOrganisationWalletTransactionsOptions = (
+  options: Options<ListOrganisationWalletTransactionsData>
+) =>
+  queryOptions<
+    ListOrganisationWalletTransactionsResponse,
+    ListOrganisationWalletTransactionsError,
+    ListOrganisationWalletTransactionsResponse,
+    ReturnType<typeof listOrganisationWalletTransactionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listOrganisationWalletTransactions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listOrganisationWalletTransactionsQueryKey(options),
+  });
+
+export const listOrganisationWalletTransactionsInfiniteQueryKey = (
+  options: Options<ListOrganisationWalletTransactionsData>
+): QueryKey<Options<ListOrganisationWalletTransactionsData>> =>
+  createQueryKey('listOrganisationWalletTransactions', options, true);
+
+/**
+ * List an organisation's wallet statement
+ *
+ * Newest first. A class sale share appears as a SALE row followed by its PLATFORM_FEE row.
+ */
+export const listOrganisationWalletTransactionsInfiniteOptions = (
+  options: Options<ListOrganisationWalletTransactionsData>
+) =>
+  infiniteQueryOptions<
+    ListOrganisationWalletTransactionsResponse,
+    ListOrganisationWalletTransactionsError,
+    InfiniteData<ListOrganisationWalletTransactionsResponse>,
+    QueryKey<Options<ListOrganisationWalletTransactionsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListOrganisationWalletTransactionsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListOrganisationWalletTransactionsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listOrganisationWalletTransactions({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listOrganisationWalletTransactionsInfiniteQueryKey(options),
+    }
+  );
 
 export const listRosterQueryKey = (options: Options<ListRosterData>) =>
   createQueryKey('listRoster', options);
@@ -26105,6 +26773,86 @@ export const getStudentSummariesOptions = (options: Options<GetStudentSummariesD
     queryKey: getStudentSummariesQueryKey(options),
   });
 
+export const getOrganisationSessionReportsQueryKey = (
+  options: Options<GetOrganisationSessionReportsData>
+) => createQueryKey('getOrganisationSessionReports', options);
+
+/**
+ * List an organisation's session reports
+ *
+ * Session reports for the organisation's classes, soonest due first; filter by status to see overdue ones.
+ */
+export const getOrganisationSessionReportsOptions = (
+  options: Options<GetOrganisationSessionReportsData>
+) =>
+  queryOptions<
+    GetOrganisationSessionReportsResponse,
+    GetOrganisationSessionReportsError,
+    GetOrganisationSessionReportsResponse,
+    ReturnType<typeof getOrganisationSessionReportsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganisationSessionReports({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrganisationSessionReportsQueryKey(options),
+  });
+
+export const getOrganisationSessionReportsInfiniteQueryKey = (
+  options: Options<GetOrganisationSessionReportsData>
+): QueryKey<Options<GetOrganisationSessionReportsData>> =>
+  createQueryKey('getOrganisationSessionReports', options, true);
+
+/**
+ * List an organisation's session reports
+ *
+ * Session reports for the organisation's classes, soonest due first; filter by status to see overdue ones.
+ */
+export const getOrganisationSessionReportsInfiniteOptions = (
+  options: Options<GetOrganisationSessionReportsData>
+) =>
+  infiniteQueryOptions<
+    GetOrganisationSessionReportsResponse,
+    GetOrganisationSessionReportsError,
+    InfiniteData<GetOrganisationSessionReportsResponse>,
+    QueryKey<Options<GetOrganisationSessionReportsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetOrganisationSessionReportsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetOrganisationSessionReportsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getOrganisationSessionReports({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getOrganisationSessionReportsInfiniteQueryKey(options),
+    }
+  );
+
 export const getEnrolmentTrendsQueryKey = (options: Options<GetEnrolmentTrendsData>) =>
   createQueryKey('getEnrolmentTrends', options);
 
@@ -27122,6 +27870,33 @@ export const getEnrollmentGradeBookOptions = (options: Options<GetEnrollmentGrad
     queryKey: getEnrollmentGradeBookQueryKey(options),
   });
 
+export const getProgressReportQueryKey = (options: Options<GetProgressReportData>) =>
+  createQueryKey('getProgressReport', options);
+
+/**
+ * Get learner progress report
+ *
+ * Lesson-by-lesson report for one learner: what was taught, attendance, marks with criteria, final grade and label, and instructor feedback.
+ */
+export const getProgressReportOptions = (options: Options<GetProgressReportData>) =>
+  queryOptions<
+    GetProgressReportResponse,
+    GetProgressReportError,
+    GetProgressReportResponse,
+    ReturnType<typeof getProgressReportQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgressReport({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgressReportQueryKey(options),
+  });
+
 export const getCourseEnrollmentsQueryKey = (options: Options<GetCourseEnrollmentsData>) =>
   createQueryKey('getCourseEnrollments', options);
 
@@ -27445,6 +28220,33 @@ export const getCourseCategoriesOptions = (options: Options<GetCourseCategoriesD
       return data;
     },
     queryKey: getCourseCategoriesQueryKey(options),
+  });
+
+export const getLineItemRevisionsQueryKey = (options: Options<GetLineItemRevisionsData>) =>
+  createQueryKey('getLineItemRevisions', options);
+
+/**
+ * List line item grade revisions
+ *
+ * Every grade given to a learner on a gradebook line item, oldest first, including regrades and earlier attempts.
+ */
+export const getLineItemRevisionsOptions = (options: Options<GetLineItemRevisionsData>) =>
+  queryOptions<
+    GetLineItemRevisionsResponse,
+    GetLineItemRevisionsError,
+    GetLineItemRevisionsResponse,
+    ReturnType<typeof getLineItemRevisionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getLineItemRevisions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getLineItemRevisionsQueryKey(options),
   });
 
 export const searchTrainingApplicationsQueryKey = (
@@ -27946,6 +28748,86 @@ export const getCoursesByInstructorInfiniteOptions = (
         return data;
       },
       queryKey: getCoursesByInstructorInfiniteQueryKey(options),
+    }
+  );
+
+export const getStudentCourseEnrollmentsQueryKey = (
+  options: Options<GetStudentCourseEnrollmentsData>
+) => createQueryKey('getStudentCourseEnrollments', options);
+
+/**
+ * List a learner's course enrolments
+ *
+ * For the learner, managers of an organisation they belong to, and platform admins. Opening each enrolment's grades is checked separately.
+ */
+export const getStudentCourseEnrollmentsOptions = (
+  options: Options<GetStudentCourseEnrollmentsData>
+) =>
+  queryOptions<
+    GetStudentCourseEnrollmentsResponse,
+    GetStudentCourseEnrollmentsError,
+    GetStudentCourseEnrollmentsResponse,
+    ReturnType<typeof getStudentCourseEnrollmentsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getStudentCourseEnrollments({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getStudentCourseEnrollmentsQueryKey(options),
+  });
+
+export const getStudentCourseEnrollmentsInfiniteQueryKey = (
+  options: Options<GetStudentCourseEnrollmentsData>
+): QueryKey<Options<GetStudentCourseEnrollmentsData>> =>
+  createQueryKey('getStudentCourseEnrollments', options, true);
+
+/**
+ * List a learner's course enrolments
+ *
+ * For the learner, managers of an organisation they belong to, and platform admins. Opening each enrolment's grades is checked separately.
+ */
+export const getStudentCourseEnrollmentsInfiniteOptions = (
+  options: Options<GetStudentCourseEnrollmentsData>
+) =>
+  infiniteQueryOptions<
+    GetStudentCourseEnrollmentsResponse,
+    GetStudentCourseEnrollmentsError,
+    InfiniteData<GetStudentCourseEnrollmentsResponse>,
+    QueryKey<Options<GetStudentCourseEnrollmentsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<GetStudentCourseEnrollmentsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<GetStudentCourseEnrollmentsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await getStudentCourseEnrollments({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: getStudentCourseEnrollmentsInfiniteQueryKey(options),
     }
   );
 
@@ -29290,6 +30172,76 @@ export const getPaymentStatusOptions = (options: Options<GetPaymentStatusData>) 
     },
     queryKey: getPaymentStatusQueryKey(options),
   });
+
+export const listMyOrdersQueryKey = (options: Options<ListMyOrdersData>) =>
+  createQueryKey('listMyOrders', options);
+
+/**
+ * List my orders
+ *
+ * The signed-in buyer's own orders, paid or awaiting payment, newest first, with their items
+ */
+export const listMyOrdersOptions = (options: Options<ListMyOrdersData>) =>
+  queryOptions<
+    ListMyOrdersResponse,
+    ListMyOrdersError,
+    ListMyOrdersResponse,
+    ReturnType<typeof listMyOrdersQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listMyOrders({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listMyOrdersQueryKey(options),
+  });
+
+export const listMyOrdersInfiniteQueryKey = (
+  options: Options<ListMyOrdersData>
+): QueryKey<Options<ListMyOrdersData>> => createQueryKey('listMyOrders', options, true);
+
+/**
+ * List my orders
+ *
+ * The signed-in buyer's own orders, paid or awaiting payment, newest first, with their items
+ */
+export const listMyOrdersInfiniteOptions = (options: Options<ListMyOrdersData>) =>
+  infiniteQueryOptions<
+    ListMyOrdersResponse,
+    ListMyOrdersError,
+    InfiniteData<ListMyOrdersResponse>,
+    QueryKey<Options<ListMyOrdersData>>,
+    number | Pick<QueryKey<Options<ListMyOrdersData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListMyOrdersData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listMyOrders({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listMyOrdersInfiniteQueryKey(options),
+    }
+  );
 
 export const searchCatalogueQueryKey = (options: Options<SearchCatalogueData>) =>
   createQueryKey('searchCatalogue', options);
