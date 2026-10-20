@@ -9,7 +9,15 @@ export type SchedulerEvent = {
   instanceUuid?: string;
   classDefinitionUuid?: string;
   /** `resource_reservation` covers both recruitment holds and confirmed resource bookings. */
-  eventType?: 'class' | 'booking_request' | 'resource_reservation' | 'job_hold' | 'job_application';
+  eventType?:
+    | 'class'
+    | 'exam'
+    | 'event'
+    | 'competition'
+    | 'booking_request'
+    | 'resource_reservation'
+    | 'job_hold'
+    | 'job_application';
   /** The marketplace job behind a `job_hold` or `job_application` entry. */
   jobUuid?: string;
   title: string;
@@ -42,7 +50,17 @@ export type SchedulerFilterSection = {
   count: number;
   isOpen: boolean;
   items: SchedulerFilterItem[];
-  key: 'bookings' | 'classes' | 'classrooms' | 'venues' | 'equipment' | 'instructors';
+  key:
+    | 'bookings'
+    | 'classes'
+    | 'exams'
+    | 'events'
+    | 'competitions'
+    | 'classrooms'
+    | 'venues'
+    | 'equipment'
+    | 'instructors';
+  mode?: 'toggle';
   label: string;
   onItemClick: (id: string) => void;
   onToggle: () => void;

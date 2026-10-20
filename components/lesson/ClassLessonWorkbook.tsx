@@ -2,7 +2,6 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Clock, Video } from 'lucide-react';
-import { useRouter } from 'next/navigation';
 import { type ReactNode, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { LessonShell } from '@/app/dashboard/instructor/classes/training/components/LessonShell';
@@ -107,7 +106,6 @@ function SelectedLessonWorkbook({
   onComplete: () => void;
 }) {
   const { searchParams, navigate } = useWorkbookNavigation();
-  const router = useRouter();
   const sessionState = useWorkbookSession(
     classId,
     searchParams.get('schedule'),
@@ -393,12 +391,9 @@ function SelectedLessonWorkbook({
               <WorkbookClassRegister
                 classId={classId}
                 session={sessionState.session}
-                onEvaluate={enrollmentId => {
-                  const params = new URLSearchParams(contextParams);
-                  params.set('enrollment', enrollmentId);
-                  if (sessionState.session?.uuid) params.set('schedule', sessionState.session.uuid);
-                  router.push(`${legacyPath}?${params.toString()}`);
-                }}
+                onEvaluate={enrollmentId =>
+                  navigate({ tab: 'grading', view: null, enrollment: enrollmentId })
+                }
               />
             )}
           </>

@@ -1,13 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
-import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -22,22 +17,27 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   associateRubricMutation,
-  updateAssociationMutation,
   dissociateRubricByContextMutation,
+  getCourseRubricsQueryKey,
   getRubricsByContextOptions,
   getRubricsByContextQueryKey,
-  getCourseRubricsQueryKey,
+  updateAssociationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
+import { toast } from 'sonner';
+import { persistEvaluationAssociation } from '../../../_components/course-evaluation-utils';
 import {
   EvaluationRubricPicker,
   type SavedEvaluationRubric,
 } from '../../../_components/evaluation-rubric-picker';
 import { EvaluationRubricPreview } from '../../../_components/evaluation-rubric-preview';
-import { persistEvaluationAssociation } from '../../../_components/course-evaluation-utils';
 import type { ProgramFormValues } from '../program-schema';
 import { ProgramCourseEvaluations } from './ProgramCourseEvaluations';
 
@@ -58,6 +58,7 @@ export function ProgramEvaluation({
   const { courseMap } = useCoursesByIds(courseIds);
   const [chosenCourse, setChosenCourse] = useState('');
   const courseUuid = courseIds.includes(chosenCourse) ? chosenCourse : courseIds[0];
+
   return (
     <section className='space-y-4' aria-label='Program evaluation'>
       <h3 className='text-sm font-medium'>Evaluation per course</h3>
@@ -141,8 +142,8 @@ function CourseProgramEvaluation({
   const existing = failed
     ? undefined
     : query.data?.data?.content?.find(
-        row => row.usage_context === context && row.course_uuid === courseUuid
-      );
+      row => row.usage_context === context && row.course_uuid === courseUuid
+    );
   const save = useMutation({
     mutationFn: async (rubric: SavedEvaluationRubric | null) => {
       await persistEvaluationAssociation(

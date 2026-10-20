@@ -10,3 +10,10 @@ export default async function ClassWorkbookPage({ params }: { params: Promise<{ 
     </Suspense>
   );
 }
+
+// ft: improve enrollments, assessment previews and scheduler filters
+
+// - Show class enrollment counts, course filters and training rates
+// - Add quiz and assignment previews to program evaluations
+// - Add scheduler event-type toggles and remove the KPI strip
+// - Open the Grading tab from attendance evaluation actions

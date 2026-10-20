@@ -6,8 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import Spinner from '@/components/ui/spinner';
 import { EmptyState } from '@/components/ui/empty-state';
+import Spinner from '@/components/ui/spinner';
 
 export type AttendanceStudent = {
   uuid: string;
