@@ -10,7 +10,8 @@ const STATEMENT = [
 
 test.describe('Instructor wallet', () => {
   test('pairs each sale share with its platform fee and shows the breakdown on request', async ({ page, baseURL }) => {
-    const api = await signedInAs(page, 'instructor', baseURL ?? '', 31500);
+    const api = await signedInAs(page, 'instructor', baseURL ?? '', 31500,
+      { shares_total: 35000, platform_fees_total: 3500, sales_count: 1 });
     api
       .get(/\/api\/v1\/wallets\/[^/]+\/transactions/, paged(STATEMENT))
       .get(/\/obligation-statement$/, { lines: [{ organisation_uuid: ORG, currency_code: 'KES', amount_outstanding: 21000, outstanding_session_count: 2 }] });

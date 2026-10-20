@@ -24,7 +24,7 @@ export const order = (id: string, displayId: string, status: string, total: numb
 });
 
 /** Signs in as `role`, installs the shell mocks every dashboard page needs, and returns the API to extend. */
-export async function signedInAs(page: Page, role: E2eRole, baseURL: string, wallet = 0) {
+export async function signedInAs(page: Page, role: E2eRole, baseURL: string, wallet = 0, totals: Record<string, number> = {}) {
   const organisation = role === 'organisation_user';
   await signIn(page.context(), { uuid: USER, name: 'Amina Wanjiru', email: 'amina@e2e.test', domains: [role],
     organisationUuid: organisation ? ORG : undefined }, baseURL);
@@ -40,6 +40,6 @@ export async function signedInAs(page: Page, role: E2eRole, baseURL: string, wal
     .get(/\/api\/v1\/course-creators\/search/, paged([{ uuid: 'cc-1', user_uuid: USER, full_name: 'Amina Wanjiru', admin_verified: true }]))
     .get(/\/api\/v1\/organisations\/[^/]+$/, { uuid: ORG, name: 'Eldoret Institute', admin_verified: true })
     .get(/\/api\/v1\/organisations\/search/, paged([{ uuid: ORG, name: 'Eldoret Institute', admin_verified: true }]))
-    .get(/\/api\/v1\/wallets\/[^/]+$/, { uuid: 'w1', user_uuid: USER, owner_type: 'USER', owner_uuid: USER, currency_code: 'KES', balance_amount: wallet });
+    .get(/\/api\/v1\/wallets\/[^/]+$/, { uuid: 'w1', user_uuid: USER, owner_type: 'USER', owner_uuid: USER, currency_code: 'KES', balance_amount: wallet, ...totals });
   return api;
 }

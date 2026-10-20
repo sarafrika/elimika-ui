@@ -12,7 +12,8 @@ const OBLIGATIONS = [
 async function organisationWallet(page: import('@playwright/test').Page, baseURL: string) {
   const api = await signedInAs(page, 'organisation_user', baseURL);
   api
-    .get(new RegExp(`/api/v1/organisations/${ORG}/wallet$`), { wallet_uuid: 'ow', currency_code: 'KES', balance_amount: 123840 })
+    .get(new RegExp(`/api/v1/organisations/${ORG}/wallet$`), { wallet_uuid: 'ow', currency_code: 'KES', balance_amount: 123840,
+      shares_total: 33600, platform_fees_total: 3360, sales_count: 1 })
     .get(new RegExp(`/api/v1/organisations/${ORG}/wallet/transactions`), paged(shareWithFee(123840, 33600, 3360, 'Introduction to AI')))
     .get(new RegExp(`/api/v1/organisations/${ORG}/instructor-obligations`), paged(OBLIGATIONS))
     .get(/\/api\/v1\/classes\/[^/]+$/, { uuid: CLASS, title: 'Introduction to AI and ML' });
