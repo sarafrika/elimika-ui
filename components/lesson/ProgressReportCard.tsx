@@ -20,6 +20,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { getErrorMessage } from '@/lib/error-utils';
+import { resultLabel } from '@/lib/grades';
 import { STALE_TIMES } from '@/lib/query-client';
 import { isBlankRichText } from '@/lib/rich-text';
 import {
@@ -39,6 +40,7 @@ const num = (value?: number | null) =>
  * One learner's progress report for a course, as the server calculates it: final grade and label,
  * lesson-by-lesson marks, attendance and feedback, with a PDF download.
  */
+
 export function ProgressReportCard({
   courseUuid,
   enrollmentUuid,
@@ -81,7 +83,7 @@ export function ProgressReportCard({
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           {report.final_grade_label && <Badge variant='success'>{report.final_grade_label}</Badge>}
-          <Badge variant='outline'>{report.result_status ?? 'IN_PROGRESS'}</Badge>
+          <Badge variant='outline'>{resultLabel(report.result_status)}</Badge>
           <Button
             size='sm'
             variant='outline'
@@ -117,7 +119,7 @@ export function ProgressReportCard({
                     <TableCell className='whitespace-normal'>
                       <p className='font-medium'>{lesson.lesson_title}</p>
                       {lesson.topic_covered && (
-                        <p className='text-muted-foreground text-xs'>{lesson.topic_covered}</p>
+                        <RichTextRenderer htmlString={lesson.topic_covered} className='text-muted-foreground text-xs' />
                       )}
                     </TableCell>
                     <TableCell>

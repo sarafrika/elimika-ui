@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { resultLabel } from '@/lib/grades';
 import type { CourseProgressReport } from '@/services/client/types.gen';
 
 type JsPdfWithAutoTable = jsPDF & { lastAutoTable?: { finalY?: number } };
@@ -28,7 +29,7 @@ export function exportProgressReportPdf(report: CourseProgressReport, studentNam
       ? `${num(report.average_lesson_score)} / ${num(report.lesson_max_score)}`
       : '—';
   doc.text(`Final score: ${finalScore}   (${num(report.final_grade)}%)`, 40, 108);
-  doc.text(`Final grade: ${report.final_grade_label ?? '—'}   Result: ${report.result_status ?? '—'}`, 40, 126);
+  doc.text(`Final grade: ${report.final_grade_label ?? '—'}   Result: ${resultLabel(report.result_status)}`, 40, 126);
   doc.text(`Progress: ${num(report.progress_percentage)}%   Generated: ${new Date().toLocaleString()}`, 40, 144);
 
   const rows = (report.lessons ?? []).map(lesson => {
@@ -38,7 +39,7 @@ export function exportProgressReportPdf(report: CourseProgressReport, studentNam
       .join('\n');
     return [
       String(lesson.lesson_number ?? ''),
-      [lesson.lesson_title, lesson.topic_covered].filter(Boolean).join('\n'),
+      [lesson.lesson_title, plainText(lesson.topic_covered)].filter(Boolean).join('\n'),
       (lesson.assignments ?? []).join('\n') || '—',
       lesson.duration_minutes != null ? `${lesson.duration_minutes} min` : '—',
       lesson.attendance ? (lesson.attendance === 'ATTENDED' ? 'Present' : 'Absent') : '—',
