@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { COURSE_UUID, ENROLLMENT_UUID, mockShell, PARENT_USER, progressReport, STUDENT_UUID } from '../fixtures/grades';
-import { MockApi, raw } from '../support/api';
+import { MockApi } from '../support/api';
 import { signIn } from '../support/session';
 
 test.describe("Parent · Child's grades", () => {
@@ -14,7 +14,7 @@ test.describe("Parent · Child's grades", () => {
     api.get(/^\/api\/v1\/guardians\/me\/students$/, [
       { student_uuid: STUDENT_UUID, student_name: 'Amani Wekesa', status: 'ACTIVE', share_scope: 'FULL' },
     ]);
-    api.get(new RegExp(`^/api/v1/guardians/students/${STUDENT_UUID}/dashboard$`), raw({
+    api.get(new RegExp(`^/api/v1/guardians/students/${STUDENT_UUID}/dashboard$`), {
       student_uuid: STUDENT_UUID,
       student_name: 'Amani Wekesa',
       share_scope: 'FULL',
@@ -24,7 +24,7 @@ test.describe("Parent · Child's grades", () => {
       ],
       program_progress: [],
       compliance_notices: [],
-    }));
+    });
     api.get(/\/gradebook\/enrollments\/[^/]+\/progress-report$/, progressReport());
     await api.install(page);
     await page.goto('/dashboard/parent/overview');
@@ -39,6 +39,7 @@ test.describe("Parent · Child's grades", () => {
     const sheet = page.getByRole('dialog');
     await expect(sheet.getByText('91.67%')).toBeVisible();
     await expect(sheet.getByText('Drafts are never shown.')).toBeVisible();
+    await expect(sheet.getByText('From the instructor')).toBeVisible();
   });
 
   test('shows nothing about grades when the report is not available to guardians', async ({ page }) => {
@@ -47,11 +48,11 @@ test.describe("Parent · Child's grades", () => {
     api.get(/^\/api\/v1\/guardians\/me\/students$/, [
       { student_uuid: STUDENT_UUID, student_name: 'Amani Wekesa', status: 'ACTIVE', share_scope: 'FULL' },
     ]);
-    api.get(new RegExp(`^/api/v1/guardians/students/${STUDENT_UUID}/dashboard$`), raw({
+    api.get(new RegExp(`^/api/v1/guardians/students/${STUDENT_UUID}/dashboard$`), {
       student_uuid: STUDENT_UUID,
       student_name: 'Amani Wekesa',
       course_progress: [{ enrollment_uuid: ENROLLMENT_UUID, course_uuid: COURSE_UUID, course_name: 'Introduction to Piano', status: 'ACTIVE', progress_percentage: 86 }],
-    }));
+    });
     api.get(/\/gradebook\/enrollments\/[^/]+\/progress-report$/, { success: false, message: 'Forbidden' });
     await api.install(page);
     await page.goto('/dashboard/parent/overview');

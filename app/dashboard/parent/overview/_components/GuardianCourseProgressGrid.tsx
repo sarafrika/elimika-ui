@@ -142,7 +142,7 @@ export function GuardianCourseProgressGrid({
             <SheetTitle>{openReport?.course_name ?? 'Course'} report</SheetTitle>
             <SheetDescription>The lesson-by-lesson report {studentName} sees. Drafts are never shown.</SheetDescription>
           </SheetHeader>
-          <div className='p-4'>{openReport && <ReportView report={openReport} studentName={studentName} />}</div>
+          <div className='p-4'>{openReport && <ReportView report={openReport} studentName={studentName} audience='guardian' />}</div>
         </SheetContent>
       </Sheet>
     </Card>

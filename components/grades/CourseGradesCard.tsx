@@ -48,7 +48,16 @@ export function CourseGradesCard({
   return <ReportView report={report} studentName={studentName} />;
 }
 
-export function ReportView({ report, studentName }: { report: CourseProgressReport; studentName: string }) {
+export function ReportView({
+  report,
+  studentName,
+  audience = 'learner',
+}: {
+  report: CourseProgressReport;
+  studentName: string;
+  /** Who is reading: the learner is addressed as "your", a guardian is not. */
+  audience?: 'learner' | 'guardian';
+}) {
   const lessons = report.lessons ?? [];
   const graded = lessons.filter(lesson => lesson.marks?.[0]?.status === 'graded').length;
   const [open, setOpen] = useState<string | null>(null);
@@ -103,7 +112,9 @@ export function ReportView({ report, studentName }: { report: CourseProgressRepo
         </ul>
 
         <div className='border-border border-t pt-4'>
-          <h3 className='mb-2 text-sm font-semibold'>From your instructor</h3>
+          <h3 className='mb-2 text-sm font-semibold'>
+            {audience === 'guardian' ? 'From the instructor' : 'From your instructor'}
+          </h3>
           {report.instructor_comments ? (
             <div className='text-sm' data-testid='instructor-comments'>
               <RichTextRenderer htmlString={report.instructor_comments} />
@@ -161,8 +172,8 @@ function LessonItem({ lesson, open, onToggle }: { lesson: LessonRow; open: boole
             </>
           ) : (
             <>
-              <span>Your instructor has not submitted this score.</span>
-              <span>Lessons not graded yet do not count towards your final grade.</span>
+              <span>The instructor has not submitted this score yet.</span>
+              <span>Lessons not graded yet do not count towards the final grade.</span>
             </>
           )}
         </div>

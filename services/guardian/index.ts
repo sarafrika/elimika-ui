@@ -1,8 +1,9 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
+
+import { type UseQueryOptions, useQuery } from '@tanstack/react-query';
+import { z } from 'zod';
 import { fetchClient } from '@/services/api/fetch-client';
 import type { paths } from '@/services/api/schema';
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { z } from 'zod';
 
 const guardianShareScopeSchema = z.enum(['FULL', 'ACADEMICS', 'ATTENDANCE']).catch('FULL');
 const guardianLinkStatusSchema = z.enum(['ACTIVE', 'PENDING', 'REVOKED']).catch('ACTIVE');
@@ -147,7 +148,9 @@ async function fetchGuardianDashboard(studentUuid: string): Promise<GuardianDash
     throw error;
   }
 
-  return guardianDashboardSchema.parse(response.data);
+  // The API wraps every answer in { success, data }; accept the bare snapshot too.
+  const body = response.data as { data?: unknown } | undefined;
+  return guardianDashboardSchema.parse(body && typeof body === 'object' && 'data' in body ? body.data : body);
 }
 
 const guardianStudentsQueryKey = ['guardian', 'students'] as const;

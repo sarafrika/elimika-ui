@@ -47,8 +47,8 @@ test.describe('Student · My grades', () => {
   test('an ungraded lesson says it does not count yet', async ({ page }) => {
     await openMyGrades(page);
     await page.getByRole('button', { name: /Recital piece/ }).click();
-    await expect(page.getByText('Your instructor has not submitted this score.')).toBeVisible();
-    await expect(page.getByText('Lessons not graded yet do not count towards your final grade.')).toBeVisible();
+    await expect(page.getByText('The instructor has not submitted this score yet.')).toBeVisible();
+    await expect(page.getByText('Lessons not graded yet do not count towards the final grade.')).toBeVisible();
   });
 
   test('expanding a graded lesson lists its criteria', async ({ page }) => {
