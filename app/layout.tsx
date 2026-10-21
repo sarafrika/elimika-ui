@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
+import localFont from 'next/font/local';
 import { StreamRevealSeed } from '@/components/perf/stream-reveal-seed';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
@@ -7,18 +7,21 @@ import { RootProviders } from '@/context/root-providers';
 import { siteMetadata } from '@/src/lib/seo';
 import './globals.css';
 
-const plusJakartaSans = Plus_Jakarta_Sans({
+// Keep font assets local so builds do not depend on Google Fonts URL parsing or availability.
+const plusJakartaSans = localFont({
+  src: '../assets/fonts/plus-jakarta-sans-latin-variable.woff2',
   variable: '--font-sans',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
+  weight: '400 800',
+  style: 'normal',
   display: 'swap',
 });
 
 /** Figures, identifiers and times read in mono across the data-heavy dashboards. */
-const jetBrainsMono = JetBrains_Mono({
+const jetBrainsMono = localFont({
+  src: '../assets/fonts/jetbrains-mono-latin-variable.woff2',
   variable: '--font-mono',
-  subsets: ['latin'],
-  weight: ['400', '500', '600'],
+  weight: '400 600',
+  style: 'normal',
   display: 'swap',
 });
 

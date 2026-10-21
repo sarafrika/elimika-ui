@@ -1,15 +1,19 @@
-import { Manrope, Sora } from 'next/font/google';
+import localFont from 'next/font/local';
 
 // Sora + Manrope are the two faces the sarafrika.com product pages ship with.
-// Both are variable, so the full 400-800 range the design uses arrives in one file.
-const productDisplayFont = Sora({
-  subsets: ['latin'],
+// Bundle variable fonts locally to keep builds independent of Google Fonts responses.
+const productDisplayFont = localFont({
+  src: '../../../../assets/fonts/sora-latin-variable.woff2',
+  weight: '100 800',
+  style: 'normal',
   display: 'swap',
   variable: '--font-sw-display',
 });
 
-const productBodyFont = Manrope({
-  subsets: ['latin'],
+const productBodyFont = localFont({
+  src: '../../../../assets/fonts/manrope-latin-variable.woff2',
+  weight: '200 800',
+  style: 'normal',
   display: 'swap',
   variable: '--font-sw-body',
 });
