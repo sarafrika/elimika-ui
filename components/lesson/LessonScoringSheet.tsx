@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { RubricGradingMatrix } from '@/app/dashboard/instructor/classes/class-training/[id]/_components/RubricGradingMatrix';
+import { RubricGradingMatrix } from '@/components/assessment/RubricGradingMatrix';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Badge } from '@/components/ui/badge';
