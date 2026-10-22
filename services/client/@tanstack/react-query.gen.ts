@@ -70,6 +70,8 @@ import {
   applyBulkAction,
   applyForDomain,
   applyToJob,
+  approveAdminWithdrawal,
+  approveOrganisationWithdrawal,
   archiveCourse,
   archiveProgram,
   assignAdminDomain,
@@ -82,8 +84,11 @@ import {
   cancelEnrollment,
   cancelJob,
   cancelObligation,
+  cancelOrganisationWithdrawal,
   cancelScheduledClass,
+  cancelWithdrawal,
   certifications,
+  checkAdminWithdrawal,
   checkAvailability,
   checkInstructorConflict,
   checkMatrixReadiness,
@@ -94,6 +99,8 @@ import {
   competencies,
   completeCart,
   completeCheckout,
+  confirmOrganisationWithdrawal,
+  confirmWithdrawal,
   countCourseCreatorsByVerificationStatus,
   createAdminUser,
   createAssessmentRubric,
@@ -411,10 +418,14 @@ import {
   getOrganisationSupportedDomains,
   getOrganisationTimetable,
   getOrganisationWallet,
+  getOrganisationWithdrawal,
   getOrganizationAdminUsers,
   getPassingScoringLevels,
   getPaymentMode,
   getPaymentStatus,
+  getPayoutRules,
+  getPayoutSettings,
+  getPayoutSummary,
   getPendingEdit,
   getPendingGrading,
   getPendingOrganisations,
@@ -513,6 +524,7 @@ import {
   getVerifiedCourseCreators,
   getWallet,
   getWeeklyGrowth,
+  getWithdrawal,
   globalSearch,
   gradeQuizTextResponse,
   gradeSubmission,
@@ -526,6 +538,7 @@ import {
   isUserSystemAdmin,
   joinWaitlist,
   listAchievements,
+  listAdminWithdrawals,
   listAll,
   listAudit,
   listAvailabilityRules,
@@ -563,6 +576,7 @@ import {
   listOrganisationWalletAudit,
   listOrganisationWalletStatements,
   listOrganisationWalletTransactions,
+  listOrganisationWithdrawals,
   listPayments,
   listPayoutApprovers,
   listPayoutMethods,
@@ -589,6 +603,7 @@ import {
   listTrainingRateUpdates,
   listTransactions,
   listTransactions1,
+  listWithdrawals,
   lookupUserByUserNo,
   makeDefault,
   makeOrganisationPayoutMethodDefault,
@@ -616,6 +631,7 @@ import {
   recordSession,
   register,
   registerAndAccept,
+  rejectAdminWithdrawal,
   removeAdminDomain,
   removeAllCategoriesFromCourse,
   removeCategoryFromCourse,
@@ -639,13 +655,17 @@ import {
   replaceLearnerSkillGoals,
   replaceMarketplaceJobRequiredSkills,
   requestOrganisationVerification,
+  requestOrganisationWithdrawal,
   requestPayment,
+  requestWithdrawal,
   rescheduleScheduledInstance,
   resendInvitation,
   resendOrganisationInvitation,
   resendOrganisationPayoutMethodCode,
+  resendOrganisationWithdrawalCode,
   resendPayoutMethodCode,
   resendRegistrationEmail,
+  resendWithdrawalCode,
   resolveByCourseOrClass,
   restoreCourseVersion,
   returnSubmission,
@@ -783,6 +803,7 @@ import {
   updateMatrixCell,
   updateMembership,
   updateOrganisation,
+  updatePayoutSettings,
   updatePortfolioItem,
   updatePracticeActivity,
   updateProgramAssessment,
@@ -1024,6 +1045,12 @@ import type {
   ApplyToJobData,
   ApplyToJobError,
   ApplyToJobResponse,
+  ApproveAdminWithdrawalData,
+  ApproveAdminWithdrawalError,
+  ApproveAdminWithdrawalResponse,
+  ApproveOrganisationWithdrawalData,
+  ApproveOrganisationWithdrawalError,
+  ApproveOrganisationWithdrawalResponse,
   ArchiveCourseData,
   ArchiveCourseError,
   ArchiveCourseResponse,
@@ -1060,12 +1087,21 @@ import type {
   CancelObligationData,
   CancelObligationError,
   CancelObligationResponse,
+  CancelOrganisationWithdrawalData,
+  CancelOrganisationWithdrawalError,
+  CancelOrganisationWithdrawalResponse,
   CancelScheduledClassData,
   CancelScheduledClassError,
   CancelScheduledClassResponse,
+  CancelWithdrawalData,
+  CancelWithdrawalError,
+  CancelWithdrawalResponse,
   CertificationsData,
   CertificationsError,
   CertificationsResponse,
+  CheckAdminWithdrawalData,
+  CheckAdminWithdrawalError,
+  CheckAdminWithdrawalResponse,
   CheckAvailabilityData,
   CheckAvailabilityError,
   CheckAvailabilityResponse,
@@ -1096,6 +1132,12 @@ import type {
   CompleteCheckoutData,
   CompleteCheckoutError,
   CompleteCheckoutResponse,
+  ConfirmOrganisationWithdrawalData,
+  ConfirmOrganisationWithdrawalError,
+  ConfirmOrganisationWithdrawalResponse,
+  ConfirmWithdrawalData,
+  ConfirmWithdrawalError,
+  ConfirmWithdrawalResponse,
   CountCourseCreatorsByVerificationStatusData,
   CountCourseCreatorsByVerificationStatusError,
   CountCourseCreatorsByVerificationStatusResponse,
@@ -2003,6 +2045,9 @@ import type {
   GetOrganisationWalletData,
   GetOrganisationWalletError,
   GetOrganisationWalletResponse,
+  GetOrganisationWithdrawalData,
+  GetOrganisationWithdrawalError,
+  GetOrganisationWithdrawalResponse,
   GetOrganizationAdminUsersData,
   GetOrganizationAdminUsersError,
   GetOrganizationAdminUsersResponse,
@@ -2015,6 +2060,15 @@ import type {
   GetPaymentStatusData,
   GetPaymentStatusError,
   GetPaymentStatusResponse,
+  GetPayoutRulesData,
+  GetPayoutRulesError,
+  GetPayoutRulesResponse,
+  GetPayoutSettingsData,
+  GetPayoutSettingsError,
+  GetPayoutSettingsResponse,
+  GetPayoutSummaryData,
+  GetPayoutSummaryError,
+  GetPayoutSummaryResponse,
   GetPendingEditData,
   GetPendingEditError,
   GetPendingEditResponse,
@@ -2310,6 +2364,9 @@ import type {
   GetWeeklyGrowthData,
   GetWeeklyGrowthError,
   GetWeeklyGrowthResponse,
+  GetWithdrawalData,
+  GetWithdrawalError,
+  GetWithdrawalResponse,
   GlobalSearchData,
   GlobalSearchError,
   GlobalSearchResponse2,
@@ -2349,6 +2406,9 @@ import type {
   ListAchievementsData,
   ListAchievementsError,
   ListAchievementsResponse,
+  ListAdminWithdrawalsData,
+  ListAdminWithdrawalsError,
+  ListAdminWithdrawalsResponse,
   ListAllData,
   ListAllError,
   ListAllResponse,
@@ -2460,6 +2520,9 @@ import type {
   ListOrganisationWalletTransactionsData,
   ListOrganisationWalletTransactionsError,
   ListOrganisationWalletTransactionsResponse,
+  ListOrganisationWithdrawalsData,
+  ListOrganisationWithdrawalsError,
+  ListOrganisationWithdrawalsResponse,
   ListPaymentsData,
   ListPaymentsError,
   ListPaymentsResponse,
@@ -2538,6 +2601,9 @@ import type {
   ListTransactionsData,
   ListTransactionsError,
   ListTransactionsResponse,
+  ListWithdrawalsData,
+  ListWithdrawalsError,
+  ListWithdrawalsResponse,
   LookupUserByUserNoData,
   LookupUserByUserNoError,
   LookupUserByUserNoResponse,
@@ -2615,6 +2681,9 @@ import type {
   RegisterData,
   RegisterError,
   RegisterResponse,
+  RejectAdminWithdrawalData,
+  RejectAdminWithdrawalError,
+  RejectAdminWithdrawalResponse,
   RemoveAdminDomainData,
   RemoveAdminDomainError,
   RemoveAdminDomainResponse,
@@ -2684,9 +2753,15 @@ import type {
   RequestOrganisationVerificationData,
   RequestOrganisationVerificationError,
   RequestOrganisationVerificationResponse,
+  RequestOrganisationWithdrawalData,
+  RequestOrganisationWithdrawalError,
+  RequestOrganisationWithdrawalResponse,
   RequestPaymentData,
   RequestPaymentError,
   RequestPaymentResponse,
+  RequestWithdrawalData,
+  RequestWithdrawalError,
+  RequestWithdrawalResponse,
   RescheduleScheduledInstanceData,
   RescheduleScheduledInstanceError,
   RescheduleScheduledInstanceResponse,
@@ -2699,12 +2774,18 @@ import type {
   ResendOrganisationPayoutMethodCodeData,
   ResendOrganisationPayoutMethodCodeError,
   ResendOrganisationPayoutMethodCodeResponse,
+  ResendOrganisationWithdrawalCodeData,
+  ResendOrganisationWithdrawalCodeError,
+  ResendOrganisationWithdrawalCodeResponse,
   ResendPayoutMethodCodeData,
   ResendPayoutMethodCodeError,
   ResendPayoutMethodCodeResponse,
   ResendRegistrationEmailData,
   ResendRegistrationEmailError,
   ResendRegistrationEmailResponse,
+  ResendWithdrawalCodeData,
+  ResendWithdrawalCodeError,
+  ResendWithdrawalCodeResponse,
   ResolveByCourseOrClassData,
   ResolveByCourseOrClassError,
   ResolveByCourseOrClassResponse,
@@ -3114,6 +3195,9 @@ import type {
   UpdateOrganisationData,
   UpdateOrganisationError,
   UpdateOrganisationResponse,
+  UpdatePayoutSettingsData,
+  UpdatePayoutSettingsError,
+  UpdatePayoutSettingsResponse,
   UpdatePortfolioItemData,
   UpdatePortfolioItemError,
   UpdatePortfolioItemResponse,
@@ -8555,6 +8639,60 @@ export const adminUpdateSkillMutation = (
   return mutationOptions;
 };
 
+export const getPayoutSettingsQueryKey = (options?: Options<GetPayoutSettingsData>) =>
+  createQueryKey('getPayoutSettings', options);
+
+/**
+ * Get the payout rules
+ */
+export const getPayoutSettingsOptions = (options?: Options<GetPayoutSettingsData>) =>
+  queryOptions<
+    GetPayoutSettingsResponse,
+    GetPayoutSettingsError,
+    GetPayoutSettingsResponse,
+    ReturnType<typeof getPayoutSettingsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPayoutSettings({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPayoutSettingsQueryKey(options),
+  });
+
+/**
+ * Change the payout rules
+ *
+ * Apply to withdrawals requested from now on.
+ */
+export const updatePayoutSettingsMutation = (
+  options?: Partial<Options<UpdatePayoutSettingsData>>
+): UseMutationOptions<
+  UpdatePayoutSettingsResponse,
+  UpdatePayoutSettingsError,
+  Options<UpdatePayoutSettingsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdatePayoutSettingsResponse,
+    UpdatePayoutSettingsError,
+    Options<UpdatePayoutSettingsData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await updatePayoutSettings({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 /**
  * Update an existing currency
  */
@@ -8568,6 +8706,235 @@ export const updateCurrencyMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await updateCurrency({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listWithdrawalsQueryKey = (options: Options<ListWithdrawalsData>) =>
+  createQueryKey('listWithdrawals', options);
+
+/**
+ * List withdrawals
+ *
+ * Newest first.
+ */
+export const listWithdrawalsOptions = (options: Options<ListWithdrawalsData>) =>
+  queryOptions<
+    ListWithdrawalsResponse,
+    ListWithdrawalsError,
+    ListWithdrawalsResponse,
+    ReturnType<typeof listWithdrawalsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listWithdrawals({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listWithdrawalsQueryKey(options),
+  });
+
+const createInfiniteParams = <
+  K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>,
+>(
+  queryKey: QueryKey<Options>,
+  page: K
+) => {
+  const params = { ...queryKey[0] };
+  if (page.body) {
+    params.body = {
+      ...(queryKey[0].body as any),
+      ...(page.body as any),
+    };
+  }
+  if (page.headers) {
+    params.headers = {
+      ...queryKey[0].headers,
+      ...page.headers,
+    };
+  }
+  if (page.path) {
+    params.path = {
+      ...(queryKey[0].path as any),
+      ...(page.path as any),
+    };
+  }
+  if (page.query) {
+    const baseQuery = (queryKey[0].query as any) ?? {};
+    const nextQuery = (page.query as any) ?? {};
+    const basePageable = baseQuery.pageable ?? {};
+    const nextPageable = nextQuery.pageable ?? {};
+
+    params.query = {
+      ...baseQuery,
+      ...nextQuery,
+      ...(Object.keys(basePageable).length > 0 || Object.keys(nextPageable).length > 0
+        ? {
+            pageable: {
+              ...basePageable,
+              ...nextPageable,
+            },
+          }
+        : {}),
+    };
+  }
+  return params as unknown as typeof page;
+};
+
+export const listWithdrawalsInfiniteQueryKey = (
+  options: Options<ListWithdrawalsData>
+): QueryKey<Options<ListWithdrawalsData>> => createQueryKey('listWithdrawals', options, true);
+
+/**
+ * List withdrawals
+ *
+ * Newest first.
+ */
+export const listWithdrawalsInfiniteOptions = (options: Options<ListWithdrawalsData>) =>
+  infiniteQueryOptions<
+    ListWithdrawalsResponse,
+    ListWithdrawalsError,
+    InfiniteData<ListWithdrawalsResponse>,
+    QueryKey<Options<ListWithdrawalsData>>,
+    number | Pick<QueryKey<Options<ListWithdrawalsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListWithdrawalsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listWithdrawals({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listWithdrawalsInfiniteQueryKey(options),
+    }
+  );
+
+/**
+ * Start a withdrawal to a verified M-Pesa number
+ *
+ * Nothing moves until the code sent by SMS to that number is confirmed.
+ */
+export const requestWithdrawalMutation = (
+  options?: Partial<Options<RequestWithdrawalData>>
+): UseMutationOptions<
+  RequestWithdrawalResponse,
+  RequestWithdrawalError,
+  Options<RequestWithdrawalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RequestWithdrawalResponse,
+    RequestWithdrawalError,
+    Options<RequestWithdrawalData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await requestWithdrawal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Send a new confirmation code
+ */
+export const resendWithdrawalCodeMutation = (
+  options?: Partial<Options<ResendWithdrawalCodeData>>
+): UseMutationOptions<
+  ResendWithdrawalCodeResponse,
+  ResendWithdrawalCodeError,
+  Options<ResendWithdrawalCodeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ResendWithdrawalCodeResponse,
+    ResendWithdrawalCodeError,
+    Options<ResendWithdrawalCodeData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await resendWithdrawalCode({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Confirm a withdrawal with its SMS code
+ *
+ * The amount leaves the balance now; it comes back if M-Pesa fails or an admin rejects it.
+ */
+export const confirmWithdrawalMutation = (
+  options?: Partial<Options<ConfirmWithdrawalData>>
+): UseMutationOptions<
+  ConfirmWithdrawalResponse,
+  ConfirmWithdrawalError,
+  Options<ConfirmWithdrawalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ConfirmWithdrawalResponse,
+    ConfirmWithdrawalError,
+    Options<ConfirmWithdrawalData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await confirmWithdrawal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Cancel a withdrawal that has not been sent
+ */
+export const cancelWithdrawalMutation = (
+  options?: Partial<Options<CancelWithdrawalData>>
+): UseMutationOptions<
+  CancelWithdrawalResponse,
+  CancelWithdrawalError,
+  Options<CancelWithdrawalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CancelWithdrawalResponse,
+    CancelWithdrawalError,
+    Options<CancelWithdrawalData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await cancelWithdrawal({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -8806,53 +9173,6 @@ export const getAllTrainingBranchesOptions = (options: Options<GetAllTrainingBra
     },
     queryKey: getAllTrainingBranchesQueryKey(options),
   });
-
-const createInfiniteParams = <
-  K extends Pick<QueryKey<Options>[0], 'body' | 'headers' | 'path' | 'query'>,
->(
-  queryKey: QueryKey<Options>,
-  page: K
-) => {
-  const params = { ...queryKey[0] };
-  if (page.body) {
-    params.body = {
-      ...(queryKey[0].body as any),
-      ...(page.body as any),
-    };
-  }
-  if (page.headers) {
-    params.headers = {
-      ...queryKey[0].headers,
-      ...page.headers,
-    };
-  }
-  if (page.path) {
-    params.path = {
-      ...(queryKey[0].path as any),
-      ...(page.path as any),
-    };
-  }
-  if (page.query) {
-    const baseQuery = (queryKey[0].query as any) ?? {};
-    const nextQuery = (page.query as any) ?? {};
-    const basePageable = baseQuery.pageable ?? {};
-    const nextPageable = nextQuery.pageable ?? {};
-
-    params.query = {
-      ...baseQuery,
-      ...nextQuery,
-      ...(Object.keys(basePageable).length > 0 || Object.keys(nextPageable).length > 0
-        ? {
-            pageable: {
-              ...basePageable,
-              ...nextPageable,
-            },
-          }
-        : {}),
-    };
-  }
-  return params as unknown as typeof page;
-};
 
 export const getAllTrainingBranchesInfiniteQueryKey = (
   options: Options<GetAllTrainingBranchesData>
@@ -11727,6 +12047,227 @@ export const uploadOrganisationDocumentMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await uploadOrganisationDocument({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listOrganisationWithdrawalsQueryKey = (
+  options: Options<ListOrganisationWithdrawalsData>
+) => createQueryKey('listOrganisationWithdrawals', options);
+
+/**
+ * List withdrawals
+ *
+ * Newest first.
+ */
+export const listOrganisationWithdrawalsOptions = (
+  options: Options<ListOrganisationWithdrawalsData>
+) =>
+  queryOptions<
+    ListOrganisationWithdrawalsResponse,
+    ListOrganisationWithdrawalsError,
+    ListOrganisationWithdrawalsResponse,
+    ReturnType<typeof listOrganisationWithdrawalsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listOrganisationWithdrawals({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listOrganisationWithdrawalsQueryKey(options),
+  });
+
+export const listOrganisationWithdrawalsInfiniteQueryKey = (
+  options: Options<ListOrganisationWithdrawalsData>
+): QueryKey<Options<ListOrganisationWithdrawalsData>> =>
+  createQueryKey('listOrganisationWithdrawals', options, true);
+
+/**
+ * List withdrawals
+ *
+ * Newest first.
+ */
+export const listOrganisationWithdrawalsInfiniteOptions = (
+  options: Options<ListOrganisationWithdrawalsData>
+) =>
+  infiniteQueryOptions<
+    ListOrganisationWithdrawalsResponse,
+    ListOrganisationWithdrawalsError,
+    InfiniteData<ListOrganisationWithdrawalsResponse>,
+    QueryKey<Options<ListOrganisationWithdrawalsData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListOrganisationWithdrawalsData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListOrganisationWithdrawalsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listOrganisationWithdrawals({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listOrganisationWithdrawalsInfiniteQueryKey(options),
+    }
+  );
+
+/**
+ * Start a withdrawal to a verified M-Pesa number
+ *
+ * Nothing moves until the code sent by SMS to that number is confirmed.
+ */
+export const requestOrganisationWithdrawalMutation = (
+  options?: Partial<Options<RequestOrganisationWithdrawalData>>
+): UseMutationOptions<
+  RequestOrganisationWithdrawalResponse,
+  RequestOrganisationWithdrawalError,
+  Options<RequestOrganisationWithdrawalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RequestOrganisationWithdrawalResponse,
+    RequestOrganisationWithdrawalError,
+    Options<RequestOrganisationWithdrawalData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await requestOrganisationWithdrawal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Send a new confirmation code
+ */
+export const resendOrganisationWithdrawalCodeMutation = (
+  options?: Partial<Options<ResendOrganisationWithdrawalCodeData>>
+): UseMutationOptions<
+  ResendOrganisationWithdrawalCodeResponse,
+  ResendOrganisationWithdrawalCodeError,
+  Options<ResendOrganisationWithdrawalCodeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ResendOrganisationWithdrawalCodeResponse,
+    ResendOrganisationWithdrawalCodeError,
+    Options<ResendOrganisationWithdrawalCodeData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await resendOrganisationWithdrawalCode({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Confirm a withdrawal with its SMS code
+ *
+ * The amount leaves the balance now; it comes back if M-Pesa fails or an admin rejects it.
+ */
+export const confirmOrganisationWithdrawalMutation = (
+  options?: Partial<Options<ConfirmOrganisationWithdrawalData>>
+): UseMutationOptions<
+  ConfirmOrganisationWithdrawalResponse,
+  ConfirmOrganisationWithdrawalError,
+  Options<ConfirmOrganisationWithdrawalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ConfirmOrganisationWithdrawalResponse,
+    ConfirmOrganisationWithdrawalError,
+    Options<ConfirmOrganisationWithdrawalData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await confirmOrganisationWithdrawal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Cancel a withdrawal that has not been sent
+ */
+export const cancelOrganisationWithdrawalMutation = (
+  options?: Partial<Options<CancelOrganisationWithdrawalData>>
+): UseMutationOptions<
+  CancelOrganisationWithdrawalResponse,
+  CancelOrganisationWithdrawalError,
+  Options<CancelOrganisationWithdrawalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CancelOrganisationWithdrawalResponse,
+    CancelOrganisationWithdrawalError,
+    Options<CancelOrganisationWithdrawalData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await cancelOrganisationWithdrawal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Agree as the second payout approver
+ *
+ * Must be a different approver from the one who asked.
+ */
+export const approveOrganisationWithdrawalMutation = (
+  options?: Partial<Options<ApproveOrganisationWithdrawalData>>
+): UseMutationOptions<
+  ApproveOrganisationWithdrawalResponse,
+  ApproveOrganisationWithdrawalError,
+  Options<ApproveOrganisationWithdrawalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ApproveOrganisationWithdrawalResponse,
+    ApproveOrganisationWithdrawalError,
+    Options<ApproveOrganisationWithdrawalData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await approveOrganisationWithdrawal({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -19360,6 +19901,91 @@ export const moderateProgramMutation = (
 };
 
 /**
+ * Reject a withdrawal and return its money
+ *
+ * The reason is shown to the earner.
+ */
+export const rejectAdminWithdrawalMutation = (
+  options?: Partial<Options<RejectAdminWithdrawalData>>
+): UseMutationOptions<
+  RejectAdminWithdrawalResponse,
+  RejectAdminWithdrawalError,
+  Options<RejectAdminWithdrawalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RejectAdminWithdrawalResponse,
+    RejectAdminWithdrawalError,
+    Options<RejectAdminWithdrawalData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await rejectAdminWithdrawal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Ask M-Pesa about a withdrawal now
+ *
+ * Sends a cleared withdrawal, or reads the result of one in flight.
+ */
+export const checkAdminWithdrawalMutation = (
+  options?: Partial<Options<CheckAdminWithdrawalData>>
+): UseMutationOptions<
+  CheckAdminWithdrawalResponse,
+  CheckAdminWithdrawalError,
+  Options<CheckAdminWithdrawalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    CheckAdminWithdrawalResponse,
+    CheckAdminWithdrawalError,
+    Options<CheckAdminWithdrawalData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await checkAdminWithdrawal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Approve a flagged withdrawal and send it
+ */
+export const approveAdminWithdrawalMutation = (
+  options?: Partial<Options<ApproveAdminWithdrawalData>>
+): UseMutationOptions<
+  ApproveAdminWithdrawalResponse,
+  ApproveAdminWithdrawalError,
+  Options<ApproveAdminWithdrawalData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ApproveAdminWithdrawalResponse,
+    ApproveAdminWithdrawalError,
+    Options<ApproveAdminWithdrawalData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await approveAdminWithdrawal({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Create a new organisation staff user with domain
  *
  * Creates a new user, provisions them in Keycloak, assigns them to the organisation with the specified domain and optional branch. If the email already exists in Keycloak or locally, an error is returned so the client can use the existing email to assign roles instead.
@@ -19996,6 +20622,31 @@ export const getWalletOptions = (options: Options<GetWalletData>) =>
     queryKey: getWalletQueryKey(options),
   });
 
+export const getWithdrawalQueryKey = (options: Options<GetWithdrawalData>) =>
+  createQueryKey('getWithdrawal', options);
+
+/**
+ * Get one withdrawal
+ */
+export const getWithdrawalOptions = (options: Options<GetWithdrawalData>) =>
+  queryOptions<
+    GetWithdrawalResponse,
+    GetWithdrawalError,
+    GetWithdrawalResponse,
+    ReturnType<typeof getWithdrawalQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getWithdrawal({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getWithdrawalQueryKey(options),
+  });
+
 export const listTransactions1QueryKey = (options: Options<ListTransactions1Data>) =>
   createQueryKey('listTransactions1', options);
 
@@ -20186,6 +20837,31 @@ export const listAuditInfiniteOptions = (options: Options<ListAuditData>) =>
       queryKey: listAuditInfiniteQueryKey(options),
     }
   );
+
+export const getPayoutRulesQueryKey = (options?: Options<GetPayoutRulesData>) =>
+  createQueryKey('getPayoutRules', options);
+
+/**
+ * Withdrawal limits, the M-Pesa charge and the new-number hold
+ */
+export const getPayoutRulesOptions = (options?: Options<GetPayoutRulesData>) =>
+  queryOptions<
+    GetPayoutRulesResponse,
+    GetPayoutRulesError,
+    GetPayoutRulesResponse,
+    ReturnType<typeof getPayoutRulesQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPayoutRules({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPayoutRulesQueryKey(options),
+  });
 
 export const getAllUsersQueryKey = (options: Options<GetAllUsersData>) =>
   createQueryKey('getAllUsers', options);
@@ -24683,6 +25359,32 @@ export const getOrganisationWalletOptions = (options: Options<GetOrganisationWal
       return data;
     },
     queryKey: getOrganisationWalletQueryKey(options),
+  });
+
+export const getOrganisationWithdrawalQueryKey = (
+  options: Options<GetOrganisationWithdrawalData>
+) => createQueryKey('getOrganisationWithdrawal', options);
+
+/**
+ * Get one withdrawal
+ */
+export const getOrganisationWithdrawalOptions = (options: Options<GetOrganisationWithdrawalData>) =>
+  queryOptions<
+    GetOrganisationWithdrawalResponse,
+    GetOrganisationWithdrawalError,
+    GetOrganisationWithdrawalResponse,
+    ReturnType<typeof getOrganisationWithdrawalQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getOrganisationWithdrawal({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getOrganisationWithdrawalQueryKey(options),
   });
 
 export const listOrganisationWalletTransactionsQueryKey = (
@@ -33429,6 +34131,103 @@ export const summaryOptions = (options?: Options<SummaryData>) =>
       return data;
     },
     queryKey: summaryQueryKey(options),
+  });
+
+export const listAdminWithdrawalsQueryKey = (options: Options<ListAdminWithdrawalsData>) =>
+  createQueryKey('listAdminWithdrawals', options);
+
+/**
+ * List withdrawals across all wallets
+ *
+ * Newest first; filter by status, e.g. NEEDS_REVIEW.
+ */
+export const listAdminWithdrawalsOptions = (options: Options<ListAdminWithdrawalsData>) =>
+  queryOptions<
+    ListAdminWithdrawalsResponse,
+    ListAdminWithdrawalsError,
+    ListAdminWithdrawalsResponse,
+    ReturnType<typeof listAdminWithdrawalsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listAdminWithdrawals({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listAdminWithdrawalsQueryKey(options),
+  });
+
+export const listAdminWithdrawalsInfiniteQueryKey = (
+  options: Options<ListAdminWithdrawalsData>
+): QueryKey<Options<ListAdminWithdrawalsData>> =>
+  createQueryKey('listAdminWithdrawals', options, true);
+
+/**
+ * List withdrawals across all wallets
+ *
+ * Newest first; filter by status, e.g. NEEDS_REVIEW.
+ */
+export const listAdminWithdrawalsInfiniteOptions = (options: Options<ListAdminWithdrawalsData>) =>
+  infiniteQueryOptions<
+    ListAdminWithdrawalsResponse,
+    ListAdminWithdrawalsError,
+    InfiniteData<ListAdminWithdrawalsResponse>,
+    QueryKey<Options<ListAdminWithdrawalsData>>,
+    | number
+    | Pick<QueryKey<Options<ListAdminWithdrawalsData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListAdminWithdrawalsData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listAdminWithdrawals({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listAdminWithdrawalsInfiniteQueryKey(options),
+    }
+  );
+
+export const getPayoutSummaryQueryKey = (options?: Options<GetPayoutSummaryData>) =>
+  createQueryKey('getPayoutSummary', options);
+
+/**
+ * Headline payout figures
+ */
+export const getPayoutSummaryOptions = (options?: Options<GetPayoutSummaryData>) =>
+  queryOptions<
+    GetPayoutSummaryResponse,
+    GetPayoutSummaryError,
+    GetPayoutSummaryResponse,
+    ReturnType<typeof getPayoutSummaryQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getPayoutSummary({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getPayoutSummaryQueryKey(options),
   });
 
 export const isOrganisationVerifiedQueryKey = (options: Options<IsOrganisationVerifiedData>) =>

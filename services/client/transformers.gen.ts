@@ -55,6 +55,8 @@ import type {
   ApplyActionResponse,
   ApplyForDomainResponse,
   ApplyToJobResponse,
+  ApproveAdminWithdrawalResponse,
+  ApproveOrganisationWithdrawalResponse,
   ArchiveCourseResponse,
   ArchiveProgramResponse,
   AssignAdminDomainResponse,
@@ -63,10 +65,15 @@ import type {
   CancelBookingResponse,
   CancelJobResponse,
   CancelObligationResponse,
+  CancelOrganisationWithdrawalResponse,
+  CancelWithdrawalResponse,
   CertificationsResponse,
+  CheckAdminWithdrawalResponse,
   CompetenciesResponse,
   CompleteCartResponse,
   CompleteCheckoutResponse,
+  ConfirmOrganisationWithdrawalResponse,
+  ConfirmWithdrawalResponse,
   CountCourseCreatorsByVerificationStatusResponse,
   CreateAdminUserResponse,
   CreateAssessmentRubricResponse,
@@ -275,8 +282,12 @@ import type {
   GetOrganisationStatisticsResponse,
   GetOrganisationTimetableResponse,
   GetOrganisationWalletResponse,
+  GetOrganisationWithdrawalResponse,
   GetOrganizationAdminUsersResponse,
   GetPassingScoringLevelsResponse,
+  GetPayoutRulesResponse,
+  GetPayoutSettingsResponse,
+  GetPayoutSummaryResponse,
   GetPendingEditResponse,
   GetPendingGradingResponse,
   GetPendingOrganisationsResponse,
@@ -362,11 +373,13 @@ import type {
   GetVerifiedCourseCreatorsResponse,
   GetWalletResponse,
   GetWeeklyGrowthResponse,
+  GetWithdrawalResponse,
   GlobalSearchResponse2,
   GradeQuizTextResponseResponse,
   GradeSubmissionResponse,
   JoinWaitlistResponse,
   ListAchievementsResponse,
+  ListAdminWithdrawalsResponse,
   ListAuditResponse,
   ListAvailabilityRulesResponse,
   ListBookingsResponse,
@@ -399,6 +412,7 @@ import type {
   ListOrganisationWalletAuditResponse,
   ListOrganisationWalletStatementsResponse,
   ListOrganisationWalletTransactionsResponse,
+  ListOrganisationWithdrawalsResponse,
   ListPaymentsResponse,
   ListPayoutApproversResponse,
   ListPayoutMethodsResponse,
@@ -423,6 +437,7 @@ import type {
   ListTrainingRateUpdatesResponse,
   ListTransactions1Response,
   ListTransactionsResponse,
+  ListWithdrawalsResponse,
   MakeOrganisationPayoutMethodDefaultResponse,
   MakePayoutMethodDefaultResponse,
   MembershipsResponse,
@@ -438,17 +453,22 @@ import type {
   RecalculateScoresResponse,
   RecordSessionResponse,
   RegisterAndAcceptResponse,
+  RejectAdminWithdrawalResponse,
   RemoveAdminDomainResponse,
   RemoveItemResponse,
   ReopenSessionReportResponse,
   ReplaceLearnerSkillGoalsResponse,
   RequestOrganisationVerificationResponse,
+  RequestOrganisationWithdrawalResponse,
   RequestPaymentResponse,
+  RequestWithdrawalResponse,
   RescheduleScheduledInstanceResponse,
   ResendInvitationResponse,
   ResendOrganisationInvitationResponse,
   ResendOrganisationPayoutMethodCodeResponse,
+  ResendOrganisationWithdrawalCodeResponse,
   ResendPayoutMethodCodeResponse,
+  ResendWithdrawalCodeResponse,
   ResolveByCourseOrClassResponse,
   RestoreCourseVersionResponse,
   ReturnSubmissionResponse,
@@ -577,6 +597,7 @@ import type {
   UpdateMatrixCellResponse,
   UpdateMembershipResponse,
   UpdateOrganisationResponse,
+  UpdatePayoutSettingsResponse,
   UpdatePortfolioItemResponse,
   UpdatePracticeActivityResponse,
   UpdateProgramAssessmentResponse,
@@ -3005,6 +3026,150 @@ export const adminUpdateSkillResponseTransformer = async (
   return data;
 };
 
+const payoutSettingsSchemaResponseTransformer = (data: any) => {
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const apiResponsePayoutSettingsSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = payoutSettingsSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getPayoutSettingsResponseTransformer = async (
+  data: any
+): Promise<GetPayoutSettingsResponse> => {
+  data = apiResponsePayoutSettingsSchemaResponseTransformer(data);
+  return data;
+};
+
+export const updatePayoutSettingsResponseTransformer = async (
+  data: any
+): Promise<UpdatePayoutSettingsResponse> => {
+  data = apiResponsePayoutSettingsSchemaResponseTransformer(data);
+  return data;
+};
+
+const withdrawalSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.confirmed_at) {
+    data.confirmed_at = new Date(data.confirmed_at);
+  }
+  if (data.sent_at) {
+    data.sent_at = new Date(data.sent_at);
+  }
+  if (data.completed_at) {
+    data.completed_at = new Date(data.completed_at);
+  }
+  return data;
+};
+
+const pageMetadataSchemaResponseTransformer = (data: any) => {
+  if (data.totalElements) {
+    data.totalElements = BigInt(data.totalElements.toString());
+  }
+  return data;
+};
+
+const pagedDtoWithdrawalSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => withdrawalSchemaResponseTransformer(item));
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoWithdrawalSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoWithdrawalSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listWithdrawalsResponseTransformer = async (
+  data: any
+): Promise<ListWithdrawalsResponse> => {
+  data = apiResponsePagedDtoWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
+const verificationCodeSchemaResponseTransformer = (data: any) => {
+  if (data.expires_at) {
+    data.expires_at = new Date(data.expires_at);
+  }
+  if (data.resend_available_at) {
+    data.resend_available_at = new Date(data.resend_available_at);
+  }
+  return data;
+};
+
+const withdrawalCreatedSchemaResponseTransformer = (data: any) => {
+  if (data.withdrawal) {
+    data.withdrawal = withdrawalSchemaResponseTransformer(data.withdrawal);
+  }
+  if (data.verification) {
+    data.verification = verificationCodeSchemaResponseTransformer(data.verification);
+  }
+  return data;
+};
+
+const apiResponseWithdrawalCreatedSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = withdrawalCreatedSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const requestWithdrawalResponseTransformer = async (
+  data: any
+): Promise<RequestWithdrawalResponse> => {
+  data = apiResponseWithdrawalCreatedSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseVerificationCodeSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = verificationCodeSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const resendWithdrawalCodeResponseTransformer = async (
+  data: any
+): Promise<ResendWithdrawalCodeResponse> => {
+  data = apiResponseVerificationCodeSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseWithdrawalSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = withdrawalSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const confirmWithdrawalResponseTransformer = async (
+  data: any
+): Promise<ConfirmWithdrawalResponse> => {
+  data = apiResponseWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
+export const cancelWithdrawalResponseTransformer = async (
+  data: any
+): Promise<CancelWithdrawalResponse> => {
+  data = apiResponseWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
 const walletSchemaResponseTransformer = (data: any) => {
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
@@ -3066,16 +3231,6 @@ export const listPayoutMethodsResponseTransformer = async (
   return data;
 };
 
-const verificationCodeSchemaResponseTransformer = (data: any) => {
-  if (data.expires_at) {
-    data.expires_at = new Date(data.expires_at);
-  }
-  if (data.resend_available_at) {
-    data.resend_available_at = new Date(data.resend_available_at);
-  }
-  return data;
-};
-
 const payoutMethodCreatedSchemaResponseTransformer = (data: any) => {
   if (data.payout_method) {
     data.payout_method = payoutMethodSchemaResponseTransformer(data.payout_method);
@@ -3107,13 +3262,6 @@ export const verifyPayoutMethodResponseTransformer = async (
   return data;
 };
 
-const apiResponseVerificationCodeSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = verificationCodeSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
 export const resendPayoutMethodCodeResponseTransformer = async (
   data: any
 ): Promise<ResendPayoutMethodCodeResponse> => {
@@ -3130,13 +3278,6 @@ export const uploadProfileImageResponseTransformer = async (
   data: any
 ): Promise<UploadProfileImageResponse> => {
   data = userSchemaResponseTransformer(data);
-  return data;
-};
-
-const pageMetadataSchemaResponseTransformer = (data: any) => {
-  if (data.totalElements) {
-    data.totalElements = BigInt(data.totalElements.toString());
-  }
   return data;
 };
 
@@ -4055,6 +4196,48 @@ export const uploadOrganisationDocumentResponseTransformer = async (
   data: any
 ): Promise<UploadOrganisationDocumentResponse> => {
   data = apiResponseOrganisationDocumentSchemaResponseTransformer(data);
+  return data;
+};
+
+export const listOrganisationWithdrawalsResponseTransformer = async (
+  data: any
+): Promise<ListOrganisationWithdrawalsResponse> => {
+  data = apiResponsePagedDtoWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
+export const requestOrganisationWithdrawalResponseTransformer = async (
+  data: any
+): Promise<RequestOrganisationWithdrawalResponse> => {
+  data = apiResponseWithdrawalCreatedSchemaResponseTransformer(data);
+  return data;
+};
+
+export const resendOrganisationWithdrawalCodeResponseTransformer = async (
+  data: any
+): Promise<ResendOrganisationWithdrawalCodeResponse> => {
+  data = apiResponseVerificationCodeSchemaResponseTransformer(data);
+  return data;
+};
+
+export const confirmOrganisationWithdrawalResponseTransformer = async (
+  data: any
+): Promise<ConfirmOrganisationWithdrawalResponse> => {
+  data = apiResponseWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
+export const cancelOrganisationWithdrawalResponseTransformer = async (
+  data: any
+): Promise<CancelOrganisationWithdrawalResponse> => {
+  data = apiResponseWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
+export const approveOrganisationWithdrawalResponseTransformer = async (
+  data: any
+): Promise<ApproveOrganisationWithdrawalResponse> => {
+  data = apiResponseWithdrawalSchemaResponseTransformer(data);
   return data;
 };
 
@@ -6773,6 +6956,27 @@ export const moderateProgramResponseTransformer = async (
   return data;
 };
 
+export const rejectAdminWithdrawalResponseTransformer = async (
+  data: any
+): Promise<RejectAdminWithdrawalResponse> => {
+  data = apiResponseWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
+export const checkAdminWithdrawalResponseTransformer = async (
+  data: any
+): Promise<CheckAdminWithdrawalResponse> => {
+  data = apiResponseWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
+export const approveAdminWithdrawalResponseTransformer = async (
+  data: any
+): Promise<ApproveAdminWithdrawalResponse> => {
+  data = apiResponseWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
 export const createOrganisationUserResponseTransformer = async (
   data: any
 ): Promise<CreateOrganisationUserResponse> => {
@@ -6858,6 +7062,13 @@ export const getWalletResponseTransformer = async (data: any): Promise<GetWallet
   return data;
 };
 
+export const getWithdrawalResponseTransformer = async (
+  data: any
+): Promise<GetWithdrawalResponse> => {
+  data = apiResponseWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
 const walletTransactionSchemaResponseTransformer = (data: any) => {
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
@@ -6938,6 +7149,27 @@ const apiResponsePagedDtoWalletAuditEventSchemaResponseTransformer = (data: any)
 
 export const listAuditResponseTransformer = async (data: any): Promise<ListAuditResponse> => {
   data = apiResponsePagedDtoWalletAuditEventSchemaResponseTransformer(data);
+  return data;
+};
+
+const payoutRulesSchemaResponseTransformer = (data: any) => {
+  if (data.new_number_hold_hours) {
+    data.new_number_hold_hours = BigInt(data.new_number_hold_hours.toString());
+  }
+  return data;
+};
+
+const apiResponsePayoutRulesSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = payoutRulesSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getPayoutRulesResponseTransformer = async (
+  data: any
+): Promise<GetPayoutRulesResponse> => {
+  data = apiResponsePayoutRulesSchemaResponseTransformer(data);
   return data;
 };
 
@@ -8041,6 +8273,13 @@ export const getOrganisationWalletResponseTransformer = async (
   data: any
 ): Promise<GetOrganisationWalletResponse> => {
   data = apiResponseWalletBalanceSummarySchemaResponseTransformer(data);
+  return data;
+};
+
+export const getOrganisationWithdrawalResponseTransformer = async (
+  data: any
+): Promise<GetOrganisationWithdrawalResponse> => {
+  data = apiResponseWithdrawalSchemaResponseTransformer(data);
   return data;
 };
 
@@ -10709,6 +10948,43 @@ const apiResponseRumSummaryResponseSchemaResponseTransformer = (data: any) => {
 
 export const summaryResponseTransformer = async (data: any): Promise<SummaryResponse> => {
   data = apiResponseRumSummaryResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const listAdminWithdrawalsResponseTransformer = async (
+  data: any
+): Promise<ListAdminWithdrawalsResponse> => {
+  data = apiResponsePagedDtoWithdrawalSchemaResponseTransformer(data);
+  return data;
+};
+
+const payoutSummarySchemaResponseTransformer = (data: any) => {
+  if (data.needs_review_count) {
+    data.needs_review_count = BigInt(data.needs_review_count.toString());
+  }
+  if (data.in_flight_count) {
+    data.in_flight_count = BigInt(data.in_flight_count.toString());
+  }
+  if (data.failed_count) {
+    data.failed_count = BigInt(data.failed_count.toString());
+  }
+  if (data.float_reported_at) {
+    data.float_reported_at = new Date(data.float_reported_at);
+  }
+  return data;
+};
+
+const apiResponsePayoutSummarySchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = payoutSummarySchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getPayoutSummaryResponseTransformer = async (
+  data: any
+): Promise<GetPayoutSummaryResponse> => {
+  data = apiResponsePayoutSummarySchemaResponseTransformer(data);
   return data;
 };
 

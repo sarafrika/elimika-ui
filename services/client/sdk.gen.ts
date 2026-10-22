@@ -62,6 +62,8 @@ import {
   applyActionResponseTransformer,
   applyForDomainResponseTransformer,
   applyToJobResponseTransformer,
+  approveAdminWithdrawalResponseTransformer,
+  approveOrganisationWithdrawalResponseTransformer,
   archiveCourseResponseTransformer,
   archiveProgramResponseTransformer,
   assignAdminDomainResponseTransformer,
@@ -70,10 +72,15 @@ import {
   cancelBookingResponseTransformer,
   cancelJobResponseTransformer,
   cancelObligationResponseTransformer,
+  cancelOrganisationWithdrawalResponseTransformer,
+  cancelWithdrawalResponseTransformer,
   certificationsResponseTransformer,
+  checkAdminWithdrawalResponseTransformer,
   competenciesResponseTransformer,
   completeCartResponseTransformer,
   completeCheckoutResponseTransformer,
+  confirmOrganisationWithdrawalResponseTransformer,
+  confirmWithdrawalResponseTransformer,
   countCourseCreatorsByVerificationStatusResponseTransformer,
   createAdminUserResponseTransformer,
   createAssessmentRubricResponseTransformer,
@@ -282,8 +289,12 @@ import {
   getOrganisationStatisticsResponseTransformer,
   getOrganisationTimetableResponseTransformer,
   getOrganisationWalletResponseTransformer,
+  getOrganisationWithdrawalResponseTransformer,
   getOrganizationAdminUsersResponseTransformer,
   getPassingScoringLevelsResponseTransformer,
+  getPayoutRulesResponseTransformer,
+  getPayoutSettingsResponseTransformer,
+  getPayoutSummaryResponseTransformer,
   getPendingEditResponseTransformer,
   getPendingGradingResponseTransformer,
   getPendingOrganisationsResponseTransformer,
@@ -369,11 +380,13 @@ import {
   getVerifiedCourseCreatorsResponseTransformer,
   getWalletResponseTransformer,
   getWeeklyGrowthResponseTransformer,
+  getWithdrawalResponseTransformer,
   globalSearchResponseTransformer,
   gradeQuizTextResponseResponseTransformer,
   gradeSubmissionResponseTransformer,
   joinWaitlistResponseTransformer,
   listAchievementsResponseTransformer,
+  listAdminWithdrawalsResponseTransformer,
   listAuditResponseTransformer,
   listAvailabilityRulesResponseTransformer,
   listBookingsResponseTransformer,
@@ -406,6 +419,7 @@ import {
   listOrganisationWalletAuditResponseTransformer,
   listOrganisationWalletStatementsResponseTransformer,
   listOrganisationWalletTransactionsResponseTransformer,
+  listOrganisationWithdrawalsResponseTransformer,
   listPaymentsResponseTransformer,
   listPayoutApproversResponseTransformer,
   listPayoutMethodsResponseTransformer,
@@ -430,6 +444,7 @@ import {
   listTrainingRateUpdatesResponseTransformer,
   listTransactions1ResponseTransformer,
   listTransactionsResponseTransformer,
+  listWithdrawalsResponseTransformer,
   makeOrganisationPayoutMethodDefaultResponseTransformer,
   makePayoutMethodDefaultResponseTransformer,
   membershipsResponseTransformer,
@@ -445,17 +460,22 @@ import {
   recalculateScoresResponseTransformer,
   recordSessionResponseTransformer,
   registerAndAcceptResponseTransformer,
+  rejectAdminWithdrawalResponseTransformer,
   removeAdminDomainResponseTransformer,
   removeItemResponseTransformer,
   reopenSessionReportResponseTransformer,
   replaceLearnerSkillGoalsResponseTransformer,
   requestOrganisationVerificationResponseTransformer,
+  requestOrganisationWithdrawalResponseTransformer,
   requestPaymentResponseTransformer,
+  requestWithdrawalResponseTransformer,
   rescheduleScheduledInstanceResponseTransformer,
   resendInvitationResponseTransformer,
   resendOrganisationInvitationResponseTransformer,
   resendOrganisationPayoutMethodCodeResponseTransformer,
+  resendOrganisationWithdrawalCodeResponseTransformer,
   resendPayoutMethodCodeResponseTransformer,
+  resendWithdrawalCodeResponseTransformer,
   resolveByCourseOrClassResponseTransformer,
   restoreCourseVersionResponseTransformer,
   returnSubmissionResponseTransformer,
@@ -584,6 +604,7 @@ import {
   updateMatrixCellResponseTransformer,
   updateMembershipResponseTransformer,
   updateOrganisationResponseTransformer,
+  updatePayoutSettingsResponseTransformer,
   updatePortfolioItemResponseTransformer,
   updatePracticeActivityResponseTransformer,
   updateProgramAssessmentResponseTransformer,
@@ -816,6 +837,12 @@ import type {
   ApplyToJobData,
   ApplyToJobErrors,
   ApplyToJobResponses,
+  ApproveAdminWithdrawalData,
+  ApproveAdminWithdrawalErrors,
+  ApproveAdminWithdrawalResponses,
+  ApproveOrganisationWithdrawalData,
+  ApproveOrganisationWithdrawalErrors,
+  ApproveOrganisationWithdrawalResponses,
   ArchiveCourseData,
   ArchiveCourseErrors,
   ArchiveCourseResponses,
@@ -852,12 +879,21 @@ import type {
   CancelObligationData,
   CancelObligationErrors,
   CancelObligationResponses,
+  CancelOrganisationWithdrawalData,
+  CancelOrganisationWithdrawalErrors,
+  CancelOrganisationWithdrawalResponses,
   CancelScheduledClassData,
   CancelScheduledClassErrors,
   CancelScheduledClassResponses,
+  CancelWithdrawalData,
+  CancelWithdrawalErrors,
+  CancelWithdrawalResponses,
   CertificationsData,
   CertificationsErrors,
   CertificationsResponses,
+  CheckAdminWithdrawalData,
+  CheckAdminWithdrawalErrors,
+  CheckAdminWithdrawalResponses,
   CheckAvailabilityData,
   CheckAvailabilityErrors,
   CheckAvailabilityResponses,
@@ -888,6 +924,12 @@ import type {
   CompleteCheckoutData,
   CompleteCheckoutErrors,
   CompleteCheckoutResponses,
+  ConfirmOrganisationWithdrawalData,
+  ConfirmOrganisationWithdrawalErrors,
+  ConfirmOrganisationWithdrawalResponses,
+  ConfirmWithdrawalData,
+  ConfirmWithdrawalErrors,
+  ConfirmWithdrawalResponses,
   CountCourseCreatorsByVerificationStatusData,
   CountCourseCreatorsByVerificationStatusErrors,
   CountCourseCreatorsByVerificationStatusResponses,
@@ -1838,6 +1880,9 @@ import type {
   GetOrganisationWalletData,
   GetOrganisationWalletErrors,
   GetOrganisationWalletResponses,
+  GetOrganisationWithdrawalData,
+  GetOrganisationWithdrawalErrors,
+  GetOrganisationWithdrawalResponses,
   GetOrganizationAdminUsersData,
   GetOrganizationAdminUsersErrors,
   GetOrganizationAdminUsersResponses,
@@ -1850,6 +1895,15 @@ import type {
   GetPaymentStatusData,
   GetPaymentStatusErrors,
   GetPaymentStatusResponses,
+  GetPayoutRulesData,
+  GetPayoutRulesErrors,
+  GetPayoutRulesResponses,
+  GetPayoutSettingsData,
+  GetPayoutSettingsErrors,
+  GetPayoutSettingsResponses,
+  GetPayoutSummaryData,
+  GetPayoutSummaryErrors,
+  GetPayoutSummaryResponses,
   GetPendingEditData,
   GetPendingEditErrors,
   GetPendingEditResponses,
@@ -2145,6 +2199,9 @@ import type {
   GetWeeklyGrowthData,
   GetWeeklyGrowthErrors,
   GetWeeklyGrowthResponses,
+  GetWithdrawalData,
+  GetWithdrawalErrors,
+  GetWithdrawalResponses,
   GlobalSearchData,
   GlobalSearchErrors,
   GlobalSearchResponses,
@@ -2184,6 +2241,9 @@ import type {
   ListAchievementsData,
   ListAchievementsErrors,
   ListAchievementsResponses,
+  ListAdminWithdrawalsData,
+  ListAdminWithdrawalsErrors,
+  ListAdminWithdrawalsResponses,
   ListAllData,
   ListAllErrors,
   ListAllResponses,
@@ -2295,6 +2355,9 @@ import type {
   ListOrganisationWalletTransactionsData,
   ListOrganisationWalletTransactionsErrors,
   ListOrganisationWalletTransactionsResponses,
+  ListOrganisationWithdrawalsData,
+  ListOrganisationWithdrawalsErrors,
+  ListOrganisationWithdrawalsResponses,
   ListPaymentsData,
   ListPaymentsErrors,
   ListPaymentsResponses,
@@ -2373,6 +2436,9 @@ import type {
   ListTransactionsData,
   ListTransactionsErrors,
   ListTransactionsResponses,
+  ListWithdrawalsData,
+  ListWithdrawalsErrors,
+  ListWithdrawalsResponses,
   LookupUserByUserNoData,
   LookupUserByUserNoErrors,
   LookupUserByUserNoResponses,
@@ -2451,6 +2517,9 @@ import type {
   RegisterData,
   RegisterErrors,
   RegisterResponses,
+  RejectAdminWithdrawalData,
+  RejectAdminWithdrawalErrors,
+  RejectAdminWithdrawalResponses,
   RemoveAdminDomainData,
   RemoveAdminDomainErrors,
   RemoveAdminDomainResponses,
@@ -2520,9 +2589,15 @@ import type {
   RequestOrganisationVerificationData,
   RequestOrganisationVerificationErrors,
   RequestOrganisationVerificationResponses,
+  RequestOrganisationWithdrawalData,
+  RequestOrganisationWithdrawalErrors,
+  RequestOrganisationWithdrawalResponses,
   RequestPaymentData,
   RequestPaymentErrors,
   RequestPaymentResponses,
+  RequestWithdrawalData,
+  RequestWithdrawalErrors,
+  RequestWithdrawalResponses,
   RescheduleScheduledInstanceData,
   RescheduleScheduledInstanceErrors,
   RescheduleScheduledInstanceResponses,
@@ -2535,12 +2610,18 @@ import type {
   ResendOrganisationPayoutMethodCodeData,
   ResendOrganisationPayoutMethodCodeErrors,
   ResendOrganisationPayoutMethodCodeResponses,
+  ResendOrganisationWithdrawalCodeData,
+  ResendOrganisationWithdrawalCodeErrors,
+  ResendOrganisationWithdrawalCodeResponses,
   ResendPayoutMethodCodeData,
   ResendPayoutMethodCodeErrors,
   ResendPayoutMethodCodeResponses,
   ResendRegistrationEmailData,
   ResendRegistrationEmailErrors,
   ResendRegistrationEmailResponses,
+  ResendWithdrawalCodeData,
+  ResendWithdrawalCodeErrors,
+  ResendWithdrawalCodeResponses,
   ResolveByCourseOrClassData,
   ResolveByCourseOrClassErrors,
   ResolveByCourseOrClassResponses,
@@ -2950,6 +3031,9 @@ import type {
   UpdateOrganisationData,
   UpdateOrganisationErrors,
   UpdateOrganisationResponses,
+  UpdatePayoutSettingsData,
+  UpdatePayoutSettingsErrors,
+  UpdatePayoutSettingsResponses,
   UpdatePortfolioItemData,
   UpdatePortfolioItemErrors,
   UpdatePortfolioItemResponses,
@@ -7334,6 +7418,52 @@ export const adminUpdateSkill = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Get the payout rules
+ */
+export const getPayoutSettings = <ThrowOnError extends boolean = false>(
+  options?: Options<GetPayoutSettingsData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<
+    GetPayoutSettingsResponses,
+    GetPayoutSettingsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getPayoutSettingsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/admin/payouts/settings',
+    ...options,
+  });
+
+/**
+ * Change the payout rules
+ *
+ * Apply to withdrawals requested from now on.
+ */
+export const updatePayoutSettings = <ThrowOnError extends boolean = false>(
+  options: Options<UpdatePayoutSettingsData, ThrowOnError>
+) =>
+  (options.client ?? client).put<
+    UpdatePayoutSettingsResponses,
+    UpdatePayoutSettingsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updatePayoutSettingsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/admin/payouts/settings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Update an existing currency
  */
 export const updateCurrency = <ThrowOnError extends boolean = false>(
@@ -7350,6 +7480,112 @@ export const updateCurrency = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * List withdrawals
+ *
+ * Newest first.
+ */
+export const listWithdrawals = <ThrowOnError extends boolean = false>(
+  options: Options<ListWithdrawalsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<ListWithdrawalsResponses, ListWithdrawalsErrors, ThrowOnError>({
+    responseTransformer: listWithdrawalsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/withdrawals',
+    ...options,
+  });
+
+/**
+ * Start a withdrawal to a verified M-Pesa number
+ *
+ * Nothing moves until the code sent by SMS to that number is confirmed.
+ */
+export const requestWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<RequestWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    RequestWithdrawalResponses,
+    RequestWithdrawalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: requestWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/withdrawals',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Send a new confirmation code
+ */
+export const resendWithdrawalCode = <ThrowOnError extends boolean = false>(
+  options: Options<ResendWithdrawalCodeData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    ResendWithdrawalCodeResponses,
+    ResendWithdrawalCodeErrors,
+    ThrowOnError
+  >({
+    responseTransformer: resendWithdrawalCodeResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/withdrawals/{withdrawalUuid}/verification-code',
+    ...options,
+  });
+
+/**
+ * Confirm a withdrawal with its SMS code
+ *
+ * The amount leaves the balance now; it comes back if M-Pesa fails or an admin rejects it.
+ */
+export const confirmWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<ConfirmWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    ConfirmWithdrawalResponses,
+    ConfirmWithdrawalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: confirmWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/withdrawals/{withdrawalUuid}/confirm',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Cancel a withdrawal that has not been sent
+ */
+export const cancelWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<CancelWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).post<CancelWithdrawalResponses, CancelWithdrawalErrors, ThrowOnError>({
+    responseTransformer: cancelWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/withdrawals/{withdrawalUuid}/cancel',
+    ...options,
   });
 
 /**
@@ -9270,6 +9506,142 @@ export const uploadOrganisationDocument = <ThrowOnError extends boolean = false>
       'Content-Type': null,
       ...options.headers,
     },
+  });
+
+/**
+ * List withdrawals
+ *
+ * Newest first.
+ */
+export const listOrganisationWithdrawals = <ThrowOnError extends boolean = false>(
+  options: Options<ListOrganisationWithdrawalsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListOrganisationWithdrawalsResponses,
+    ListOrganisationWithdrawalsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listOrganisationWithdrawalsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/withdrawals',
+    ...options,
+  });
+
+/**
+ * Start a withdrawal to a verified M-Pesa number
+ *
+ * Nothing moves until the code sent by SMS to that number is confirmed.
+ */
+export const requestOrganisationWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<RequestOrganisationWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    RequestOrganisationWithdrawalResponses,
+    RequestOrganisationWithdrawalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: requestOrganisationWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/withdrawals',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Send a new confirmation code
+ */
+export const resendOrganisationWithdrawalCode = <ThrowOnError extends boolean = false>(
+  options: Options<ResendOrganisationWithdrawalCodeData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    ResendOrganisationWithdrawalCodeResponses,
+    ResendOrganisationWithdrawalCodeErrors,
+    ThrowOnError
+  >({
+    responseTransformer: resendOrganisationWithdrawalCodeResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/withdrawals/{withdrawalUuid}/verification-code',
+    ...options,
+  });
+
+/**
+ * Confirm a withdrawal with its SMS code
+ *
+ * The amount leaves the balance now; it comes back if M-Pesa fails or an admin rejects it.
+ */
+export const confirmOrganisationWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<ConfirmOrganisationWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    ConfirmOrganisationWithdrawalResponses,
+    ConfirmOrganisationWithdrawalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: confirmOrganisationWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/withdrawals/{withdrawalUuid}/confirm',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Cancel a withdrawal that has not been sent
+ */
+export const cancelOrganisationWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<CancelOrganisationWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    CancelOrganisationWithdrawalResponses,
+    CancelOrganisationWithdrawalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: cancelOrganisationWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/withdrawals/{withdrawalUuid}/cancel',
+    ...options,
+  });
+
+/**
+ * Agree as the second payout approver
+ *
+ * Must be a different approver from the one who asked.
+ */
+export const approveOrganisationWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<ApproveOrganisationWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    ApproveOrganisationWithdrawalResponses,
+    ApproveOrganisationWithdrawalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: approveOrganisationWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/withdrawals/{withdrawalUuid}/approve',
+    ...options,
   });
 
 /**
@@ -14270,6 +14642,74 @@ export const moderateProgram = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Reject a withdrawal and return its money
+ *
+ * The reason is shown to the earner.
+ */
+export const rejectAdminWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<RejectAdminWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    RejectAdminWithdrawalResponses,
+    RejectAdminWithdrawalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: rejectAdminWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/admin/payouts/withdrawals/{withdrawalUuid}/reject',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Ask M-Pesa about a withdrawal now
+ *
+ * Sends a cleared withdrawal, or reads the result of one in flight.
+ */
+export const checkAdminWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<CheckAdminWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    CheckAdminWithdrawalResponses,
+    CheckAdminWithdrawalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: checkAdminWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/admin/payouts/withdrawals/{withdrawalUuid}/check',
+    ...options,
+  });
+
+/**
+ * Approve a flagged withdrawal and send it
+ */
+export const approveAdminWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<ApproveAdminWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    ApproveAdminWithdrawalResponses,
+    ApproveAdminWithdrawalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: approveAdminWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/admin/payouts/withdrawals/{withdrawalUuid}/approve',
+    ...options,
+  });
+
+/**
  * Create a new organisation staff user with domain
  *
  * Creates a new user, provisions them in Keycloak, assigns them to the organisation with the specified domain and optional branch. If the email already exists in Keycloak or locally, an error is returned so the client can use the existing email to assign roles instead.
@@ -14771,6 +15211,22 @@ export const getWallet = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Get one withdrawal
+ */
+export const getWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<GetWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetWithdrawalResponses, GetWithdrawalErrors, ThrowOnError>({
+    responseTransformer: getWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/withdrawals/{withdrawalUuid}',
+    ...options,
+  });
+
+/**
  * List wallet transactions
  */
 export const listTransactions1 = <ThrowOnError extends boolean = false>(
@@ -14842,6 +15298,22 @@ export const listAudit = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/wallets/{userUuid}/audit',
+    ...options,
+  });
+
+/**
+ * Withdrawal limits, the M-Pesa charge and the new-number hold
+ */
+export const getPayoutRules = <ThrowOnError extends boolean = false>(
+  options?: Options<GetPayoutRulesData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<GetPayoutRulesResponses, GetPayoutRulesErrors, ThrowOnError>({
+    responseTransformer: getPayoutRulesResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/payout-rules',
     ...options,
   });
 
@@ -16777,6 +17249,26 @@ export const getOrganisationWallet = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/organisations/{organisationUuid}/wallet',
+    ...options,
+  });
+
+/**
+ * Get one withdrawal
+ */
+export const getOrganisationWithdrawal = <ThrowOnError extends boolean = false>(
+  options: Options<GetOrganisationWithdrawalData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetOrganisationWithdrawalResponses,
+    GetOrganisationWithdrawalErrors,
+    ThrowOnError
+  >({
+    responseTransformer: getOrganisationWithdrawalResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/withdrawals/{withdrawalUuid}',
     ...options,
   });
 
@@ -20895,6 +21387,44 @@ export const summary = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/admin/perf/rum/summary',
+    ...options,
+  });
+
+/**
+ * List withdrawals across all wallets
+ *
+ * Newest first; filter by status, e.g. NEEDS_REVIEW.
+ */
+export const listAdminWithdrawals = <ThrowOnError extends boolean = false>(
+  options: Options<ListAdminWithdrawalsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListAdminWithdrawalsResponses,
+    ListAdminWithdrawalsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listAdminWithdrawalsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/admin/payouts/withdrawals',
+    ...options,
+  });
+
+/**
+ * Headline payout figures
+ */
+export const getPayoutSummary = <ThrowOnError extends boolean = false>(
+  options?: Options<GetPayoutSummaryData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<GetPayoutSummaryResponses, GetPayoutSummaryErrors, ThrowOnError>({
+    responseTransformer: getPayoutSummaryResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/admin/payouts/summary',
     ...options,
   });
 

@@ -1206,10 +1206,10 @@ export const AssessmentRubricSchema = {
       example: true,
       readOnly: true,
     },
-    rubric_category: {
+    usage_status: {
       type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
-      example: 'Performance Assessment',
+      description: '**[READ-ONLY]** Comprehensive status indicating usage and accessibility.',
+      example: 'Active Public Rubric',
       readOnly: true,
     },
     assessment_scope: {
@@ -1219,10 +1219,10 @@ export const AssessmentRubricSchema = {
       example: 'General Use',
       readOnly: true,
     },
-    usage_status: {
+    rubric_category: {
       type: 'string',
-      description: '**[READ-ONLY]** Comprehensive status indicating usage and accessibility.',
-      example: 'Active Public Rubric',
+      description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
+      example: 'Performance Assessment',
       readOnly: true,
     },
   },
@@ -1353,17 +1353,17 @@ export const RubricScoringLevelSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    css_color_class: {
-      type: 'string',
-      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
-      example: 'level-green',
-      readOnly: true,
-    },
     performance_indicator: {
       type: 'string',
       description:
         '**[READ-ONLY]** Performance classification based on level order and passing status.',
       example: 'Exceeds Expectations',
+      readOnly: true,
+    },
+    css_color_class: {
+      type: 'string',
+      description: '**[READ-ONLY]** CSS-safe color class name derived from the color code.',
+      example: 'level-green',
       readOnly: true,
     },
     is_highest_level: {
@@ -1799,16 +1799,16 @@ export const RubricScoringSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    performance_expectation: {
-      type: 'string',
-      description: '**[READ-ONLY]** Classification of performance expectation level.',
-      example: 'Exceptional Performance',
-      readOnly: true,
-    },
     score_range: {
       type: 'string',
       description: '**[READ-ONLY]** Expected score range for this performance level.',
       example: '5 points',
+      readOnly: true,
+    },
+    performance_expectation: {
+      type: 'string',
+      description: '**[READ-ONLY]** Classification of performance expectation level.',
+      example: 'Exceptional Performance',
       readOnly: true,
     },
     is_passing_level: {
@@ -5309,17 +5309,17 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
+      example: 'IEEE Member (4 years, 3 months) - Active',
+      readOnly: true,
+    },
     is_complete: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the membership record has all essential information.',
       example: true,
-      readOnly: true,
-    },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
-      example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
     formatted_duration: {
@@ -5527,17 +5527,17 @@ export const InstructorExperienceSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
+      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
+      readOnly: true,
+    },
     is_complete: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the experience record has all essential information.',
       example: true,
-      readOnly: true,
-    },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
-      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
     duration_in_months: {
@@ -12416,6 +12416,66 @@ export const SkillSchema = {
   },
 } as const;
 
+export const PayoutSettingsSchema = {
+  type: 'object',
+  description: 'Rules every withdrawal follows',
+  properties: {
+    min_amount: {
+      type: 'number',
+    },
+    max_amount: {
+      type: 'number',
+    },
+    daily_limit: {
+      type: 'number',
+    },
+    review_limit: {
+      type: 'number',
+      description: 'Withdrawals above this wait for an admin',
+    },
+    second_approval_limit: {
+      type: 'number',
+      description: 'Organisation withdrawals above this need a second payout approver',
+    },
+    fee_payer: {
+      $ref: '#/components/schemas/FeePayerEnum',
+    },
+    earner_fee: {
+      type: 'number',
+      description: 'Charged per withdrawal when the earner pays the M-Pesa charge',
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+      readOnly: true,
+    },
+  },
+  required: [
+    'daily_limit',
+    'fee_payer',
+    'max_amount',
+    'min_amount',
+    'review_limit',
+    'second_approval_limit',
+  ],
+} as const;
+
+export const ApiResponsePayoutSettingsSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PayoutSettings',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const CurrencyUpdateRequestSchema = {
   type: 'object',
   description: 'Admin payload to update currency metadata',
@@ -12509,6 +12569,226 @@ export const CurrencySchema = {
       type: 'boolean',
       description: 'Indicates whether this is the platform default currency',
     },
+  },
+} as const;
+
+export const WithdrawalRequestSchema = {
+  type: 'object',
+  description: 'How much to withdraw and to which verified number',
+  properties: {
+    amount: {
+      type: 'number',
+      description: 'Whole shillings',
+      example: 1500,
+    },
+    payout_method_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    idempotency_key: {
+      type: 'string',
+      description: 'Generated by the client per attempt; repeating it returns the first withdrawal',
+      maxLength: 80,
+      minLength: 0,
+    },
+  },
+  required: ['amount', 'idempotency_key', 'payout_method_uuid'],
+} as const;
+
+export const ApiResponseWithdrawalCreatedSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/WithdrawalCreated',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const VerificationCodeSchema = {
+  type: 'object',
+  description: 'Where a one-time code was sent and how long it works',
+  properties: {
+    sent_to: {
+      type: 'string',
+      description: '**[READ-ONLY]** Masked number the SMS went to.',
+      readOnly: true,
+    },
+    expires_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When the code stops working.',
+      readOnly: true,
+    },
+    resend_available_at: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When another code may be requested.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const WithdrawalSchema = {
+  type: 'object',
+  description: 'Money leaving a wallet for an M-Pesa number',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    owner_type: {
+      $ref: '#/components/schemas/OwnerTypeEnum',
+    },
+    owner_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    reference: {
+      type: 'string',
+      example: 'WD-2026-000042',
+    },
+    status: {
+      $ref: '#/components/schemas/ItemsEnum',
+    },
+    amount: {
+      type: 'number',
+      description: 'Taken from the wallet',
+    },
+    fee_amount: {
+      type: 'number',
+      description: 'M-Pesa charge paid by the earner; zero when Elimika pays it',
+    },
+    net_amount: {
+      type: 'number',
+      description: 'What arrives on M-Pesa',
+    },
+    currency_code: {
+      type: 'string',
+    },
+    payout_method_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    masked_msisdn: {
+      type: 'string',
+      description: 'The number, masked; the full number never leaves the server',
+      example: '+254 7•• ••• 678',
+    },
+    requested_by_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    requester_name: {
+      type: 'string',
+      description: 'Name of the person who asked, as on their account',
+    },
+    review_flags: {
+      type: 'array',
+      description:
+        'Why it waits for an admin, e.g. ABOVE_REVIEW_LIMIT, FIRST_PAYOUT_TO_NUMBER, NAME_MISMATCH',
+      items: {
+        type: 'string',
+      },
+    },
+    second_approver_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    rejection_reason: {
+      type: 'string',
+    },
+    failure_reason: {
+      type: 'string',
+    },
+    mpesa_receipt: {
+      type: 'string',
+    },
+    mpesa_recipient_name: {
+      type: 'string',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+    },
+    confirmed_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    sent_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    completed_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+  },
+} as const;
+
+export const WithdrawalCreatedSchema = {
+  type: 'object',
+  description: 'A new withdrawal and the SMS code sent to confirm it',
+  properties: {
+    withdrawal: {
+      $ref: '#/components/schemas/Withdrawal',
+    },
+    verification: {
+      $ref: '#/components/schemas/VerificationCode',
+      description: 'Null when this was a repeat of an earlier request',
+    },
+  },
+} as const;
+
+export const ApiResponseVerificationCodeSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/VerificationCode',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const VerifyCodeRequestSchema = {
+  type: 'object',
+  description: 'The six-digit code from the SMS',
+  properties: {
+    code: {
+      type: 'string',
+      description: 'Six digits.',
+      example: '482913',
+      pattern: '\\d{6}',
+    },
+  },
+  required: ['code'],
+} as const;
+
+export const ApiResponseWithdrawalSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/Withdrawal',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
   },
 } as const;
 
@@ -12790,60 +13070,6 @@ export const PayoutMethodCreatedSchema = {
     verification: {
       $ref: '#/components/schemas/VerificationCode',
     },
-  },
-} as const;
-
-export const VerificationCodeSchema = {
-  type: 'object',
-  description: 'Where a one-time code was sent and how long it works',
-  properties: {
-    sent_to: {
-      type: 'string',
-      description: '**[READ-ONLY]** Masked number the SMS went to.',
-      readOnly: true,
-    },
-    expires_at: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[READ-ONLY]** When the code stops working.',
-      readOnly: true,
-    },
-    resend_available_at: {
-      type: 'string',
-      format: 'date-time',
-      description: '**[READ-ONLY]** When another code may be requested.',
-      readOnly: true,
-    },
-  },
-} as const;
-
-export const VerifyCodeRequestSchema = {
-  type: 'object',
-  description: 'The six-digit code from the SMS',
-  properties: {
-    code: {
-      type: 'string',
-      description: 'Six digits.',
-      example: '482913',
-      pattern: '\\d{6}',
-    },
-  },
-  required: ['code'],
-} as const;
-
-export const ApiResponseVerificationCodeSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    data: {
-      $ref: '#/components/schemas/VerificationCode',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {},
   },
 } as const;
 
@@ -15145,7 +15371,7 @@ export const OrganisationInvitationSchema = {
       description: 'Who sent the invitation',
     },
     status: {
-      $ref: '#/components/schemas/ItemsEnum',
+      $ref: '#/components/schemas/ItemsEnum2',
     },
     message: {
       type: ['string', 'null'],
@@ -15733,7 +15959,7 @@ export const AcceptInvitationResultSchema = {
   description: 'What happened when an invitation was accepted.',
   properties: {
     status: {
-      $ref: '#/components/schemas/ItemsEnum',
+      $ref: '#/components/schemas/ItemsEnum2',
     },
     affiliated: {
       type: 'boolean',
@@ -15884,7 +16110,7 @@ export const PublicInvitationSchema = {
       example: 3,
     },
     status: {
-      $ref: '#/components/schemas/ItemsEnum',
+      $ref: '#/components/schemas/ItemsEnum2',
     },
     actionable: {
       type: 'boolean',
@@ -18944,6 +19170,19 @@ export const ContentModerationDecisionRequestSchema = {
   required: ['action'],
 } as const;
 
+export const RejectWithdrawalRequestSchema = {
+  type: 'object',
+  description: 'Why a withdrawal is not approved; shown to the earner',
+  properties: {
+    reason: {
+      type: 'string',
+      maxLength: 500,
+      minLength: 10,
+    },
+  },
+  required: ['reason'],
+} as const;
+
 export const OrganisationUserCreateRequestDTOSchema = {
   type: 'object',
   properties: {
@@ -19205,14 +19444,14 @@ export const PageableSchema = {
   },
 } as const;
 
-export const ApiResponsePagedDTOWalletTransactionSchema = {
+export const ApiResponsePagedDTOWithdrawalSchema = {
   type: 'object',
   properties: {
     success: {
       type: 'boolean',
     },
     data: {
-      $ref: '#/components/schemas/PagedDTOWalletTransaction',
+      $ref: '#/components/schemas/PagedDTOWithdrawal',
     },
     message: {
       type: 'string',
@@ -19267,12 +19506,46 @@ export const PageMetadataSchema = {
     hasPrevious: {
       type: 'boolean',
     },
-    last: {
-      type: 'boolean',
-    },
     first: {
       type: 'boolean',
     },
+    last: {
+      type: 'boolean',
+    },
+  },
+} as const;
+
+export const PagedDTOWithdrawalSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/Withdrawal',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOWalletTransactionSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOWalletTransaction',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
   },
 } as const;
 
@@ -19311,7 +19584,7 @@ export const WalletTransactionSchema = {
       readOnly: true,
     },
     transaction_type: {
-      $ref: '#/components/schemas/ItemsEnum2',
+      $ref: '#/components/schemas/ItemsEnum3',
     },
     amount: {
       type: 'number',
@@ -19547,6 +19820,50 @@ export const WalletAuditEventSchema = {
       format: 'date-time',
       description: '**[READ-ONLY]** When it happened.',
       readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponsePayoutRulesSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PayoutRules',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PayoutRulesSchema = {
+  type: 'object',
+  description: 'What an earner needs to know before withdrawing',
+  properties: {
+    min_amount: {
+      type: 'number',
+    },
+    max_amount: {
+      type: 'number',
+    },
+    daily_limit: {
+      type: 'number',
+    },
+    fee_payer: {
+      $ref: '#/components/schemas/FeePayerEnum',
+    },
+    earner_fee: {
+      type: 'number',
+      description: 'Taken from each withdrawal when the earner pays the M-Pesa charge',
+    },
+    new_number_hold_hours: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Hours a newly added number is held before it can receive money',
     },
   },
 } as const;
@@ -20196,12 +20513,6 @@ export const PageSessionReportSummarySchema = {
     pageable: {
       $ref: '#/components/schemas/PageableObject',
     },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
-    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -20218,6 +20529,12 @@ export const PageSessionReportSummarySchema = {
     },
     sort: {
       $ref: '#/components/schemas/SortObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
     },
     numberOfElements: {
       type: 'integer',
@@ -20831,12 +21148,6 @@ export const PageSchema = {
     pageable: {
       $ref: '#/components/schemas/PageableObject',
     },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
-    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -20851,6 +21162,12 @@ export const PageSchema = {
     },
     sort: {
       $ref: '#/components/schemas/SortObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
     },
     numberOfElements: {
       type: 'integer',
@@ -24056,7 +24373,7 @@ export const MyInvitationSchema = {
       example: 3,
     },
     status: {
-      $ref: '#/components/schemas/ItemsEnum',
+      $ref: '#/components/schemas/ItemsEnum2',
     },
     requires_guardian_consent: {
       type: 'boolean',
@@ -24848,7 +25165,7 @@ export const PublicGuardianInvitationSchema = {
       example: 3,
     },
     status: {
-      $ref: '#/components/schemas/ItemsEnum',
+      $ref: '#/components/schemas/ItemsEnum2',
     },
     actionable: {
       type: 'boolean',
@@ -30876,6 +31193,59 @@ export const RumSummaryRowSchema = {
   },
 } as const;
 
+export const ApiResponsePayoutSummarySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PayoutSummary',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PayoutSummarySchema = {
+  type: 'object',
+  description: "The admin Payouts page's headline figures",
+  properties: {
+    needs_review_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    needs_review_amount: {
+      type: 'number',
+    },
+    in_flight_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    paid_today_amount: {
+      type: 'number',
+    },
+    failed_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    float_amount: {
+      type: 'number',
+      description: 'M-Pesa payout float as last reported; null when unknown',
+    },
+    float_reported_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    payouts_configured: {
+      type: 'boolean',
+      description: 'False while payouts are not configured (no gateway or payout shortcode)',
+    },
+  },
+} as const;
+
 export const ApiResponseListStringSchema = {
   type: 'object',
   properties: {
@@ -31756,6 +32126,22 @@ export const SocialMediaUrlSchema = {
   pattern: '^https?://(www\\.)?(facebook|twitter|instagram|linkedin|youtube|tiktok)\\.com/[^\\s]*$',
 } as const;
 
+export const ItemsEnumSchema = {
+  type: 'string',
+  enum: [
+    'AWAITING_CONFIRMATION',
+    'AWAITING_SECOND_APPROVAL',
+    'NEEDS_REVIEW',
+    'SENDING',
+    'PROCESSING',
+    'PAID',
+    'FAILED',
+    'REJECTED',
+    'CANCELLED',
+    'EXPIRED',
+  ],
+} as const;
+
 export const SchemaEnumSchema = {
   type: 'string',
   enum: ['PLATFORM_FEE', 'AGE_GATE', 'ENROLLMENT_GUARD', 'CUSTOM'],
@@ -31766,7 +32152,7 @@ export const SchemaEnum2Schema = {
   enum: ['DRAFT', 'ACTIVE', 'INACTIVE'],
 } as const;
 
-export const ItemsEnumSchema = {
+export const ItemsEnum2Schema = {
   type: 'string',
   enum: ['PENDING', 'AWAITING_GUARDIAN_CONSENT', 'ACCEPTED', 'DECLINED', 'EXPIRED', 'REVOKED'],
 } as const;
@@ -31786,9 +32172,19 @@ export const SchemaEnum5Schema = {
   enum: ['skills', 'competencies', 'certifications'],
 } as const;
 
-export const ItemsEnum2Schema = {
+export const ItemsEnum3Schema = {
   type: 'string',
-  enum: ['DEPOSIT', 'SALE', 'TRANSFER_IN', 'TRANSFER_OUT', 'PLATFORM_FEE', 'SALE_REVERSAL'],
+  enum: [
+    'DEPOSIT',
+    'SALE',
+    'TRANSFER_IN',
+    'TRANSFER_OUT',
+    'PLATFORM_FEE',
+    'SALE_REVERSAL',
+    'WITHDRAWAL',
+    'WITHDRAWAL_REVERSAL',
+    'PAYOUT_FEE',
+  ],
 } as const;
 
 export const SchemaEnum6Schema = {
@@ -31812,12 +32208,12 @@ export const SchemaEnum9Schema = {
   enum: ['all', 'courses', 'programmes'],
 } as const;
 
-export const ItemsEnum3Schema = {
+export const ItemsEnum4Schema = {
   type: 'string',
   enum: ['beginner', 'intermediate', 'advanced'],
 } as const;
 
-export const ItemsEnum4Schema = {
+export const ItemsEnum5Schema = {
   type: 'string',
   enum: ['free', 'paid'],
 } as const;
@@ -32287,12 +32683,14 @@ export const SubmissionTypesEnumSchema = {
   },
 } as const;
 
+export const FeePayerEnumSchema = {
+  type: 'string',
+  enum: ['PLATFORM', 'EARNER'],
+} as const;
+
 export const OwnerTypeEnumSchema = {
   type: 'string',
-  description: '**[READ-ONLY]** Who owns this wallet.',
   enum: ['USER', 'ORGANISATION'],
-  example: 'USER',
-  readOnly: true,
 } as const;
 
 export const StatusEnum10Schema = {
@@ -32450,6 +32848,8 @@ export const TypeEnumSchema = {
     'DOMAIN_APPROVAL_REQUESTED',
     'DOMAIN_APPROVAL_GRANTED',
     'DOMAIN_APPROVAL_DECLINED',
+    'WALLET_WITHDRAWAL_PAID',
+    'WALLET_WITHDRAWAL_FAILED',
     'WEEKLY_PROGRESS_SUMMARY',
     'LEARNING_STREAK_ACHIEVEMENT',
     'PEER_ACHIEVEMENT_CELEBRATION',
@@ -32618,6 +33018,17 @@ export const EventTypeEnum2Schema = {
     'PAYOUT_METHOD_DEFAULT_CHANGED',
     'PAYOUT_APPROVER_ADDED',
     'PAYOUT_APPROVER_REMOVED',
+    'WITHDRAWAL_REQUESTED',
+    'WITHDRAWAL_CONFIRMED',
+    'WITHDRAWAL_SECOND_APPROVED',
+    'WITHDRAWAL_APPROVED',
+    'WITHDRAWAL_REJECTED',
+    'WITHDRAWAL_PAID',
+    'WITHDRAWAL_FAILED',
+    'WITHDRAWAL_REVERSED',
+    'WITHDRAWAL_CANCELLED',
+    'PAYOUT_FEE_CHARGED',
+    'PAYOUT_SETTINGS_CHANGED',
   ],
   example: 'SALE_SHARE_CREDITED',
   readOnly: true,
@@ -39202,6 +39613,100 @@ export const SavedAgeGroupWritableSchema = {
   },
 } as const;
 
+export const PayoutSettingsWritableSchema = {
+  type: 'object',
+  description: 'Rules every withdrawal follows',
+  properties: {
+    min_amount: {
+      type: 'number',
+    },
+    max_amount: {
+      type: 'number',
+    },
+    daily_limit: {
+      type: 'number',
+    },
+    review_limit: {
+      type: 'number',
+      description: 'Withdrawals above this wait for an admin',
+    },
+    second_approval_limit: {
+      type: 'number',
+      description: 'Organisation withdrawals above this need a second payout approver',
+    },
+    fee_payer: {
+      $ref: '#/components/schemas/FeePayerEnum',
+    },
+    earner_fee: {
+      type: 'number',
+      description: 'Charged per withdrawal when the earner pays the M-Pesa charge',
+    },
+  },
+  required: [
+    'daily_limit',
+    'fee_payer',
+    'max_amount',
+    'min_amount',
+    'review_limit',
+    'second_approval_limit',
+  ],
+} as const;
+
+export const ApiResponsePayoutSettingsWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PayoutSettingsWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponseWithdrawalCreatedWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/WithdrawalCreatedWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const WithdrawalCreatedWritableSchema = {
+  type: 'object',
+  description: 'A new withdrawal and the SMS code sent to confirm it',
+  properties: {
+    withdrawal: {
+      $ref: '#/components/schemas/Withdrawal',
+    },
+  },
+} as const;
+
+export const ApiResponseVerificationCodeWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponseWalletTransferResponseWritableSchema = {
   type: 'object',
   properties: {
@@ -39221,6 +39726,11 @@ export const ApiResponseWalletTransferResponseWritableSchema = {
 export const WalletWritableSchema = {
   type: 'object',
   description: 'User or organisation wallet summary for a specific currency',
+  properties: {
+    owner_type: {
+      $ref: '#/components/schemas/OwnerTypeEnum',
+    },
+  },
 } as const;
 
 export const WalletTransferResponseWritableSchema = {
@@ -39267,19 +39777,6 @@ export const PayoutMethodCreatedWritableSchema = {
     payout_method: {
       $ref: '#/components/schemas/PayoutMethodWritable',
     },
-  },
-} as const;
-
-export const ApiResponseVerificationCodeWritableSchema = {
-  type: 'object',
-  properties: {
-    success: {
-      type: 'boolean',
-    },
-    message: {
-      type: 'string',
-    },
-    error: {},
   },
 } as const;
 
@@ -41102,7 +41599,7 @@ export const WalletTransactionWritableSchema = {
   description: 'Wallet ledger entry capturing balance changes',
   properties: {
     transaction_type: {
-      $ref: '#/components/schemas/ItemsEnum2',
+      $ref: '#/components/schemas/ItemsEnum3',
     },
   },
 } as const;
