@@ -17,6 +17,57 @@ export type ResponseDtoVoid = {
   timestamp?: Date;
 };
 
+export type ApiResponsePayoutMethod = {
+  success?: boolean;
+  data?: PayoutMethod;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A number a wallet's withdrawals can be sent to
+ */
+export type PayoutMethod = {
+  /**
+   * **[READ-ONLY]** Payout method identifier.
+   */
+  readonly uuid?: string;
+  method_type?: MethodTypeEnum;
+  /**
+   * **[READ-ONLY]** The number, written out (owner only).
+   */
+  readonly msisdn?: string;
+  /**
+   * **[READ-ONLY]** The number with most digits hidden.
+   */
+  readonly masked_msisdn?: string;
+  /**
+   * **[READ-ONLY]** Owner's nickname for it.
+   */
+  readonly label?: string;
+  status?: StatusEnum;
+  /**
+   * **[READ-ONLY]** Withdrawals go here unless another is picked.
+   */
+  readonly is_default?: boolean;
+  /**
+   * **[READ-ONLY]** When its code was confirmed.
+   */
+  readonly verified_at?: Date;
+  /**
+   * **[READ-ONLY]** When it can first receive money.
+   */
+  readonly unlock_at?: Date;
+  /**
+   * **[READ-ONLY]** Verified but still inside the hold after adding it.
+   */
+  readonly on_hold?: boolean;
+  /**
+   * **[READ-ONLY]** Name M-Pesa returned on the first payout; null until then.
+   */
+  readonly mpesa_registered_name?: string;
+};
+
 /**
  * Complete user profile information including personal details, authentication, and organizational data
  */
@@ -518,7 +569,7 @@ export type AssessmentRubric = {
    * **[OPTIONAL]** Indicates if this rubric is publicly available for other course creators to use.
    */
   is_public?: boolean;
-  status: StatusEnum;
+  status: StatusEnum2;
   /**
    * **[OPTIONAL]** Indicates if the rubric is actively available for use. Can only be true for published rubrics.
    */
@@ -634,13 +685,13 @@ export type RubricScoringLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Performance classification based on level order and passing status.
-   */
-  readonly performance_indicator?: string;
-  /**
    * **[READ-ONLY]** CSS-safe color class name derived from the color code.
    */
   readonly css_color_class?: string;
+  /**
+   * **[READ-ONLY]** Performance classification based on level order and passing status.
+   */
+  readonly performance_indicator?: string;
   /**
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
@@ -928,7 +979,7 @@ export type Quiz = {
    * **[OPTIONAL]** Reference to assessment rubric UUID for detailed grading criteria.
    */
   rubric_uuid?: string | null;
-  status: StatusEnum;
+  status: StatusEnum2;
   /**
    * **[OPTIONAL]** Indicates if the quiz is actively available to students. Can only be true for published quizzes.
    */
@@ -1186,7 +1237,7 @@ export type QuizAttempt = {
    * **[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.
    */
   is_passed?: boolean;
-  status: StatusEnum2;
+  status: StatusEnum3;
   /**
    * **[READ-ONLY]** UUID of the instructor who finalised grading of this attempt, when manually graded.
    */
@@ -1212,21 +1263,21 @@ export type QuizAttempt = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
+   * **[READ-ONLY]** Formatted display of the grade information.
    */
-  readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
-   */
-  readonly attempt_category?: string;
+  readonly grade_display?: string;
   /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
+   * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
-  readonly grade_display?: string;
+  readonly attempt_category?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
+   */
+  readonly performance_summary?: string;
   /**
    * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
    */
@@ -1527,7 +1578,7 @@ export type ProgramTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum3;
+  status?: StatusEnum4;
   /**
    * Submission notes provided by the applicant.
    */
@@ -2177,7 +2228,7 @@ export type UserDocument = {
   membership_uuid?: string;
   title?: string;
   description?: string;
-  status?: StatusEnum4;
+  status?: StatusEnum5;
   expiry_date?: Date;
   readonly user_uuid?: string;
   readonly original_filename?: string;
@@ -2363,13 +2414,13 @@ export type Instructor = {
    */
   readonly is_profile_complete?: boolean;
   /**
-   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
-   */
-  readonly formatted_location?: string | null;
-  /**
    * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
    */
   readonly has_location_coordinates?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
+   */
+  readonly formatted_location?: string | null;
 };
 
 /**
@@ -2701,10 +2752,6 @@ export type InstructorEducation = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Complete description combining qualification, school, and year.
-   */
-  readonly full_description?: string;
-  /**
    * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
   readonly is_complete?: boolean;
@@ -2725,6 +2772,10 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
   readonly has_certificate_number?: boolean;
+  /**
+   * **[READ-ONLY]** Complete description combining qualification, school, and year.
+   */
+  readonly full_description?: string;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -2774,7 +2825,7 @@ export type InstructorDocument = {
    * **[OPTIONAL]** Detailed description of the document content and its relevance to instructor qualifications.
    */
   description?: string | null;
-  status?: StatusEnum5;
+  status?: StatusEnum6;
   /**
    * **[OPTIONAL]** Expiry date of the document if applicable. Used for certificates and time-limited credentials.
    */
@@ -3395,7 +3446,7 @@ export type CourseTrainingApplication = {
    * **[READ-ONLY]** Unique identifier for this application.
    */
   readonly uuid?: string;
-  status?: StatusEnum6;
+  status?: StatusEnum7;
   /**
    * Submission notes provided by the applicant.
    */
@@ -3594,7 +3645,7 @@ export type Lesson = {
    * **[OPTIONAL]** Specific learning objectives and outcomes for this lesson.
    */
   learning_objectives?: string;
-  status: StatusEnum;
+  status: StatusEnum2;
   /**
    * **[OPTIONAL]** Indicates if the lesson is actively available to students. Can only be true for published lessons.
    */
@@ -4035,7 +4086,7 @@ export type CourseAssessmentLineItemRubricEvaluation = {
   readonly uuid?: string;
   line_item_uuid?: string;
   enrollment_uuid?: string;
-  status?: StatusEnum7;
+  status?: StatusEnum8;
   readonly score?: number;
   readonly percentage?: number;
   comments?: string;
@@ -4277,7 +4328,7 @@ export type CourseCreatorDocumentDto = {
   original_filename: string;
   title?: string;
   description?: string;
-  status?: StatusEnum4;
+  status?: StatusEnum5;
   expiry_date?: Date;
   readonly stored_filename?: string;
   readonly file_path?: string;
@@ -5344,7 +5395,7 @@ export type ClassMarketplaceJob = {
   readonly uuid?: string;
   readonly title?: string;
   readonly description?: string;
-  status?: StatusEnum8;
+  status?: StatusEnum9;
   readonly resources?: Array<ClassMarketplaceJobResource>;
   readonly organisation_uuid?: string;
   readonly course_uuid?: string;
@@ -6038,6 +6089,74 @@ export type ApiResponseWallet = {
 };
 
 /**
+ * An M-Pesa number to add for withdrawals
+ */
+export type PayoutMethodRequest = {
+  /**
+   * Safaricom number in any common form: 07…, 01…, 2547…, +254 7….
+   */
+  msisdn: string;
+  /**
+   * Optional nickname.
+   */
+  label?: string;
+  /**
+   * The caller confirms the number is registered in their name.
+   */
+  confirms_registered_name: boolean;
+};
+
+export type ApiResponsePayoutMethodCreated = {
+  success?: boolean;
+  data?: PayoutMethodCreated;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A newly added number and the code sent to it
+ */
+export type PayoutMethodCreated = {
+  payout_method?: PayoutMethod;
+  verification?: VerificationCode;
+};
+
+/**
+ * Where a one-time code was sent and how long it works
+ */
+export type VerificationCode = {
+  /**
+   * **[READ-ONLY]** Masked number the SMS went to.
+   */
+  readonly sent_to?: string;
+  /**
+   * **[READ-ONLY]** When the code stops working.
+   */
+  readonly expires_at?: Date;
+  /**
+   * **[READ-ONLY]** When another code may be requested.
+   */
+  readonly resend_available_at?: Date;
+};
+
+/**
+ * The six-digit code from the SMS
+ */
+export type VerifyCodeRequest = {
+  /**
+   * Six digits.
+   */
+  code: string;
+};
+
+export type ApiResponseVerificationCode = {
+  success?: boolean;
+  data?: VerificationCode;
+  message?: string;
+  error?: unknown;
+};
+
+/**
  * Request to schedule a new class instance
  */
 export type ScheduleRequest = {
@@ -6126,7 +6245,7 @@ export type ScheduledInstance = {
    * **[OPTIONAL]** Maximum number of participants for this session (cached from class definition).
    */
   max_participants?: number;
-  status?: StatusEnum9;
+  status?: StatusEnum10;
   /**
    * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
    */
@@ -6281,7 +6400,7 @@ export type SessionReport = {
   session_ended?: boolean;
   topic_covered?: string;
   instructor_remarks?: string;
-  status?: StatusEnum10;
+  status?: StatusEnum11;
   due_at?: Date;
   overdue?: boolean;
   submitted_at?: Date;
@@ -6373,7 +6492,7 @@ export type StudentGuardian = {
    */
   phone?: string | null;
   relationship_type?: RelationshipTypeEnum2;
-  status?: StatusEnum11;
+  status?: StatusEnum12;
   /**
    * Guardian's account, once known
    */
@@ -6414,7 +6533,7 @@ export type GuardianStudentLink = {
   guardian_display_name?: string;
   relationship_type?: RelationshipTypeEnum2;
   share_scope?: ShareScopeEnum;
-  status?: StatusEnum12;
+  status?: StatusEnum13;
   primary_guardian?: boolean;
   linked_date?: Date;
   revoked_date?: Date;
@@ -6682,7 +6801,7 @@ export type TrainingRateUpdate = {
    * **[READ-ONLY]** The applicant's reason for the change.
    */
   readonly note?: string | null;
-  status?: StatusEnum13;
+  status?: StatusEnum14;
   /**
    * **[READ-ONLY]** The training application whose rates would change.
    */
@@ -6950,13 +7069,48 @@ export type OrganisationDocument = {
    * Whether a reviewer has verified the document
    */
   readonly is_verified?: boolean;
-  status?: StatusEnum4;
+  status?: StatusEnum5;
   /**
    * Expiry date, where the document type carries one
    */
   expiry_date?: Date;
   /**
    * When the record was created
+   */
+  readonly created_date?: Date;
+};
+
+/**
+ * An admin of the organisation to name as payout approver
+ */
+export type PayoutApproverRequest = {
+  /**
+   * The admin's user uuid.
+   */
+  user_uuid: string;
+};
+
+export type ApiResponsePayoutApprover = {
+  success?: boolean;
+  data?: PayoutApprover;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * An organisation admin who may manage payout numbers and withdraw
+ */
+export type PayoutApprover = {
+  /**
+   * **[READ-ONLY]** The admin.
+   */
+  readonly user_uuid?: string;
+  /**
+   * **[READ-ONLY]** Who named them.
+   */
+  readonly added_by_user_uuid?: string;
+  /**
+   * **[READ-ONLY]** When.
    */
   readonly created_date?: Date;
 };
@@ -7013,7 +7167,7 @@ export type CreateSkillsFundTransactionRequest = {
    * Type: Allocation, Disbursement, Adjustment. Defaults to Allocation.
    */
   transaction_type?: string;
-  status?: StatusEnum14;
+  status?: StatusEnum15;
   transaction_date?: Date;
 };
 
@@ -7054,7 +7208,7 @@ export type SkillsFundTransaction = {
    * Type: Allocation, Disbursement, Adjustment.
    */
   transaction_type?: string;
-  status?: StatusEnum14;
+  status?: StatusEnum15;
   transaction_date?: Date | null;
   readonly created_date?: Date;
 };
@@ -7518,7 +7672,7 @@ export type ApiResponseOnboarding = {
  */
 export type Onboarding = {
   domain?: string;
-  status?: StatusEnum15;
+  status?: StatusEnum16;
   /**
    * False when the user has not requested this domain yet (the steps are a preview)
    */
@@ -7588,7 +7742,7 @@ export type NotificationDto = {
   category?: CategoryEnum;
   priority?: PriorityEnum;
   presentation?: PresentationEnum;
-  status?: StatusEnum16;
+  status?: StatusEnum17;
   title?: string;
   body?: string;
   action_url?: string;
@@ -7918,7 +8072,7 @@ export type Enrollment = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum17;
+  status?: StatusEnum18;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -8867,7 +9021,7 @@ export type ApiResponseClassMarketplaceJobApplication = {
  */
 export type ClassMarketplaceJobApplication = {
   readonly uuid?: string;
-  status?: StatusEnum18;
+  status?: StatusEnum19;
   /**
    * Summary of the job applied to; present on an instructor's application lists and the single application read
    */
@@ -8909,7 +9063,7 @@ export type ClassMarketplaceJobSummary = {
    * **[READ-ONLY]** Job title.
    */
   readonly title?: string;
-  status?: StatusEnum8;
+  status?: StatusEnum9;
   /**
    * **[READ-ONLY]** Course the class teaches; absent for a program job.
    */
@@ -9055,7 +9209,7 @@ export type BookingResponse = {
    * End time for the session
    */
   end_time: Date;
-  status: StatusEnum19;
+  status: StatusEnum20;
   /**
    * Price charged for the booking, computed by the server from the approved rate
    */
@@ -9206,7 +9360,7 @@ export type AssignmentSubmission = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum20;
+  status: StatusEnum21;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -9425,7 +9579,7 @@ export type AdminDomainAssignmentRequest = {
  * Marks a profile item VERIFIED or REJECTED
  */
 export type ProfileVerificationRequest = {
-  status: StatusEnum21;
+  status: StatusEnum22;
   notes?: string;
 };
 
@@ -9565,7 +9719,7 @@ export type CurrencyCreateRequest = {
  * A platform admin's check of one skills wallet item
  */
 export type WalletVerificationRequest = {
-  status: StatusEnum21;
+  status: StatusEnum22;
   notes?: string;
 };
 
@@ -9741,6 +9895,13 @@ export type WalletStatement = {
    * **[READ-ONLY]** Number of transactions in the month.
    */
   readonly transaction_count?: bigint;
+};
+
+export type ApiResponseListPayoutMethod = {
+  success?: boolean;
+  data?: Array<PayoutMethod>;
+  message?: string;
+  error?: unknown;
 };
 
 export type ApiResponsePagedDtoWalletAuditEvent = {
@@ -10120,7 +10281,7 @@ export type SessionReportSummary = {
   instructor_uuid?: string;
   session_start?: Date;
   session_end?: Date;
-  status?: StatusEnum10;
+  status?: StatusEnum11;
   due_at?: Date;
   overdue?: boolean;
   submitted_at?: Date;
@@ -10157,7 +10318,7 @@ export type OrganisationTimetableEntry = {
    * Timezone of the session
    */
   readonly timezone?: string;
-  status?: StatusEnum9;
+  status?: StatusEnum10;
   /**
    * The class this session belongs to
    */
@@ -10247,7 +10408,7 @@ export type InstructorTimeHold = {
    * Timezone the window was authored in
    */
   timezone?: string;
-  status?: StatusEnum22;
+  status?: StatusEnum23;
   /**
    * Class definition the hold became, once confirmed
    */
@@ -10302,7 +10463,7 @@ export type SessionColumnDto = {
   start_time?: Date;
   lesson_number?: number;
   lesson_title?: string;
-  report_status?: StatusEnum10;
+  report_status?: StatusEnum11;
   overdue?: boolean;
   class_average?: number;
   max_score?: number;
@@ -10404,7 +10565,7 @@ export type PublicStudentGuardianInvitation = {
    */
   masked_guardian_email?: string;
   relationship_type?: RelationshipTypeEnum2;
-  status?: StatusEnum11;
+  status?: StatusEnum12;
   /**
    * Whether the invitation can still be accepted or declined
    */
@@ -10884,7 +11045,7 @@ export type StudentQuizReview = {
   quiz_uuid?: string;
   attempt_uuid?: string;
   enrollment_uuid?: string;
-  status?: StatusEnum23;
+  status?: StatusEnum24;
   score?: number;
   max_score?: number;
   percentage?: number;
@@ -11071,7 +11232,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum24;
+  status: StatusEnum25;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -11247,6 +11408,13 @@ export type WalletBalanceSummary = {
   held_amount?: number;
   available_amount?: number;
   can_withdraw?: boolean;
+};
+
+export type ApiResponseListPayoutApprover = {
+  success?: boolean;
+  data?: Array<PayoutApprover>;
+  message?: string;
+  error?: unknown;
 };
 
 export type ApiResponseListStudentGroup = {
@@ -11458,7 +11626,7 @@ export type ResourceBooking = {
    * Organisation owning the resource
    */
   organisation_uuid?: string;
-  status?: StatusEnum25;
+  status?: StatusEnum26;
   /**
    * Units reserved (1 for venues)
    */
@@ -11692,7 +11860,7 @@ export type ApiResponseListOnboardingSummary = {
  */
 export type OnboardingSummary = {
   domain?: string;
-  status?: StatusEnum15;
+  status?: StatusEnum16;
   requires_approval?: boolean;
   active?: boolean;
   steps_completed?: number;
@@ -11975,7 +12143,7 @@ export type InstructorCalendarEntry = {
    * Flag indicating availability; false represents blocked time or scheduled instances occupying the slot
    */
   is_available?: boolean;
-  status?: StatusEnum9;
+  status?: StatusEnum10;
   /**
    * Optional title (for scheduled instances)
    */
@@ -12144,7 +12312,7 @@ export type GuardianStudentDashboardDto = {
   student_uuid?: string;
   student_name?: string;
   share_scope?: ShareScopeEnum;
-  status?: StatusEnum12;
+  status?: StatusEnum13;
   course_progress?: Array<LearnerCourseProgressView>;
   program_progress?: Array<LearnerProgramProgressView>;
 };
@@ -12180,7 +12348,7 @@ export type GuardianStudentSummaryDto = {
   student_name?: string;
   relationship_type?: RelationshipTypeEnum2;
   share_scope?: ShareScopeEnum;
-  status?: StatusEnum12;
+  status?: StatusEnum13;
   primary_guardian?: boolean;
 };
 
@@ -12998,7 +13166,7 @@ export type CoursePendingEdit = {
    * **[READ-ONLY]** Unique identifier for the pending edit.
    */
   readonly uuid?: string;
-  status?: StatusEnum13;
+  status?: StatusEnum14;
   /**
    * **[READ-ONLY]** The live course this edit applies to.
    */
@@ -13796,7 +13964,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum24;
+  status: StatusEnum25;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -14545,7 +14713,7 @@ export type JobMatch = {
   readonly uuid?: string;
   readonly title?: string;
   readonly description?: string;
-  status?: StatusEnum8;
+  status?: StatusEnum9;
   readonly resources?: Array<ClassMarketplaceJobResource>;
   readonly organisation_uuid?: string;
   readonly course_uuid?: string;
@@ -14995,7 +15163,7 @@ export type ApiResponseApplyCatalogueResponse = {
  */
 export type ApplyCatalogueApplication = {
   uuid?: string;
-  status?: StatusEnum3;
+  status?: StatusEnum4;
 };
 
 /**
@@ -16019,6 +16187,30 @@ export const SchemaEnum14 = { ADMIN: 'admin', ORGANISATION_USER: 'organisation_u
 export type SchemaEnum14 = (typeof SchemaEnum14)[keyof typeof SchemaEnum14];
 
 /**
+ * **[READ-ONLY]** Payout rail.
+ */
+export const MethodTypeEnum = { MPESA: 'MPESA' } as const;
+
+/**
+ * **[READ-ONLY]** Payout rail.
+ */
+export type MethodTypeEnum = (typeof MethodTypeEnum)[keyof typeof MethodTypeEnum];
+
+/**
+ * **[READ-ONLY]** Where it is in verification.
+ */
+export const StatusEnum = {
+  PENDING_VERIFICATION: 'PENDING_VERIFICATION',
+  VERIFIED: 'VERIFIED',
+  REMOVED: 'REMOVED',
+} as const;
+
+/**
+ * **[READ-ONLY]** Where it is in verification.
+ */
+export type StatusEnum = (typeof StatusEnum)[keyof typeof StatusEnum];
+
+/**
  * **[OPTIONAL]** User's gender information. Used for demographic analytics and personalization. Can be null if not specified or preferred not to disclose.
  */
 export const GenderEnum = {
@@ -16098,7 +16290,7 @@ export type RelationshipTypeEnum = (typeof RelationshipTypeEnum)[keyof typeof Re
 /**
  * **[REQUIRED]** Rubric publication status in the content workflow.
  */
-export const StatusEnum = {
+export const StatusEnum2 = {
   DRAFT: 'DRAFT',
   IN_REVIEW: 'IN_REVIEW',
   PUBLISHED: 'PUBLISHED',
@@ -16108,7 +16300,7 @@ export const StatusEnum = {
 /**
  * **[REQUIRED]** Rubric publication status in the content workflow.
  */
-export type StatusEnum = (typeof StatusEnum)[keyof typeof StatusEnum];
+export type StatusEnum2 = (typeof StatusEnum2)[keyof typeof StatusEnum2];
 
 /**
  * **[OPTIONAL]** Unit of measurement for weight calculations.
@@ -16155,7 +16347,7 @@ export type QuestionTypeEnum = (typeof QuestionTypeEnum)[keyof typeof QuestionTy
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export const StatusEnum2 = {
+export const StatusEnum3 = {
   IN_PROGRESS: 'IN_PROGRESS',
   SUBMITTED: 'SUBMITTED',
   GRADED: 'GRADED',
@@ -16164,7 +16356,7 @@ export const StatusEnum2 = {
 /**
  * **[REQUIRED]** Current status of the quiz attempt.
  */
-export type StatusEnum2 = (typeof StatusEnum2)[keyof typeof StatusEnum2];
+export type StatusEnum3 = (typeof StatusEnum3)[keyof typeof StatusEnum3];
 
 /**
  * How the applicant would obtain it: required when has_it is false, ignored when true.
@@ -16179,7 +16371,7 @@ export type AcquisitionEnum = (typeof AcquisitionEnum)[keyof typeof AcquisitionE
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum3 = {
+export const StatusEnum4 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -16189,7 +16381,7 @@ export const StatusEnum3 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum3 = (typeof StatusEnum3)[keyof typeof StatusEnum3];
+export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
 
 /**
  * **[READ-ONLY]** Applicant type making the request.
@@ -16290,14 +16482,14 @@ export const ExperienceTypeEnum = {
 
 export type ExperienceTypeEnum = (typeof ExperienceTypeEnum)[keyof typeof ExperienceTypeEnum];
 
-export const StatusEnum4 = {
+export const StatusEnum5 = {
   PENDING_REVIEW: 'Pending Review',
   APPROVED: 'Approved',
   REJECTED: 'Rejected',
   EXPIRED: 'Expired',
 } as const;
 
-export type StatusEnum4 = (typeof StatusEnum4)[keyof typeof StatusEnum4];
+export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
 
 export const CredentialTypeEnum = {
   CERTIFICATE: 'CERTIFICATE',
@@ -16419,7 +16611,7 @@ export type EducationLevelEnum = (typeof EducationLevelEnum)[keyof typeof Educat
 /**
  * **[READ-ONLY]** Current status of the document in the verification workflow.
  */
-export const StatusEnum5 = {
+export const StatusEnum6 = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
@@ -16430,7 +16622,7 @@ export const StatusEnum5 = {
 /**
  * **[READ-ONLY]** Current status of the document in the verification workflow.
  */
-export type StatusEnum5 = (typeof StatusEnum5)[keyof typeof StatusEnum5];
+export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
 
 /**
  * **[READ-ONLY]** Human-readable verification status of the document.
@@ -16496,7 +16688,7 @@ export type ProvidedByEnum = (typeof ProvidedByEnum)[keyof typeof ProvidedByEnum
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export const StatusEnum6 = {
+export const StatusEnum7 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -16505,7 +16697,7 @@ export const StatusEnum6 = {
 /**
  * **[READ-ONLY]** Current status of the application.
  */
-export type StatusEnum6 = (typeof StatusEnum6)[keyof typeof StatusEnum6];
+export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
 
 /**
  * **[OPTIONAL]** Practice activity format.
@@ -16571,12 +16763,12 @@ export type AggregationStrategyEnum =
 /**
  * Send pending to save an incomplete draft that does not count yet; completed (default) submits it.
  */
-export const StatusEnum7 = { PENDING: 'pending', COMPLETED: 'completed' } as const;
+export const StatusEnum8 = { PENDING: 'pending', COMPLETED: 'completed' } as const;
 
 /**
  * Send pending to save an incomplete draft that does not count yet; completed (default) submits it.
  */
-export type StatusEnum7 = (typeof StatusEnum7)[keyof typeof StatusEnum7];
+export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
 
 export const AttendanceStatusEnum = { ATTENDED: 'attended', ABSENT: 'absent' } as const;
 
@@ -16723,7 +16915,7 @@ export const BookingStatusEnum = {
  */
 export type BookingStatusEnum = (typeof BookingStatusEnum)[keyof typeof BookingStatusEnum];
 
-export const StatusEnum8 = {
+export const StatusEnum9 = {
   OPEN: 'open',
   AWAITING_CLASS: 'awaiting_class',
   FILLED: 'filled',
@@ -16731,7 +16923,7 @@ export const StatusEnum8 = {
   EXPIRED: 'expired',
 } as const;
 
-export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
+export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
 
 export const ServiceTypeEnum2 = {
   ONE_ON_ONE: 'ONE_ON_ONE',
@@ -16787,7 +16979,7 @@ export type OwnerTypeEnum = (typeof OwnerTypeEnum)[keyof typeof OwnerTypeEnum];
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export const StatusEnum9 = {
+export const StatusEnum10 = {
   SCHEDULED: 'SCHEDULED',
   ONGOING: 'ONGOING',
   COMPLETED: 'COMPLETED',
@@ -16798,12 +16990,12 @@ export const StatusEnum9 = {
 /**
  * **[OPTIONAL]** Current status of the scheduled instance.
  */
-export type StatusEnum9 = (typeof StatusEnum9)[keyof typeof StatusEnum9];
+export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
 
 /**
  * draft, submitted or locked
  */
-export const StatusEnum10 = {
+export const StatusEnum11 = {
   DRAFT: 'draft',
   SUBMITTED: 'submitted',
   LOCKED: 'locked',
@@ -16812,7 +17004,7 @@ export const StatusEnum10 = {
 /**
  * draft, submitted or locked
  */
-export type StatusEnum10 = (typeof StatusEnum10)[keyof typeof StatusEnum10];
+export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
 
 /**
  * Relationship to the student
@@ -16832,7 +17024,7 @@ export type RelationshipTypeEnum2 =
 /**
  * linked, invited, expired, declined or revoked
  */
-export const StatusEnum11 = {
+export const StatusEnum12 = {
   LINKED: 'linked',
   INVITED: 'invited',
   EXPIRED: 'expired',
@@ -16843,7 +17035,7 @@ export const StatusEnum11 = {
 /**
  * linked, invited, expired, declined or revoked
  */
-export type StatusEnum11 = (typeof StatusEnum11)[keyof typeof StatusEnum11];
+export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
 
 export const ShareScopeEnum = {
   FULL: 'FULL',
@@ -16853,13 +17045,13 @@ export const ShareScopeEnum = {
 
 export type ShareScopeEnum = (typeof ShareScopeEnum)[keyof typeof ShareScopeEnum];
 
-export const StatusEnum12 = {
+export const StatusEnum13 = {
   PENDING: 'PENDING',
   ACTIVE: 'ACTIVE',
   REVOKED: 'REVOKED',
 } as const;
 
-export type StatusEnum12 = (typeof StatusEnum12)[keyof typeof StatusEnum12];
+export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
 
 export const GenderEnum2 = {
   MALE: 'MALE',
@@ -16887,7 +17079,7 @@ export type DomainEnum = (typeof DomainEnum)[keyof typeof DomainEnum];
 /**
  * **[READ-ONLY]** Review status.
  */
-export const StatusEnum13 = {
+export const StatusEnum14 = {
   PENDING: 'pending',
   APPROVED: 'approved',
   REJECTED: 'rejected',
@@ -16897,7 +17089,7 @@ export const StatusEnum13 = {
 /**
  * **[READ-ONLY]** Review status.
  */
-export type StatusEnum13 = (typeof StatusEnum13)[keyof typeof StatusEnum13];
+export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
 
 /**
  * **[READ-ONLY]** Whether the application targets a course or a program.
@@ -16912,7 +17104,7 @@ export type ApplicationTypeEnum = (typeof ApplicationTypeEnum)[keyof typeof Appl
 /**
  * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
  */
-export const StatusEnum14 = {
+export const StatusEnum15 = {
   PENDING: 'PENDING',
   ALLOCATED: 'ALLOCATED',
   APPROVED: 'APPROVED',
@@ -16922,12 +17114,12 @@ export const StatusEnum14 = {
 /**
  * PENDING, ALLOCATED, APPROVED or DISBURSED. The legacy value 'Completed' is accepted and stored as DISBURSED. Defaults to PENDING.
  */
-export type StatusEnum14 = (typeof StatusEnum14)[keyof typeof StatusEnum14];
+export type StatusEnum15 = (typeof StatusEnum15)[keyof typeof StatusEnum15];
 
 /**
  * not_started | in_progress | submitted | approved | rejected | suspended
  */
-export const StatusEnum15 = {
+export const StatusEnum16 = {
   NOT_STARTED: 'not_started',
   IN_PROGRESS: 'in_progress',
   SUBMITTED: 'submitted',
@@ -16939,7 +17131,7 @@ export const StatusEnum15 = {
 /**
  * not_started | in_progress | submitted | approved | rejected | suspended
  */
-export type StatusEnum15 = (typeof StatusEnum15)[keyof typeof StatusEnum15];
+export type StatusEnum16 = (typeof StatusEnum16)[keyof typeof StatusEnum16];
 
 export const TypeEnum = {
   COURSE_ENROLLMENT_WELCOME: 'COURSE_ENROLLMENT_WELCOME',
@@ -17048,13 +17240,13 @@ export const PresentationEnum = { POPUP: 'POPUP', INBOX: 'INBOX' } as const;
 
 export type PresentationEnum = (typeof PresentationEnum)[keyof typeof PresentationEnum];
 
-export const StatusEnum16 = {
+export const StatusEnum17 = {
   UNREAD: 'UNREAD',
   READ: 'READ',
   ARCHIVED: 'ARCHIVED',
 } as const;
 
-export type StatusEnum16 = (typeof StatusEnum16)[keyof typeof StatusEnum16];
+export type StatusEnum17 = (typeof StatusEnum17)[keyof typeof StatusEnum17];
 
 /**
  * **[OPTIONAL]** How much of the child's learning the guardian will see. Defaults to FULL.
@@ -17073,7 +17265,7 @@ export type ShareScopeEnum2 = (typeof ShareScopeEnum2)[keyof typeof ShareScopeEn
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export const StatusEnum17 = {
+export const StatusEnum18 = {
   ENROLLED: 'ENROLLED',
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
@@ -17084,7 +17276,7 @@ export const StatusEnum17 = {
 /**
  * **[OPTIONAL]** Current enrollment and attendance status.
  */
-export type StatusEnum17 = (typeof StatusEnum17)[keyof typeof StatusEnum17];
+export type StatusEnum18 = (typeof StatusEnum18)[keyof typeof StatusEnum18];
 
 /**
  * **[READ-ONLY]** Condition of the learner's instrument in this session, noted when attendance is marked.
@@ -17135,7 +17327,7 @@ export const ReleaseStrategyEnum = {
  */
 export type ReleaseStrategyEnum = (typeof ReleaseStrategyEnum)[keyof typeof ReleaseStrategyEnum];
 
-export const StatusEnum18 = {
+export const StatusEnum19 = {
   PENDING: 'pending',
   SHORTLISTED: 'shortlisted',
   INTERVIEWING: 'interviewing',
@@ -17147,12 +17339,12 @@ export const StatusEnum18 = {
   WITHDRAWN: 'withdrawn',
 } as const;
 
-export type StatusEnum18 = (typeof StatusEnum18)[keyof typeof StatusEnum18];
+export type StatusEnum19 = (typeof StatusEnum19)[keyof typeof StatusEnum19];
 
 /**
  * Current status of the booking
  */
-export const StatusEnum19 = {
+export const StatusEnum20 = {
   PAYMENT_REQUIRED: 'payment_required',
   CONFIRMED: 'confirmed',
   CANCELLED: 'cancelled',
@@ -17166,7 +17358,7 @@ export const StatusEnum19 = {
 /**
  * Current status of the booking
  */
-export type StatusEnum19 = (typeof StatusEnum19)[keyof typeof StatusEnum19];
+export type StatusEnum20 = (typeof StatusEnum20)[keyof typeof StatusEnum20];
 
 /**
  * Payment status reported by the engine
@@ -17181,7 +17373,7 @@ export type PaymentStatusEnum = (typeof PaymentStatusEnum)[keyof typeof PaymentS
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export const StatusEnum20 = {
+export const StatusEnum21 = {
   DRAFT: 'DRAFT',
   SUBMITTED: 'SUBMITTED',
   IN_REVIEW: 'IN_REVIEW',
@@ -17192,7 +17384,7 @@ export const StatusEnum20 = {
 /**
  * **[REQUIRED]** Current status of the submission in the grading workflow.
  */
-export type StatusEnum20 = (typeof StatusEnum20)[keyof typeof StatusEnum20];
+export type StatusEnum21 = (typeof StatusEnum21)[keyof typeof StatusEnum21];
 
 /**
  * Type of assignment - global or organization-specific
@@ -17204,9 +17396,9 @@ export const AssignmentTypeEnum = { GLOBAL: 'global', ORGANIZATION: 'organizatio
  */
 export type AssignmentTypeEnum = (typeof AssignmentTypeEnum)[keyof typeof AssignmentTypeEnum];
 
-export const StatusEnum21 = { VERIFIED: 'VERIFIED', REJECTED: 'REJECTED' } as const;
+export const StatusEnum22 = { VERIFIED: 'VERIFIED', REJECTED: 'REJECTED' } as const;
 
-export type StatusEnum21 = (typeof StatusEnum21)[keyof typeof StatusEnum21];
+export type StatusEnum22 = (typeof StatusEnum22)[keyof typeof StatusEnum22];
 
 /**
  * The decision to apply.
@@ -17248,6 +17440,12 @@ export const EventTypeEnum2 = {
   TRANSFER_SENT: 'TRANSFER_SENT',
   TRANSFER_RECEIVED: 'TRANSFER_RECEIVED',
   SALE_SHARE_REVERSED: 'SALE_SHARE_REVERSED',
+  PAYOUT_METHOD_ADDED: 'PAYOUT_METHOD_ADDED',
+  PAYOUT_METHOD_VERIFIED: 'PAYOUT_METHOD_VERIFIED',
+  PAYOUT_METHOD_REMOVED: 'PAYOUT_METHOD_REMOVED',
+  PAYOUT_METHOD_DEFAULT_CHANGED: 'PAYOUT_METHOD_DEFAULT_CHANGED',
+  PAYOUT_APPROVER_ADDED: 'PAYOUT_APPROVER_ADDED',
+  PAYOUT_APPROVER_REMOVED: 'PAYOUT_APPROVER_REMOVED',
 } as const;
 
 /**
@@ -17304,7 +17502,7 @@ export type EnrollmentStatusEnum = (typeof EnrollmentStatusEnum)[keyof typeof En
 /**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
-export const StatusEnum22 = {
+export const StatusEnum23 = {
   TENTATIVE: 'TENTATIVE',
   FIRM: 'FIRM',
   CONFIRMED: 'CONFIRMED',
@@ -17314,7 +17512,7 @@ export const StatusEnum22 = {
 /**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
-export type StatusEnum22 = (typeof StatusEnum22)[keyof typeof StatusEnum22];
+export type StatusEnum23 = (typeof StatusEnum23)[keyof typeof StatusEnum23];
 
 export const QuestionTypeEnum2 = {
   MULTIPLE_CHOICE: 'multiple_choice',
@@ -17325,13 +17523,13 @@ export const QuestionTypeEnum2 = {
 
 export type QuestionTypeEnum2 = (typeof QuestionTypeEnum2)[keyof typeof QuestionTypeEnum2];
 
-export const StatusEnum23 = {
+export const StatusEnum24 = {
   IN_PROGRESS: 'in_progress',
   SUBMITTED: 'submitted',
   GRADED: 'graded',
 } as const;
 
-export type StatusEnum23 = (typeof StatusEnum23)[keyof typeof StatusEnum23];
+export type StatusEnum24 = (typeof StatusEnum24)[keyof typeof StatusEnum24];
 
 /**
  * **[READ-ONLY]** What happened.
@@ -17358,7 +17556,7 @@ export type EventTypeEnum3 = (typeof EventTypeEnum3)[keyof typeof EventTypeEnum3
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum24 = {
+export const StatusEnum25 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -17368,7 +17566,7 @@ export const StatusEnum24 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum24 = (typeof StatusEnum24)[keyof typeof StatusEnum24];
+export type StatusEnum25 = (typeof StatusEnum25)[keyof typeof StatusEnum25];
 
 /**
  * Entry kind
@@ -17388,7 +17586,7 @@ export type EntryTypeEnum = (typeof EntryTypeEnum)[keyof typeof EntryTypeEnum];
 /**
  * Booking lifecycle state
  */
-export const StatusEnum25 = {
+export const StatusEnum26 = {
   HOLD: 'HOLD',
   CONFIRMED: 'CONFIRMED',
   RELEASED: 'RELEASED',
@@ -17398,7 +17596,7 @@ export const StatusEnum25 = {
 /**
  * Booking lifecycle state
  */
-export type StatusEnum25 = (typeof StatusEnum25)[keyof typeof StatusEnum25];
+export type StatusEnum26 = (typeof StatusEnum26)[keyof typeof StatusEnum26];
 
 /**
  * What created the booking
@@ -17590,6 +17788,20 @@ export const ContentTypeEnum = { COURSE: 'course', TRAINING_PROGRAM: 'training_p
  * **[READ-ONLY]** Type of the moderated content.
  */
 export type ContentTypeEnum = (typeof ContentTypeEnum)[keyof typeof ContentTypeEnum];
+
+export type ApiResponsePayoutMethodWritable = {
+  success?: boolean;
+  data?: PayoutMethodWritable;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A number a wallet's withdrawals can be sent to
+ */
+export type PayoutMethodWritable = {
+  [key: string]: unknown;
+};
 
 /**
  * Complete user profile information including personal details, authentication, and organizational data
@@ -17818,7 +18030,7 @@ export type AssessmentRubricWritable = {
    * **[OPTIONAL]** Indicates if this rubric is publicly available for other course creators to use.
    */
   is_public?: boolean;
-  status: StatusEnum;
+  status: StatusEnum2;
   /**
    * **[OPTIONAL]** Indicates if the rubric is actively available for use. Can only be true for published rubrics.
    */
@@ -18034,7 +18246,7 @@ export type QuizWritable = {
    * **[OPTIONAL]** Reference to assessment rubric UUID for detailed grading criteria.
    */
   rubric_uuid?: string | null;
-  status: StatusEnum;
+  status: StatusEnum2;
   /**
    * **[OPTIONAL]** Indicates if the quiz is actively available to students. Can only be true for published quizzes.
    */
@@ -18158,7 +18370,7 @@ export type QuizAttemptWritable = {
    * **[OPTIONAL]** Indicates if the student passed the quiz based on passing criteria.
    */
   is_passed?: boolean;
-  status: StatusEnum2;
+  status: StatusEnum3;
 };
 
 /**
@@ -19273,7 +19485,7 @@ export type LessonWritable = {
    * **[OPTIONAL]** Specific learning objectives and outcomes for this lesson.
    */
   learning_objectives?: string;
-  status: StatusEnum;
+  status: StatusEnum2;
   /**
    * **[OPTIONAL]** Indicates if the lesson is actively available to students. Can only be true for published lessons.
    */
@@ -19533,7 +19745,7 @@ export type ApiResponseCourseAssessmentLineItemScoreWritable = {
 export type CourseAssessmentLineItemRubricEvaluationWritable = {
   line_item_uuid?: string;
   enrollment_uuid?: string;
-  status?: StatusEnum7;
+  status?: StatusEnum8;
   comments?: string;
   graded_at?: Date;
   criteria_selections?: Array<CourseAssessmentLineItemRubricEvaluationRowWritable>;
@@ -20385,6 +20597,26 @@ export type ApiResponseWalletWritable = {
   error?: unknown;
 };
 
+export type ApiResponsePayoutMethodCreatedWritable = {
+  success?: boolean;
+  data?: PayoutMethodCreatedWritable;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A newly added number and the code sent to it
+ */
+export type PayoutMethodCreatedWritable = {
+  payout_method?: PayoutMethodWritable;
+};
+
+export type ApiResponseVerificationCodeWritable = {
+  success?: boolean;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponseScheduledInstanceWritable = {
   success?: boolean;
   data?: ScheduledInstanceWritable;
@@ -20437,7 +20669,7 @@ export type ScheduledInstanceWritable = {
    * **[OPTIONAL]** Maximum number of participants for this session (cached from class definition).
    */
   max_participants?: number;
-  status?: StatusEnum9;
+  status?: StatusEnum10;
   /**
    * **[OPTIONAL]** Reason for cancellation if status is CANCELLED.
    */
@@ -20598,6 +20830,12 @@ export type OrganisationDocumentWritable = {
   expiry_date?: Date;
 };
 
+export type ApiResponsePayoutApproverWritable = {
+  success?: boolean;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponseSkillsFundTransactionWritable = {
   success?: boolean;
   data?: SkillsFundTransactionWritable;
@@ -20634,7 +20872,7 @@ export type SkillsFundTransactionWritable = {
    * Type: Allocation, Disbursement, Adjustment.
    */
   transaction_type?: string;
-  status?: StatusEnum14;
+  status?: StatusEnum15;
   transaction_date?: Date | null;
 };
 
@@ -20818,7 +21056,7 @@ export type EnrollmentWritable = {
    * **[REQUIRED]** Reference to the student UUID who is enrolling.
    */
   student_uuid: string;
-  status?: StatusEnum17;
+  status?: StatusEnum18;
   /**
    * **[OPTIONAL]** Timestamp when attendance was marked for this enrollment.
    */
@@ -21293,7 +21531,7 @@ export type AssignmentSubmissionWritable = {
    * **[OPTIONAL]** Timestamp when the submission was made by the student.
    */
   submitted_at?: Date;
-  status: StatusEnum20;
+  status: StatusEnum21;
   /**
    * **[OPTIONAL]** Score awarded to this submission by the instructor.
    */
@@ -21377,6 +21615,13 @@ export type WalletTransactionWritable = {
 export type ApiResponseListWalletStatementWritable = {
   success?: boolean;
   data?: Array<unknown>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListPayoutMethodWritable = {
+  success?: boolean;
+  data?: Array<PayoutMethodWritable>;
   message?: string;
   error?: unknown;
 };
@@ -21554,7 +21799,7 @@ export type ApiResponseListOrganisationTimetableEntryWritable = {
  * One session of an organisation's class, carrying what a timetable cell shows without further lookups
  */
 export type OrganisationTimetableEntryWritable = {
-  status?: StatusEnum9;
+  status?: StatusEnum10;
 };
 
 export type ApiResponseListInstructorTimeHoldWritable = {
@@ -21600,7 +21845,7 @@ export type InstructorTimeHoldWritable = {
    * Timezone the window was authored in
    */
   timezone?: string;
-  status?: StatusEnum22;
+  status?: StatusEnum23;
   /**
    * Class definition the hold became, once confirmed
    */
@@ -21855,7 +22100,7 @@ export type ProgramEnrollmentWritable = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum24;
+  status: StatusEnum25;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -21926,6 +22171,13 @@ export type ApiResponseListOrganisationDocumentWritable = {
   error?: unknown;
 };
 
+export type ApiResponseListPayoutApproverWritable = {
+  success?: boolean;
+  data?: Array<unknown>;
+  message?: string;
+  error?: unknown;
+};
+
 export type ApiResponseListStudentGroupWritable = {
   success?: boolean;
   data?: Array<StudentGroupWritable>;
@@ -21985,7 +22237,7 @@ export type ResourceBookingWritable = {
    * Organisation owning the resource
    */
   organisation_uuid?: string;
-  status?: StatusEnum25;
+  status?: StatusEnum26;
   /**
    * Units reserved (1 for venues)
    */
@@ -22776,7 +23028,7 @@ export type CourseEnrollmentWritable = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum24;
+  status: StatusEnum25;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -23485,6 +23737,40 @@ export type ApiResponseListAcademicTierWritable = {
   message?: string;
   error?: unknown;
 };
+
+export type MakePayoutMethodDefaultData = {
+  body?: never;
+  path: {
+    userUuid: string;
+    methodUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/wallets/{userUuid}/payout-methods/{methodUuid}/default';
+};
+
+export type MakePayoutMethodDefaultErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type MakePayoutMethodDefaultError =
+  MakePayoutMethodDefaultErrors[keyof MakePayoutMethodDefaultErrors];
+
+export type MakePayoutMethodDefaultResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePayoutMethod;
+};
+
+export type MakePayoutMethodDefaultResponse =
+  MakePayoutMethodDefaultResponses[keyof MakePayoutMethodDefaultResponses];
 
 export type DeleteUserData = {
   body?: never;
@@ -25424,6 +25710,40 @@ export type UpdateTrainingBranch1Responses = {
 
 export type UpdateTrainingBranch1Response =
   UpdateTrainingBranch1Responses[keyof UpdateTrainingBranch1Responses];
+
+export type MakeOrganisationPayoutMethodDefaultData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    methodUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods/{methodUuid}/default';
+};
+
+export type MakeOrganisationPayoutMethodDefaultErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type MakeOrganisationPayoutMethodDefaultError =
+  MakeOrganisationPayoutMethodDefaultErrors[keyof MakeOrganisationPayoutMethodDefaultErrors];
+
+export type MakeOrganisationPayoutMethodDefaultResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePayoutMethod;
+};
+
+export type MakeOrganisationPayoutMethodDefaultResponse =
+  MakeOrganisationPayoutMethodDefaultResponses[keyof MakeOrganisationPayoutMethodDefaultResponses];
 
 export type GetData = {
   body?: never;
@@ -29894,6 +30214,136 @@ export type CreditSaleResponses = {
 
 export type CreditSaleResponse = CreditSaleResponses[keyof CreditSaleResponses];
 
+export type ListPayoutMethodsData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/wallets/{userUuid}/payout-methods';
+};
+
+export type ListPayoutMethodsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListPayoutMethodsError = ListPayoutMethodsErrors[keyof ListPayoutMethodsErrors];
+
+export type ListPayoutMethodsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListPayoutMethod;
+};
+
+export type ListPayoutMethodsResponse =
+  ListPayoutMethodsResponses[keyof ListPayoutMethodsResponses];
+
+export type AddPayoutMethodData = {
+  body: PayoutMethodRequest;
+  path: {
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/wallets/{userUuid}/payout-methods';
+};
+
+export type AddPayoutMethodErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddPayoutMethodError = AddPayoutMethodErrors[keyof AddPayoutMethodErrors];
+
+export type AddPayoutMethodResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePayoutMethodCreated;
+};
+
+export type AddPayoutMethodResponse = AddPayoutMethodResponses[keyof AddPayoutMethodResponses];
+
+export type VerifyPayoutMethodData = {
+  body: VerifyCodeRequest;
+  path: {
+    userUuid: string;
+    methodUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/wallets/{userUuid}/payout-methods/{methodUuid}/verify';
+};
+
+export type VerifyPayoutMethodErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type VerifyPayoutMethodError = VerifyPayoutMethodErrors[keyof VerifyPayoutMethodErrors];
+
+export type VerifyPayoutMethodResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePayoutMethod;
+};
+
+export type VerifyPayoutMethodResponse =
+  VerifyPayoutMethodResponses[keyof VerifyPayoutMethodResponses];
+
+export type ResendPayoutMethodCodeData = {
+  body?: never;
+  path: {
+    userUuid: string;
+    methodUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/wallets/{userUuid}/payout-methods/{methodUuid}/verification-code';
+};
+
+export type ResendPayoutMethodCodeErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ResendPayoutMethodCodeError =
+  ResendPayoutMethodCodeErrors[keyof ResendPayoutMethodCodeErrors];
+
+export type ResendPayoutMethodCodeResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVerificationCode;
+};
+
+export type ResendPayoutMethodCodeResponse =
+  ResendPayoutMethodCodeResponses[keyof ResendPayoutMethodCodeResponses];
+
 export type DepositData = {
   body: WalletCreditRequest;
   path: {
@@ -32675,6 +33125,204 @@ export type UploadOrganisationDocumentResponses = {
 
 export type UploadOrganisationDocumentResponse =
   UploadOrganisationDocumentResponses[keyof UploadOrganisationDocumentResponses];
+
+export type ListOrganisationPayoutMethodsData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods';
+};
+
+export type ListOrganisationPayoutMethodsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListOrganisationPayoutMethodsError =
+  ListOrganisationPayoutMethodsErrors[keyof ListOrganisationPayoutMethodsErrors];
+
+export type ListOrganisationPayoutMethodsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListPayoutMethod;
+};
+
+export type ListOrganisationPayoutMethodsResponse =
+  ListOrganisationPayoutMethodsResponses[keyof ListOrganisationPayoutMethodsResponses];
+
+export type AddOrganisationPayoutMethodData = {
+  body: PayoutMethodRequest;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods';
+};
+
+export type AddOrganisationPayoutMethodErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddOrganisationPayoutMethodError =
+  AddOrganisationPayoutMethodErrors[keyof AddOrganisationPayoutMethodErrors];
+
+export type AddOrganisationPayoutMethodResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePayoutMethodCreated;
+};
+
+export type AddOrganisationPayoutMethodResponse =
+  AddOrganisationPayoutMethodResponses[keyof AddOrganisationPayoutMethodResponses];
+
+export type VerifyOrganisationPayoutMethodData = {
+  body: VerifyCodeRequest;
+  path: {
+    organisationUuid: string;
+    methodUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods/{methodUuid}/verify';
+};
+
+export type VerifyOrganisationPayoutMethodErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type VerifyOrganisationPayoutMethodError =
+  VerifyOrganisationPayoutMethodErrors[keyof VerifyOrganisationPayoutMethodErrors];
+
+export type VerifyOrganisationPayoutMethodResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePayoutMethod;
+};
+
+export type VerifyOrganisationPayoutMethodResponse =
+  VerifyOrganisationPayoutMethodResponses[keyof VerifyOrganisationPayoutMethodResponses];
+
+export type ResendOrganisationPayoutMethodCodeData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    methodUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods/{methodUuid}/verification-code';
+};
+
+export type ResendOrganisationPayoutMethodCodeErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ResendOrganisationPayoutMethodCodeError =
+  ResendOrganisationPayoutMethodCodeErrors[keyof ResendOrganisationPayoutMethodCodeErrors];
+
+export type ResendOrganisationPayoutMethodCodeResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVerificationCode;
+};
+
+export type ResendOrganisationPayoutMethodCodeResponse =
+  ResendOrganisationPayoutMethodCodeResponses[keyof ResendOrganisationPayoutMethodCodeResponses];
+
+export type ListPayoutApproversData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/wallet/payout-approvers';
+};
+
+export type ListPayoutApproversErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListPayoutApproversError = ListPayoutApproversErrors[keyof ListPayoutApproversErrors];
+
+export type ListPayoutApproversResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListPayoutApprover;
+};
+
+export type ListPayoutApproversResponse =
+  ListPayoutApproversResponses[keyof ListPayoutApproversResponses];
+
+export type AddPayoutApproverData = {
+  body: PayoutApproverRequest;
+  path: {
+    organisationUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/wallet/payout-approvers';
+};
+
+export type AddPayoutApproverErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddPayoutApproverError = AddPayoutApproverErrors[keyof AddPayoutApproverErrors];
+
+export type AddPayoutApproverResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePayoutApprover;
+};
+
+export type AddPayoutApproverResponse =
+  AddPayoutApproverResponses[keyof AddPayoutApproverResponses];
 
 export type ListGroupsData = {
   body?: never;
@@ -51485,6 +52133,39 @@ export type ListTiersResponses = {
 
 export type ListTiersResponse = ListTiersResponses[keyof ListTiersResponses];
 
+export type RemovePayoutMethodData = {
+  body?: never;
+  path: {
+    userUuid: string;
+    methodUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/wallets/{userUuid}/payout-methods/{methodUuid}';
+};
+
+export type RemovePayoutMethodErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RemovePayoutMethodError = RemovePayoutMethodErrors[keyof RemovePayoutMethodErrors];
+
+export type RemovePayoutMethodResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type RemovePayoutMethodResponse =
+  RemovePayoutMethodResponses[keyof RemovePayoutMethodResponses];
+
 export type RemoveMemberData = {
   body?: never;
   path: {
@@ -51619,6 +52300,74 @@ export type DeleteOrganisationDocumentResponses = {
 
 export type DeleteOrganisationDocumentResponse =
   DeleteOrganisationDocumentResponses[keyof DeleteOrganisationDocumentResponses];
+
+export type RemoveOrganisationPayoutMethodData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    methodUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods/{methodUuid}';
+};
+
+export type RemoveOrganisationPayoutMethodErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RemoveOrganisationPayoutMethodError =
+  RemoveOrganisationPayoutMethodErrors[keyof RemoveOrganisationPayoutMethodErrors];
+
+export type RemoveOrganisationPayoutMethodResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type RemoveOrganisationPayoutMethodResponse =
+  RemoveOrganisationPayoutMethodResponses[keyof RemoveOrganisationPayoutMethodResponses];
+
+export type RemovePayoutApproverData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+    userUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/organisations/{organisationUuid}/wallet/payout-approvers/{userUuid}';
+};
+
+export type RemovePayoutApproverErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type RemovePayoutApproverError =
+  RemovePayoutApproverErrors[keyof RemovePayoutApproverErrors];
+
+export type RemovePayoutApproverResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseVoid;
+};
+
+export type RemovePayoutApproverResponse =
+  RemovePayoutApproverResponses[keyof RemovePayoutApproverResponses];
 
 export type ClearInstructorAvailabilityData = {
   body?: never;

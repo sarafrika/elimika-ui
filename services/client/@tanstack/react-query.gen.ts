@@ -46,6 +46,9 @@ import {
   addLessonContent,
   addMembers,
   addMembership,
+  addOrganisationPayoutMethod,
+  addPayoutApprover,
+  addPayoutMethod,
   addPortfolioItem,
   addProgramCourse,
   addProgramRequirement,
@@ -556,10 +559,13 @@ import {
   listObligations,
   listOrganisationAgeGroups,
   listOrganisationInvitations,
+  listOrganisationPayoutMethods,
   listOrganisationWalletAudit,
   listOrganisationWalletStatements,
   listOrganisationWalletTransactions,
   listPayments,
+  listPayoutApprovers,
+  listPayoutMethods,
   listPendingCourseEdits,
   listPendingCourses,
   listPendingPrograms,
@@ -585,6 +591,8 @@ import {
   listTransactions1,
   lookupUserByUserNo,
   makeDefault,
+  makeOrganisationPayoutMethodDefault,
+  makePayoutMethodDefault,
   markAttendance,
   memberships,
   moderateCourse,
@@ -613,6 +621,9 @@ import {
   removeCategoryFromCourse,
   removeItem,
   removeMember,
+  removeOrganisationPayoutMethod,
+  removePayoutApprover,
+  removePayoutMethod,
   removeProgramCourse,
   removeTeam,
   removeUserFromBranch,
@@ -632,6 +643,8 @@ import {
   rescheduleScheduledInstance,
   resendInvitation,
   resendOrganisationInvitation,
+  resendOrganisationPayoutMethodCode,
+  resendPayoutMethodCode,
   resendRegistrationEmail,
   resolveByCourseOrClass,
   restoreCourseVersion,
@@ -821,6 +834,8 @@ import {
   verifyCourseCreatorDocument,
   verifyDocument,
   verifyInstructor,
+  verifyOrganisationPayoutMethod,
+  verifyPayoutMethod,
   verifyWalletItem,
   withdrawApplication,
   withdrawPendingEdit,
@@ -938,6 +953,15 @@ import type {
   AddMembershipError,
   AddMembershipResponse,
   AddMembersResponse,
+  AddOrganisationPayoutMethodData,
+  AddOrganisationPayoutMethodError,
+  AddOrganisationPayoutMethodResponse,
+  AddPayoutApproverData,
+  AddPayoutApproverError,
+  AddPayoutApproverResponse,
+  AddPayoutMethodData,
+  AddPayoutMethodError,
+  AddPayoutMethodResponse,
   AddPortfolioItemData,
   AddPortfolioItemError,
   AddPortfolioItemResponse,
@@ -2424,6 +2448,9 @@ import type {
   ListOrganisationInvitationsData,
   ListOrganisationInvitationsError,
   ListOrganisationInvitationsResponse,
+  ListOrganisationPayoutMethodsData,
+  ListOrganisationPayoutMethodsError,
+  ListOrganisationPayoutMethodsResponse,
   ListOrganisationWalletAuditData,
   ListOrganisationWalletAuditError,
   ListOrganisationWalletAuditResponse,
@@ -2436,6 +2463,12 @@ import type {
   ListPaymentsData,
   ListPaymentsError,
   ListPaymentsResponse,
+  ListPayoutApproversData,
+  ListPayoutApproversError,
+  ListPayoutApproversResponse,
+  ListPayoutMethodsData,
+  ListPayoutMethodsError,
+  ListPayoutMethodsResponse,
   ListPendingCourseEditsData,
   ListPendingCourseEditsError,
   ListPendingCourseEditsResponse,
@@ -2511,6 +2544,12 @@ import type {
   MakeDefaultData,
   MakeDefaultError,
   MakeDefaultResponse,
+  MakeOrganisationPayoutMethodDefaultData,
+  MakeOrganisationPayoutMethodDefaultError,
+  MakeOrganisationPayoutMethodDefaultResponse,
+  MakePayoutMethodDefaultData,
+  MakePayoutMethodDefaultError,
+  MakePayoutMethodDefaultResponse,
   MarkAttendanceData,
   MarkAttendanceError,
   MarkAttendanceResponse,
@@ -2591,6 +2630,15 @@ import type {
   RemoveMemberData,
   RemoveMemberError,
   RemoveMemberResponse,
+  RemoveOrganisationPayoutMethodData,
+  RemoveOrganisationPayoutMethodError,
+  RemoveOrganisationPayoutMethodResponse,
+  RemovePayoutApproverData,
+  RemovePayoutApproverError,
+  RemovePayoutApproverResponse,
+  RemovePayoutMethodData,
+  RemovePayoutMethodError,
+  RemovePayoutMethodResponse,
   RemoveProgramCourseData,
   RemoveProgramCourseError,
   RemoveProgramCourseResponse,
@@ -2648,6 +2696,12 @@ import type {
   ResendOrganisationInvitationData,
   ResendOrganisationInvitationError,
   ResendOrganisationInvitationResponse,
+  ResendOrganisationPayoutMethodCodeData,
+  ResendOrganisationPayoutMethodCodeError,
+  ResendOrganisationPayoutMethodCodeResponse,
+  ResendPayoutMethodCodeData,
+  ResendPayoutMethodCodeError,
+  ResendPayoutMethodCodeResponse,
   ResendRegistrationEmailData,
   ResendRegistrationEmailError,
   ResendRegistrationEmailResponse,
@@ -3213,6 +3267,12 @@ import type {
   VerifyInstructorData,
   VerifyInstructorError,
   VerifyInstructorResponse,
+  VerifyOrganisationPayoutMethodData,
+  VerifyOrganisationPayoutMethodError,
+  VerifyOrganisationPayoutMethodResponse,
+  VerifyPayoutMethodData,
+  VerifyPayoutMethodError,
+  VerifyPayoutMethodResponse,
   VerifyResponse,
   VerifyWalletItemData,
   VerifyWalletItemError,
@@ -3232,6 +3292,33 @@ import type {
   WithdrawTrainingRateUpdateData,
   WithdrawTrainingRateUpdateError,
 } from '../types.gen';
+
+/**
+ * Make a verified number the default
+ */
+export const makePayoutMethodDefaultMutation = (
+  options?: Partial<Options<MakePayoutMethodDefaultData>>
+): UseMutationOptions<
+  MakePayoutMethodDefaultResponse,
+  MakePayoutMethodDefaultError,
+  Options<MakePayoutMethodDefaultData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MakePayoutMethodDefaultResponse,
+    MakePayoutMethodDefaultError,
+    Options<MakePayoutMethodDefaultData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await makePayoutMethodDefault({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
 
 /**
  * Delete a user by UUID
@@ -4786,6 +4873,33 @@ export const updateTrainingBranch1Mutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await updateTrainingBranch1({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Make a verified number the default
+ */
+export const makeOrganisationPayoutMethodDefaultMutation = (
+  options?: Partial<Options<MakeOrganisationPayoutMethodDefaultData>>
+): UseMutationOptions<
+  MakeOrganisationPayoutMethodDefaultResponse,
+  MakeOrganisationPayoutMethodDefaultError,
+  Options<MakeOrganisationPayoutMethodDefaultData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    MakeOrganisationPayoutMethodDefaultResponse,
+    MakeOrganisationPayoutMethodDefaultError,
+    Options<MakeOrganisationPayoutMethodDefaultData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await makeOrganisationPayoutMethodDefault({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -8510,6 +8624,118 @@ export const creditSaleMutation = (
   return mutationOptions;
 };
 
+export const listPayoutMethodsQueryKey = (options: Options<ListPayoutMethodsData>) =>
+  createQueryKey('listPayoutMethods', options);
+
+/**
+ * List my payout numbers
+ *
+ * Default first.
+ */
+export const listPayoutMethodsOptions = (options: Options<ListPayoutMethodsData>) =>
+  queryOptions<
+    ListPayoutMethodsResponse,
+    ListPayoutMethodsError,
+    ListPayoutMethodsResponse,
+    ReturnType<typeof listPayoutMethodsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listPayoutMethods({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listPayoutMethodsQueryKey(options),
+  });
+
+/**
+ * Add an M-Pesa number
+ *
+ * Saved as pending; a six-digit code is sent to it by SMS.
+ */
+export const addPayoutMethodMutation = (
+  options?: Partial<Options<AddPayoutMethodData>>
+): UseMutationOptions<
+  AddPayoutMethodResponse,
+  AddPayoutMethodError,
+  Options<AddPayoutMethodData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddPayoutMethodResponse,
+    AddPayoutMethodError,
+    Options<AddPayoutMethodData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await addPayoutMethod({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Confirm a number with its code
+ *
+ * A verified number can receive money once its hold ends.
+ */
+export const verifyPayoutMethodMutation = (
+  options?: Partial<Options<VerifyPayoutMethodData>>
+): UseMutationOptions<
+  VerifyPayoutMethodResponse,
+  VerifyPayoutMethodError,
+  Options<VerifyPayoutMethodData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    VerifyPayoutMethodResponse,
+    VerifyPayoutMethodError,
+    Options<VerifyPayoutMethodData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await verifyPayoutMethod({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Send a new verification code
+ */
+export const resendPayoutMethodCodeMutation = (
+  options?: Partial<Options<ResendPayoutMethodCodeData>>
+): UseMutationOptions<
+  ResendPayoutMethodCodeResponse,
+  ResendPayoutMethodCodeError,
+  Options<ResendPayoutMethodCodeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ResendPayoutMethodCodeResponse,
+    ResendPayoutMethodCodeError,
+    Options<ResendPayoutMethodCodeData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await resendPayoutMethodCode({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 /**
  * Record a wallet deposit
  */
@@ -11501,6 +11727,171 @@ export const uploadOrganisationDocumentMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await uploadOrganisationDocument({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listOrganisationPayoutMethodsQueryKey = (
+  options: Options<ListOrganisationPayoutMethodsData>
+) => createQueryKey('listOrganisationPayoutMethods', options);
+
+/**
+ * List an organisation's payout numbers
+ */
+export const listOrganisationPayoutMethodsOptions = (
+  options: Options<ListOrganisationPayoutMethodsData>
+) =>
+  queryOptions<
+    ListOrganisationPayoutMethodsResponse,
+    ListOrganisationPayoutMethodsError,
+    ListOrganisationPayoutMethodsResponse,
+    ReturnType<typeof listOrganisationPayoutMethodsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listOrganisationPayoutMethods({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listOrganisationPayoutMethodsQueryKey(options),
+  });
+
+/**
+ * Add an M-Pesa number for the organisation
+ *
+ * Payout approvers only. A six-digit code is sent to the number.
+ */
+export const addOrganisationPayoutMethodMutation = (
+  options?: Partial<Options<AddOrganisationPayoutMethodData>>
+): UseMutationOptions<
+  AddOrganisationPayoutMethodResponse,
+  AddOrganisationPayoutMethodError,
+  Options<AddOrganisationPayoutMethodData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddOrganisationPayoutMethodResponse,
+    AddOrganisationPayoutMethodError,
+    Options<AddOrganisationPayoutMethodData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await addOrganisationPayoutMethod({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Confirm an organisation number with its code
+ */
+export const verifyOrganisationPayoutMethodMutation = (
+  options?: Partial<Options<VerifyOrganisationPayoutMethodData>>
+): UseMutationOptions<
+  VerifyOrganisationPayoutMethodResponse,
+  VerifyOrganisationPayoutMethodError,
+  Options<VerifyOrganisationPayoutMethodData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    VerifyOrganisationPayoutMethodResponse,
+    VerifyOrganisationPayoutMethodError,
+    Options<VerifyOrganisationPayoutMethodData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await verifyOrganisationPayoutMethod({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Send a new verification code
+ */
+export const resendOrganisationPayoutMethodCodeMutation = (
+  options?: Partial<Options<ResendOrganisationPayoutMethodCodeData>>
+): UseMutationOptions<
+  ResendOrganisationPayoutMethodCodeResponse,
+  ResendOrganisationPayoutMethodCodeError,
+  Options<ResendOrganisationPayoutMethodCodeData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ResendOrganisationPayoutMethodCodeResponse,
+    ResendOrganisationPayoutMethodCodeError,
+    Options<ResendOrganisationPayoutMethodCodeData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await resendOrganisationPayoutMethodCode({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const listPayoutApproversQueryKey = (options: Options<ListPayoutApproversData>) =>
+  createQueryKey('listPayoutApprovers', options);
+
+/**
+ * List the organisation's payout approvers
+ */
+export const listPayoutApproversOptions = (options: Options<ListPayoutApproversData>) =>
+  queryOptions<
+    ListPayoutApproversResponse,
+    ListPayoutApproversError,
+    ListPayoutApproversResponse,
+    ReturnType<typeof listPayoutApproversQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listPayoutApprovers({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listPayoutApproversQueryKey(options),
+  });
+
+/**
+ * Name an admin as payout approver
+ *
+ * Any admin of the organisation may do this; the person named must be an admin too.
+ */
+export const addPayoutApproverMutation = (
+  options?: Partial<Options<AddPayoutApproverData>>
+): UseMutationOptions<
+  AddPayoutApproverResponse,
+  AddPayoutApproverError,
+  Options<AddPayoutApproverData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddPayoutApproverResponse,
+    AddPayoutApproverError,
+    Options<AddPayoutApproverData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await addPayoutApprover({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -33647,6 +34038,33 @@ export const listTiersOptions = (options?: Options<ListTiersData>) =>
   });
 
 /**
+ * Remove a payout number
+ */
+export const removePayoutMethodMutation = (
+  options?: Partial<Options<RemovePayoutMethodData>>
+): UseMutationOptions<
+  RemovePayoutMethodResponse,
+  RemovePayoutMethodError,
+  Options<RemovePayoutMethodData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RemovePayoutMethodResponse,
+    RemovePayoutMethodError,
+    Options<RemovePayoutMethodData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await removePayoutMethod({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
  * Remove a student from a group
  */
 export const removeMemberMutation = (
@@ -33736,6 +34154,60 @@ export const deleteOrganisationDocumentMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await deleteOrganisationDocument({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove an organisation payout number
+ */
+export const removeOrganisationPayoutMethodMutation = (
+  options?: Partial<Options<RemoveOrganisationPayoutMethodData>>
+): UseMutationOptions<
+  RemoveOrganisationPayoutMethodResponse,
+  RemoveOrganisationPayoutMethodError,
+  Options<RemoveOrganisationPayoutMethodData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RemoveOrganisationPayoutMethodResponse,
+    RemoveOrganisationPayoutMethodError,
+    Options<RemoveOrganisationPayoutMethodData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await removeOrganisationPayoutMethod({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Remove a payout approver
+ */
+export const removePayoutApproverMutation = (
+  options?: Partial<Options<RemovePayoutApproverData>>
+): UseMutationOptions<
+  RemovePayoutApproverResponse,
+  RemovePayoutApproverError,
+  Options<RemovePayoutApproverData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    RemovePayoutApproverResponse,
+    RemovePayoutApproverError,
+    Options<RemovePayoutApproverData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await removePayoutApprover({
         ...options,
         ...fnOptions,
         throwOnError: true,

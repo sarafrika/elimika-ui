@@ -41,6 +41,9 @@ import {
   addLessonContentResponseTransformer,
   addMembershipResponseTransformer,
   addMembersResponseTransformer,
+  addOrganisationPayoutMethodResponseTransformer,
+  addPayoutApproverResponseTransformer,
+  addPayoutMethodResponseTransformer,
   addPortfolioItemResponseTransformer,
   addProgramCourseResponseTransformer,
   addProgramRequirementResponseTransformer,
@@ -399,10 +402,13 @@ import {
   listNotificationsResponseTransformer,
   listObligationsResponseTransformer,
   listOrganisationInvitationsResponseTransformer,
+  listOrganisationPayoutMethodsResponseTransformer,
   listOrganisationWalletAuditResponseTransformer,
   listOrganisationWalletStatementsResponseTransformer,
   listOrganisationWalletTransactionsResponseTransformer,
   listPaymentsResponseTransformer,
+  listPayoutApproversResponseTransformer,
+  listPayoutMethodsResponseTransformer,
   listPendingCourseEditsResponseTransformer,
   listPendingCoursesResponseTransformer,
   listPendingProgramsResponseTransformer,
@@ -424,6 +430,8 @@ import {
   listTrainingRateUpdatesResponseTransformer,
   listTransactions1ResponseTransformer,
   listTransactionsResponseTransformer,
+  makeOrganisationPayoutMethodDefaultResponseTransformer,
+  makePayoutMethodDefaultResponseTransformer,
   membershipsResponseTransformer,
   moderateCourseCreatorResponseTransformer,
   moderateCourseResponseTransformer,
@@ -446,6 +454,8 @@ import {
   rescheduleScheduledInstanceResponseTransformer,
   resendInvitationResponseTransformer,
   resendOrganisationInvitationResponseTransformer,
+  resendOrganisationPayoutMethodCodeResponseTransformer,
+  resendPayoutMethodCodeResponseTransformer,
   resolveByCourseOrClassResponseTransformer,
   restoreCourseVersionResponseTransformer,
   returnSubmissionResponseTransformer,
@@ -620,6 +630,8 @@ import {
   verifyCourseCreatorResponseTransformer,
   verifyDocumentResponseTransformer,
   verifyInstructorResponseTransformer,
+  verifyOrganisationPayoutMethodResponseTransformer,
+  verifyPayoutMethodResponseTransformer,
   withdrawApplicationResponseTransformer,
   withdrawPendingEditResponseTransformer,
 } from './transformers.gen';
@@ -732,6 +744,15 @@ import type {
   AddMembershipErrors,
   AddMembershipResponses,
   AddMembersResponses,
+  AddOrganisationPayoutMethodData,
+  AddOrganisationPayoutMethodErrors,
+  AddOrganisationPayoutMethodResponses,
+  AddPayoutApproverData,
+  AddPayoutApproverErrors,
+  AddPayoutApproverResponses,
+  AddPayoutMethodData,
+  AddPayoutMethodErrors,
+  AddPayoutMethodResponses,
   AddPortfolioItemData,
   AddPortfolioItemErrors,
   AddPortfolioItemResponses,
@@ -2262,6 +2283,9 @@ import type {
   ListOrganisationInvitationsData,
   ListOrganisationInvitationsErrors,
   ListOrganisationInvitationsResponses,
+  ListOrganisationPayoutMethodsData,
+  ListOrganisationPayoutMethodsErrors,
+  ListOrganisationPayoutMethodsResponses,
   ListOrganisationWalletAuditData,
   ListOrganisationWalletAuditErrors,
   ListOrganisationWalletAuditResponses,
@@ -2274,6 +2298,12 @@ import type {
   ListPaymentsData,
   ListPaymentsErrors,
   ListPaymentsResponses,
+  ListPayoutApproversData,
+  ListPayoutApproversErrors,
+  ListPayoutApproversResponses,
+  ListPayoutMethodsData,
+  ListPayoutMethodsErrors,
+  ListPayoutMethodsResponses,
   ListPendingCourseEditsData,
   ListPendingCourseEditsErrors,
   ListPendingCourseEditsResponses,
@@ -2349,6 +2379,12 @@ import type {
   MakeDefaultData,
   MakeDefaultErrors,
   MakeDefaultResponses,
+  MakeOrganisationPayoutMethodDefaultData,
+  MakeOrganisationPayoutMethodDefaultErrors,
+  MakeOrganisationPayoutMethodDefaultResponses,
+  MakePayoutMethodDefaultData,
+  MakePayoutMethodDefaultErrors,
+  MakePayoutMethodDefaultResponses,
   MarkAttendanceData,
   MarkAttendanceErrors,
   MarkAttendanceResponses,
@@ -2430,6 +2466,15 @@ import type {
   RemoveMemberData,
   RemoveMemberErrors,
   RemoveMemberResponses,
+  RemoveOrganisationPayoutMethodData,
+  RemoveOrganisationPayoutMethodErrors,
+  RemoveOrganisationPayoutMethodResponses,
+  RemovePayoutApproverData,
+  RemovePayoutApproverErrors,
+  RemovePayoutApproverResponses,
+  RemovePayoutMethodData,
+  RemovePayoutMethodErrors,
+  RemovePayoutMethodResponses,
   RemoveProgramCourseData,
   RemoveProgramCourseErrors,
   RemoveProgramCourseResponses,
@@ -2487,6 +2532,12 @@ import type {
   ResendOrganisationInvitationData,
   ResendOrganisationInvitationErrors,
   ResendOrganisationInvitationResponses,
+  ResendOrganisationPayoutMethodCodeData,
+  ResendOrganisationPayoutMethodCodeErrors,
+  ResendOrganisationPayoutMethodCodeResponses,
+  ResendPayoutMethodCodeData,
+  ResendPayoutMethodCodeErrors,
+  ResendPayoutMethodCodeResponses,
   ResendRegistrationEmailData,
   ResendRegistrationEmailErrors,
   ResendRegistrationEmailResponses,
@@ -3052,6 +3103,12 @@ import type {
   VerifyInstructorData,
   VerifyInstructorErrors,
   VerifyInstructorResponses,
+  VerifyOrganisationPayoutMethodData,
+  VerifyOrganisationPayoutMethodErrors,
+  VerifyOrganisationPayoutMethodResponses,
+  VerifyPayoutMethodData,
+  VerifyPayoutMethodErrors,
+  VerifyPayoutMethodResponses,
   VerifyResponses,
   VerifyWalletItemData,
   VerifyWalletItemErrors,
@@ -3093,6 +3150,26 @@ export type Options<
    */
   meta?: Record<string, unknown>;
 };
+
+/**
+ * Make a verified number the default
+ */
+export const makePayoutMethodDefault = <ThrowOnError extends boolean = false>(
+  options: Options<MakePayoutMethodDefaultData, ThrowOnError>
+) =>
+  (options.client ?? client).put<
+    MakePayoutMethodDefaultResponses,
+    MakePayoutMethodDefaultErrors,
+    ThrowOnError
+  >({
+    responseTransformer: makePayoutMethodDefaultResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/payout-methods/{methodUuid}/default',
+    ...options,
+  });
 
 /**
  * Delete a user by UUID
@@ -4318,6 +4395,26 @@ export const updateTrainingBranch1 = <ThrowOnError extends boolean = false>(
       'Content-Type': 'application/json',
       ...options.headers,
     },
+  });
+
+/**
+ * Make a verified number the default
+ */
+export const makeOrganisationPayoutMethodDefault = <ThrowOnError extends boolean = false>(
+  options: Options<MakeOrganisationPayoutMethodDefaultData, ThrowOnError>
+) =>
+  (options.client ?? client).put<
+    MakeOrganisationPayoutMethodDefaultResponses,
+    MakeOrganisationPayoutMethodDefaultErrors,
+    ThrowOnError
+  >({
+    responseTransformer: makeOrganisationPayoutMethodDefaultResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods/{methodUuid}/default',
+    ...options,
   });
 
 /**
@@ -7296,6 +7393,94 @@ export const creditSale = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * List my payout numbers
+ *
+ * Default first.
+ */
+export const listPayoutMethods = <ThrowOnError extends boolean = false>(
+  options: Options<ListPayoutMethodsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<ListPayoutMethodsResponses, ListPayoutMethodsErrors, ThrowOnError>(
+    {
+      responseTransformer: listPayoutMethodsResponseTransformer,
+      security: [
+        { scheme: 'bearer', type: 'http' },
+        { scheme: 'bearer', type: 'http' },
+      ],
+      url: '/api/v1/wallets/{userUuid}/payout-methods',
+      ...options,
+    }
+  );
+
+/**
+ * Add an M-Pesa number
+ *
+ * Saved as pending; a six-digit code is sent to it by SMS.
+ */
+export const addPayoutMethod = <ThrowOnError extends boolean = false>(
+  options: Options<AddPayoutMethodData, ThrowOnError>
+) =>
+  (options.client ?? client).post<AddPayoutMethodResponses, AddPayoutMethodErrors, ThrowOnError>({
+    responseTransformer: addPayoutMethodResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/payout-methods',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Confirm a number with its code
+ *
+ * A verified number can receive money once its hold ends.
+ */
+export const verifyPayoutMethod = <ThrowOnError extends boolean = false>(
+  options: Options<VerifyPayoutMethodData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    VerifyPayoutMethodResponses,
+    VerifyPayoutMethodErrors,
+    ThrowOnError
+  >({
+    responseTransformer: verifyPayoutMethodResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/payout-methods/{methodUuid}/verify',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Send a new verification code
+ */
+export const resendPayoutMethodCode = <ThrowOnError extends boolean = false>(
+  options: Options<ResendPayoutMethodCodeData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    ResendPayoutMethodCodeResponses,
+    ResendPayoutMethodCodeErrors,
+    ThrowOnError
+  >({
+    responseTransformer: resendPayoutMethodCodeResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/payout-methods/{methodUuid}/verification-code',
+    ...options,
+  });
+
+/**
  * Record a wallet deposit
  */
 export const deposit = <ThrowOnError extends boolean = false>(
@@ -9083,6 +9268,142 @@ export const uploadOrganisationDocument = <ThrowOnError extends boolean = false>
     ...options,
     headers: {
       'Content-Type': null,
+      ...options.headers,
+    },
+  });
+
+/**
+ * List an organisation's payout numbers
+ */
+export const listOrganisationPayoutMethods = <ThrowOnError extends boolean = false>(
+  options: Options<ListOrganisationPayoutMethodsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListOrganisationPayoutMethodsResponses,
+    ListOrganisationPayoutMethodsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listOrganisationPayoutMethodsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods',
+    ...options,
+  });
+
+/**
+ * Add an M-Pesa number for the organisation
+ *
+ * Payout approvers only. A six-digit code is sent to the number.
+ */
+export const addOrganisationPayoutMethod = <ThrowOnError extends boolean = false>(
+  options: Options<AddOrganisationPayoutMethodData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    AddOrganisationPayoutMethodResponses,
+    AddOrganisationPayoutMethodErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addOrganisationPayoutMethodResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Confirm an organisation number with its code
+ */
+export const verifyOrganisationPayoutMethod = <ThrowOnError extends boolean = false>(
+  options: Options<VerifyOrganisationPayoutMethodData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    VerifyOrganisationPayoutMethodResponses,
+    VerifyOrganisationPayoutMethodErrors,
+    ThrowOnError
+  >({
+    responseTransformer: verifyOrganisationPayoutMethodResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods/{methodUuid}/verify',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Send a new verification code
+ */
+export const resendOrganisationPayoutMethodCode = <ThrowOnError extends boolean = false>(
+  options: Options<ResendOrganisationPayoutMethodCodeData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    ResendOrganisationPayoutMethodCodeResponses,
+    ResendOrganisationPayoutMethodCodeErrors,
+    ThrowOnError
+  >({
+    responseTransformer: resendOrganisationPayoutMethodCodeResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods/{methodUuid}/verification-code',
+    ...options,
+  });
+
+/**
+ * List the organisation's payout approvers
+ */
+export const listPayoutApprovers = <ThrowOnError extends boolean = false>(
+  options: Options<ListPayoutApproversData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListPayoutApproversResponses,
+    ListPayoutApproversErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listPayoutApproversResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/payout-approvers',
+    ...options,
+  });
+
+/**
+ * Name an admin as payout approver
+ *
+ * Any admin of the organisation may do this; the person named must be an admin too.
+ */
+export const addPayoutApprover = <ThrowOnError extends boolean = false>(
+  options: Options<AddPayoutApproverData, ThrowOnError>
+) =>
+  (options.client ?? client).post<
+    AddPayoutApproverResponses,
+    AddPayoutApproverErrors,
+    ThrowOnError
+  >({
+    responseTransformer: addPayoutApproverResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/payout-approvers',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
       ...options.headers,
     },
   });
@@ -20858,6 +21179,25 @@ export const listTiers = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Remove a payout number
+ */
+export const removePayoutMethod = <ThrowOnError extends boolean = false>(
+  options: Options<RemovePayoutMethodData, ThrowOnError>
+) =>
+  (options.client ?? client).delete<
+    RemovePayoutMethodResponses,
+    RemovePayoutMethodErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/payout-methods/{methodUuid}',
+    ...options,
+  });
+
+/**
  * Remove a student from a group
  */
 export const removeMember = <ThrowOnError extends boolean = false>(
@@ -20922,6 +21262,44 @@ export const deleteOrganisationDocument = <ThrowOnError extends boolean = false>
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/organisations/{uuid}/documents/{documentUuid}',
+    ...options,
+  });
+
+/**
+ * Remove an organisation payout number
+ */
+export const removeOrganisationPayoutMethod = <ThrowOnError extends boolean = false>(
+  options: Options<RemoveOrganisationPayoutMethodData, ThrowOnError>
+) =>
+  (options.client ?? client).delete<
+    RemoveOrganisationPayoutMethodResponses,
+    RemoveOrganisationPayoutMethodErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/payout-methods/{methodUuid}',
+    ...options,
+  });
+
+/**
+ * Remove a payout approver
+ */
+export const removePayoutApprover = <ThrowOnError extends boolean = false>(
+  options: Options<RemovePayoutApproverData, ThrowOnError>
+) =>
+  (options.client ?? client).delete<
+    RemovePayoutApproverResponses,
+    RemovePayoutApproverErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/payout-approvers/{userUuid}',
     ...options,
   });
 

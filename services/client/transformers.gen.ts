@@ -34,6 +34,9 @@ import type {
   AddLessonContentResponse,
   AddMembershipResponse,
   AddMembersResponse,
+  AddOrganisationPayoutMethodResponse,
+  AddPayoutApproverResponse,
+  AddPayoutMethodResponse,
   AddPortfolioItemResponse,
   AddProgramCourseResponse,
   AddProgramRequirementResponse,
@@ -392,10 +395,13 @@ import type {
   ListNotificationsResponse,
   ListObligationsResponse,
   ListOrganisationInvitationsResponse,
+  ListOrganisationPayoutMethodsResponse,
   ListOrganisationWalletAuditResponse,
   ListOrganisationWalletStatementsResponse,
   ListOrganisationWalletTransactionsResponse,
   ListPaymentsResponse,
+  ListPayoutApproversResponse,
+  ListPayoutMethodsResponse,
   ListPendingCourseEditsResponse,
   ListPendingCoursesResponse,
   ListPendingProgramsResponse,
@@ -417,6 +423,8 @@ import type {
   ListTrainingRateUpdatesResponse,
   ListTransactions1Response,
   ListTransactionsResponse,
+  MakeOrganisationPayoutMethodDefaultResponse,
+  MakePayoutMethodDefaultResponse,
   MembershipsResponse,
   ModerateCourseCreatorResponse,
   ModerateCourseResponse,
@@ -439,6 +447,8 @@ import type {
   RescheduleScheduledInstanceResponse,
   ResendInvitationResponse,
   ResendOrganisationInvitationResponse,
+  ResendOrganisationPayoutMethodCodeResponse,
+  ResendPayoutMethodCodeResponse,
   ResolveByCourseOrClassResponse,
   RestoreCourseVersionResponse,
   ReturnSubmissionResponse,
@@ -613,9 +623,35 @@ import type {
   VerifyCourseCreatorResponse,
   VerifyDocumentResponse,
   VerifyInstructorResponse,
+  VerifyOrganisationPayoutMethodResponse,
+  VerifyPayoutMethodResponse,
   WithdrawApplicationResponse,
   WithdrawPendingEditResponse,
 } from './types.gen';
+
+const payoutMethodSchemaResponseTransformer = (data: any) => {
+  if (data.verified_at) {
+    data.verified_at = new Date(data.verified_at);
+  }
+  if (data.unlock_at) {
+    data.unlock_at = new Date(data.unlock_at);
+  }
+  return data;
+};
+
+const apiResponsePayoutMethodSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = payoutMethodSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const makePayoutMethodDefaultResponseTransformer = async (
+  data: any
+): Promise<MakePayoutMethodDefaultResponse> => {
+  data = apiResponsePayoutMethodSchemaResponseTransformer(data);
+  return data;
+};
 
 const userOrganisationAffiliationDtoSchemaResponseTransformer = (data: any) => {
   if (data.start_date) {
@@ -1269,6 +1305,13 @@ export const updateTrainingBranch1ResponseTransformer = async (
   data: any
 ): Promise<UpdateTrainingBranch1Response> => {
   data = apiResponseTrainingBranchSchemaResponseTransformer(data);
+  return data;
+};
+
+export const makeOrganisationPayoutMethodDefaultResponseTransformer = async (
+  data: any
+): Promise<MakeOrganisationPayoutMethodDefaultResponse> => {
+  data = apiResponsePayoutMethodSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3009,6 +3052,75 @@ export const creditSaleResponseTransformer = async (data: any): Promise<CreditSa
   return data;
 };
 
+const apiResponseListPayoutMethodSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => payoutMethodSchemaResponseTransformer(item));
+  }
+  return data;
+};
+
+export const listPayoutMethodsResponseTransformer = async (
+  data: any
+): Promise<ListPayoutMethodsResponse> => {
+  data = apiResponseListPayoutMethodSchemaResponseTransformer(data);
+  return data;
+};
+
+const verificationCodeSchemaResponseTransformer = (data: any) => {
+  if (data.expires_at) {
+    data.expires_at = new Date(data.expires_at);
+  }
+  if (data.resend_available_at) {
+    data.resend_available_at = new Date(data.resend_available_at);
+  }
+  return data;
+};
+
+const payoutMethodCreatedSchemaResponseTransformer = (data: any) => {
+  if (data.payout_method) {
+    data.payout_method = payoutMethodSchemaResponseTransformer(data.payout_method);
+  }
+  if (data.verification) {
+    data.verification = verificationCodeSchemaResponseTransformer(data.verification);
+  }
+  return data;
+};
+
+const apiResponsePayoutMethodCreatedSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = payoutMethodCreatedSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const addPayoutMethodResponseTransformer = async (
+  data: any
+): Promise<AddPayoutMethodResponse> => {
+  data = apiResponsePayoutMethodCreatedSchemaResponseTransformer(data);
+  return data;
+};
+
+export const verifyPayoutMethodResponseTransformer = async (
+  data: any
+): Promise<VerifyPayoutMethodResponse> => {
+  data = apiResponsePayoutMethodSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseVerificationCodeSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = verificationCodeSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const resendPayoutMethodCodeResponseTransformer = async (
+  data: any
+): Promise<ResendPayoutMethodCodeResponse> => {
+  data = apiResponseVerificationCodeSchemaResponseTransformer(data);
+  return data;
+};
+
 export const depositResponseTransformer = async (data: any): Promise<DepositResponse> => {
   data = apiResponseWalletSchemaResponseTransformer(data);
   return data;
@@ -3943,6 +4055,69 @@ export const uploadOrganisationDocumentResponseTransformer = async (
   data: any
 ): Promise<UploadOrganisationDocumentResponse> => {
   data = apiResponseOrganisationDocumentSchemaResponseTransformer(data);
+  return data;
+};
+
+export const listOrganisationPayoutMethodsResponseTransformer = async (
+  data: any
+): Promise<ListOrganisationPayoutMethodsResponse> => {
+  data = apiResponseListPayoutMethodSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addOrganisationPayoutMethodResponseTransformer = async (
+  data: any
+): Promise<AddOrganisationPayoutMethodResponse> => {
+  data = apiResponsePayoutMethodCreatedSchemaResponseTransformer(data);
+  return data;
+};
+
+export const verifyOrganisationPayoutMethodResponseTransformer = async (
+  data: any
+): Promise<VerifyOrganisationPayoutMethodResponse> => {
+  data = apiResponsePayoutMethodSchemaResponseTransformer(data);
+  return data;
+};
+
+export const resendOrganisationPayoutMethodCodeResponseTransformer = async (
+  data: any
+): Promise<ResendOrganisationPayoutMethodCodeResponse> => {
+  data = apiResponseVerificationCodeSchemaResponseTransformer(data);
+  return data;
+};
+
+const payoutApproverSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListPayoutApproverSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => payoutApproverSchemaResponseTransformer(item));
+  }
+  return data;
+};
+
+export const listPayoutApproversResponseTransformer = async (
+  data: any
+): Promise<ListPayoutApproversResponse> => {
+  data = apiResponseListPayoutApproverSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponsePayoutApproverSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = payoutApproverSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const addPayoutApproverResponseTransformer = async (
+  data: any
+): Promise<AddPayoutApproverResponse> => {
+  data = apiResponsePayoutApproverSchemaResponseTransformer(data);
   return data;
 };
 
