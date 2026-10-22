@@ -1278,12 +1278,6 @@ export const RubricScoringLevelSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    display_name: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display name combining level name and points for UI.',
-      example: 'Excellent (4.0 pts)',
-      readOnly: true,
-    },
     performance_indicator: {
       type: 'string',
       description:
@@ -1302,6 +1296,12 @@ export const RubricScoringLevelSchema = {
       description:
         '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).',
       example: true,
+      readOnly: true,
+    },
+    display_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display name combining level name and points for UI.',
+      example: 'Excellent (4.0 pts)',
       readOnly: true,
     },
   },
@@ -1611,19 +1611,19 @@ export const RubricMatrixSchema = {
         '**[READ-ONLY]** Statistical information about the matrix completion and scoring.',
       readOnly: true,
     },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
+      example: true,
+      readOnly: true,
+    },
     expected_cell_count: {
       type: 'integer',
       format: 'int32',
       description:
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).',
       example: 20,
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.',
-      example: true,
       readOnly: true,
     },
   },
@@ -2429,23 +2429,10 @@ export const QuizAttemptSchema = {
       example: 'system@sarafrika.com',
       readOnly: true,
     },
-    is_completed: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).',
-      example: true,
-      readOnly: true,
-    },
-    grade_display: {
+    performance_summary: {
       type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the grade information.',
-      example: '85.00 / 100.00 (85%)',
-      readOnly: true,
-    },
-    time_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
-      example: '1 hour 15 minutes',
+      description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
+      example: 'Passed on attempt 2 with 85% score',
       readOnly: true,
     },
     attempt_category: {
@@ -2454,10 +2441,23 @@ export const QuizAttemptSchema = {
       example: 'Graded Attempt',
       readOnly: true,
     },
-    performance_summary: {
+    time_display: {
       type: 'string',
-      description: '**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.',
-      example: 'Passed on attempt 2 with 85% score',
+      description: '**[READ-ONLY]** Formatted display of the time taken to complete the quiz.',
+      example: '1 hour 15 minutes',
+      readOnly: true,
+    },
+    grade_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the grade information.',
+      example: '85.00 / 100.00 (85%)',
+      readOnly: true,
+    },
+    is_completed: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).',
+      example: true,
       readOnly: true,
     },
   },
@@ -4956,18 +4956,18 @@ export const InstructorSchema = {
       example: true,
       readOnly: true,
     },
-    has_location_coordinates: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
-      example: true,
-      readOnly: true,
-    },
     formatted_location: {
       type: ['string', 'null'],
       description:
         '**[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.',
       example: '-1.292100, 36.821900',
+      readOnly: true,
+    },
+    has_location_coordinates: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.',
+      example: true,
       readOnly: true,
     },
   },
@@ -5089,12 +5089,6 @@ export const InstructorSkillSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
-    display_name: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted skill name for display in UI components.',
-      example: 'Java Programming (Expert)',
-      readOnly: true,
-    },
     summary: {
       type: 'string',
       description: '**[READ-ONLY]** Brief summary of the skill for display in skill lists.',
@@ -5105,6 +5099,12 @@ export const InstructorSkillSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the proficiency level.',
       example: 'Expert level with 7+ years of experience',
+      readOnly: true,
+    },
+    display_name: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted skill name for display in UI components.',
+      example: 'Java Programming (Expert)',
       readOnly: true,
     },
   },
@@ -5234,12 +5234,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
-    is_valid: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the membership is currently valid and active.',
-      example: true,
-      readOnly: true,
-    },
     summary: {
       type: 'string',
       description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
@@ -5257,6 +5251,14 @@ export const InstructorProfessionalMembershipSchema = {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
       example: '4 years, 3 months',
+      readOnly: true,
+    },
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
     membership_status: {
@@ -5299,12 +5301,10 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
+    is_valid: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the membership is currently valid and active.',
+      example: true,
       readOnly: true,
     },
   },
@@ -5937,13 +5937,6 @@ export const InstructorDocumentSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_url: {
       type: 'string',
       description:
@@ -5954,6 +5947,13 @@ export const InstructorDocumentSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum2',
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
     },
     file_size_formatted: {
       type: 'string',
@@ -7491,17 +7491,17 @@ export const LessonSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    lesson_sequence: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted lesson sequence for display purposes.',
-      example: 'Lesson 3',
-      readOnly: true,
-    },
     is_published: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the lesson is published and accessible to students.',
       example: true,
+      readOnly: true,
+    },
+    lesson_sequence: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted lesson sequence for display purposes.',
+      example: 'Lesson 3',
       readOnly: true,
     },
   },
@@ -8764,11 +8764,11 @@ export const CourseCreatorSkillSchema = {
       type: 'string',
       readOnly: true,
     },
-    display_name: {
+    proficiency_description: {
       type: 'string',
       readOnly: true,
     },
-    proficiency_description: {
+    display_name: {
       type: 'string',
       readOnly: true,
     },
@@ -9247,13 +9247,6 @@ export const CourseCreatorDocumentDTOSchema = {
       type: 'string',
       readOnly: true,
     },
-    is_expired: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
-      example: false,
-      readOnly: true,
-    },
     file_url: {
       type: 'string',
       description:
@@ -9264,6 +9257,13 @@ export const CourseCreatorDocumentDTOSchema = {
     },
     verification_status: {
       $ref: '#/components/schemas/VerificationStatusEnum2',
+    },
+    is_expired: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the document has expired based on the expiry date.',
+      example: false,
+      readOnly: true,
     },
     file_size_formatted: {
       type: 'string',
@@ -9823,17 +9823,17 @@ export const DifficultyLevelSchema = {
       example: 'admin@sarafrika.com',
       readOnly: true,
     },
+    is_entry_level: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.',
+      example: false,
+      readOnly: true,
+    },
     display_name: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted display name including level order for UI presentation.',
       example: 'Level 3: Intermediate',
-      readOnly: true,
-    },
-    is_entry_level: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.',
-      example: false,
       readOnly: true,
     },
   },
@@ -10809,13 +10809,6 @@ export const ClassDefinitionSchema = {
         '**[READ-ONLY]** Marketplace job this class was created from at instructor assignment. Null for directly created classes.',
       readOnly: true,
     },
-    is_standalone: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if this is a standalone class not associated with any course.',
-      example: false,
-      readOnly: true,
-    },
     duration_minutes: {
       type: 'integer',
       format: 'int64',
@@ -10835,6 +10828,13 @@ export const ClassDefinitionSchema = {
       description:
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.',
       example: 'Max 25 participants (waitlist enabled)',
+      readOnly: true,
+    },
+    is_standalone: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if this is a standalone class not associated with any course.',
+      example: false,
       readOnly: true,
     },
   },
@@ -12117,17 +12117,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: '100.00 points',
+      readOnly: true,
+    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
-      readOnly: true,
-    },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: '100.00 points',
       readOnly: true,
     },
     assignment_scope: {
@@ -12562,6 +12562,22 @@ export const WalletSchema = {
       description: '**[READ-ONLY]** Lifetime money transferred out to other users.',
       readOnly: true,
     },
+    held_amount: {
+      type: 'number',
+      description:
+        '**[READ-ONLY]** Money held for withdrawals still being paid out; not part of the balance.',
+      readOnly: true,
+    },
+    available_amount: {
+      type: 'number',
+      description: '**[READ-ONLY]** What can be withdrawn or spent now.',
+      readOnly: true,
+    },
+    can_withdraw: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Whether the caller may withdraw from this wallet.',
+      readOnly: true,
+    },
   },
 } as const;
 
@@ -12900,25 +12916,6 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_started: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_ended: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
-      example: false,
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -12935,6 +12932,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
+      example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
       example: false,
       readOnly: true,
     },
@@ -16074,12 +16090,6 @@ export const EnrollmentSchema = {
       description: "**[READ-ONLY]** The instructor's attendance comment for this session.",
       readOnly: true,
     },
-    is_active: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).',
-      example: true,
-      readOnly: true,
-    },
     can_be_cancelled: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
@@ -16092,16 +16102,22 @@ export const EnrollmentSchema = {
       example: false,
       readOnly: true,
     },
+    did_attend: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the student attended the class.',
+      example: false,
+      readOnly: true,
+    },
     status_description: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
       readOnly: true,
     },
-    did_attend: {
+    is_active: {
       type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the student attended the class.',
-      example: false,
+      description: '**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).',
+      example: true,
       readOnly: true,
     },
   },
@@ -19014,10 +19030,10 @@ export const PageMetadataSchema = {
     hasPrevious: {
       type: 'boolean',
     },
-    first: {
+    last: {
       type: 'boolean',
     },
-    last: {
+    first: {
       type: 'boolean',
     },
   },
@@ -19058,7 +19074,7 @@ export const WalletTransactionSchema = {
       readOnly: true,
     },
     transaction_type: {
-      $ref: '#/components/schemas/TransactionTypeEnum',
+      $ref: '#/components/schemas/ItemsEnum2',
     },
     amount: {
       type: 'number',
@@ -19114,6 +19130,166 @@ export const WalletTransactionSchema = {
       type: 'string',
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the transaction was recorded.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponseListWalletStatementSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/WalletStatement',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const WalletStatementSchema = {
+  type: 'object',
+  description: "One calendar month (UTC) of a wallet's activity",
+  properties: {
+    month: {
+      type: 'string',
+      description: '**[READ-ONLY]** The month, as YYYY-MM.',
+      example: '2026-10',
+      readOnly: true,
+    },
+    currency_code: {
+      type: 'string',
+      description: '**[READ-ONLY]** Currency of every amount here.',
+      example: 'KES',
+      readOnly: true,
+    },
+    opening_balance: {
+      type: 'number',
+      description: '**[READ-ONLY]** Balance when the month began.',
+      readOnly: true,
+    },
+    money_in: {
+      type: 'number',
+      description: '**[READ-ONLY]** Everything that raised the balance.',
+      readOnly: true,
+    },
+    money_out: {
+      type: 'number',
+      description: '**[READ-ONLY]** Everything that lowered the balance.',
+      readOnly: true,
+    },
+    closing_balance: {
+      type: 'number',
+      description: '**[READ-ONLY]** Balance when the month ended, or now for the current month.',
+      readOnly: true,
+    },
+    transaction_count: {
+      type: 'integer',
+      format: 'int64',
+      description: '**[READ-ONLY]** Number of transactions in the month.',
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOWalletAuditEventSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOWalletAuditEvent',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOWalletAuditEventSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/WalletAuditEvent',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const WalletAuditEventSchema = {
+  type: 'object',
+  description: "One append-only entry in a wallet's audit trail",
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** Event identifier.',
+      readOnly: true,
+    },
+    event_type: {
+      $ref: '#/components/schemas/EventTypeEnum2',
+    },
+    actor_kind: {
+      type: 'string',
+      description: '**[READ-ONLY]** SYSTEM for automatic changes, USER when a person made it.',
+      example: 'SYSTEM',
+      readOnly: true,
+    },
+    actor_user_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: '**[READ-ONLY]** The person who made the change; null for the system.',
+      readOnly: true,
+    },
+    currency_code: {
+      type: 'string',
+      description: '**[READ-ONLY]** Currency the event concerns.',
+      example: 'KES',
+      readOnly: true,
+    },
+    reference: {
+      type: 'string',
+      description: '**[READ-ONLY]** Reference of the underlying record.',
+      readOnly: true,
+    },
+    reason: {
+      type: 'string',
+      description: '**[READ-ONLY]** Why it happened, in words.',
+      readOnly: true,
+    },
+    previous_values: {
+      type: 'object',
+      additionalProperties: {},
+      description: '**[READ-ONLY]** Values before the change.',
+      readOnly: true,
+    },
+    updated_values: {
+      type: 'object',
+      additionalProperties: {},
+      description: '**[READ-ONLY]** Values after the change.',
+      readOnly: true,
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+      description: '**[READ-ONLY]** When it happened.',
       readOnly: true,
     },
   },
@@ -19761,6 +19937,15 @@ export const PageSessionReportSummarySchema = {
       type: 'integer',
       format: 'int32',
     },
+    pageable: {
+      $ref: '#/components/schemas/PageableObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
+    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -19775,21 +19960,12 @@ export const PageSessionReportSummarySchema = {
       type: 'integer',
       format: 'int32',
     },
-    numberOfElements: {
-      type: 'integer',
-      format: 'int32',
-    },
     sort: {
       $ref: '#/components/schemas/SortObject',
     },
-    pageable: {
-      $ref: '#/components/schemas/PageableObject',
-    },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
+    numberOfElements: {
+      type: 'integer',
+      format: 'int32',
     },
     empty: {
       type: 'boolean',
@@ -19800,13 +19976,6 @@ export const PageSessionReportSummarySchema = {
 export const PageableObjectSchema = {
   type: 'object',
   properties: {
-    offset: {
-      type: 'integer',
-      format: 'int64',
-    },
-    sort: {
-      $ref: '#/components/schemas/SortObject',
-    },
     paged: {
       type: 'boolean',
     },
@@ -19820,6 +19989,13 @@ export const PageableObjectSchema = {
     },
     unpaged: {
       type: 'boolean',
+    },
+    offset: {
+      type: 'integer',
+      format: 'int64',
+    },
+    sort: {
+      $ref: '#/components/schemas/SortObject',
     },
   },
 } as const;
@@ -19884,13 +20060,13 @@ export const SessionReportSummarySchema = {
 export const SortObjectSchema = {
   type: 'object',
   properties: {
-    empty: {
-      type: 'boolean',
-    },
     sorted: {
       type: 'boolean',
     },
     unsorted: {
+      type: 'boolean',
+    },
+    empty: {
       type: 'boolean',
     },
   },
@@ -20396,6 +20572,15 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
+    pageable: {
+      $ref: '#/components/schemas/PageableObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
+    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -20408,21 +20593,12 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
-    numberOfElements: {
-      type: 'integer',
-      format: 'int32',
-    },
     sort: {
       $ref: '#/components/schemas/SortObject',
     },
-    pageable: {
-      $ref: '#/components/schemas/PageableObject',
-    },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
+    numberOfElements: {
+      type: 'integer',
+      format: 'int32',
     },
     empty: {
       type: 'boolean',
@@ -21969,7 +22145,7 @@ export const TrainingApplicationEventSchema = {
       readOnly: true,
     },
     event_type: {
-      $ref: '#/components/schemas/EventTypeEnum2',
+      $ref: '#/components/schemas/EventTypeEnum3',
     },
     actor_uuid: {
       type: ['string', 'null'],
@@ -22210,12 +22386,6 @@ export const ProgramEnrollmentSchema = {
       example: 'system@sarafrika.com',
       readOnly: true,
     },
-    is_active: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.',
-      example: false,
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
@@ -22240,6 +22410,12 @@ export const ProgramEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed program with final grade of 87.25',
+      readOnly: true,
+    },
+    is_active: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.',
+      example: false,
       readOnly: true,
     },
   },
@@ -22522,6 +22698,15 @@ export const WalletBalanceSummarySchema = {
     },
     transferred_out_total: {
       type: 'number',
+    },
+    held_amount: {
+      type: 'number',
+    },
+    available_amount: {
+      type: 'number',
+    },
+    can_withdraw: {
+      type: 'boolean',
     },
   },
 } as const;
@@ -24196,26 +24381,26 @@ export const PagedDTOInstructorDocumentSchema = {
 export const GuardianStudentDashboardDTOSchema = {
   type: 'object',
   properties: {
-    studentUuid: {
+    student_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    studentName: {
+    student_name: {
       type: 'string',
     },
-    shareScope: {
+    share_scope: {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
       $ref: '#/components/schemas/StatusEnum12',
     },
-    courseProgress: {
+    course_progress: {
       type: 'array',
       items: {
         $ref: '#/components/schemas/LearnerCourseProgressView',
       },
     },
-    programProgress: {
+    program_progress: {
       type: 'array',
       items: {
         $ref: '#/components/schemas/LearnerProgramProgressView',
@@ -24227,24 +24412,24 @@ export const GuardianStudentDashboardDTOSchema = {
 export const LearnerCourseProgressViewSchema = {
   type: 'object',
   properties: {
-    enrollmentUuid: {
+    enrollment_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    courseUuid: {
+    course_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    courseName: {
+    course_name: {
       type: 'string',
     },
     status: {
       type: 'string',
     },
-    progressPercentage: {
+    progress_percentage: {
       type: 'number',
     },
-    updatedDate: {
+    updated_date: {
       type: 'string',
       format: 'date-time',
     },
@@ -24254,24 +24439,24 @@ export const LearnerCourseProgressViewSchema = {
 export const LearnerProgramProgressViewSchema = {
   type: 'object',
   properties: {
-    enrollmentUuid: {
+    enrollment_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    programUuid: {
+    program_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    programName: {
+    program_name: {
       type: 'string',
     },
     status: {
       type: 'string',
     },
-    progressPercentage: {
+    progress_percentage: {
       type: 'number',
     },
-    updatedDate: {
+    updated_date: {
       type: 'string',
       format: 'date-time',
     },
@@ -24300,27 +24485,27 @@ export const ApiResponseListGuardianStudentSummaryDTOSchema = {
 export const GuardianStudentSummaryDTOSchema = {
   type: 'object',
   properties: {
-    linkUuid: {
+    link_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    studentUuid: {
+    student_uuid: {
       type: 'string',
       format: 'uuid',
     },
-    studentName: {
+    student_name: {
       type: 'string',
     },
-    relationshipType: {
+    relationship_type: {
       $ref: '#/components/schemas/RelationshipTypeEnum2',
     },
-    shareScope: {
+    share_scope: {
       $ref: '#/components/schemas/ShareScopeEnum',
     },
     status: {
       $ref: '#/components/schemas/StatusEnum12',
     },
-    primaryGuardian: {
+    primary_guardian: {
       type: 'boolean',
     },
   },
@@ -27138,12 +27323,6 @@ export const CourseEnrollmentSchema = {
       example: 'system@sarafrika.com',
       readOnly: true,
     },
-    is_active: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.',
-      example: false,
-      readOnly: true,
-    },
     enrollment_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
@@ -27168,6 +27347,12 @@ export const CourseEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed with final grade of 85.50',
+      readOnly: true,
+    },
+    is_active: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.',
+      example: false,
       readOnly: true,
     },
   },
@@ -28699,7 +28884,7 @@ export const ClassMarketplaceJobApplicationEventSchema = {
       readOnly: true,
     },
     event_type: {
-      $ref: '#/components/schemas/EventTypeEnum3',
+      $ref: '#/components/schemas/EventTypeEnum4',
     },
     actor_uuid: {
       type: ['string', 'null'],
@@ -31326,6 +31511,11 @@ export const SchemaEnum5Schema = {
   enum: ['skills', 'competencies', 'certifications'],
 } as const;
 
+export const ItemsEnum2Schema = {
+  type: 'string',
+  enum: ['DEPOSIT', 'SALE', 'TRANSFER_IN', 'TRANSFER_OUT', 'PLATFORM_FEE', 'SALE_REVERSAL'],
+} as const;
+
 export const SchemaEnum6Schema = {
   type: 'string',
   enum: ['draft', 'in_review', 'published', 'archived'],
@@ -31347,12 +31537,12 @@ export const SchemaEnum9Schema = {
   enum: ['all', 'courses', 'programmes'],
 } as const;
 
-export const ItemsEnum2Schema = {
+export const ItemsEnum3Schema = {
   type: 'string',
   enum: ['beginner', 'intermediate', 'advanced'],
 } as const;
 
-export const ItemsEnum3Schema = {
+export const ItemsEnum4Schema = {
   type: 'string',
   enum: ['free', 'paid'],
 } as const;
@@ -32121,11 +32311,18 @@ export const DomainNameEnum2Schema = {
   minLength: 1,
 } as const;
 
-export const TransactionTypeEnumSchema = {
+export const EventTypeEnum2Schema = {
   type: 'string',
-  description: '**[READ-ONLY]** Transaction category for this wallet entry.',
-  enum: ['DEPOSIT', 'SALE', 'TRANSFER_IN', 'TRANSFER_OUT', 'PLATFORM_FEE', 'SALE_REVERSAL'],
-  example: 'DEPOSIT',
+  description: '**[READ-ONLY]** What happened.',
+  enum: [
+    'DEPOSIT_RECORDED',
+    'SALE_SHARE_CREDITED',
+    'PLATFORM_FEE_CHARGED',
+    'TRANSFER_SENT',
+    'TRANSFER_RECEIVED',
+    'SALE_SHARE_REVERSED',
+  ],
+  example: 'SALE_SHARE_CREDITED',
   readOnly: true,
 } as const;
 
@@ -32169,7 +32366,7 @@ export const StatusEnum23Schema = {
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
 
-export const EventTypeEnum2Schema = {
+export const EventTypeEnum3Schema = {
   type: 'string',
   description: '**[READ-ONLY]** What happened.',
   enum: [
@@ -32294,7 +32491,7 @@ export const ApplicationStatusEnumSchema = {
   readOnly: true,
 } as const;
 
-export const EventTypeEnum3Schema = {
+export const EventTypeEnum4Schema = {
   type: 'string',
   description:
     '**[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.',
@@ -40533,6 +40730,66 @@ export const PagedDTOWalletTransactionWritableSchema = {
 export const WalletTransactionWritableSchema = {
   type: 'object',
   description: 'Wallet ledger entry capturing balance changes',
+  properties: {
+    transaction_type: {
+      $ref: '#/components/schemas/ItemsEnum2',
+    },
+  },
+} as const;
+
+export const ApiResponseListWalletStatementWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ApiResponsePagedDTOWalletAuditEventWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOWalletAuditEventWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOWalletAuditEventWritableSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/WalletAuditEventWritable',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const WalletAuditEventWritableSchema = {
+  type: 'object',
+  description: "One append-only entry in a wallet's audit trail",
 } as const;
 
 export const ApiResponsePagedDTOUserWritableSchema = {
