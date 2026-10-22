@@ -9379,14 +9379,11 @@ export const zPayoutMethod = z
       .readonly()
       .optional(),
     method_type: zMethodTypeEnum.optional(),
-    msisdn: z
-      .string()
-      .describe('**[READ-ONLY]** The number, written out (owner only).')
-      .readonly()
-      .optional(),
     masked_msisdn: z
       .string()
-      .describe('**[READ-ONLY]** The number with most digits hidden.')
+      .describe(
+        '**[READ-ONLY]** The number with most digits hidden; the full number never leaves the server.'
+      )
       .readonly()
       .optional(),
     label: z.string().describe("**[READ-ONLY]** Owner's nickname for it.").readonly().optional(),
@@ -12262,14 +12259,14 @@ export const zInstructorProfessionalMembership = z
       )
       .readonly()
       .optional(),
-    summary: z
-      .string()
-      .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
-      .readonly()
-      .optional(),
     is_complete: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .readonly()
+      .optional(),
+    summary: z
+      .string()
+      .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
       .readonly()
       .optional(),
     formatted_duration: z.string().readonly().nullish(),
@@ -12403,14 +12400,14 @@ export const zInstructorExperience = z
       )
       .readonly()
       .optional(),
-    summary: z
-      .string()
-      .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
-      .readonly()
-      .optional(),
     is_complete: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the experience record has all essential information.')
+      .readonly()
+      .optional(),
+    summary: z
+      .string()
+      .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
       .readonly()
       .optional(),
     duration_in_months: z
@@ -12537,6 +12534,11 @@ export const zInstructorEducation = z
       )
       .readonly()
       .optional(),
+    full_description: z
+      .string()
+      .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
+      .readonly()
+      .optional(),
     is_complete: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
@@ -12567,11 +12569,6 @@ export const zInstructorEducation = z
       .describe(
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.'
       )
-      .readonly()
-      .optional(),
-    full_description: z
-      .string()
-      .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
   })
@@ -15139,16 +15136,16 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
-      .readonly()
-      .optional(),
     assignment_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.'
       )
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
     assignment_scope: z

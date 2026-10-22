@@ -53,15 +53,10 @@ export const PayoutMethodSchema = {
     method_type: {
       $ref: '#/components/schemas/MethodTypeEnum',
     },
-    msisdn: {
-      type: 'string',
-      description: '**[READ-ONLY]** The number, written out (owner only).',
-      example: '+254 712 345 678',
-      readOnly: true,
-    },
     masked_msisdn: {
       type: 'string',
-      description: '**[READ-ONLY]** The number with most digits hidden.',
+      description:
+        '**[READ-ONLY]** The number with most digits hidden; the full number never leaves the server.',
       example: '+254 7•• ••• 678',
       readOnly: true,
     },
@@ -5314,17 +5309,17 @@ export const InstructorProfessionalMembershipSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
-      example: 'IEEE Member (4 years, 3 months) - Active',
-      readOnly: true,
-    },
     is_complete: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the membership record has all essential information.',
       example: true,
+      readOnly: true,
+    },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
+      example: 'IEEE Member (4 years, 3 months) - Active',
       readOnly: true,
     },
     formatted_duration: {
@@ -5532,17 +5527,17 @@ export const InstructorExperienceSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
-      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
-      readOnly: true,
-    },
     is_complete: {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the experience record has all essential information.',
       example: true,
+      readOnly: true,
+    },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
+      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
       readOnly: true,
     },
     duration_in_months: {
@@ -5733,6 +5728,13 @@ export const InstructorEducationSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
+    full_description: {
+      type: 'string',
+      description:
+        '**[READ-ONLY]** Complete description combining qualification, school, and year.',
+      example: 'Master of Science in Computer Science from University of Nairobi (2020)',
+      readOnly: true,
+    },
     is_complete: {
       type: 'boolean',
       description:
@@ -5768,13 +5770,6 @@ export const InstructorEducationSchema = {
       description:
         '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
       example: true,
-      readOnly: true,
-    },
-    full_description: {
-      type: 'string',
-      description:
-        '**[READ-ONLY]** Complete description combining qualification, school, and year.',
-      example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
   },
@@ -12197,17 +12192,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: '100.00 points',
-      readOnly: true,
-    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
+      readOnly: true,
+    },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: '100.00 points',
       readOnly: true,
     },
     assignment_scope: {

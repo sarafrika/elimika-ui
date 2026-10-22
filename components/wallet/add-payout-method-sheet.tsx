@@ -214,7 +214,7 @@ export function AddPayoutMethodSheet({
           <div className='flex flex-1 flex-col items-center gap-2 overflow-y-auto px-4 pt-6 text-center'>
             <CheckCircle2 aria-hidden className='text-success size-14' />
             <p className='text-lg font-bold'>Number verified</p>
-            <p className='font-mono'>{verified?.msisdn}</p>
+            <p className='font-mono'>{verified?.masked_msisdn}</p>
             <p className='text-muted-foreground max-w-xs text-sm'>
               {verified?.on_hold && unlock
                 ? `For your safety, withdrawals to this number unlock on ${unlock} (EAT). We emailed you in case this wasn't you.`

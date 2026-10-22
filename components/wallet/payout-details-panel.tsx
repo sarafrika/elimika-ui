@@ -151,7 +151,7 @@ export function PayoutDetailsPanel({
                           </Badge>
                         )}
                       </div>
-                      <p className='font-mono text-sm'>{method.msisdn}</p>
+                      <p className='font-mono text-sm'>{method.masked_msisdn}</p>
                       <p className='text-muted-foreground text-xs'>
                         {method.mpesa_registered_name
                           ? `Name on M-Pesa: ${method.mpesa_registered_name}`
@@ -194,7 +194,7 @@ export function PayoutDetailsPanel({
                   {removing === uuid ? (
                     <div className='flex flex-wrap items-center gap-2 border-t pt-3'>
                       <p className='text-muted-foreground flex-[1_1_260px] text-sm'>
-                        Remove {method.msisdn}? Withdrawals already sent to it still complete.
+                        Remove {method.masked_msisdn}? Withdrawals already sent to it still complete.
                       </p>
                       <Button size='sm' variant='ghost' onClick={() => setRemoving(null)}>
                         Keep

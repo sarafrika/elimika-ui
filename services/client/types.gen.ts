@@ -34,11 +34,7 @@ export type PayoutMethod = {
   readonly uuid?: string;
   method_type?: MethodTypeEnum;
   /**
-   * **[READ-ONLY]** The number, written out (owner only).
-   */
-  readonly msisdn?: string;
-  /**
-   * **[READ-ONLY]** The number with most digits hidden.
+   * **[READ-ONLY]** The number with most digits hidden; the full number never leaves the server.
    */
   readonly masked_msisdn?: string;
   /**
@@ -2547,13 +2543,13 @@ export type InstructorProfessionalMembership = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Brief summary of the membership for display in listings.
-   */
-  readonly summary?: string;
-  /**
    * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Brief summary of the membership for display in listings.
+   */
+  readonly summary?: string;
   /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
@@ -2654,13 +2650,13 @@ export type InstructorExperience = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Brief summary of the experience for display in listings.
-   */
-  readonly summary?: string;
-  /**
    * **[READ-ONLY]** Indicates if the experience record has all essential information.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Brief summary of the experience for display in listings.
+   */
+  readonly summary?: string;
   /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
@@ -2752,6 +2748,10 @@ export type InstructorEducation = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Complete description combining qualification, school, and year.
+   */
+  readonly full_description?: string;
+  /**
    * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
   readonly is_complete?: boolean;
@@ -2772,10 +2772,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
   readonly has_certificate_number?: boolean;
-  /**
-   * **[READ-ONLY]** Complete description combining qualification, school, and year.
-   */
-  readonly full_description?: string;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -5755,13 +5751,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
    */
   readonly assignment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
