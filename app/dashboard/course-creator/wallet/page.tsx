@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, FileText, Landmark, LayoutDashboard, ShieldCheck, Smartphone, Undo2 } from 'lucide-react';
+import { ArrowLeftRight, ArrowUpRight, FileText, Landmark, LayoutDashboard, ShieldCheck, Smartphone, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { TrainingOrdersDashboard } from '@/app/dashboard/_components/wallet/TrainingOrdersDashboard';
 import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
@@ -20,12 +20,14 @@ import {
 } from '@/components/wallet/wallet-panels';
 import { invalidateWallet, useWalletFigures, type WalletScope } from '@/components/wallet/wallet-scope';
 import { WalletShell } from '@/components/wallet/wallet-shell';
+import { WithdrawSheet } from '@/components/wallet/withdraw-sheet';
+import { WithdrawalsPanel } from '@/components/wallet/withdrawals-panel';
 import { useUserProfile } from '@/context/profile-context';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { getMyCourseEarningsOptions } from '@/services/client/@tanstack/react-query.gen';
 
-const TABS = ['dashboard', 'accounts', 'transactions', 'payout', 'refunds', 'statements', 'audit'] as const;
-const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
+const TABS = ['dashboard', 'accounts', 'transactions', 'withdrawals', 'payout', 'refunds', 'statements', 'audit'] as const;
+const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'WITHDRAWAL', 'WITHDRAWAL_REVERSAL', 'PAYOUT_FEE', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
 
 /** A course creator's share of every class sold on their courses, per course, and every movement of it. */
 export default function CourseCreatorWalletPage() {
@@ -36,6 +38,7 @@ export default function CourseCreatorWalletPage() {
   const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'dashboard');
   const [transferOpen, setTransferOpen] = useState(false);
   const { figures, isLoading } = useWalletFigures(scope);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const currency = figures?.currency ?? 'KES';
 
   const earnings = useQuery({ ...getMyCourseEarningsOptions(), enabled: tab === 'accounts' });
@@ -62,6 +65,7 @@ export default function CourseCreatorWalletPage() {
           { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
           { id: 'accounts', label: 'Accounts', icon: Landmark },
           { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
+          { id: 'withdrawals', label: 'Withdrawals', icon: ArrowUpRight },
           { id: 'payout', label: 'Payout details', icon: Smartphone },
           { id: 'refunds', label: 'Refunds', icon: Undo2 },
           { id: 'statements', label: 'Statements', icon: FileText },
@@ -70,6 +74,7 @@ export default function CourseCreatorWalletPage() {
         tab={tab}
         onTabChange={setTab}
         hrefFor={hrefFor}
+        onWithdraw={() => setWithdrawOpen(true)}
         actions={
           <Button variant='outline' onClick={() => setTransferOpen(true)} disabled={!figures || figures.available <= 0}>
             Transfer
@@ -114,6 +119,15 @@ export default function CourseCreatorWalletPage() {
         <SectionTabPanel value='transactions'>
           <TransactionsPanel scope={scope} active={tab === 'transactions'} filterTypes={EARNER_TYPES} />
         </SectionTabPanel>
+        <SectionTabPanel value='withdrawals'>
+          <WithdrawalsPanel
+            scope={scope}
+            active={tab === 'withdrawals'}
+            selfUuid={userUuid}
+            onWithdraw={figures?.canWithdraw ? () => setWithdrawOpen(true) : undefined}
+            onChanged={() => void invalidateWallet(queryClient)}
+          />
+        </SectionTabPanel>
         <SectionTabPanel value='payout'>
           <PayoutDetailsPanel
             scope={scope}
@@ -145,6 +159,15 @@ export default function CourseCreatorWalletPage() {
         balance={figures?.available ?? 0}
         currency={currency}
         onTransferred={() => void invalidateWallet(queryClient)}
+      />
+      <WithdrawSheet
+        open={withdrawOpen}
+        onOpenChange={setWithdrawOpen}
+        scope={scope}
+        available={figures?.available ?? 0}
+        currency={currency}
+        onAddNumber={() => setTab('payout')}
+        onChanged={() => void invalidateWallet(queryClient)}
       />
     </>
   );

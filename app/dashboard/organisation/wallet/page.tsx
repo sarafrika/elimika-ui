@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, Coins, FileText, Landmark, LayoutDashboard, Receipt, ShieldCheck, Smartphone, Undo2, Users } from 'lucide-react';
+import { ArrowLeftRight, ArrowUpRight, Coins, FileText, Landmark, LayoutDashboard, Receipt, ShieldCheck, Smartphone, Undo2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
@@ -23,13 +23,15 @@ import {
 } from '@/components/wallet/wallet-panels';
 import { invalidateWallet, useWalletFigures, type WalletScope } from '@/components/wallet/wallet-scope';
 import { WalletShell } from '@/components/wallet/wallet-shell';
+import { WithdrawSheet } from '@/components/wallet/withdraw-sheet';
+import { WithdrawalsPanel } from '@/components/wallet/withdrawals-panel';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassDefinitionsByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { listObligationsOptions, listObligationsQueryKey } from '@/services/client/@tanstack/react-query.gen';
 
-const TABS = ['dashboard', 'accounts', 'transactions', 'payout', 'refunds', 'statements', 'audit'] as const;
-const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
+const TABS = ['dashboard', 'accounts', 'transactions', 'withdrawals', 'payout', 'refunds', 'statements', 'audit'] as const;
+const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'WITHDRAWAL', 'WITHDRAWAL_REVERSAL', 'PAYOUT_FEE', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
 const PAGE = { pageable: { page: 0, size: 100 } };
 const PAYABLE_FILTERS = [
   { id: 'all', label: 'All sessions' },
@@ -49,6 +51,7 @@ export default function OrganisationWalletPage() {
   const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'dashboard');
   const [settling, setSettling] = useState<LedgerEntry<Obligation> | null>(null);
   const { figures, isLoading } = useWalletFigures(scope);
+  const [withdrawOpen, setWithdrawOpen] = useState(false);
   const currency = figures?.currency ?? 'KES';
 
   const obligationQuery = { path: { organisationUuid }, query: PAGE };
@@ -78,6 +81,7 @@ export default function OrganisationWalletPage() {
           { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
           { id: 'accounts', label: 'Accounts', icon: Landmark, count: owedList.length || null },
           { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
+          { id: 'withdrawals', label: 'Withdrawals', icon: ArrowUpRight },
           { id: 'payout', label: 'Payout details', icon: Smartphone },
           { id: 'refunds', label: 'Refunds', icon: Undo2 },
           { id: 'statements', label: 'Statements', icon: FileText },
@@ -86,6 +90,7 @@ export default function OrganisationWalletPage() {
         tab={tab}
         onTabChange={setTab}
         hrefFor={hrefFor}
+        onWithdraw={() => setWithdrawOpen(true)}
       >
         <SectionTabPanel value='dashboard' className='space-y-5'>
           <section aria-label='Summary' className={surfaceTheme.statGrid}>
@@ -148,6 +153,16 @@ export default function OrganisationWalletPage() {
             exportName='organisation-wallet-transactions.csv'
           />
         </SectionTabPanel>
+        <SectionTabPanel value='withdrawals'>
+          <WithdrawalsPanel
+            scope={scope}
+            active={tab === 'withdrawals'}
+            selfUuid={user?.uuid}
+            canApprove={isApprover}
+            onWithdraw={figures?.canWithdraw ? () => setWithdrawOpen(true) : undefined}
+            onChanged={() => void invalidateWallet(queryClient)}
+          />
+        </SectionTabPanel>
         <SectionTabPanel value='payout'>
           <PayoutDetailsPanel
             scope={scope}
@@ -190,6 +205,15 @@ export default function OrganisationWalletPage() {
           void queryClient.invalidateQueries({ queryKey: listObligationsQueryKey(obligationQuery) });
           void invalidateWallet(queryClient);
         }}
+      />
+      <WithdrawSheet
+        open={withdrawOpen}
+        onOpenChange={setWithdrawOpen}
+        scope={scope}
+        available={figures?.available ?? 0}
+        currency={currency}
+        onAddNumber={() => setTab('payout')}
+        onChanged={() => void invalidateWallet(queryClient)}
       />
     </>
   );

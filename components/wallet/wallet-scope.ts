@@ -30,6 +30,8 @@ const WALLET_QUERY_IDS = new Set([
   'listPayoutMethods',
   'listOrganisationPayoutMethods',
   'listPayoutApprovers',
+  'listWithdrawals',
+  'listOrganisationWithdrawals',
 ]);
 
 export const scopeReady = (scope: WalletScope) =>

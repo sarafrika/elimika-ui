@@ -214,6 +214,20 @@ const workflowQueryIds = {
     'getOrganisationInstructorSummaries',
     'getOrganisationStatistics',
   ],
+  wallet: [
+    'getWallet',
+    'getOrganisationWallet',
+    'listTransactions1',
+    'listOrganisationWalletTransactions',
+    'listStatements',
+    'listOrganisationWalletStatements',
+    'listAudit',
+    'listOrganisationWalletAudit',
+    'listWithdrawals',
+    'listOrganisationWithdrawals',
+    'listPayoutMethods',
+    'listOrganisationPayoutMethods',
+  ],
 } as const;
 
 const contentModerationQueryIds = workflowQueryIds.contentModeration;
@@ -226,6 +240,7 @@ const assessmentQueryIds = workflowQueryIds.assessment;
 const certificateQueryIds = workflowQueryIds.certificate;
 const invitationQueryIds = workflowQueryIds.invitation;
 const sessionReportQueryIds = workflowQueryIds.sessionReport;
+const walletQueryIds = workflowQueryIds.wallet;
 
 /** Course and program reads keyed by the uuid that moderation and application events name. */
 const COURSE_DETAIL_QUERY_IDS: ReadonlySet<string> = new Set([
@@ -405,6 +420,14 @@ export async function invalidateJobApplicationWorkflowQueries(
 }
 
 /** Review events name the reviewed class or program, not every read they move, so nothing is scoped. */
+/** A withdrawal paid, failed or rejected moves the balance, the ledger and the withdrawal list. */
+async function invalidateWalletWorkflowQueries(queryClient: QueryClient) {
+  await Promise.all([
+    invalidateGeneratedQueryIds(queryClient, walletQueryIds),
+    invalidateQueryKeyPrefixes(queryClient, [notificationQueryKey]),
+  ]);
+}
+
 export async function invalidateReviewWorkflowQueries(queryClient: QueryClient) {
   await Promise.all([
     invalidateGeneratedQueryIds(queryClient, reviewQueryIds),
@@ -519,6 +542,10 @@ export function invalidateWorkflowQueriesForNotification(
 
   if (type.includes('REVIEW') || type.includes('RATING')) {
     return invalidateReviewWorkflowQueries(queryClient);
+  }
+
+  if (type.startsWith('WALLET_WITHDRAWAL')) {
+    return invalidateWalletWorkflowQueries(queryClient);
   }
 
   if (type.startsWith('SESSION_REPORT')) {
