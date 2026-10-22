@@ -380,7 +380,7 @@ const InstructorStudentsDetailPage = () => {
         variant='ghost'
         size='sm'
         className='-ml-2 w-fit rounded'
-        onClick={() => router.push('/dashboard/instructor/students')}
+        onClick={() => router.push('/dashboard/instructor/enrollments')}
       >
         <ArrowLeft className='mr-2 h-4 w-4' />
         All students

@@ -2,11 +2,10 @@
 
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
 import { useMemo } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { StudentCourseAction } from '../../components/StudentCourseAction';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
@@ -49,9 +48,7 @@ import {
   getProgramReviewsOptions,
   getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { stripHtml } from '@/src/features/dashboard/courses/shared/_components/courses-data';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { ImageWithFallback } from '../../../../../../components/data/image-with-fallback';
 import { Skeleton } from '../../../../../../components/ui/skeleton';
 import { toAuthenticatedMediaUrl } from '../../../../../lib/media-url';
@@ -67,7 +64,6 @@ export function CourseDetailsSheet({
   open: boolean;
   onOpenChange: (o: boolean) => void;
 }) {
-  const { activeDomain } = useUserDomain();
   const isCourse = type === 'course';
   const isProgram = type === 'program';
   const resolvedId = itemId ?? '';
@@ -334,12 +330,13 @@ export function CourseDetailsSheet({
               <p className='text-foreground'>
                 {studentRequirements.length > 0
                   ? studentRequirements
-                    .map(
-                      (requirement: CourseTrainingRequirement) =>
-                        `${requirement.name} (${requirement.quantity ?? 0} ${requirement.unit ?? ''
-                        })`
-                    )
-                    .join(', ') + '.'
+                      .map(
+                        (requirement: CourseTrainingRequirement) =>
+                          `${requirement.name} (${requirement.quantity ?? 0} ${
+                            requirement.unit ?? ''
+                          })`
+                      )
+                      .join(', ') + '.'
                   : 'No student-provided materials required.'}
               </p>
             </Section>
@@ -351,11 +348,11 @@ export function CourseDetailsSheet({
               <p className='text-foreground'>
                 {assessments.length > 0
                   ? assessments
-                    .map(
-                      (assessment: CourseAssessment) =>
-                        `${assessment.title || 'Untitled Assessment'} (${assessment.weight_percentage ?? 0}%)`
-                    )
-                    .join(', ') + '.'
+                      .map(
+                        (assessment: CourseAssessment) =>
+                          `${assessment.title || 'Untitled Assessment'} (${assessment.weight_percentage ?? 0}%)`
+                      )
+                      .join(', ') + '.'
                   : 'Assessment details will be shared by the instructor.'}
               </p>
             </Section>
@@ -407,35 +404,23 @@ export function CourseDetailsSheet({
             <Separator />
 
             <div className='flex flex-wrap gap-2 pb-4'>
-              <Button
-                asChild
+              <StudentCourseAction
+                href={
+                  isCourse
+                    ? `/dashboard/courses/available-classes/${resolvedId}`
+                    : `/dashboard/courses/available-programs/${resolvedId}`
+                }
                 className='bg-primary hover:bg-primary/90'
-                onClick={() => onOpenChange(false)}
               >
-                <Link
-                  href={roleScopedDashboardPath(
-                    activeDomain,
-                    isCourse
-                      ? `/dashboard/courses/available-classes/${resolvedId}`
-                      : `/dashboard/courses/available-programs/${resolvedId}`
-                  )}
-                >
-                  <Users className='mr-1 h-4 w-4' /> Join a Class
-                </Link>
-              </Button>
+                <Users className='mr-1 h-4 w-4' /> Join a Class
+              </StudentCourseAction>
 
-              <Button asChild
+              <StudentCourseAction
+                href={`/dashboard/courses/instructor?${isCourse ? 'courseId' : 'programId'}=${resolvedId}`}
                 className='bg-primary hover:bg-primary/90'
-                onClick={() => onOpenChange(false)}>
-                <Link
-                  href={roleScopedDashboardPath(
-                    activeDomain,
-                    `/dashboard/courses/instructor?courseId=${resolvedId}`
-                  )}
-                >
-                  <UserSearch className='mr-1 h-4 w-4' /> Search Instructor
-                </Link>
-              </Button>
+              >
+                <UserSearch className='mr-1 h-4 w-4' /> Search Instructor
+              </StudentCourseAction>
             </div>
           </div>
         )}

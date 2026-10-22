@@ -10,9 +10,8 @@ import {
   UserCheck,
   Users,
 } from 'lucide-react';
-import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { StudentCourseAction } from '../../components/StudentCourseAction';
 import { CourseCatalogCardLayout } from './CourseCatalogCardLayout';
 import type { CoursesCatalogCardData } from './courses-data';
 
@@ -83,19 +82,20 @@ export function StudentCoursesCard({ card }: StudentCoursesCardProps) {
         </>
       }
     >
-      <Button asChild size='sm' className='w-full rounded-lg'>
-        <Link href={card.enrollHref}>
-          <Users className='mr-1 h-3 w-3' />
-          Join Class
-        </Link>
-      </Button>
+      <StudentCourseAction href={card.enrollHref} size='sm' className='w-full rounded-lg'>
+        <Users className='mr-1 h-3 w-3' />
+        Join Class
+      </StudentCourseAction>
 
-      <Button asChild size='sm' className='w-full rounded-lg' variant='outline'>
-        <Link href={card.instructorHref}>
-          <Search className='h-3 w-3' />
-          Search Instructor
-        </Link>
-      </Button>
+      <StudentCourseAction
+        href={card.instructorHref}
+        size='sm'
+        className='w-full rounded-lg'
+        variant='outline'
+      >
+        <Search className='h-3 w-3' />
+        Search Instructor
+      </StudentCourseAction>
     </CourseCatalogCardLayout>
   );
 }

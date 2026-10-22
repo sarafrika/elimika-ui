@@ -9,32 +9,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { ArrowLeft, Search, Users } from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { PageHeader } from '../../../../../../components/page-header';
+import { Search, Users } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { WaitingListItem } from '../../_components/WaitingListItem';
 import { useInstructorTrainingHubData } from '../../_components/useInstructorTrainingHubData';
 
 export function InstructorWaitingListPage() {
-  const { replaceBreadcrumbs } = useBreadcrumb();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClass, setSelectedClass] = useState<'all' | string>('all');
   const { classes, waitingList, isLoading } = useInstructorTrainingHubData();
-
-  useEffect(() => {
-    replaceBreadcrumbs([
-      { id: 'dashboard', title: 'Dashboard', url: '/dashboard/instructor/overview' },
-      { id: 'training-hub', title: 'Training Hub', url: '/dashboard/instructor/training-hub' },
-      {
-        id: 'waiting-list',
-        title: 'Waiting List',
-        url: '/dashboard/instructor/training-hub/waiting-list',
-        isLast: true,
-      },
-    ]);
-  }, [replaceBreadcrumbs]);
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -71,18 +54,6 @@ export function InstructorWaitingListPage() {
 
   return (
     <main className='bg-background mx-auto flex w-full flex-col gap-5 px-3 py-4 sm:px-4 lg:px-5'>
-      <Link
-        href='/dashboard/instructor/training-hub'
-        className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
-      >
-        <ArrowLeft className='h-4 w-4' /> Back to training Hub
-      </Link>
-
-      <PageHeader
-        title='Class Waiting List'
-        description='Students who enrolled after a class reached capacity appear here until a seat opens up.'
-      />
-
       <section className='border-border/50 bg-card rounded-[14px] border p-3 shadow-sm sm:p-4'>
         <div className='grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px]'>
           <label className='border-border/60 bg-background flex h-11 items-center gap-2 rounded-[10px] border px-3'>

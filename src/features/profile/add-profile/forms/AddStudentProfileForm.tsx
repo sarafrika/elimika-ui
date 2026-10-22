@@ -3,10 +3,12 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import Spinner from '@/components/ui/spinner';
 import { getErrorMessage } from '@/lib/error-utils';
 import { createStudent } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { studentCoursePath } from '@/src/features/dashboard/lib/student-enrollment';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { StudentGuardianFields } from '@/src/features/profile/forms/shared/components/StudentGuardianFields';
 import {
@@ -29,8 +31,7 @@ export default function AddStudentProfileForm() {
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const returnTo = searchParams.get('next');
-  const returnPath =
-    returnTo && returnTo.startsWith('/') && !returnTo.startsWith('//') ? returnTo : null;
+  const returnPath = returnTo ? studentCoursePath(returnTo) : null;
 
   const form = useForm<StudentProfileFormData>({
     resolver: zodResolver(studentProfileSchema),
@@ -51,7 +52,7 @@ export default function AddStudentProfileForm() {
 
     const payload = {
       ...data,
-      user_uuid: data.user_uuid || user.uuid,
+      user_uuid: user.uuid,
     };
 
     setIsSubmitting(true);
@@ -75,8 +76,6 @@ export default function AddStudentProfileForm() {
       userDomain.setActiveDomain('student');
       router.replace(buildDashboardSwitchPath('student', returnPath || undefined));
     } catch (error) {
-      // @ts-ignore
-      toast.error(error?.message)
       toast.error(getErrorMessage(error, 'Failed to create student profile. Please try again.'));
     } finally {
       setIsSubmitting(false);
@@ -102,7 +101,9 @@ export default function AddStudentProfileForm() {
         </div>
         <h1 className='text-foreground mb-2 text-3xl font-bold'>Add Student Profile</h1>
         <p className='text-muted-foreground'>
-          Set up your student profile - all fields are optional and can be completed later
+          {returnPath
+            ? 'Create your student profile, then continue enrolling in your class.'
+            : 'Set up your student profile - all fields are optional and can be completed later'}
         </p>
       </div>
 
@@ -129,7 +130,12 @@ export default function AddStudentProfileForm() {
                   Cancel
                 </Button>
                 <Button type='submit' className='flex-1' disabled={isSubmitting}>
-                  {isSubmitting ? 'Creating Profile...' : 'Add Student Profile'}
+                  {isSubmitting && <Spinner />}
+                  {isSubmitting
+                    ? 'Creating Profile...'
+                    : returnPath
+                      ? 'Create Profile and Continue'
+                      : 'Add Student Profile'}
                 </Button>
               </div>
             </form>

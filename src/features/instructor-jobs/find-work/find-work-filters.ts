@@ -4,7 +4,7 @@ import type { ClassMarketplaceJob, LocationTypeEnum } from '@/services/client/ty
 
 import type { JobFacts } from '../job-facts';
 import type { JobReadiness, JobReadinessState } from '../job-readiness';
-import { findWorkHref } from '../job-routes';
+import { skillsMatchesHref } from '@/src/features/dashboard/lib/skills-matches-url';
 
 export type ReadyFilter = 'all' | 'ready' | 'fix' | 'applied';
 export type DeliveryFilter = 'all' | LocationTypeEnum;
@@ -113,7 +113,7 @@ const DEFAULT_FILTERS = parseFindWorkFilters(new URLSearchParams());
 /** Find work opened on a filter, e.g. `findWorkFilteredHref({ organisation: uuid })`. */
 export function findWorkFilteredHref(patch: Partial<FindWorkFilters>) {
   const query = findWorkQuery({ ...DEFAULT_FILTERS, ...patch });
-  return query ? `${findWorkHref()}?${query}` : findWorkHref();
+  return skillsMatchesHref('jobs', new URLSearchParams(query));
 }
 
 const FIX_STATES: readonly JobReadinessState[] = ['verify', 'training', 'rate', 'clash'];
@@ -136,7 +136,9 @@ export const matchesBasis = (filter: BasisFilter, job: ClassMarketplaceJob) =>
 
 export const matchesFormat = (filter: FormatFilter, job: ClassMarketplaceJob) =>
   filter === 'all' ||
-  (filter === 'private' ? job.session_format === 'INDIVIDUAL' : job.session_format !== 'INDIVIDUAL');
+  (filter === 'private'
+    ? job.session_format === 'INDIVIDUAL'
+    : job.session_format !== 'INDIVIDUAL');
 
 export function matchesStarts(filter: StartsFilter, facts: JobFacts, now: number) {
   if (filter === 'any') return true;

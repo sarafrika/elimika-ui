@@ -5,7 +5,7 @@ import { useDeferredValue, useMemo, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -173,8 +173,8 @@ export function SkillsWalletMySkillsTab({ data, onAddSkill, onEditSkill, onDelet
         ))}
       </div>
 
-      <div className='grid gap-4 lg:grid-cols-4'>
-        <Card className='lg:col-span-3'>
+      <div className='w-full flex'>
+        <Card className='w-full'>
           <CardHeader className='pb-3'>
             <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
               <div className='flex gap-4 text-sm'>
@@ -222,6 +222,7 @@ export function SkillsWalletMySkillsTab({ data, onAddSkill, onEditSkill, onDelet
               </div>
             </div>
           </CardHeader>
+
           <CardContent className='space-y-3'>
             {filteredSkills.length ? filteredSkills.map(skill => {
               const Icon = ICON_MAP[skill.icon_key] ?? Sparkles;
@@ -366,66 +367,6 @@ export function SkillsWalletMySkillsTab({ data, onAddSkill, onEditSkill, onDelet
             )}
           </CardContent>
         </Card>
-
-        <div className='space-y-4'>
-          <Card>
-            <CardHeader className='pb-3'>
-              <div className='flex items-center justify-between'>
-                <CardTitle className='text-base'>Skills by Category</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className='space-y-3'>
-              {data.categoryCounts.map((category, index) => {
-                const color = tokenColors[index % tokenColors.length];
-
-                return (
-                  <div key={category.name}>
-                    <div className='flex items-center justify-between text-sm'>
-                      <span>{category.name}</span>
-                      <span className='text-muted-foreground'>{category.count} skills</span>
-                    </div>
-                    <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-muted'>
-                      <div
-                        className={`h-full rounded-full`}
-                        style={{
-                          width: `${Math.max(10, category.count * 10)}%`,
-                          backgroundColor: color,
-                        }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-
-            </CardContent>
-          </Card>
-
-          {/* <Card>
-            <CardHeader className='pb-3'>
-              <CardTitle className='text-base'>Recommended for You</CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-3'>
-              {[
-                { name: 'Time Management', reason: 'Complements your active coursework' },
-                { name: 'Communication', reason: 'Useful for group learning and project work' },
-                { name: 'Leadership', reason: 'Common next step for advanced learners' },
-              ].map(item => (
-                <div key={item.name} className='flex items-start gap-3'>
-                  <div className='grid h-8 w-8 place-items-center rounded-md bg-warning/10 text-warning'>
-                    <Sparkles className='h-4 w-4' />
-                  </div>
-                  <div className='min-w-0 flex-1'>
-                    <p className='text-sm font-medium'>{item.name}</p>
-                    <p className='text-xs text-muted-foreground'>{item.reason}</p>
-                  </div>
-                  <Button size='sm' variant='outline' className='h-7 text-xs'>
-                    Add
-                  </Button>
-                </div>
-              ))}
-            </CardContent>
-          </Card> */}
-        </div>
       </div>
     </div>
   );

@@ -219,7 +219,7 @@ function SelectedLessonWorkbook({
   const selectedContent = contents[pageIndex];
   const homeHref =
     role === 'instructor'
-      ? '/dashboard/instructor/training-hub'
+      ? '/dashboard/instructor/training-hub?tab=classes'
       : '/dashboard/student/learning-hub';
   const selectLesson = (id: string) =>
     navigate({ lesson: id, content: null, view: null, tab: 'lesson' });

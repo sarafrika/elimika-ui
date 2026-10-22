@@ -1,7 +1,5 @@
-'use client';
-
-import { AssignmentPageClient } from './_components/AssignmentPageClient';
+import { redirect } from 'next/navigation';
 
 export default function AssignmentsPage() {
-  return <AssignmentPageClient />;
+  redirect('/dashboard/instructor/training-hub?tab=assignment');
 }

@@ -2026,7 +2026,7 @@ const InstructorClassCreationPage = () => {
             ? 'Class updated successfully'
             : 'Class created successfully'
       );
-      router.push('/dashboard/instructor/training-hub');
+      router.push('/dashboard/instructor/training-hub?tab=classes');
     };
 
     if (resolvedId) {
@@ -2461,7 +2461,7 @@ const InstructorClassCreationPage = () => {
           emptyState={<EmptyState
             title='This class has enrollments'
             description='Class details and schedules can only be edited before learners enroll.'
-            action={<Button type='button' variant='outline' onClick={() => router.push('/dashboard/instructor/training-hub')}>Back to classes</Button>}
+            action={<Button type='button' variant='outline' onClick={() => router.push('/dashboard/instructor/training-hub?tab=classes')}>Back to classes</Button>}
           />}
           errorTitle='Couldn’t load this class'
           onRetry={() => {

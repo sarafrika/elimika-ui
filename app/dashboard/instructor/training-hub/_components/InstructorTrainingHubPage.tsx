@@ -1,215 +1,116 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { LiveClassCard } from './LiveClassCard';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  BookOpen,
+  ChartNoAxesCombined,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  ClipboardList,
+  FileCheck2,
+  Users,
+} from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useRef } from 'react';
+import { PageHeader } from '@/components/page-header';
 import { ReportsDueSection } from './ReportsDueSection';
 import { TrainingHubSectionHeader } from './TrainingHubSectionHeader';
-import { TrainingHubToolbar } from './TrainingHubToolbar';
-import { useInstructorTrainingHubData } from './useInstructorTrainingHubData';
 
-function getLiveClassCompletionRate(liveClass: {
-  class?: {
-    class_progress_percentage?: number | null;
-    scheduled_session_count?: number | null;
-    completed_session_count?: number | null;
-    schedule?: Array<{
-      status?: string | null;
-      concluded_at?: string | null;
-      start_time?: string | null;
-      end_time?: string | null;
-    }>;
-  } | null;
-}) {
-  const progress = liveClass.class?.class_progress_percentage;
-  if (typeof progress === 'number' && !Number.isNaN(progress)) {
-    return Math.max(0, Math.min(100, Math.round(progress)));
-  }
-
-  const schedule = liveClass.class?.schedule ?? [];
-  const countableSessions = schedule.filter(instance => {
-    const status = instance.status?.toUpperCase();
-    return status !== 'CANCELLED' && status !== 'BLOCKED';
-  });
-
-  const totalSessions =
-    typeof liveClass.class?.scheduled_session_count === 'number'
-      ? liveClass.class.scheduled_session_count
-      : countableSessions.length;
-  const completedSessions =
-    typeof liveClass.class?.completed_session_count === 'number'
-      ? liveClass.class.completed_session_count
-      : countableSessions.filter(
-        instance =>
-          instance.status?.toUpperCase() === 'COMPLETED' || Boolean(instance.concluded_at)
-      ).length;
-
-  return totalSessions ? Math.round((completedSessions / totalSessions) * 100) : 0;
-}
-
-function getScheduledClassInstances(liveClass: {
-  class?: {
-    schedule?: Array<{
-      start_time?: string | Date | null;
-      status?: string | null;
-    }>;
-  } | null;
-}) {
-  return (liveClass.class?.schedule ?? []).filter(instance => {
-    const status = instance.status?.toUpperCase();
-    return status !== 'CANCELLED' && status !== 'BLOCKED';
-  });
-}
-
-function isSameCalendarDay(left?: string | Date | null, right: Date = new Date()) {
-  if (!left) return false;
-
-  const leftDate = new Date(left);
-  if (Number.isNaN(leftDate.getTime())) return false;
-
+function TabLoading() {
   return (
-    leftDate.getFullYear() === right.getFullYear() &&
-    leftDate.getMonth() === right.getMonth() &&
-    leftDate.getDate() === right.getDate()
+    <div className='space-y-4 p-4' role='status' aria-label='Loading training hub content'>
+      <Skeleton className='h-10 w-64 max-w-full rounded-lg' />
+      <Skeleton className='h-80 w-full rounded-xl' />
+    </div>
   );
 }
 
-function isTomorrow(left?: string | Date | null) {
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  return isSameCalendarDay(left, tomorrow);
-}
+const MyCoursesTab = dynamic(
+  () => import('@/src/features/dashboard/courses/pages/InstructorApprovedCoursesPage'),
+  { loading: TabLoading }
+);
+const ClassesTab = dynamic(
+  () => import('./TrainingHubClassesTab').then(module => module.TrainingHubClassesTab),
+  { loading: TabLoading }
+);
+const AssignmentTab = dynamic(
+  () =>
+    import('../../assignment/_components/AssignmentPageClient').then(
+      module => module.AssignmentPageClient
+    ),
+  { loading: TabLoading }
+);
+const AssessmentTab = dynamic(
+  () =>
+    import('@/components/assessment/shared-assessment-workspace').then(
+      module => module.SharedAssessmentWorkspace
+    ),
+  { loading: TabLoading }
+);
 
-function isUpcomingClass(liveClass: {
-  class?: {
-    schedule?: Array<{
-      start_time?: string | Date | null;
-      status?: string | null;
-    }>;
-  } | null;
-}) {
-  const now = Date.now();
+const TABS = [
+  { id: 'my-courses', label: 'My Courses', icon: BookOpen },
+  { id: 'classes', label: 'Classes', icon: Users },
+  { id: 'assignment', label: 'Assignment', icon: ClipboardList },
+  { id: 'assessment', label: 'Assessment', icon: FileCheck2 },
+  { id: 'progress', label: 'Progress', icon: ChartNoAxesCombined },
+  { id: 'attendance', label: 'Attendance', icon: ClipboardCheck },
+] as const;
 
-  return getScheduledClassInstances(liveClass).some(instance => {
-    if (!instance.start_time) return false;
-    const startTime = new Date(instance.start_time).getTime();
-    return Number.isFinite(startTime) && startTime > now;
-  });
-}
+type TabId = (typeof TABS)[number]['id'];
 
-function matchesClassTag(
-  liveClass: { title?: string; provider?: string; level?: string },
-  tag: string
-) {
-  const haystack =
-    `${liveClass.title ?? ''} ${liveClass.provider ?? ''} ${liveClass.level ?? ''}`.toLowerCase();
-  return haystack.includes(tag);
+function isTabId(value: string | null): value is TabId {
+  return TABS.some(tab => tab.id === value);
 }
 
 export function InstructorTrainingHubPage() {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedType, setSelectedType] = useState<
-    'all' | 'today' | 'upcoming' | 'incomplete' | 'remedial' | 'make-up' | 'cancelled' | 'completed'
-  >('all');
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams.get('tab');
+  const tab = isTabId(requestedTab) ? requestedTab : 'my-courses';
+  const tabRowRef = useRef<HTMLDivElement>(null);
+  const tabRefs = useRef(new Map<TabId, HTMLButtonElement>());
 
-  const { liveClasses, upcomingBookings, waitingList, isLoading, classes, instructorStudentUuids } =
-    useInstructorTrainingHubData();
+  useEffect(() => {
+    tabRefs.current.get(tab)?.scrollIntoView({
+      behavior: 'smooth',
+      inline: 'center',
+      block: 'nearest',
+    });
+  }, [tab]);
 
-  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const handleTabChange = (nextTab: string) => {
+    if (!isTabId(nextTab)) return;
 
-  const filteredLiveClasses = useMemo(
-    () =>
-      liveClasses
-        .filter(liveClass => {
-          const searchMatch = [
-            liveClass.title,
-            liveClass.provider,
-            liveClass.level,
-            liveClass.classes,
-            liveClass.students,
-            ...(liveClass.programCourses ?? []).flatMap(course => [
-              course.name,
-              course.description ?? '',
-              course.difficulty_uuid ?? '',
-            ]),
-          ].some(value => value.toLowerCase().includes(normalizedSearch));
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextTab === 'my-courses') {
+      params.delete('tab');
+    } else {
+      params.set('tab', nextTab);
+    }
 
-          if (!searchMatch) return false;
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
 
-          const completionRate = getLiveClassCompletionRate(liveClass);
-
-          const hasTodaySession = getScheduledClassInstances(liveClass).some(instance =>
-            isSameCalendarDay(instance.start_time)
-          );
-
-          const hasTomorrowSession = getScheduledClassInstances(liveClass).some(instance =>
-            isTomorrow(instance.start_time)
-          );
-
-          const hasFutureSession = isUpcomingClass(liveClass);
-
-          const isCancelled =
-            (liveClass.class?.schedule ?? []).length > 0 &&
-            (liveClass.class?.schedule ?? []).every(instance => {
-              const status = instance.status?.toUpperCase();
-              return status === 'CANCELLED' || status === 'BLOCKED';
-            });
-
-          const isIncomplete = completionRate > 0 && completionRate < 100;
-          const isCompleted = completionRate === 100;
-
-          const isRemedial = matchesClassTag(liveClass, 'remedial');
-
-          const isMakeUp =
-            matchesClassTag(liveClass, 'make-up') || matchesClassTag(liveClass, 'makeup');
-
-          const typeMatch =
-            selectedType === 'all' ||
-            (selectedType === 'today' && hasTodaySession) ||
-            (selectedType === 'upcoming' && hasFutureSession) ||
-            (selectedType === 'incomplete' && isIncomplete) ||
-            (selectedType === 'remedial' && isRemedial) ||
-            (selectedType === 'make-up' && isMakeUp) ||
-            (selectedType === 'cancelled' && isCancelled) ||
-            (selectedType === 'completed' && isCompleted);
-
-          return typeMatch;
-        })
-        .sort(
-          (a, b) =>
-            new Date(b.class?.created_date).getTime() - new Date(a.class?.created_date).getTime()
-        ),
-    [liveClasses, normalizedSearch, selectedType]
-  );
-
-  const filteredWaitingList = useMemo(
-    () =>
-      waitingList.filter(student =>
-        [student.name, student.email, student.classTitle].some(value =>
-          value.toLowerCase().includes(normalizedSearch)
-        )
-      ),
-    [normalizedSearch, waitingList]
-  );
-
-  const filteredBookings = useMemo(
-    () =>
-      upcomingBookings.filter(booking =>
-        [booking.title, booking.subtitle, booking.status, booking.meta].some(value =>
-          value.toLowerCase().includes(normalizedSearch)
-        )
-      ),
-    [normalizedSearch, upcomingBookings]
-  );
+  const scrollTabs = (direction: 'left' | 'right') => {
+    tabRowRef.current?.scrollBy({
+      left: direction === 'left' ? -280 : 280,
+      behavior: 'smooth',
+    });
+  };
 
   return (
-    <main className='bg-background mx-auto flex w-full flex-col gap-4 px-3 py-3 sm:px-4 sm:py-4 lg:px-5'>
-      <TrainingHubToolbar
-        onSearchTermChange={setSearchTerm}
-        onTypeChange={setSelectedType}
-        searchTerm={searchTerm}
-        selectedType={selectedType}
+    <div className='w-full min-w-0 px-6 py-6'>
+      <PageHeader
+        eyebrow='INSTRUCTOR TRAINING HUB'
+        title='Training Hub'
+        description='Manage your courses, classes, assignments, and assessments in one place.'
       />
 
       <div className='w-full 2xl:max-w-[80%]'>
@@ -223,96 +124,80 @@ export function InstructorTrainingHubPage() {
             href='/dashboard/instructor/classes'
             title='My Classes'
           />
+          <Tabs value={tab} onValueChange={handleTabChange} className='min-w-0 gap-0'>
+            <div className='mt-4 flex min-w-0 items-center gap-1'>
+              <Button
+                type='button'
+                variant='outline'
+                size='icon'
+                aria-label='Scroll tabs left'
+                onClick={() => scrollTabs('left')}
+                className='border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground size-7 rounded-full'
+              >
+                <ChevronLeft className='size-4' />
+              </Button>
 
-          <div className='space-y-3'>
-            {filteredLiveClasses.map(liveClass => (
-              <LiveClassCard
-                key={liveClass.id}
-                liveClass={liveClass}
-                instructorStudentUuids={instructorStudentUuids}
-                studentsLoading={isLoading}
-              />
-            ))}
+              <div
+                ref={tabRowRef}
+                className='min-w-0 flex-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
+              >
+                <TabsList
+                  aria-label='Training hub sections'
+                  className='h-auto justify-start gap-2 rounded-none bg-transparent p-0'
+                >
+                  {TABS.map(({ id, label, icon: Icon }) => (
+                    <TabsTrigger
+                      key={id}
+                      value={id}
+                      ref={element => {
+                        if (element) {
+                          tabRefs.current.set(id, element);
+                        } else {
+                          tabRefs.current.delete(id);
+                        }
+                      }}
+                      className='border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground shrink-0 gap-2 rounded-full border px-4 py-1.5 font-normal data-[state=active]:shadow-sm'
+                    >
+                      <Icon className='size-3.5' />
+                      <span>{label}</span>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
 
-            {!isLoading && filteredLiveClasses.length === 0 && (
-              <Card className='border-border/60 shadow-sm'>
-                <CardContent className='text-muted-foreground py-10 text-center text-sm'>
-                  No created classes matched your search.
-                </CardContent>
-              </Card>
-            )}
+              <Button
+                type='button'
+                variant='outline'
+                size='icon'
+                aria-label='Scroll tabs right'
+                onClick={() => scrollTabs('right')}
+                className='border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground size-7 rounded-full'
+              >
+                <ChevronRight className='size-4' />
+              </Button>
+            </div>
 
-            {isLoading && (
-              <Card className='border-border/60 shadow-sm'>
-                <CardContent className='text-muted-foreground py-10 text-center text-sm'>
-                  Loading classes...
-                </CardContent>
-              </Card>
-            )}
-          </div>
+            <TabsContent value='my-courses' className='min-w-0'>
+              <MyCoursesTab />
+            </TabsContent>
+            <TabsContent value='classes' className='min-w-0'>
+              <ClassesTab />
+            </TabsContent>
+            <TabsContent value='assignment' className='min-w-0'>
+              <AssignmentTab />
+            </TabsContent>
+            <TabsContent value='assessment' className='min-w-0'>
+              <AssessmentTab role='instructor' />
+            </TabsContent>
+            <TabsContent value='progress'>
+              <div>Coming soon</div>
+            </TabsContent>
+            <TabsContent value='attendance'>
+              <div>Coming soon</div>
+            </TabsContent>
+          </Tabs>
         </div>
-
-        {/* <aside className='min-w-0 space-y-5 overflow-hidden'>
-          <section className='space-y-3'>
-            <TrainingHubSectionHeader
-              actionLabel={`Show All (${waitingList.length})`}
-              href='/dashboard/instructor/training-hub/waiting-list'
-              title='Waiting List'
-            />
-
-            {filteredWaitingList.length > 0 ? (
-              <div className='space-y-3'>
-                {filteredWaitingList.slice(0, 3).map(student => (
-                  <WaitingListItem key={student.id} student={student} />
-                ))}
-              </div>
-            ) : (
-              <div className='border-border bg-muted/30 mx-auto flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-center'>
-                <p className='text-foreground text-sm font-medium'>
-                  No students on the waiting list
-                </p>
-
-                <p className='text-muted-foreground mt-1 text-sm'>
-                  New waiting list requests will appear here.
-                </p>
-              </div>
-            )}
-          </section>
-
-          <section className='space-y-3'>
-            <TrainingHubSectionHeader
-              actionLabel={`Show All (${upcomingBookings.length})`}
-              href='/dashboard/instructor/training-hub/bookings'
-              title='Bookings'
-            />
-
-            {filteredBookings.length > 0 ? (
-              <div className='space-y-3'>
-                {filteredBookings.slice(0, 3).map(booking => (
-                  <BookingCard key={booking.id} booking={booking} />
-                ))}
-              </div>
-            ) : (
-              <div className='border-border bg-muted/30 flex min-h-40 flex-col items-center justify-center rounded-xl border border-dashed px-4 py-8 text-center'>
-                <p className='text-foreground text-sm font-medium'>No upcoming bookings</p>
-
-                <p className='text-muted-foreground mt-1 text-sm'>
-                  Upcoming bookings will appear here.
-                </p>
-              </div>
-            )}
-          </section>
-
-          <Button
-            type='button'
-            className='bg-primary text-primary-foreground hover:bg-primary/90 flex w-full items-center justify-center gap-3 rounded-[10px] px-4 py-3 text-center text-[0.96rem] font-medium transition-colors'
-          >
-            <CalendarDays className='size-4 shrink-0' />
-            <span className='truncate'>Invite Students</span>
-            <span aria-hidden='true'>›</span>
-          </Button>
-        </aside> */}
       </section>
-    </main>
+    </div>
   );
 }

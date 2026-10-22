@@ -37,7 +37,6 @@ import {
   UserCheck,
   UserIcon,
   UserPlus,
-  UserRoundPlus,
   Users,
   UsersRound,
   Wallet,
@@ -301,44 +300,14 @@ export default {
           icon: ClipboardList,
         },
         {
-          title: 'My Courses',
-          url: '/dashboard/my-courses',
-          icon: BookOpen,
-        },
-        {
-          title: 'Assignments',
-          url: '/dashboard/assignment',
-          icon: FileText,
-        },
-        {
-          title: 'Assessment',
-          url: '/dashboard/assessment',
-          icon: BarChart3,
-        },
-        {
-          title: 'Students',
-          url: '/dashboard/students',
+          title: 'Enrollments',
+          url: '/dashboard/enrollments',
           icon: Users,
         },
         {
-          title: 'Booking Requests',
-          url: '/dashboard/booking-requests',
-          icon: CalendarClock,
-        },
-        {
-          title: 'Waiting List',
-          url: '/dashboard/training-hub/waiting-list',
-          icon: UserRoundPlus,
-        },
-        {
-          title: 'Jobs',
-          url: '/dashboard/opportunities',
-          icon: Handshake,
-        },
-        {
-          title: 'Apply to Train',
-          url: '/dashboard/apply-to-train',
-          icon: Rocket,
+          title: 'Skills Matches',
+          url: '/dashboard/skills-matches',
+          icon: Sparkles,
         },
         {
           title: 'Start Course',

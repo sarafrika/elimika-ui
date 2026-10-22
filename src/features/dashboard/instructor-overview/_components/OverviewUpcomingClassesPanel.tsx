@@ -8,7 +8,7 @@ type OverviewUpcomingClassesPanelProps = {
 };
 
 function UpcomingClassRow({ upcomingClass }: { upcomingClass: OverviewUpcomingClass }) {
-  const upcomingClassHref = `/dashboard/instructor/training-hub`;
+  const upcomingClassHref = `/dashboard/instructor/training-hub?tab=classes`;
 
   return (
     <Link href={upcomingClassHref} className='block'>

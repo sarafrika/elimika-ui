@@ -3,10 +3,11 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function TrainingHubLoading() {
   return (
     <div className='flex w-full flex-col gap-4 p-4'>
-      <Skeleton className='h-10 w-64 rounded-lg' />
-      <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-        {[0, 1, 2, 3].map(idx => (
-          <Skeleton key={idx} className='h-24 w-full rounded-2xl' />
+      <Skeleton className='h-8 w-48 rounded-lg' />
+      <Skeleton className='h-4 w-80 max-w-full rounded-lg' />
+      <div className='flex gap-2 overflow-hidden'>
+        {[0, 1, 2, 3, 4, 5].map(idx => (
+          <Skeleton key={idx} className='h-9 w-32 shrink-0 rounded-full' />
         ))}
       </div>
       <Skeleton className='h-[480px] w-full rounded-2xl' />

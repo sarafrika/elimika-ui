@@ -294,7 +294,7 @@ export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOver
   ]);
 
   const handleClose = () => {
-    router.push('/dashboard/instructor/assignment');
+    router.push('/dashboard/instructor/training-hub?tab=assignment');
   };
 
   const handleGradeSubmission = () => {

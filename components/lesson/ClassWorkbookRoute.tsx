@@ -57,7 +57,7 @@ export function ClassWorkbookRoute({
             <Link
               href={
                 role === 'instructor'
-                  ? '/dashboard/instructor/training-hub'
+                  ? '/dashboard/instructor/training-hub?tab=classes'
                   : '/dashboard/student/learning-hub'
               }
             >

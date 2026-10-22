@@ -20,6 +20,7 @@ import {
   joinWaitlistMutation
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { StudentEnrollmentGate } from '@/src/features/dashboard/courses/components/StudentEnrollmentGate';
 import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
@@ -90,7 +91,15 @@ function formatAgeRange(lower?: number | null, upper?: number | null): string | 
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
-export default function ClassEnrollmentPage({
+export default function ClassEnrollmentPage(props: { courseId: string; classId: string }) {
+  return (
+    <StudentEnrollmentGate>
+      <ClassEnrollmentContent {...props} />
+    </StudentEnrollmentGate>
+  );
+}
+
+function ClassEnrollmentContent({
   courseId,
   classId,
 }: {

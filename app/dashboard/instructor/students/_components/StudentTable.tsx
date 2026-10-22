@@ -1,7 +1,9 @@
 'use client';
 
 import { Filter, Search } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { EmptyState } from '@/components/ui/empty-state';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 import { Button } from '../../../../../components/ui/button';
 import { Input } from '../../../../../components/ui/input';
@@ -21,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from '../../../../../components/ui/table';
-import { useInstructorStudentsData } from '../data';
+import type { InstructorStudentsData } from '../data';
 import type { StudentFilterState } from '../types';
 import { Pagination } from './Pagination';
 import { StudentCard } from './StudentCard';
@@ -56,7 +58,7 @@ const FilterDropdown = ({
   );
 };
 
-export function StudentTable() {
+export function StudentTable({ data }: { data: InstructorStudentsData }) {
   const [activeTab, setActiveTab] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
@@ -68,10 +70,11 @@ export function StudentTable() {
     level: 'all',
   });
 
-  const { students, courseTabs, filterOptions, loading } = useInstructorStudentsData();
+  const { students, courseTabs, filterOptions, loading } = data;
+  const deferredSearch = useDeferredValue(search.trim().toLowerCase());
 
   const filteredStudents = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = deferredSearch;
 
     return students.filter(student => {
       const matchesSearch = query.length === 0 || student.searchIndex.includes(query);
@@ -84,7 +87,7 @@ export function StudentTable() {
 
       return matchesSearch && matchesTab && matchesClass && matchesStatus && matchesLevel;
     });
-  }, [students, search, activeTab, filters]);
+  }, [students, deferredSearch, activeTab, filters]);
 
   const totalItems = filteredStudents.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
@@ -133,7 +136,7 @@ export function StudentTable() {
           onClick={() => setActiveTab('all')}
           className={`rounded-sm border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
             activeTab === 'all'
-              ? 'border-primary bg-primary text-white'
+              ? 'border-primary bg-primary text-primary-foreground'
               : 'border-border bg-background text-foreground hover:bg-muted'
           }`}
         >
@@ -148,13 +151,13 @@ export function StudentTable() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 rounded-sm border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
                 activeTab === tab.id
-                  ? 'border-primary bg-primary text-white'
+                  ? 'border-primary bg-primary text-primary-foreground'
                   : 'border-border bg-background text-foreground hover:bg-muted'
               }`}
             >
               {tab.thumbnail_url ? (
                 <img
-                  src={tab.thumbnail_url}
+                  src={toAuthenticatedMediaUrl(tab.thumbnail_url) ?? undefined}
                   alt={tab.label}
                   className='h-5 w-5 shrink-0 rounded object-cover'
                 />
@@ -214,56 +217,56 @@ export function StudentTable() {
         </Button>
       </div>
 
-      {/* Table */}
-      <div className='bg-card border-border overflow-hidden rounded-md border'>
-        <div className='hidden overflow-x-auto sm:block'>
-          <Table className='min-w-[500px]'>
-            <TableHeader>
-              <TableRow className='bg-muted/40'>
-                <TableHead className='text-xs'>Student</TableHead>
-
-                <TableHead className='hidden text-xs sm:table-cell'>Course / Class</TableHead>
-
-                <TableHead className='text-xs'>Status</TableHead>
-
-                <TableHead className='hidden text-xs md:table-cell'>Progress</TableHead>
-
-                <TableHead className='hidden text-xs xl:table-cell'>Joined</TableHead>
-              </TableRow>
-            </TableHeader>
-
-            <TableBody>
-              {paginatedStudents.map(student => (
-                <StudentRow key={student.student.uuid} student={student} />
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-
-        {/* Mobile */}
-        <div className='divide-y sm:hidden'>
-          {paginatedStudents.map(student => (
-            <div key={student.student.uuid} className='p-3'>
-              <StudentCard student={student} />
-            </div>
-          ))}
-
-          {!loading && paginatedStudents.length === 0 && (
-            <div className='text-muted-foreground flex h-40 items-center justify-center text-sm'>
-              No students found.
-            </div>
-          )}
-        </div>
-
-        <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          rowsPerPage={rowsPerPage}
-          onPageChange={setCurrentPage}
-          onRowsPerPageChange={setRowsPerPage}
+      {paginatedStudents.length === 0 ? (
+        <EmptyState
+          title='No students found'
+          description='Students enrolled in matching classes will appear here. Try another search or filter.'
         />
-      </div>
+      ) : (
+        <div className='bg-card border-border overflow-hidden rounded-md border'>
+          <div className='hidden overflow-x-auto sm:block'>
+            <Table className='min-w-[500px]'>
+              <TableHeader>
+                <TableRow className='bg-muted/40'>
+                  <TableHead className='text-xs'>Student</TableHead>
+
+                  <TableHead className='hidden text-xs sm:table-cell'>Course / Class</TableHead>
+
+                  <TableHead className='text-xs'>Status</TableHead>
+
+                  <TableHead className='hidden text-xs md:table-cell'>Progress</TableHead>
+
+                  <TableHead className='hidden text-xs xl:table-cell'>Joined</TableHead>
+                </TableRow>
+              </TableHeader>
+
+              <TableBody>
+                {paginatedStudents.map(student => (
+                  <StudentRow key={student.student.uuid} student={student} />
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          {/* Mobile */}
+          <div className='divide-y sm:hidden'>
+            {paginatedStudents.map(student => (
+              <div key={student.student.uuid} className='p-3'>
+                <StudentCard student={student} />
+              </div>
+            ))}
+          </div>
+
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            rowsPerPage={rowsPerPage}
+            onPageChange={setCurrentPage}
+            onRowsPerPageChange={setRowsPerPage}
+          />
+        </div>
+      )}
     </div>
   );
 }

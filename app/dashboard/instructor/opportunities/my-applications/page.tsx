@@ -1,5 +1,13 @@
-import { MyJobApplicationsPage } from '@/components/profile-job-marketplace/_components/MyJobApplicationsPage';
+import { redirect } from 'next/navigation';
+import {
+  skillsMatchesHref,
+  type SkillsMatchSearchParams,
+} from '@/src/features/dashboard/lib/skills-matches-url';
 
-export default function InstructorMyApplicationsPage() {
-  return <MyJobApplicationsPage />;
+export default async function InstructorMyApplicationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<SkillsMatchSearchParams>;
+}) {
+  redirect(skillsMatchesHref('my-applications', await searchParams));
 }

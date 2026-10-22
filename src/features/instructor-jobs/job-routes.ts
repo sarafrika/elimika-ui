@@ -1,14 +1,15 @@
 import { dashboardUrl, toBareDashboardPath } from '@/src/features/dashboard/lib/dashboard-url';
+import { skillsMatchesHref } from '@/src/features/dashboard/lib/skills-matches-url';
 
-/** Instructor Jobs area: Find work, My applications and Hired all live under /opportunities. */
+/** Lists live in Skills Matches; job, application, and hired detail URLs stay stable. */
 const instructor = (path: string) => dashboardUrl('instructor', path);
 const id = (value: string) => encodeURIComponent(value);
 
-export const findWorkHref = () => instructor('opportunities');
+export const findWorkHref = () => skillsMatchesHref('jobs');
 
 export const jobPageHref = (jobUuid: string) => instructor(`opportunities/${id(jobUuid)}`);
 
-export const myApplicationsHref = () => instructor('opportunities/my-applications');
+export const myApplicationsHref = () => skillsMatchesHref('my-applications');
 
 export const applicationPageHref = (applicationUuid: string) =>
   instructor(`opportunities/my-applications/${id(applicationUuid)}`);

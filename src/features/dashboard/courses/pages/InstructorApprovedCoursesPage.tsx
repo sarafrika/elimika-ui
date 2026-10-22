@@ -1,8 +1,8 @@
 'use client';
 
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
+import { surfaceTheme } from '@/components/data-display';
 import { EmptyState } from '@/components/empty-state';
-import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,7 +38,6 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { BookOpen, Eye, MoreHorizontal, PlusSquare } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { surfaceTheme } from '@/components/data-display';
 
 type ApprovedCourseRow = {
   rowKey: string;
@@ -247,11 +246,6 @@ export default function InstructorApprovedCoursesPage() {
 
   return (
     <div className={`${surfaceTheme.pageWide} space-y-6 py-4`}>
-      <PageHeader
-        title='My Courses'
-        description='Courses you have been approved to train.'
-      />
-
       {loading ? (
         <div className='space-y-2'>
           {[...Array(6)].map((_, index) => (
