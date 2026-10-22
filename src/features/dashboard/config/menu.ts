@@ -1,4 +1,3 @@
-import type { UserDomain } from '@/lib/types';
 import {
   BadgeCheck,
   BarChart3,
@@ -15,9 +14,9 @@ import {
   ClipboardList,
   Clock,
   DollarSign,
-  HandCoins,
   FileText,
   GraduationCap,
+  HandCoins,
   Handshake,
   Layers2,
   LayoutDashboard,
@@ -43,6 +42,7 @@ import {
   Wrench
 } from 'lucide-react';
 import type { ComponentType } from 'react';
+import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -521,6 +521,7 @@ export default {
       items: [
         { title: 'Revenue', url: '/dashboard/revenue', icon: ChartNoAxesCombined },
         { title: 'Sales & payments', url: '/dashboard/sales', icon: DollarSign },
+        { title: 'Payouts', url: '/dashboard/payouts', icon: Wallet },
         { title: 'Currencies', url: '/dashboard/currencies', icon: DollarSign },
       ],
     },
