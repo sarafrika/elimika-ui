@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 function TabLoading() {
   return (
@@ -71,8 +71,28 @@ export function InstructorSkillsMatchesPage() {
   const searchParams = useSearchParams();
   const requestedTab = searchParams.get('tab');
   const tab = isSkillsMatchTab(requestedTab) ? requestedTab : 'all-matches';
+  const tabNavigationRef = useRef<HTMLDivElement>(null);
   const tabRowRef = useRef<HTMLDivElement>(null);
+  const tabListRef = useRef<HTMLDivElement>(null);
   const tabRefs = useRef(new Map<TabId, HTMLButtonElement>());
+  const [hasTabOverflow, setHasTabOverflow] = useState(false);
+
+  useEffect(() => {
+    const navigation = tabNavigationRef.current;
+    const list = tabListRef.current;
+    if (!navigation || !list) return;
+
+    const updateOverflow = () => {
+      // Compare with the full row so the arrows cannot create overflow themselves.
+      setHasTabOverflow(list.scrollWidth > navigation.clientWidth);
+    };
+
+    updateOverflow();
+    const observer = new ResizeObserver(updateOverflow);
+    observer.observe(navigation);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     tabRefs.current.get(tab)?.scrollIntoView({
@@ -105,25 +125,28 @@ export function InstructorSkillsMatchesPage() {
       />
 
       <Tabs value={tab} onValueChange={handleTabChange} className='min-w-0 gap-0'>
-        <div className='mt-4 flex min-w-0 items-center gap-1'>
-          <Button
-            type='button'
-            variant='outline'
-            size='icon'
-            aria-label='Scroll tabs left'
-            onClick={() => scrollTabs('left')}
-            className='border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground size-7 rounded-full'
-          >
-            <ChevronLeft className='size-4' />
-          </Button>
+        <div ref={tabNavigationRef} className='mt-4 flex min-w-0 items-center gap-1'>
+          {hasTabOverflow && (
+            <Button
+              type='button'
+              variant='outline'
+              size='icon'
+              aria-label='Scroll tabs left'
+              onClick={() => scrollTabs('left')}
+              className='border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground size-7 rounded-full'
+            >
+              <ChevronLeft className='size-4' />
+            </Button>
+          )}
 
           <div
             ref={tabRowRef}
             className='min-w-0 flex-1 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'
           >
             <TabsList
+              ref={tabListRef}
               aria-label='Skills matches sections'
-              className='h-auto justify-start gap-2 rounded-none bg-transparent p-0'
+              className='h-auto w-max justify-start gap-2 rounded-none bg-transparent p-0'
             >
               {TABS.map(({ id, label, icon: Icon }) => (
                 <TabsTrigger
@@ -145,16 +168,18 @@ export function InstructorSkillsMatchesPage() {
             </TabsList>
           </div>
 
-          <Button
-            type='button'
-            variant='outline'
-            size='icon'
-            aria-label='Scroll tabs right'
-            onClick={() => scrollTabs('right')}
-            className='border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground size-7 rounded-full'
-          >
-            <ChevronRight className='size-4' />
-          </Button>
+          {hasTabOverflow && (
+            <Button
+              type='button'
+              variant='outline'
+              size='icon'
+              aria-label='Scroll tabs right'
+              onClick={() => scrollTabs('right')}
+              className='border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground size-7 rounded-full'
+            >
+              <ChevronRight className='size-4' />
+            </Button>
+          )}
         </div>
 
         <TabsContent value='all-matches' className='min-w-0 py-4'>

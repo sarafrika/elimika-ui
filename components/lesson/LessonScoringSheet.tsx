@@ -44,6 +44,7 @@ type ScoringProps = {
   enrollmentId: string;
   studentName: string;
   onClose: () => void;
+  onSaved?: () => Promise<unknown>;
 };
 
 /**
@@ -74,7 +75,12 @@ export function LessonScoringSheet({ studentName, onClose, ...props }: ScoringPr
   );
 }
 
-function LessonScoring({ courseId, lessonId, enrollmentId }: Omit<ScoringProps, 'studentName' | 'onClose'>) {
+function LessonScoring({
+  courseId,
+  lessonId,
+  enrollmentId,
+  onSaved,
+}: Omit<ScoringProps, 'studentName' | 'onClose'>) {
   const gradebookQuery = useQuery({
     ...getEnrollmentGradeBookOptions({ path: { courseUuid: courseId, enrollmentUuid: enrollmentId } }),
     enabled: Boolean(courseId && enrollmentId),
@@ -119,6 +125,7 @@ function LessonScoring({ courseId, lessonId, enrollmentId }: Omit<ScoringProps, 
       courseId={courseId}
       enrollmentId={enrollmentId}
       passMark={gradebookQuery.data?.data?.pass_mark}
+      onSaved={onSaved}
       {...cell}
     />
   );
@@ -132,6 +139,7 @@ function RubricCell({
   rubricUuid,
   title,
   passMark,
+  onSaved,
 }: {
   courseId: string;
   enrollmentId: string;
@@ -140,6 +148,7 @@ function RubricCell({
   rubricUuid: string;
   title?: string;
   passMark?: number | null;
+  onSaved?: () => Promise<unknown>;
 }) {
   const client = useQueryClient();
   const bandsQuery = useQuery({
@@ -232,6 +241,7 @@ function RubricCell({
           path: { courseUuid: courseId, enrollmentUuid: enrollmentId },
         }),
       }),
+      onSaved?.(),
     ]);
   };
 

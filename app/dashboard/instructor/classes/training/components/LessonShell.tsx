@@ -1,10 +1,10 @@
 'use client';
 
-import { BookOpen, ChevronLeft, ChevronRight, ClipboardCheck, Dumbbell, FileCheck2, FileQuestion, FileText, FolderOpen, Home, List, ListChecks, Menu } from 'lucide-react';
-import Link from 'next/link';
-import { type ReactNode, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, ClipboardCheck, Dumbbell, FileCheck2, FileQuestion, FileText, FolderOpen, Home, List, ListChecks } from 'lucide-react';
+import Link from 'next/link';
+import { type ReactNode, useEffect, useRef } from 'react';
 import { Card } from '../../../../../../components/ui/card';
 import type { LessonTabKey } from './LessonTabPanels';
 
@@ -143,7 +143,7 @@ export function LessonShell({
               className='hover:bg-primary/20 bg-primary/10 shrink-0 cursor-pointer rounded-sm p-1.5 mr-2 -ml-6'
             >
               <Link href={homeHref} aria-label='Back to classes'>
-                <Menu className='h-5 w-5' />
+                <ArrowLeft className='h-5 w-5' />
               </Link>
             </div>
 

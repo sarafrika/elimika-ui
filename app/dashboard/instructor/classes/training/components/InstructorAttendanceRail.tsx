@@ -72,33 +72,33 @@ export function InstructorAttendanceRail({
           {student.status}
         </p>
       </div>
-      {showAdmit ? (
-        <Button
-          type='button'
-          size='sm'
-          className='h-8 px-3 text-xs'
-          disabled={!canAdmit}
-          onClick={() => onAdmit(student.uuid)}
-          aria-label={`Admit ${student.name}`}
-        >
-          {isPending && pendingStudentId === student.uuid && <Spinner />}
-          Admit
-        </Button>
-      ) : (
-        <div className='flex items-center gap-2'>
-          <Check className='text-success h-4 w-4 shrink-0' aria-label='Admitted' />
+      <div className='flex flex-wrap items-center justify-end gap-2'>
+        {showAdmit ? (
           <Button
             type='button'
             size='sm'
-            variant='outline'
             className='h-8 px-3 text-xs'
-            onClick={() => onEvaluate(student.uuid)}
-            aria-label={`Evaluate ${student.name}`}
+            disabled={!canAdmit}
+            onClick={() => onAdmit(student.uuid)}
+            aria-label={`Admit ${student.name}`}
           >
-            Evaluate
+            {isPending && pendingStudentId === student.uuid && <Spinner />}
+            Admit
           </Button>
-        </div>
-      )}
+        ) : (
+          <Check className='text-success h-4 w-4 shrink-0' aria-label='Admitted' />
+        )}
+        <Button
+          type='button'
+          size='sm'
+          variant='outline'
+          className='h-8 px-3 text-xs'
+          onClick={() => onEvaluate(student.uuid)}
+          aria-label={`Evaluate ${student.name}`}
+        >
+          Evaluate
+        </Button>
+      </div>
     </div>
   );
 

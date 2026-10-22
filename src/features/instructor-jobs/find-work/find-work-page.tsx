@@ -19,17 +19,16 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { type ComponentProps, useCallback, useMemo, useState } from 'react';
 
+import { AsyncSection, SectionError } from '@/components/data/async-section';
 import { MarketplaceSidebar } from '@/components/profile-job-marketplace/_components/MarketplaceSidebar';
 import { MarketplaceTabs } from '@/components/profile-job-marketplace/_components/MarketplaceTabs';
+import { statusLabel } from '@/components/profile-job-marketplace/application-status';
 import type { FilterGroup } from '@/components/profile-job-marketplace/data';
-import { PageHeader } from '@/components/dashboard';
-import { AsyncSection, SectionError } from '@/components/data/async-section';
-import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
 import { SearchUnavailable } from '@/components/search/search-unavailable';
-import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
+import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import {
   Select,
   SelectContent,
@@ -47,7 +46,7 @@ import {
 } from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { Tabs, TabsContent } from '@/components/ui/tabs';
-import { statusLabel } from '@/components/profile-job-marketplace/application-status';
+import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
 import { isSearchUnavailable } from '@/lib/api-errors';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob } from '@/services/client/types.gen';
@@ -56,19 +55,20 @@ import { skillsMatchesHref } from '@/src/features/dashboard/lib/skills-matches-u
 import { useNearMe } from '@/src/features/near-me/near-me';
 import { NearMeControl } from '@/src/features/near-me/near-me-control';
 
+import { StatCard, StatCardSkeleton, surfaceTheme } from '@/components/data-display';
 import { ApplyDialog } from '../apply/apply-dialog';
-import { BestMatches } from './best-matches';
 import { JobsSectionTabs } from '../components/jobs-section-tabs';
 import { useNow } from '../hooks/use-now';
 import { hiredJobsHref, myApplicationsHref } from '../job-routes';
+import { BestMatches } from './best-matches';
 import {
   BASIS_OPTIONS,
   type BasisFilter,
   DELIVERY_OPTIONS,
   type FindWorkFilters,
+  findWorkQuery,
   FORMAT_OPTIONS,
   type FormatFilter,
-  findWorkQuery,
   matchesBasis,
   matchesDelivery,
   matchesFormat,
@@ -80,12 +80,11 @@ import {
   readyGroupOf,
   SORT_OPTIONS,
   type SortOption,
-  STARTS_OPTIONS,
   sortRows,
+  STARTS_OPTIONS,
 } from './find-work-filters';
 import { FindWorkJobCard, FindWorkJobCardSkeleton } from './find-work-job-card';
 import { useFindWorkJobs } from './use-find-work-jobs';
-import { StatCard, StatCardSkeleton, surfaceTheme } from '@/components/data-display';
 
 const BASIS_ICONS = {
   all: BriefcaseBusiness,
@@ -293,7 +292,7 @@ export function FindWorkPage({ embedded = false }: { embedded?: boolean }) {
   return (
     <main className={cn(surfaceTheme.pageWide, 'py-4 pb-16')}>
       <div className={surfaceTheme.pageStack}>
-        <PageHeader
+        {/* <PageHeader
           title='Jobs'
           description='Class jobs posted by organisations. Each one shows whether you can apply, and what to fix if you can’t yet.'
           actions={
@@ -311,7 +310,22 @@ export function FindWorkPage({ embedded = false }: { embedded?: boolean }) {
               </Button>
             </div>
           }
-        />
+        /> */}
+
+        <div className='flex flex-wrap gap-2 self-end justify-end'>
+          {embedded && (
+            <Button asChild variant='outline'>
+              <Link href={hiredJobsHref()}>Hired jobs</Link>
+            </Button>
+          )}
+          <Button asChild variant='outline'>
+            <Link href={dashboardUrl('instructor', 'rate-card')}>
+              <Layers aria-hidden />
+              Rate cards
+            </Link>
+          </Button>
+        </div>
+
         {!embedded && <JobsSectionTabs />}
 
         <section aria-label='Job summary' className={surfaceTheme.statGrid}>
