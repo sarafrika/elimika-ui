@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, FileText, Landmark, LayoutDashboard, ShieldCheck, Undo2 } from 'lucide-react';
+import { ArrowLeftRight, FileText, Landmark, LayoutDashboard, ShieldCheck, Smartphone, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { TrainingOrdersDashboard } from '@/app/dashboard/_components/wallet/TrainingOrdersDashboard';
 import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
@@ -10,6 +10,7 @@ import type { LedgerEntry } from '@/components/money/ledger';
 import { LedgerPanel } from '@/components/money/ledger-panel';
 import { WalletTransferSheet } from '@/components/money/wallet-transfer-sheet';
 import { Button } from '@/components/ui/button';
+import { PayoutDetailsPanel } from '@/components/wallet/payout-details-panel';
 import {
   AccountCards,
   AuditPanel,
@@ -23,7 +24,7 @@ import { useUserProfile } from '@/context/profile-context';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { getMyCourseEarningsOptions } from '@/services/client/@tanstack/react-query.gen';
 
-const TABS = ['dashboard', 'accounts', 'transactions', 'refunds', 'statements', 'audit'] as const;
+const TABS = ['dashboard', 'accounts', 'transactions', 'payout', 'refunds', 'statements', 'audit'] as const;
 const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
 
 /** A course creator's share of every class sold on their courses, per course, and every movement of it. */
@@ -61,6 +62,7 @@ export default function CourseCreatorWalletPage() {
           { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
           { id: 'accounts', label: 'Accounts', icon: Landmark },
           { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
+          { id: 'payout', label: 'Payout details', icon: Smartphone },
           { id: 'refunds', label: 'Refunds', icon: Undo2 },
           { id: 'statements', label: 'Statements', icon: FileText },
           { id: 'audit', label: 'Audit', icon: ShieldCheck },
@@ -111,6 +113,14 @@ export default function CourseCreatorWalletPage() {
         </SectionTabPanel>
         <SectionTabPanel value='transactions'>
           <TransactionsPanel scope={scope} active={tab === 'transactions'} filterTypes={EARNER_TYPES} />
+        </SectionTabPanel>
+        <SectionTabPanel value='payout'>
+          <PayoutDetailsPanel
+            scope={scope}
+            active={tab === 'payout'}
+            canManage
+            ownerName={[user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'you'}
+          />
         </SectionTabPanel>
         <SectionTabPanel value='refunds'>
           <RefundsPanel

@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, Coins, FileText, Landmark, LayoutDashboard, Receipt, ShieldCheck, Undo2, Users } from 'lucide-react';
+import { ArrowLeftRight, Coins, FileText, Landmark, LayoutDashboard, Receipt, ShieldCheck, Smartphone, Undo2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
@@ -10,6 +10,9 @@ import { formatMoney, formatSignedMoney } from '@/components/money/format';
 import { type LedgerEntry, type ObligationLike, obligationEntries } from '@/components/money/ledger';
 import { LedgerPanel } from '@/components/money/ledger-panel';
 import { RecordPaymentSheet } from '@/components/money/money-sheets';
+import { usePayoutApprovers } from '@/components/wallet/payout-api';
+import { PayoutApproversCard } from '@/components/wallet/payout-approvers-card';
+import { PayoutDetailsPanel } from '@/components/wallet/payout-details-panel';
 import {
   AccountCards,
   AuditPanel,
@@ -25,7 +28,7 @@ import { useUserProfile } from '@/context/profile-context';
 import { useClassDefinitionsByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { listObligationsOptions, listObligationsQueryKey } from '@/services/client/@tanstack/react-query.gen';
 
-const TABS = ['dashboard', 'accounts', 'transactions', 'refunds', 'statements', 'audit'] as const;
+const TABS = ['dashboard', 'accounts', 'transactions', 'payout', 'refunds', 'statements', 'audit'] as const;
 const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
 const PAGE = { pageable: { page: 0, size: 100 } };
 const PAYABLE_FILTERS = [
@@ -60,6 +63,8 @@ export default function OrganisationWalletPage() {
   const payables = obligationEntries(obligationList, { canSettle: true, title: titleOf });
   const owedList = obligationList.filter(o => (o.status ?? '').toUpperCase() === 'ACCRUED');
   const owed = owedList.reduce((sum, o) => sum + Number(o.rate_amount ?? 0), 0);
+  const { approvers } = usePayoutApprovers(organisationUuid, true);
+  const isApprover = approvers.some(approver => approver.user_uuid === user?.uuid);
   const sessions = `${owedList.length} delivered ${owedList.length === 1 ? 'session' : 'sessions'}`;
 
   return (
@@ -73,6 +78,7 @@ export default function OrganisationWalletPage() {
           { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
           { id: 'accounts', label: 'Accounts', icon: Landmark, count: owedList.length || null },
           { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
+          { id: 'payout', label: 'Payout details', icon: Smartphone },
           { id: 'refunds', label: 'Refunds', icon: Undo2 },
           { id: 'statements', label: 'Statements', icon: FileText },
           { id: 'audit', label: 'Audit', icon: ShieldCheck },
@@ -140,6 +146,23 @@ export default function OrganisationWalletPage() {
             active={tab === 'transactions'}
             filterTypes={EARNER_TYPES}
             exportName='organisation-wallet-transactions.csv'
+          />
+        </SectionTabPanel>
+        <SectionTabPanel value='payout'>
+          <PayoutDetailsPanel
+            scope={scope}
+            active={tab === 'payout'}
+            canManage={isApprover}
+            ownerName={[user?.first_name, user?.last_name].filter(Boolean).join(' ') || 'you'}
+            readOnlyNote='Only payout approvers can add or change these numbers. Any admin can name approvers.'
+            aside={
+              <PayoutApproversCard
+                organisationUuid={organisationUuid}
+                approvers={approvers}
+                selfUuid={user?.uuid}
+                active={tab === 'payout'}
+              />
+            }
           />
         </SectionTabPanel>
         <SectionTabPanel value='refunds'>
