@@ -1,6 +1,5 @@
 'use client';
 
-import { PageHeader } from '@/components/dashboard/page-header';
 import { SectionError } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -13,8 +12,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { ApplyToTrainWizard, headingFor, type WizardHeading } from './apply-to-train-wizard';
-import { ProfileStrip } from './components/profile-strip';
-import { myTrainingApplicationsHref, trackApplicationHref } from './links';
+import { trackApplicationHref } from './links';
 import type { ApplyKind } from './types';
 import { useDeepLinkItem } from './use-deep-link-item';
 
@@ -124,7 +122,7 @@ export function ApplyToTrainPage({ embedded = false }: { embedded?: boolean }) {
 
   return (
     <div className='mx-auto w-full max-w-[1600px] space-y-5 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
-      <PageHeader
+      {/* <PageHeader
         eyebrow={heading.eyebrow}
         title={
           applicationUuid && heading.title === 'Apply to train'
@@ -137,8 +135,9 @@ export function ApplyToTrainPage({ embedded = false }: { embedded?: boolean }) {
             <Link href={myTrainingApplicationsHref()}>My applications</Link>
           </Button>
         }
-      />
-      <ProfileStrip />
+      /> */}
+      {/* <ProfileStrip /> */}
+
       {body}
     </div>
   );

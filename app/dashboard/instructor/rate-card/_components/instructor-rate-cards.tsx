@@ -1,12 +1,11 @@
 'use client';
 
-import { Layers, Pencil, SearchX } from 'lucide-react';
+import { ChevronLeft, Layers, Pencil, SearchX } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { AsyncSection } from '@/components/data/async-section';
-import { PageHeader } from '@/components/page-header';
 import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
 import { RateUpdateStatus } from '@/components/rate-card/rate-update-status';
 import { UpdateRatesDialog } from '@/components/rate-card/update-rates-dialog';
@@ -41,6 +40,7 @@ function applyHref(kind: TrainingApplicationKind, parentUuid: string, applicatio
 
 /** The instructor's rate cards: one per course or program they applied to train. */
 export function InstructorRateCards() {
+  const router = useRouter();
   const instructor = useInstructor();
   const instructorUuid = instructor?.uuid ?? '';
   const searchParams = useSearchParams();
@@ -72,11 +72,11 @@ export function InstructorRateCards() {
   const linkBasis = RATE_BASES.find(basis => basis.value === rawBasis)?.value;
   const linked = linkParent
     ? (sorted.find(
-        entry =>
-          entry.kind === linkKind &&
-          entry.parentUuid === linkParent &&
-          entry.application.status === 'approved'
-      ) ?? sorted.find(entry => entry.kind === linkKind && entry.parentUuid === linkParent))
+      entry =>
+        entry.kind === linkKind &&
+        entry.parentUuid === linkParent &&
+        entry.application.status === 'approved'
+    ) ?? sorted.find(entry => entry.kind === linkKind && entry.parentUuid === linkParent))
     : undefined;
 
   const [dialog, setDialog] = useState<DialogTarget | null>(null);
@@ -96,10 +96,14 @@ export function InstructorRateCards() {
 
   return (
     <div className='mx-auto w-full max-w-6xl space-y-6 px-4 py-4 pb-10 sm:px-6'>
-      <PageHeader
+      <Button type='button' onClick={() => router.back()}>
+        <ChevronLeft /> Back
+      </Button>
+
+      {/* <PageHeader
         title='Rate cards'
         description='The rates each course creator approved for you, per training method and billing basis. Jobs can only hire you on a basis you have an approved rate for.'
-      />
+      /> */}
 
       {linkParent && !loading && !error && !linked ? (
         <EmptyState

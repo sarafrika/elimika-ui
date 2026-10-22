@@ -196,27 +196,27 @@ export function ApplyToTrainWizard({
     course: item ? { label: 'Course', status: 'Chosen', tone: 'success' } : { label: 'Course', status: 'Not started', tone: 'muted' },
     groups: item
       ? {
-          label: 'Age groups',
-          status: `${state.groups.length} ${state.groups.length === 1 ? 'group' : 'groups'}`,
-          tone: tone('groups'),
-        }
+        label: 'Age groups',
+        status: `${state.groups.length} ${state.groups.length === 1 ? 'group' : 'groups'}`,
+        tone: tone('groups'),
+      }
       : { label: 'Age groups', status: 'Not started', tone: 'muted' },
     delivery: state.delivery.methods.length
       ? {
-          label: 'Delivery',
-          status: `${state.delivery.methods.length} ${state.delivery.methods.length === 1 ? 'method' : 'methods'}`,
-          tone: tone('delivery'),
-        }
+        label: 'Delivery',
+        status: `${state.delivery.methods.length} ${state.delivery.methods.length === 1 ? 'method' : 'methods'}`,
+        tone: tone('delivery'),
+      }
       : { label: 'Delivery', status: 'Not started', tone: shown('delivery') && item ? 'danger' : 'muted' },
     requirements: !item
       ? { label: 'Requirements', status: 'Not started', tone: 'muted' }
       : item.kind === 'program'
         ? { label: 'Requirements', status: 'Read only', tone: 'default' }
         : {
-            label: 'Requirements',
-            status: state.answers.length ? `${answered} of ${state.answers.length} answered` : 'None',
-            tone: tone('requirements'),
-          },
+          label: 'Requirements',
+          status: state.answers.length ? `${answered} of ${state.answers.length} answered` : 'None',
+          tone: tone('requirements'),
+        },
     review: { label: 'Review', status: step === 'review' ? 'In progress' : '—', tone: 'muted' },
   };
 
@@ -303,9 +303,9 @@ export function ApplyToTrainWizard({
 
   return (
     <div className='space-y-5'>
-      <StepTabs current={step} statuses={statuses} canOpen={id => id === 'course' || Boolean(item)} onOpen={go} />
+      {/* <StepTabs current={step} statuses={statuses} canOpen={id => id === 'course' || Boolean(item)} onOpen={go} /> */}
 
-      <div className='grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_340px]'>
+      <div className='grid min-w-0 gap-5'>
         <div className='min-w-0 space-y-4'>
           {step === 'course' ? (
             <StepCourse

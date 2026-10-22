@@ -1,8 +1,10 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { type FormEvent, useId, useRef, useState } from 'react';
+import Image from 'next/image';
+import { type FormEvent, useEffect, useId, useRef, useState } from 'react';
 import { toast } from 'sonner';
+import { DocumentPreview } from '@/components/data-display/document-preview';
 import { Button } from '@/components/ui/button';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
@@ -18,14 +20,57 @@ import { dayjs, localDate } from '@/lib/date';
 import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
-  addPortfolioItemMutation, listDocumentsQueryKey, listDocumentTypesOptions,
+  addPortfolioItemMutation, listDocumentsOptions, listDocumentsQueryKey, listDocumentTypesOptions,
   updatePortfolioItemMutation, uploadDocumentMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { ItemTypeEnum, type UserDocument, type UserPortfolioItem } from '@/services/client/types.gen';
 import { requireApiData } from '@/src/features/onboarding/lib/user-onboarding';
+import { isAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { PORTFOLIO_ITEM_TYPES, portfolioDateInput, portfolioLink } from './portfolio';
 
 type UploadedAttachment = { file: File; documentType: string; document: UserDocument };
+
+function AttachmentPreview({ url, name, mime = '' }: { url: string; name: string; mime?: string }) {
+  const extension = name.split('.').pop()?.toLowerCase() ?? '';
+  return (
+    <div className='border-border bg-muted/20 space-y-2 overflow-hidden rounded-md border p-3'>
+      <p className='text-foreground break-all text-sm font-medium'>{name}</p>
+      {mime.startsWith('image/') || /^(png|jpe?g|gif|webp|avif|bmp|svg)$/.test(extension) ? (
+        <Image src={url} alt={name} width={640} height={360} className='max-h-64 w-full rounded-md object-contain' />
+      ) : mime.startsWith('video/') || /^(mp4|webm|mov|m4v|ogv)$/.test(extension) ? (
+        <video key={url} src={url} controls preload='metadata' aria-label={name} className='max-h-64 w-full rounded-md' />
+      ) : mime.startsWith('audio/') || /^(mp3|wav|m4a|aac|ogg|flac)$/.test(extension) ? (
+        <audio key={url} src={url} controls preload='metadata' aria-label={name} className='w-full' />
+      ) : mime === 'application/pdf' || extension === 'pdf' ? (
+        <DocumentPreview key={url} documentUrl={url} documentTitle={name} height={260} />
+      ) : (
+        <p className='text-muted-foreground text-xs'>An inline preview is unavailable for this file type.</p>
+      )}
+      <a className='text-primary text-sm underline' href={url} target='_blank' rel='noopener noreferrer'>Open attachment</a>
+    </div>
+  );
+}
+
+function SelectedFilePreview({ file }: { file: File }) {
+  const [preview, setPreview] = useState<{ file: File; url: string } | null>(null);
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setPreview({ file, url });
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  return preview?.file === file
+    ? <AttachmentPreview url={preview.url} name={file.name} mime={file.type} />
+    : <Spinner />;
+}
+
+function attachmentName(url: string) {
+  try {
+    return decodeURIComponent(new URL(url, 'https://local.invalid').pathname.split('/').pop() || 'Current attachment');
+  } catch {
+    return 'Current attachment';
+  }
+}
 
 export function PortfolioProjectDialog({ project, onClose, onSaved }: {
   project?: UserPortfolioItem;
@@ -42,6 +87,7 @@ export function PortfolioProjectDialog({ project, onClose, onSaved }: {
     link: project?.link_url ?? '',
   });
   const [file, setFile] = useState<File | null>(null);
+  const [attachmentSource, setAttachmentSource] = useState<'file' | 'external' | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const [documentType, setDocumentType] = useState('');
   // Retain successful work if a later request fails so retries reuse the same records.
@@ -62,6 +108,20 @@ export function PortfolioProjectDialog({ project, onClose, onSaved }: {
   });
   const selectedType = documentTypes.data?.find(type => type.uuid === documentType);
   const currentLink = portfolioLink(draft.link);
+  const documents = useQuery({
+    ...listDocumentsOptions(),
+    select: requireApiData,
+    enabled: !!project?.link_url,
+    staleTime: STALE_TIMES.entity,
+  });
+  const existingDocument = documents.data?.find(document => {
+    const url = portfolioLink(document.file_url);
+    return !!url && url === currentLink;
+  });
+  const isUploadedLink = draft.link.startsWith('/') || isAuthenticatedMediaUrl(currentLink) || !!existingDocument;
+  const source = attachmentSource ?? (
+    !draft.link || isUploadedLink || !documents.isSuccess ? 'file' : 'external'
+  );
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -81,7 +141,7 @@ export function PortfolioProjectDialog({ project, onClose, onSaved }: {
       setError('This project has no ID. Reload your portfolio before editing it.');
       return;
     }
-    if (!file && draft.link.trim() && (
+    if (source === 'external' && draft.link.trim() && (
       !currentLink || (draft.link.trim().startsWith('/') && draft.link.trim() !== project?.link_url)
     )) {
       setError('Enter a valid http or https project link.');
@@ -137,7 +197,7 @@ export function PortfolioProjectDialog({ project, onClose, onSaved }: {
           throw new Error('The uploaded document has no usable attachment link. Check your profile documents before trying again.');
         }
         link = attachment.document.file_url;
-      } else if (link && !link.startsWith('/')) {
+      } else if (source === 'external' && link && !link.startsWith('/')) {
         link = new URL(link).toString();
       }
       setStage('project');
@@ -201,22 +261,49 @@ export function PortfolioProjectDialog({ project, onClose, onSaved }: {
               <Textarea id={`${id}-description`} required rows={4} value={draft.description} onChange={event => setDraft(value => ({ ...value, description: event.target.value }))} />
             </div>
             <div className='space-y-2 sm:col-span-2'>
-              <Label htmlFor={`${id}-link`}>Project or media link (optional)</Label>
-              <Input id={`${id}-link`} inputMode='url' placeholder='https://' disabled={pending || !!file} value={draft.link} onChange={event => setDraft(value => ({ ...value, link: event.target.value }))} />
-              {currentLink && !file && <div className='flex flex-wrap items-center gap-2'>
-                <a className='text-primary text-sm underline' href={currentLink} target='_blank' rel='noopener noreferrer'>Open current link or attachment</a>
-                <Button type='button' variant='ghost' size='sm' onClick={() => setDraft(value => ({ ...value, link: '' }))}>Remove link or attachment</Button>
-              </div>}
+              <Label htmlFor={`${id}-source`}>Project media (optional)</Label>
+              <Select value={source} disabled={pending} onValueChange={value => {
+                if (value !== 'file' && value !== 'external') return;
+                if (value === source) return;
+                setAttachmentSource(value);
+                setDraft(current => ({ ...current, link: '' }));
+                setFile(null);
+                setDocumentType('');
+                if (fileInput.current) fileInput.current.value = '';
+              }}>
+                <SelectTrigger id={`${id}-source`}><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='file'>Upload a file</SelectItem>
+                  <SelectItem value='external'>External URL</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <div className='space-y-2 sm:col-span-2'>
+            {source === 'external' && <div className='space-y-2 sm:col-span-2'>
+              <Label htmlFor={`${id}-link`}>Project or media link (optional)</Label>
+              <Input id={`${id}-link`} inputMode='url' placeholder='https://' value={draft.link} onChange={event => setDraft(value => ({ ...value, link: event.target.value }))} />
+              {currentLink && <div className='flex flex-wrap items-center gap-2'>
+                <a className='text-primary text-sm underline' href={currentLink} target='_blank' rel='noopener noreferrer'>Open current link</a>
+                <Button type='button' variant='ghost' size='sm' onClick={() => setDraft(value => ({ ...value, link: '' }))}>Remove link</Button>
+              </div>}
+            </div>}
+            {source === 'file' && <div className='space-y-2 sm:col-span-2'>
               <Label htmlFor={`${id}-file`}>Attachment (optional)</Label>
-              <Input ref={fileInput} id={`${id}-file`} type='file' onChange={event => setFile(event.target.files?.[0] ?? null)} />
+              <Input ref={fileInput} id={`${id}-file`} type='file' onChange={event => {
+                setAttachmentSource('file');
+                setFile(event.target.files?.[0] ?? null);
+              }} />
               <p className='text-muted-foreground text-xs'>Uploading a file replaces the project link. Uploaded files are also saved in your profile documents.</p>
+              {file ? <SelectedFilePreview file={file} /> : currentLink && (
+                <>
+                  <AttachmentPreview url={currentLink} name={existingDocument?.original_filename || attachmentName(draft.link)} mime={existingDocument?.mime_type} />
+                  <Button type='button' variant='ghost' size='sm' onClick={() => setDraft(value => ({ ...value, link: '' }))}>Remove attachment</Button>
+                </>
+              )}
               {file && <Button type='button' variant='outline' size='sm' onClick={() => {
                 setFile(null);
                 if (fileInput.current) fileInput.current.value = '';
               }}>Remove selected file</Button>}
-            </div>
+            </div>}
             {file && (
               <div className='space-y-2 sm:col-span-2'>
                 <Label htmlFor={`${id}-document-type`}>Attachment document type</Label>

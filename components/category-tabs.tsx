@@ -1,6 +1,7 @@
 import { Check, ChevronDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,7 +64,12 @@ export function CategoryTabs({
   className,
 }: CategoryTabsProps) {
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const [scrollState, setScrollState] = useState({ canLeft: false, canRight: false });
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [scrollState, setScrollState] = useState({
+    hasOverflow: false,
+    canLeft: false,
+    canRight: false,
+  });
 
   const categories = useMemo(() => {
     const options = hierarchy
@@ -86,26 +92,35 @@ export function CategoryTabs({
     return [{ value: ALL_CATEGORIES, label: ALL_CATEGORIES, subjects: [] }, ...options];
   }, [hierarchy, items]);
 
-  const updateScrollState = () => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    setScrollState({
-      canLeft: el.scrollLeft > 4,
-      canRight: el.scrollLeft + el.clientWidth < el.scrollWidth - 4,
-    });
-  };
-
   useEffect(() => {
-    updateScrollState();
     const el = scrollerRef.current;
-    if (!el) return;
-    el.addEventListener('scroll', updateScrollState, { passive: true });
-    window.addEventListener('resize', updateScrollState);
-    return () => {
-      el.removeEventListener('scroll', updateScrollState);
-      window.removeEventListener('resize', updateScrollState);
+    const content = contentRef.current;
+    if (!el || !content) return;
+
+    const updateScrollState = () => {
+      // Measure the tabs without the space reserved for the arrow buttons.
+      const hasOverflow = content.scrollWidth > el.clientWidth;
+      const canLeft = hasOverflow && el.scrollLeft > 4;
+      const canRight = hasOverflow && el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+      setScrollState(previous =>
+        previous.hasOverflow === hasOverflow &&
+        previous.canLeft === canLeft &&
+        previous.canRight === canRight
+          ? previous
+          : { hasOverflow, canLeft, canRight }
+      );
     };
-  }, [categories.length]);
+
+    updateScrollState();
+    const observer = new ResizeObserver(updateScrollState);
+    observer.observe(el);
+    observer.observe(content);
+    el.addEventListener('scroll', updateScrollState, { passive: true });
+    return () => {
+      observer.disconnect();
+      el.removeEventListener('scroll', updateScrollState);
+    };
+  }, []);
 
   const scrollTabs = (dir: 'left' | 'right') => {
     const el = scrollerRef.current;
@@ -133,18 +148,18 @@ export function CategoryTabs({
       )}
     >
       <div className='relative'>
-        <button
-          type='button'
-          aria-label='Scroll categories left'
-          onClick={() => scrollTabs('left')}
-          disabled={!scrollState.canLeft}
-          className={cn(
-            'border-border bg-background absolute top-1/2 left-0 z-10 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-opacity md:flex',
-            !scrollState.canLeft && 'pointer-events-none opacity-0'
-          )}
-        >
-          <ChevronLeft className='h-4 w-4' />
-        </button>
+        {scrollState.canLeft && (
+          <Button
+            type='button'
+            variant='outline'
+            size='icon'
+            aria-label='Scroll categories left'
+            onClick={() => scrollTabs('left')}
+            className='border-border bg-background absolute top-1/2 left-0 z-10 hidden h-8 w-8 -translate-y-1/2 rounded-full shadow-sm md:flex'
+          >
+            <ChevronLeft className='h-4 w-4' />
+          </Button>
+        )}
 
         <div
           aria-hidden
@@ -163,10 +178,13 @@ export function CategoryTabs({
 
         <div
           ref={scrollerRef}
-          className='thin-scrollbar overflow-x-auto scroll-smooth md:px-10'
+          className={cn(
+            'thin-scrollbar overflow-x-auto scroll-smooth',
+            scrollState.hasOverflow && 'md:px-10'
+          )}
           style={{ WebkitOverflowScrolling: 'touch' }}
         >
-          <div className='flex min-w-max items-center gap-2 py-1'>
+          <div ref={contentRef} className='flex min-w-max items-center gap-2 py-1'>
             {categories.map(option => {
               const cat = option.value;
               const isActive = activeCategory === cat;
@@ -302,18 +320,18 @@ export function CategoryTabs({
           </div>
         </div>
 
-        <button
-          type='button'
-          aria-label='Scroll categories right'
-          onClick={() => scrollTabs('right')}
-          disabled={!scrollState.canRight}
-          className={cn(
-            'border-border bg-background absolute top-1/2 right-0 z-10 hidden h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border shadow-sm transition-opacity md:flex',
-            !scrollState.canRight && 'pointer-events-none opacity-0'
-          )}
-        >
-          <ChevronRight className='h-4 w-4' />
-        </button>
+        {scrollState.canRight && (
+          <Button
+            type='button'
+            variant='outline'
+            size='icon'
+            aria-label='Scroll categories right'
+            onClick={() => scrollTabs('right')}
+            className='border-border bg-background absolute top-1/2 right-0 z-10 hidden h-8 w-8 -translate-y-1/2 rounded-full shadow-sm md:flex'
+          >
+            <ChevronRight className='h-4 w-4' />
+          </Button>
+        )}
       </div>
     </div>
   );

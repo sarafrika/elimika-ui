@@ -1,6 +1,6 @@
 'use client';
 
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +36,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { isTaskGraded, isTaskSubmitted, taskGradeLabel } from './grading';
 import { useLessonTaskGrades } from './useLessonTaskGrades';
+import { invalidateSessionReportData } from './session-report-cache';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
 import { useWorkbookNavigation } from './useWorkbookNavigation';
@@ -78,6 +79,7 @@ export function LessonGradingPanel({
   sessionId?: string;
   tasks: LessonGradingTask[];
 }) {
+  const client = useQueryClient();
   const { searchParams, navigate } = useWorkbookNavigation();
   const focusedEnrollmentId = searchParams.get('enrollment');
   const [search, setSearch] = useState('');
@@ -527,6 +529,9 @@ export function LessonGradingPanel({
           enrollmentId={scoring.enrollmentId}
           studentName={scoring.studentName}
           onClose={() => setScoring(null)}
+          onSaved={() =>
+            sessionId ? invalidateSessionReportData(client, sessionId, classId) : Promise.resolve()
+          }
         />
       )}
 
@@ -535,7 +540,10 @@ export function LessonGradingPanel({
           key={`${selected.enrollmentId} -${selected.task.id} `}
           {...selected}
           onClose={() => setSelected(null)}
-          onGraded={grades.refetch}
+          onGraded={() => {
+            grades.refetch();
+            if (sessionId) void invalidateSessionReportData(client, sessionId, classId);
+          }}
         />
       )}
     </div>

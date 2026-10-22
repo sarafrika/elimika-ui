@@ -2,7 +2,9 @@
 
 import { useQuery } from '@tanstack/react-query';
 import RichTextRenderer from '@/components/editors/richTextRenders';
-import { ReportFigures, ReportLearnerTable } from '@/components/lesson/SessionReportPanel';
+import { SessionReportResults } from '@/components/lesson/SessionReportPanel';
+import { WorkbookError } from '@/components/lesson/WorkbookError';
+import { hasApiError } from '@/components/lesson/workbook-data';
 import { Badge } from '@/components/ui/badge';
 import {
   Sheet,
@@ -17,7 +19,11 @@ import { STALE_TIMES } from '@/lib/query-client';
 import { getSessionReportOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { RowDto } from '@/services/client/types.gen';
 
-const STATUS_LABELS: Record<string, string> = { draft: 'Draft', submitted: 'Submitted', locked: 'Locked' };
+const STATUS_LABELS: Record<string, string> = {
+  draft: 'Draft',
+  submitted: 'Submitted',
+  locked: 'Locked',
+};
 
 /** The school's read-only view of one submitted session report, laid out as the trainer's tab. */
 export function SessionReportSheet({
@@ -48,22 +54,35 @@ export function SessionReportSheet({
           </SheetTitle>
           <SheetDescription>
             {report?.start_time ? formatDateTime(report.start_time) : ''}
-            {report?.duration_minutes != null ? ` · ${String(report.duration_minutes)} minutes` : ''}
+            {report?.duration_minutes != null
+              ? ` · ${String(report.duration_minutes)} minutes`
+              : ''}
           </SheetDescription>
         </SheetHeader>
-        <div className='min-h-0 flex-1 space-y-5 overflow-y-auto p-4' data-testid='session-report-readonly'>
+        <div
+          className='min-h-0 flex-1 space-y-5 overflow-y-auto p-4'
+          data-testid='session-report-readonly'
+        >
           {query.isLoading ? (
             <Skeleton className='h-40 w-full' />
+          ) : query.isError || hasApiError(query.data) ? (
+            <WorkbookError
+              title='Unable to load the session report'
+              retry={() => void query.refetch()}
+            />
           ) : !rows.length ? (
             <p className='text-muted-foreground text-sm'>
-              This report has not been submitted yet. You will see it here once the trainer submits it.
+              This report has not been submitted yet. You will see it here once the trainer submits
+              it.
             </p>
           ) : (
             <>
               <div className='flex flex-wrap items-center gap-2'>
                 <Badge variant='outline'>{STATUS_LABELS[report?.status ?? ''] ?? 'Draft'}</Badge>
                 {report?.submitted_at && (
-                  <span className='text-muted-foreground text-xs'>Submitted {formatDateTime(report.submitted_at)}</span>
+                  <span className='text-muted-foreground text-xs'>
+                    Submitted {formatDateTime(report.submitted_at)}
+                  </span>
                 )}
               </div>
               <section className='bg-muted/40 space-y-2 rounded-xl border p-4 text-sm'>
@@ -89,8 +108,7 @@ export function SessionReportSheet({
               </section>
               {report && (
                 <>
-                  <ReportFigures report={report} />
-                  <ReportLearnerTable report={report} nameOf={studentName} submittedOnly />
+                  <SessionReportResults report={report} nameOf={studentName} submittedOnly />
                 </>
               )}
             </>
@@ -100,4 +118,3 @@ export function SessionReportSheet({
     </Sheet>
   );
 }
-

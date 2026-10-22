@@ -1,9 +1,8 @@
 'use client';
 
+import { EmptyState } from '@/components/ui/empty-state';
 import { Filter, Search } from 'lucide-react';
 import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-import { EmptyState } from '@/components/ui/empty-state';
-import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 import { Button } from '../../../../../components/ui/button';
 import { Input } from '../../../../../components/ui/input';
@@ -131,7 +130,8 @@ export function StudentTable({ data }: { data: InstructorStudentsData }) {
   return (
     <div className='min-w-0 flex-1 space-y-4'>
       {/* Course tabs */}
-      <div className='flex flex-wrap gap-2'>
+
+      {/* <div className='flex flex-wrap gap-2'>
         <Button
           onClick={() => setActiveTab('all')}
           className={`rounded-sm border px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
@@ -170,7 +170,7 @@ export function StudentTable({ data }: { data: InstructorStudentsData }) {
               {tab.label}
             </Button>
           ))}
-      </div>
+      </div> */}
 
       {/* Filters */}
       <div className='flex flex-wrap items-center gap-2'>

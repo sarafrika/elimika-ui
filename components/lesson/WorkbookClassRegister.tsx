@@ -1,8 +1,5 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import {
   type AttendanceStudent,
   InstructorAttendanceRail,
@@ -21,6 +18,7 @@ import {
   Sheet,
   SheetContent,
   SheetDescription,
+  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet';
@@ -37,16 +35,22 @@ import {
   recordAttendanceMutation,
   recordSessionMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { ScheduledInstance } from '@/services/client/types.gen';
+import type { Enrollment, ScheduledInstance } from '@/services/client/types.gen';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import { enrollmentAttendanceStatus } from './attendance';
+import { invalidateSessionReportData } from './session-report-cache';
+import { hasStudentNoteChanges, type StudentNotes } from './student-notes';
 import { useWorkbookNavigation } from './useWorkbookNavigation';
 import {
   getWorkbookSessionAvailability,
   useWorkbookSessionAvailability,
 } from './useWorkbookSessionAvailability';
+import { hasApiError } from './workbook-data';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
-import { hasApiError } from './workbook-data';
 
 export function WorkbookClassRegister({
   classId,
@@ -116,55 +120,131 @@ export function WorkbookClassRegister({
             .join('')
             .toUpperCase(),
           imageUrl: toAuthenticatedMediaUrl(user?.profile_image_url) ?? undefined,
-          status: entry.is_attendance_marked
-            ? entry.did_attend
-              ? 'PRESENT'
-              : 'ABSENT'
-            : entry.status === 'ATTENDED'
-              ? 'PRESENT'
-              : entry.status === 'ABSENT'
-                ? 'ABSENT'
-                : 'UNMARKED',
+          status: enrollmentAttendanceStatus(entry),
           checked_in_at: entry.attendance_marked_at,
         };
       }),
     [enrollments, studentMap, userMap]
   );
+  const [notes, setNotes] = useState<Record<string, StudentNotes>>({});
+  const [pendingAction, setPendingAction] = useState<'present' | 'absent' | 'notes'>('present');
   const mutation = useMutation({
     ...recordAttendanceMutation(),
     onError: error => toast.error(getErrorMessage(error, 'Unable to mark attendance.')),
-    onSuccess: async response => {
+    onSuccess: (response, variables) => {
       if (hasApiError(response)) {
         toast.error(response.message || 'Unable to mark attendance.');
         return;
       }
-      await client.invalidateQueries({
-        queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
-      });
-      toast.success('Attendance updated.');
+      const savedEnrollment = query.data?.data?.find(
+        entry => entry.uuid === variables.path.enrollmentUuid
+      );
+      const savedSessionId = savedEnrollment?.scheduled_instance_uuid ?? sessionId;
+      // Keep successful rows saved locally even if another row or the refresh fails.
+      client.setQueryData(
+        getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
+        (current: typeof query.data) =>
+          current && !hasApiError(current)
+            ? {
+              ...current,
+              data: current.data?.map(
+                (entry): Enrollment =>
+                  entry.uuid === variables.path.enrollmentUuid
+                    ? {
+                      ...entry,
+                      status: variables.body.attended ? 'ATTENDED' : 'ABSENT',
+                      instrument_condition:
+                        variables.body.instrument_condition === 'GOOD' ||
+                          variables.body.instrument_condition === 'NEEDS_REPAIR' ||
+                          variables.body.instrument_condition === 'NO_EQUIPMENT'
+                          ? variables.body.instrument_condition
+                          : entry.instrument_condition,
+                      attendance_comment: variables.body.comment,
+                    }
+                    : entry
+              ),
+            }
+            : current
+      );
+      if (savedSessionId && savedEnrollment) {
+        setNotes(current => {
+          const next = { ...current };
+          delete next[`${savedSessionId}-${savedEnrollment.student_uuid}`];
+          return next;
+        });
+      }
     },
   });
-  const [notes, setNotes] = useState<Record<string, { condition?: string; comment?: string }>>({});
+  const noteKey = (studentId: string) => `${sessionId}-${studentId}`;
   const noteFor = (studentId: string) => {
     const enrollment = enrollments.find(entry => entry.student_uuid === studentId);
     return {
-      condition: notes[studentId]?.condition ?? enrollment?.instrument_condition ?? undefined,
-      comment: notes[studentId]?.comment ?? enrollment?.attendance_comment ?? '',
+      condition:
+        notes[noteKey(studentId)]?.condition ?? enrollment?.instrument_condition ?? undefined,
+      comment: notes[noteKey(studentId)]?.comment ?? enrollment?.attendance_comment ?? '',
     };
   };
-  const mark = (studentId: string, attended: boolean) => {
+  const changedEnrollments = enrollments.filter(enrollment =>
+    hasStudentNoteChanges(enrollment, notes[noteKey(enrollment.student_uuid)])
+  );
+  const notesToSave = changedEnrollments.filter(
+    enrollment => enrollment.uuid && enrollmentAttendanceStatus(enrollment) !== 'UNMARKED'
+  );
+  const unmarkedChanges = changedEnrollments.length - notesToSave.length;
+  const refreshRegister = () =>
+    Promise.all([
+      client.invalidateQueries({
+        queryKey: getEnrollmentsForClassQueryKey({ path: { uuid: classId } }),
+      }),
+      ...(sessionId ? [invalidateSessionReportData(client, sessionId, classId)] : []),
+    ]);
+  const saveNotes = useMutation({
+    mutationFn: async () => {
+      setPendingAction('notes');
+      let saved = 0;
+      for (const enrollment of notesToSave) {
+        if (!enrollment.uuid) continue;
+        const note = noteFor(enrollment.student_uuid);
+        const response = await mutation
+          .mutateAsync({
+            path: { enrollmentUuid: enrollment.uuid },
+            body: {
+              attended: enrollmentAttendanceStatus(enrollment) === 'PRESENT',
+              instrument_condition: note.condition || undefined,
+              comment: richTextOrUndefined(note.comment) ?? '',
+            },
+          })
+          .catch(() => null);
+        if (response && !hasApiError(response)) saved++;
+      }
+      if (saved > 0) {
+        toast.success(`Notes saved for ${saved} ${saved === 1 ? 'student' : 'students'}.`);
+        await refreshRegister();
+      }
+    },
+  });
+  const busy = mutation.isPending || saveNotes.isPending;
+  const mark = async (studentId: string, attended: boolean) => {
     const enrollment = enrollments.find(entry => entry.student_uuid === studentId);
-    if (!enrollment?.uuid || mutation.isPending) return;
+    if (!enrollment?.uuid || busy) return;
+    const status = roster.find(student => student.uuid === studentId)?.status;
+    if (status === (attended ? 'PRESENT' : 'ABSENT')) return;
     const note = noteFor(studentId);
-    mutation.mutate({
-      path: { enrollmentUuid: enrollment.uuid },
-      // The comment is rich-text HTML, so it travels in the body rather than the URL.
-      body: {
-        attended,
-        instrument_condition: note.condition || undefined,
-        comment: richTextOrUndefined(note.comment),
-      },
-    });
+    setPendingAction(attended ? 'present' : 'absent');
+    const response = await mutation
+      .mutateAsync({
+        path: { enrollmentUuid: enrollment.uuid },
+        // The comment is rich-text HTML, so it travels in the body rather than the URL.
+        body: {
+          attended,
+          instrument_condition: note.condition || undefined,
+          comment: richTextOrUndefined(note.comment) ?? '',
+        },
+      })
+      .catch(() => null);
+    if (!response || hasApiError(response)) return;
+    toast.success('Attendance updated.');
+    await refreshRegister();
   };
   if (!sessionId) return <EmptyState title='Select a class session to view its students' />;
   if (query.isLoading || studentsLoading || usersLoading) return <WorkbookLoading />;
@@ -183,12 +263,12 @@ export function WorkbookClassRegister({
     <>
       <InstructorAttendanceRail
         roster={roster}
-        canAdmit={canAdmit && !mutation.isPending}
+        canAdmit={canAdmit && !busy}
         pendingStudentId={
           enrollments.find(entry => entry.uuid === mutation.variables?.path.enrollmentUuid)
             ?.student_uuid
         }
-        isPending={mutation.isPending}
+        isPending={busy}
         onAdmit={id => {
           if (getWorkbookSessionAvailability(session).canAdmit) mark(id, true);
         }}
@@ -199,25 +279,32 @@ export function WorkbookClassRegister({
         onOpenRegister={() => setOpen(true)}
       />
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent className='w-full overflow-y-auto sm:max-w-2xl'>
-          <SheetHeader>
+        <SheetContent className='w-full overflow-hidden sm:max-w-2xl'>
+          <SheetHeader className='shrink-0'>
             <SheetTitle>Class register</SheetTitle>
             <SheetDescription>{roster.length} students enrolled in this session.</SheetDescription>
           </SheetHeader>
-          <div className='space-y-4 p-4'>
-            {sessionId && <SessionRecordForm sessionId={sessionId} />}
+          <div className='min-h-0 flex-1 space-y-4 overflow-y-auto p-4'>
+            {sessionId && (
+              <SessionRecordForm key={sessionId} sessionId={sessionId} classId={classId} />
+            )}
             {!roster.length && <EmptyState title='No students enrolled in this session' />}
             {roster.map(student => (
               <div key={student.uuid} className='space-y-2 rounded-lg border p-3'>
                 <p className='font-medium'>{student.name}</p>
                 <p className='text-muted-foreground text-xs'>{student.status}</p>
+                <p className='text-muted-foreground text-xs'>
+                  Attendance saves the instrument condition and comment. Use Save notes below to
+                  save changes for all students with marked attendance.
+                </p>
                 <div className='grid gap-2 sm:grid-cols-2'>
                   <Select
+                    disabled={busy}
                     value={noteFor(student.uuid).condition ?? ''}
                     onValueChange={value =>
                       setNotes(current => ({
                         ...current,
-                        [student.uuid]: { ...noteFor(student.uuid), condition: value },
+                        [noteKey(student.uuid)]: { ...noteFor(student.uuid), condition: value },
                       }))
                     }
                   >
@@ -230,14 +317,20 @@ export function WorkbookClassRegister({
                       <SelectItem value='NO_EQUIPMENT'>No equipment provided</SelectItem>
                     </SelectContent>
                   </Select>
-                  <div role='group' aria-label={`Comment on ${student.name}`} className='sm:col-span-2'>
+                  <div
+                    role='group'
+                    aria-label={`Comment on ${student.name}`}
+                    className='sm:col-span-2'
+                  >
+                    <p className='text-muted-foreground mb-1 text-xs'>Student comment</p>
                     <SimpleEditor
-                      key={`${student.uuid}-${query.isSuccess}`}
+                      key={`${sessionId}-${student.uuid}`}
                       value={noteFor(student.uuid).comment}
+                      isEditable={!busy}
                       onChange={comment =>
                         setNotes(current => ({
                           ...current,
-                          [student.uuid]: { ...noteFor(student.uuid), comment },
+                          [noteKey(student.uuid)]: { ...noteFor(student.uuid), comment },
                         }))
                       }
                     />
@@ -247,13 +340,13 @@ export function WorkbookClassRegister({
                   <Button
                     size='sm'
                     variant='outline'
-                    disabled={mutation.isPending}
+                    disabled={busy || student.status === 'PRESENT'}
                     onClick={() => mark(student.uuid, true)}
                   >
                     {mutation.isPending &&
-                      mutation.variables?.body.attended &&
+                      pendingAction === 'present' &&
                       mutation.variables?.path.enrollmentUuid ===
-                        enrollments.find(entry => entry.student_uuid === student.uuid)?.uuid && (
+                      enrollments.find(entry => entry.student_uuid === student.uuid)?.uuid && (
                         <Spinner />
                       )}
                     Mark present
@@ -261,13 +354,13 @@ export function WorkbookClassRegister({
                   <Button
                     size='sm'
                     variant='outline'
-                    disabled={mutation.isPending}
+                    disabled={busy || student.status === 'ABSENT'}
                     onClick={() => mark(student.uuid, false)}
                   >
                     {mutation.isPending &&
-                      !mutation.variables?.body.attended &&
+                      pendingAction === 'absent' &&
                       mutation.variables?.path.enrollmentUuid ===
-                        enrollments.find(entry => entry.student_uuid === student.uuid)?.uuid && (
+                      enrollments.find(entry => entry.student_uuid === student.uuid)?.uuid && (
                         <Spinner />
                       )}
                     Mark absent
@@ -289,6 +382,22 @@ export function WorkbookClassRegister({
               </div>
             ))}
           </div>
+          <SheetFooter className='bg-background shrink-0 items-center border-t'>
+            <p className='text-muted-foreground text-center text-xs' role='status'>
+              {notesToSave.length} {notesToSave.length === 1 ? 'student has' : 'students have'}{' '}
+              unsaved notes.
+              {unmarkedChanges > 0 &&
+                ` Mark attendance for ${unmarkedChanges} more ${unmarkedChanges === 1 ? 'student' : 'students'} to save their notes.`}
+            </p>
+            <Button
+              className='w-full'
+              disabled={busy || notesToSave.length === 0}
+              onClick={() => saveNotes.mutate()}
+            >
+              {saveNotes.isPending && <Spinner />}
+              Save notes
+            </Button>
+          </SheetFooter>
         </SheetContent>
       </Sheet>
     </>
@@ -296,7 +405,7 @@ export function WorkbookClassRegister({
 }
 
 /** What was actually taught in this session, as the school's attendance sheet records it. */
-function SessionRecordForm({ sessionId }: { sessionId: string }) {
+function SessionRecordForm({ sessionId, classId }: { sessionId: string; classId: string }) {
   const client = useQueryClient();
   const query = useQuery({
     ...getSessionRecordOptions({ path: { instanceUuid: sessionId } }),
@@ -320,36 +429,52 @@ function SessionRecordForm({ sessionId }: { sessionId: string }) {
         <p className='text-muted-foreground text-xs'>{record.duration_minutes} minute session</p>
       )}
       <div role='group' aria-label='Topic covered' className='space-y-1'>
-        <p className='text-muted-foreground text-xs'>Topic covered, e.g. grand staff: treble and bass clefs</p>
-        <SimpleEditor key={`topic-${sessionId}-${query.isSuccess}`} value={topicValue} onChange={setTopic} />
+        <p className='text-muted-foreground text-xs'>
+          Topic covered, e.g. grand staff: treble and bass clefs
+        </p>
+        <SimpleEditor
+          key={`topic-${sessionId}-${query.isSuccess}`}
+          value={topicValue}
+          onChange={setTopic}
+        />
       </div>
       <div role='group' aria-label='Instructor remarks' className='space-y-1'>
         <p className='text-muted-foreground text-xs'>Remarks on the session</p>
-        <SimpleEditor key={`remarks-${sessionId}-${query.isSuccess}`} value={remarksValue} onChange={setRemarks} />
+        <SimpleEditor
+          key={`remarks-${sessionId}-${query.isSuccess}`}
+          value={remarksValue}
+          onChange={setRemarks}
+        />
       </div>
       <div className='flex justify-end'>
         <Button
           size='sm'
           disabled={mutation.isPending || query.isLoading}
           onClick={async () => {
-            const response = await mutation.mutateAsync({
-              path: { instanceUuid: sessionId },
-              body: {
-                topic_covered: richTextOrUndefined(topicValue),
-                instructor_remarks: richTextOrUndefined(remarksValue),
-              },
-            }).catch(() => null);
+            const response = await mutation
+              .mutateAsync({
+                path: { instanceUuid: sessionId },
+                body: {
+                  topic_covered: richTextOrUndefined(topicValue),
+                  instructor_remarks: richTextOrUndefined(remarksValue),
+                },
+              })
+              .catch(() => null);
             if (!response) return;
             if (hasApiError(response)) {
               toast.error(response.message || 'Unable to save the session record.');
               return;
             }
             toast.success('Session record saved.');
-            await client.invalidateQueries({
-              queryKey: getSessionRecordQueryKey({ path: { instanceUuid: sessionId } }),
-            });
+            await Promise.all([
+              client.invalidateQueries({
+                queryKey: getSessionRecordQueryKey({ path: { instanceUuid: sessionId } }),
+              }),
+              invalidateSessionReportData(client, sessionId, classId),
+            ]);
           }}
         >
+          {mutation.isPending && <Spinner />}
           Save
         </Button>
       </div>

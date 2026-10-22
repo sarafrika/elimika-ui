@@ -1,11 +1,10 @@
 'use client';
 
-import { ArrowRight, GraduationCap } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
-import { cn } from '@/lib/utils';
-import { APPLY_TO_TRAIN_STEPS, type ApplyItem, type ApplyStepId, ageRangeLabel } from '../types';
+import { type ApplyItem, type ApplyStepId } from '../types';
 
 export type RailLine = { label: string; status: string; tone: 'muted' | 'default' | 'success' | 'danger' };
 
@@ -16,7 +15,7 @@ const TONE: Record<RailLine['tone'], string> = {
   danger: 'text-destructive font-semibold',
 };
 
-/** The sticky "Your application" card: what is chosen, where each step stands, and the next move. */
+/** The application summary and navigation at the bottom of the current step. */
 export function SummaryRail({
   item,
   lessonCount,
@@ -43,7 +42,10 @@ export function SummaryRail({
   tip: string;
 }) {
   return (
-    <aside className='flex flex-col gap-4 lg:sticky lg:top-4'>
+    <aside className='flex min-w-0 flex-col gap-4'>
+      {/* <p className='bg-card text-muted-foreground rounded-2xl border px-5 py-4 text-sm leading-relaxed shadow-sm'>
+        {tip}
+      </p>
       <div className='bg-card space-y-4 rounded-2xl border p-5 shadow-sm'>
         <h2 className='text-foreground text-base font-bold'>Your application</h2>
         {item ? (
@@ -77,27 +79,25 @@ export function SummaryRail({
             </div>
           ))}
         </dl>
-        <div className='flex gap-2'>
-          {canBack ? (
-            <Button type='button' variant='outline' className='h-11 flex-1' onClick={onBack}>
-              Back
-            </Button>
-          ) : null}
-          <Button
-            type='button'
-            className='h-11 flex-[2]'
-            onClick={onNext}
-            disabled={nextDisabled || submitting}
-          >
-            {submitting ? <Spinner className='size-4' /> : null}
-            {nextLabel}
-            {submitting ? null : <ArrowRight aria-hidden />}
+      </div> */}
+
+      <div className='flex items-center justify-between gap-3'>
+        {canBack ? (
+          <Button type='button' variant='outline' className='h-11' onClick={onBack}>
+            Back
           </Button>
-        </div>
+        ) : null}
+        <Button
+          type='button'
+          className='ml-auto h-auto min-h-11 min-w-0 shrink py-2 text-center whitespace-normal'
+          onClick={onNext}
+          disabled={nextDisabled || submitting}
+        >
+          {submitting ? <Spinner className='size-4' /> : null}
+          {nextLabel}
+          {submitting ? null : <ArrowRight aria-hidden />}
+        </Button>
       </div>
-      <p className='bg-card text-muted-foreground rounded-2xl border px-5 py-4 text-sm leading-relaxed shadow-sm'>
-        {tip}
-      </p>
     </aside>
   );
 }

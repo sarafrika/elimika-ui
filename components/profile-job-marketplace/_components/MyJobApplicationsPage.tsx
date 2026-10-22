@@ -5,8 +5,8 @@ import { BriefcaseBusiness, CalendarClock, Layers } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
+import { surfaceTheme } from '@/components/data-display';
 import { AsyncSection } from '@/components/data/async-section';
-import { PageHeader } from '@/components/dashboard/page-header';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
@@ -36,7 +36,6 @@ import {
 } from '@/src/features/instructor-jobs/job-routes';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { hiredJobData } from '../hired-jobs';
-import { surfaceTheme } from '@/components/data-display';
 
 type Segment = 'in-progress' | 'closed';
 
@@ -92,7 +91,7 @@ export function MyJobApplicationsPage({ embedded = false }: { embedded?: boolean
   return (
     <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
-        <PageHeader
+        {/* <PageHeader
           title={embedded ? 'My Applications' : 'Jobs'}
           description='Class jobs posted by organisations. Check the fit before you apply, then follow each application through to the class.'
           actions={
@@ -103,7 +102,15 @@ export function MyJobApplicationsPage({ embedded = false }: { embedded?: boolean
               </Link>
             </Button>
           }
-        />
+        /> */}
+
+        <Button className='mx-w-fit self-end' variant='outline' asChild>
+          <Link href={dashboardUrl('instructor', 'rate-card')}>
+            <Layers className='size-4' />
+            View Rate cards
+          </Link>
+        </Button>
+
         {!embedded && <JobsSectionTabs />}
 
         <div className='flex flex-wrap items-center justify-between gap-3'>

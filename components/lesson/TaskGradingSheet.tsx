@@ -275,10 +275,8 @@ function AssignmentSubmissionGrade({
               client.invalidateQueries({
                 queryKey: searchSubmissionsQueryKey({
                   query: {
-                    searchParams: {
-                      assignmentUuid: task.uuid,
-                      enrollmentUuid: submission.enrollment_uuid,
-                    },
+                    // Grading also changes batched session-report and register views.
+                    searchParams: {},
                     pageable: {},
                   },
                 }),
@@ -607,10 +605,7 @@ function QuizAttemptGrade({
                       client.invalidateQueries({
                         queryKey: searchAttemptsQueryKey({
                           query: {
-                            searchParams: {
-                              quizUuid: attempt.quiz_uuid,
-                              enrollmentUuid: attempt.enrollment_uuid,
-                            },
+                            searchParams: {},
                             pageable: {},
                           },
                         }),
