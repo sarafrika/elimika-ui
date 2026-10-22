@@ -2,6 +2,9 @@
 
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { StudentCourseAction } from '../../components/StudentCourseAction';
+import { getEnrollHref } from './courses-data';
 import type { CoursesCatalogCardData } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { Award, BookOpen, Calendar, Search, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -26,6 +29,9 @@ const ctaToneClasses: Record<NonNullable<CoursesCatalogCardData['ctaTone']>, str
 
 export function CoursesCatalogCard({ card, type }: CoursesCatalogCardProps) {
   const router = useRouter();
+  const { activeDomain } = useUserDomain();
+  const isTrainingApplication = card.ctaKind === 'apply-course' || card.ctaKind === 'apply-program';
+  const classesPath = getEnrollHref('student', card.contentKind, card.id);
 
   return (
     <CourseCatalogCardLayout
@@ -53,18 +59,21 @@ export function CoursesCatalogCard({ card, type }: CoursesCatalogCardProps) {
         </>
       }
     >
-      {/* Instructor CTA */}
-      {card.showInstructorCta !== false && (
-        <Button asChild variant='outline' className='h-9 w-full rounded-lg text-sm shadow-none'>
-          <Link href={card.instructorHref}>
-            <Search className='size-4' />
-            Search Instructor
-          </Link>
-        </Button>
-      )}
+      <StudentCourseAction
+        href={card.instructorHref}
+        variant='outline'
+        className='h-9 w-full rounded-lg text-sm shadow-none'
+      >
+        <Search className='size-4' />
+        Search Instructor
+      </StudentCourseAction>
 
-      {/* Primary CTA */}
-      {card.ctaKind === 'apply-course' || card.ctaKind === 'apply-program' ? (
+      <StudentCourseAction href={classesPath} className='h-9 w-full rounded-lg text-sm shadow-none'>
+        <Calendar className='size-4' />
+        Join Class
+      </StudentCourseAction>
+
+      {activeDomain === 'instructor' && isTrainingApplication && (
         <Button
           type='button'
           className={cn(
@@ -77,29 +86,33 @@ export function CoursesCatalogCard({ card, type }: CoursesCatalogCardProps) {
           <BookOpen className='size-4' />
           {card.ctaLabel}
         </Button>
-      ) : card.ctaLabel === 'View Certificate' ? (
-        <Button
-          asChild
-          className='h-9 w-full rounded-lg text-sm shadow-none'
-          disabled={card.ctaDisabled}
-        >
-          <Link href={card.certificateHref}>
-            <Award className='size-4' />
-            {card.ctaLabel}
-          </Link>
-        </Button>
-      ) : (
-        <Button
-          asChild
-          className='h-9 w-full rounded-lg text-sm shadow-none'
-          disabled={card.ctaDisabled}
-        >
-          <Link href={card.enrollHref}>
-            <Calendar className='size-4' />
-            {card.ctaLabel}
-          </Link>
-        </Button>
       )}
+
+      {!isTrainingApplication &&
+        type !== 'general' &&
+        (card.ctaLabel === 'View Certificate' ? (
+          <Button
+            asChild
+            className='h-9 w-full rounded-lg text-sm shadow-none'
+            disabled={card.ctaDisabled}
+          >
+            <Link href={card.certificateHref}>
+              <Award className='size-4' />
+              {card.ctaLabel}
+            </Link>
+          </Button>
+        ) : (
+          <Button
+            asChild
+            className='h-9 w-full rounded-lg text-sm shadow-none'
+            disabled={card.ctaDisabled}
+          >
+            <Link href={card.enrollHref}>
+              <Calendar className='size-4' />
+              {card.ctaLabel}
+            </Link>
+          </Button>
+        ))}
     </CourseCatalogCardLayout>
   );
 }

@@ -1,14 +1,13 @@
 'use client';
 
 import {
+  BookOpen,
   Briefcase,
   FileCheck2,
   GraduationCap,
   Plus,
-  Share2,
-  Users,
-  BookOpen,
   Trash2,
+  Users
 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
@@ -95,9 +94,6 @@ export function SkillsWalletExperienceTab({
         <div className='flex items-center gap-2'>
           <Button className='bg-primary hover:bg-primary/90' onClick={onAddExperience}>
             <Plus className='mr-2 h-4 w-4' /> Add Experience
-          </Button>
-          <Button variant='outline'>
-            <Share2 className='mr-2 h-4 w-4' /> Share Experience
           </Button>
         </div>
       </div>

@@ -42,7 +42,7 @@ type Segment = 'in-progress' | 'closed';
 
 const PAGE_SIZE = 10;
 
-export function MyJobApplicationsPage() {
+export function MyJobApplicationsPage({ embedded = false }: { embedded?: boolean }) {
   const profile = useUserProfile();
   const { replaceBreadcrumbs } = useBreadcrumb();
   const [segment, setSegment] = useState<Segment>('in-progress');
@@ -51,12 +51,13 @@ export function MyJobApplicationsPage() {
   const [now] = useState(() => Date.now());
 
   useEffect(() => {
+    if (embedded) return;
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: '/dashboard' },
       { id: 'jobs', title: 'Jobs', url: findWorkHref() },
       { id: 'applications', title: 'My applications', url: myApplicationsHref(), isLast: true },
     ]);
-  }, [replaceBreadcrumbs]);
+  }, [replaceBreadcrumbs, embedded]);
 
   const applications = useQuery({
     ...listMyApplicationsOptions(myApplicationsQueryArgs),
@@ -92,7 +93,7 @@ export function MyJobApplicationsPage() {
     <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
         <PageHeader
-          title='Jobs'
+          title={embedded ? 'My Applications' : 'Jobs'}
           description='Class jobs posted by organisations. Check the fit before you apply, then follow each application through to the class.'
           actions={
             <Button variant='outline' asChild>
@@ -103,7 +104,7 @@ export function MyJobApplicationsPage() {
             </Button>
           }
         />
-        <JobsSectionTabs />
+        {!embedded && <JobsSectionTabs />}
 
         <div className='flex flex-wrap items-center justify-between gap-3'>
           <div

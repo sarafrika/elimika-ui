@@ -9,17 +9,27 @@
  * Usage:  node scripts/perf/ts-error-ratchet.mjs           # check
  *         node scripts/perf/ts-error-ratchet.mjs --update  # lower ceiling
  */
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 
 const CEILING_FILE = new URL('./ts-error-ceiling.txt', import.meta.url);
+const require = createRequire(import.meta.url);
+const TSC_PATH = require.resolve('typescript/bin/tsc');
 
 let output = '';
 try {
-  output = execSync('pnpm exec tsc --noEmit --pretty false -p tsconfig.json', {
-    encoding: 'utf8',
-    maxBuffer: 64 * 1024 * 1024,
-  });
+  // This project exceeds Node's default heap. Apply the larger limit directly to
+  // the compiler process so both pnpm and direct script invocations use it.
+  output = execFileSync(
+    process.execPath,
+    ['--max-old-space-size=6144', TSC_PATH, '--noEmit', '--pretty', 'false', '-p', 'tsconfig.json'],
+    {
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    }
+  );
 } catch (error) {
   output = `${error.stdout ?? ''}${error.stderr ?? ''}`;
   if (error.signal || !/error TS\d+/.test(output)) {

@@ -4,17 +4,17 @@ import { ArrowRight, CheckCircle, GraduationCap, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { useInstructorStudentsData } from '../data';
+import type { InstructorStudentsData } from '../data';
 import { CourseList } from './CourseList';
 import { OverviewStats } from './OverviewStats';
 import { RecentActivityList } from './RecentActivityList';
 
-export function OverviewSidebar() {
+export function OverviewSidebar({ data }: { data: InstructorStudentsData }) {
   const router = useRouter();
 
   const [showAllCourses, setShowAllCourses] = useState(false);
 
-  const { recentActivities, classes, students } = useInstructorStudentsData();
+  const { recentActivities, classes, students } = data;
 
   const stats = useMemo(() => {
     const totalStudents = students.length;

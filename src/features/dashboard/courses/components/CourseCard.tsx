@@ -5,6 +5,7 @@ import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { StudentCourseAction } from './StudentCourseAction';
 import { Card, CardContent } from '@/components/ui/card';
 import { extractEntity, extractPage, getTotalFromMetadata } from '@/lib/api-helpers';
 import type {
@@ -20,6 +21,7 @@ import {
   getCourseEnrollmentsOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery } from '@tanstack/react-query';
 import { BookOpen, Play, Users } from 'lucide-react';
@@ -125,7 +127,11 @@ export function CourseCard({
   return (
     <Card
       className='group border-border max-w-[360px] cursor-pointer rounded-lg border-[1px] p-0 transition-all hover:-translate-y-1 hover:shadow-lg'
-      onClick={handleClick}
+      onClick={event => {
+        if (event.target instanceof Node && event.currentTarget.contains(event.target)) {
+          handleClick();
+        }
+      }}
     >
       <div className='relative'>
         {/* Course Image */}
@@ -201,27 +207,29 @@ export function CourseCard({
           <div className='flex items-end justify-between gap-2 self-end pt-4'>
             {isStudentView ? (
               <>
-                <Button
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleSearchInstructor();
-                    // router.push(`/dashboard/courses/instructor/123`);
-                  }}
+                <StudentCourseAction
+                  href={dashboardUrl(
+                    'student',
+                    `courses/instructor?${'name' in course ? 'courseId' : 'programId'}=${course.uuid}`
+                  )}
+                  onContinue={handleSearchInstructor}
+                  disabled={!course.uuid}
                   size='sm'
                   variant='outline'
                 >
                   Search Instructor
-                </Button>
-                <Button
+                </StudentCourseAction>
+                <StudentCourseAction
+                  href={dashboardUrl(
+                    'student',
+                    `courses/${'name' in course ? 'available-classes' : 'available-programs'}/${course.uuid}`
+                  )}
                   size='sm'
-                  onClick={e => {
-                    e.stopPropagation();
-                    handleEnroll();
-                    // router.push(`/dashboard/courses/enroll/${course.uuid}`);
-                  }}
+                  onContinue={handleEnroll}
+                  disabled={!course.uuid}
                 >
                   Enroll
-                </Button>
+                </StudentCourseAction>
               </>
             ) : (
               <Button

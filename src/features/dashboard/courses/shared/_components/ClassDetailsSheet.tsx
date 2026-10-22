@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { StudentCourseAction } from '../../components/StudentCourseAction';
+import { studentClassEnrollmentPath } from '@/src/features/dashboard/lib/student-enrollment';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import {
   BookOpen,
@@ -64,40 +65,31 @@ export function ClassDetailSheet({
             <SheetHeader className='p-0'>
               <SheetTitle className='text-xl'>{detail.title}</SheetTitle>
 
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                {detail.session_format && (
-                  <Badge>{detail.session_format}</Badge>
-                )}
+              <div className='mt-2 flex flex-wrap items-center gap-2'>
+                {detail.session_format && <Badge>{detail.session_format}</Badge>}
 
-                {detail.location_type && (
-                  <Badge variant="outline">{detail.location_type}</Badge>
-                )}
+                {detail.location_type && <Badge variant='outline'>{detail.location_type}</Badge>}
 
                 {detail.skills_fund_eligible && (
-                  <Badge className="bg-success/10 text-success">
-                    Fund Eligible
-                  </Badge>
+                  <Badge className='bg-success/10 text-success'>Fund Eligible</Badge>
                 )}
 
-                {detail.classRating != null ? <Badge variant="outline" className="gap-1">
-                  <span className="flex items-center text-warning">
-                    {rating > 0 ? (
-                      Array.from({ length: rating }).map((_, index) => (
-                        <Star
-                          key={index}
-                          className="h-3.5 w-3.5 fill-current"
-                        />
-                      ))
-                    ) : (
-                      <Star className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
-                  </span>
+                {detail.classRating != null ? (
+                  <Badge variant='outline' className='gap-1'>
+                    <span className='text-warning flex items-center'>
+                      {rating > 0 ? (
+                        Array.from({ length: rating }).map((_, index) => (
+                          <Star key={index} className='h-3.5 w-3.5 fill-current' />
+                        ))
+                      ) : (
+                        <Star className='text-muted-foreground h-3.5 w-3.5' />
+                      )}
+                    </span>
 
-                  <span>{rating}</span>
-                </Badge> : null}
-
+                    <span>{rating}</span>
+                  </Badge>
+                ) : null}
               </div>
-
             </SheetHeader>
 
             <div className='mt-6 space-y-6'>
@@ -106,11 +98,13 @@ export function ClassDetailSheet({
                 <h3 className='font-semibold'>Overview</h3>
 
                 <div className='grid gap-3 text-sm sm:grid-cols-2'>
-                  {detail?.organisation_uuid && organisation && <InfoRow
-                    icon={<BookOpen className='h-4 w-4' />}
-                    label='Institution'
-                    value={organisation?.name || "-"}
-                  />}
+                  {detail?.organisation_uuid && organisation && (
+                    <InfoRow
+                      icon={<BookOpen className='h-4 w-4' />}
+                      label='Institution'
+                      value={organisation?.name || '-'}
+                    />
+                  )}
 
                   <InfoRow
                     icon={<Users className='h-4 w-4' />}
@@ -226,12 +220,13 @@ export function ClassDetailSheet({
               </section>
 
               <div className='flex gap-2 pt-2'>
-                <Button
+                <StudentCourseAction
+                  href={studentClassEnrollmentPath(detail)}
                   className='bg-primary hover:bg-primary/90 flex-1'
-                  onClick={() => onEnroll(detail)}
+                  onContinue={() => onEnroll(detail)}
                 >
                   Join Class
-                </Button>
+                </StudentCourseAction>
               </div>
             </div>
           </>

@@ -10,9 +10,8 @@
  *
  * Three actions come across from the page these routes used to render:
  *
- * - **View available classes** — the enrolment path. The legacy screen pushed
- *   `/dashboard/<role>/courses/available-classes/<uuid>`; the href is passed in
- *   so each route keeps its own, already-existing destination.
+ * - **View available classes** — the enrolment path. It carries the course into
+ *   the student profile, or prompts the account to add that profile first.
  * - **Find an instructor** — the instructor directory, filtered to this course.
  * - **Write a review** — the one genuine mutation the legacy page owned.
  *
@@ -24,7 +23,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { CalendarRange, Search, Star } from 'lucide-react';
-import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -33,12 +31,13 @@ import { useStudent } from '@/context/student-context';
 import { cn } from '@/lib/utils';
 import { submitCourseReviewMutation } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateReviewWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { StudentCourseAction } from './StudentCourseAction';
 
 import { FeedbackSheet } from './feedback-sheet';
 
 interface CourseRecordRouteActionsProps {
   courseUuid: string;
-  /** Where "View available classes" goes — the route's own classes list. */
+  /** The classes list to resume in the student's dashboard. */
   classesHref: string;
   /** Where "Find an instructor" goes — the route's own instructor directory. */
   instructorsHref: string;
@@ -95,19 +94,20 @@ export function CourseRecordRouteActions({
 
   return (
     <div className={cn('my-4 flex flex-wrap items-center gap-2', className)}>
-      <Button asChild size='sm' className='h-8 rounded-[10px]'>
-        <Link href={classesHref}>
-          <CalendarRange className='size-4' />
-          View available classes
-        </Link>
-      </Button>
+      <StudentCourseAction href={classesHref} size='sm' className='h-8 rounded-[10px]'>
+        <CalendarRange className='size-4' />
+        View available classes
+      </StudentCourseAction>
 
-      <Button asChild variant='outline' size='sm' className='h-8 rounded-[10px]'>
-        <Link href={instructorsHref}>
-          <Search className='size-4' />
-          Find an instructor
-        </Link>
-      </Button>
+      <StudentCourseAction
+        href={instructorsHref}
+        variant='outline'
+        size='sm'
+        className='h-8 rounded-[10px]'
+      >
+        <Search className='size-4' />
+        Find an instructor
+      </StudentCourseAction>
 
       {studentUuid ? (
         <Button

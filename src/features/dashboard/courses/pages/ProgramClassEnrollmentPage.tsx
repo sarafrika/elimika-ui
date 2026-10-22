@@ -21,6 +21,7 @@ import {
   joinWaitlistMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { StudentEnrollmentGate } from '@/src/features/dashboard/courses/components/StudentEnrollmentGate';
 import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
@@ -110,7 +111,15 @@ function combineAgeRanges(courses: Array<{ age_lower_limit?: number | null; age_
 }
 
 // ─── Main Page ─────────────────────────────────────────────────────────────
-export default function ProgramClassEnrollmentPage({
+export default function ProgramClassEnrollmentPage(props: { programId: string; classId: string }) {
+  return (
+    <StudentEnrollmentGate>
+      <ProgramClassEnrollmentContent {...props} />
+    </StudentEnrollmentGate>
+  );
+}
+
+function ProgramClassEnrollmentContent({
   programId,
   classId,
 }: {

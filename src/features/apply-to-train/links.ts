@@ -1,4 +1,5 @@
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { skillsMatchesHref } from '@/src/features/dashboard/lib/skills-matches-url';
 import type { ApplyKind } from './types';
 
 /** The new instructor flow, optionally preselecting an item or editing an application. */
@@ -12,8 +13,7 @@ export function instructorApplyToTrainHref(
     params.set('kind', item.kind);
   }
   if (applicationUuid) params.set('application', applicationUuid);
-  const search = params.toString();
-  return dashboardUrl('instructor', `apply-to-train${search ? `?${search}` : ''}`);
+  return skillsMatchesHref('apply-to-train', params);
 }
 
 /** Instructors track training applications on their rate card page, opened on the item. */

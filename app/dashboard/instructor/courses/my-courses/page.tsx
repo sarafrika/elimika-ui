@@ -1,5 +1,5 @@
-import InstructorApprovedCoursesPage from '@/src/features/dashboard/courses/pages/InstructorApprovedCoursesPage';
+import { redirect } from 'next/navigation';
 
 export default function InstructorMyCoursesSlotPage() {
-  return <InstructorApprovedCoursesPage />;
+  redirect('/dashboard/instructor/training-hub');
 }

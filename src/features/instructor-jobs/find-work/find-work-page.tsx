@@ -52,6 +52,7 @@ import { isSearchUnavailable } from '@/lib/api-errors';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob } from '@/services/client/types.gen';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { skillsMatchesHref } from '@/src/features/dashboard/lib/skills-matches-url';
 import { useNearMe } from '@/src/features/near-me/near-me';
 import { NearMeControl } from '@/src/features/near-me/near-me-control';
 
@@ -59,7 +60,7 @@ import { ApplyDialog } from '../apply/apply-dialog';
 import { BestMatches } from './best-matches';
 import { JobsSectionTabs } from '../components/jobs-section-tabs';
 import { useNow } from '../hooks/use-now';
-import { myApplicationsHref } from '../job-routes';
+import { hiredJobsHref, myApplicationsHref } from '../job-routes';
 import {
   BASIS_OPTIONS,
   type BasisFilter,
@@ -130,7 +131,7 @@ function FilterStatCard({
 }
 
 /** Instructor Find work: open jobs, what each needs before you can apply, and the apply dialog. */
-export function FindWorkPage() {
+export function FindWorkPage({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -143,9 +144,14 @@ export function FindWorkPage() {
   const setFilters = useCallback(
     (patch: Partial<FindWorkFilters>) => {
       const query = findWorkQuery({ ...filters, ...patch });
-      router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+      const href = embedded
+        ? skillsMatchesHref('jobs', new URLSearchParams(query))
+        : query
+          ? `${pathname}?${query}`
+          : pathname;
+      router.replace(href, { scroll: false });
     },
-    [filters, pathname, router]
+    [filters, pathname, router, embedded]
   );
 
   // Near-me stays in component state: never in the URL, dropped on leaving the page.
@@ -291,15 +297,22 @@ export function FindWorkPage() {
           title='Jobs'
           description='Class jobs posted by organisations. Each one shows whether you can apply, and what to fix if you can’t yet.'
           actions={
-            <Button asChild variant='outline'>
-              <Link href={dashboardUrl('instructor', 'rate-card')}>
-                <Layers aria-hidden />
-                Rate cards
-              </Link>
-            </Button>
+            <div className='flex flex-wrap gap-2'>
+              {embedded && (
+                <Button asChild variant='outline'>
+                  <Link href={hiredJobsHref()}>Hired jobs</Link>
+                </Button>
+              )}
+              <Button asChild variant='outline'>
+                <Link href={dashboardUrl('instructor', 'rate-card')}>
+                  <Layers aria-hidden />
+                  Rate cards
+                </Link>
+              </Button>
+            </div>
           }
         />
-        <JobsSectionTabs />
+        {!embedded && <JobsSectionTabs />}
 
         <section aria-label='Job summary' className={surfaceTheme.statGrid}>
           {data.loading ? (
@@ -549,7 +562,9 @@ export function FindWorkPage() {
                             onClick={() => {
                               search.clear();
                               nearMe.clear();
-                              router.replace(pathname, { scroll: false });
+                              router.replace(embedded ? skillsMatchesHref('jobs') : pathname, {
+                                scroll: false,
+                              });
                             }}
                           >
                             Clear filters

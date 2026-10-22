@@ -34,11 +34,14 @@ export type InstructorClassWithDetails = InstructorClass & {
 
 const EMPTY_ARRAY: never[] = []; // stable reference
 
-function useInstructorClassesWithDetails(instructorUuid?: string) {
+function useInstructorClassesWithDetails(
+  instructorUuid?: string,
+  options: { activeOnly?: boolean } = {}
+) {
   const { data, isLoading, isPending } = useQuery({
     ...getClassDefinitionsForInstructorOptions({
       path: { instructorUuid: instructorUuid ?? '' },
-      query: {},
+      query: options,
     }),
     enabled: !!instructorUuid,
     staleTime: 5 * 60 * 1000,

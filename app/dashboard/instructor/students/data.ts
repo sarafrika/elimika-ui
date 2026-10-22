@@ -37,6 +37,10 @@ import {
   getStudentProgress,
   normalizeStudentStatus,
 } from './types';
+import {
+  filterRosterClasses,
+  type RosterScope,
+} from '../enrollments/_components/enrollment-filters';
 
 type StudentBuilder = {
   studentUuid: string;
@@ -118,14 +122,20 @@ function buildSearchIndex(
     .toLowerCase();
 }
 
-export function useInstructorStudentsData() {
+export function useInstructorStudentsData(scope: RosterScope = 'all') {
   const profile = useUserProfile();
   const instructor = profile?.instructor;
 
   const { difficultyMap, isLoading: difficultyIsLoading } = useDifficultyLevels();
 
-  const { classes, loading: classesLoading } = useInstructorClassesWithDetails(
-    instructor?.uuid as string
+  const { classes: instructorClasses, loading: classesLoading } = useInstructorClassesWithDetails(
+    instructor?.uuid,
+    { activeOnly: false }
+  );
+
+  const classes = useMemo(
+    () => filterRosterClasses(instructorClasses, scope),
+    [instructorClasses, scope]
   );
 
   const studentIds = useMemo(() => {
@@ -245,10 +255,19 @@ export function useInstructorStudentsData() {
     return Array.from(roster.values())
       .map(entry => {
         const overview = overviewMap.get(entry.studentUuid);
-        const courseEnrollments = overview?.course_enrollments?.content ?? [];
-        const classEnrollments = overview?.class_enrollments?.content ?? [];
+        const courseIds = new Set(Array.from(entry.courses).map(course => course.uuid));
+        const classIds = new Set(Array.from(entry.classes).map(classItem => classItem.uuid));
+        const courseEnrollments = (overview?.course_enrollments?.content ?? []).filter(enrollment =>
+          courseIds.has(enrollment.course_uuid)
+        );
+        const classEnrollments = (overview?.class_enrollments?.content ?? []).filter(enrollment =>
+          classIds.has(enrollment.class_definition_uuid)
+        );
         const progress = getStudentProgress(courseEnrollments);
-        const status = getStudentStatus(courseEnrollments, classEnrollments, progress);
+        const status: StudentStatus =
+          scope === 'active'
+            ? 'Enrolled'
+            : getStudentStatus(courseEnrollments, classEnrollments, progress);
         const latestActivityAt = getLatestDate(courseEnrollments, classEnrollments);
 
         return {
@@ -279,7 +298,7 @@ export function useInstructorStudentsData() {
         if (bTime !== aTime) return bTime - aTime;
         return a.student.full_name.localeCompare(b.student.full_name);
       });
-  }, [classes, difficultyMap, overviewMap, studentMap, userMap]);
+  }, [classes, difficultyMap, overviewMap, studentMap, userMap, scope]);
 
   const uniqueCourses = useMemo<Course[]>(() => {
     const coursesSet = new Map<string, Course>();
@@ -385,3 +404,5 @@ export function useInstructorStudentsData() {
     loading,
   };
 }
+
+export type InstructorStudentsData = ReturnType<typeof useInstructorStudentsData>;

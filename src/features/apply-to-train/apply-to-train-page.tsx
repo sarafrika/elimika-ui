@@ -1,8 +1,5 @@
 'use client';
 
-import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { SectionError } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
@@ -10,7 +7,11 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { skillsMatchesHref } from '@/src/features/dashboard/lib/skills-matches-url';
 import { useTrainingApplication } from '@/src/features/rate-card/hooks';
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 import { ApplyToTrainWizard, headingFor, type WizardHeading } from './apply-to-train-wizard';
 import { ProfileStrip } from './components/profile-strip';
 import { myTrainingApplicationsHref, trackApplicationHref } from './links';
@@ -21,7 +22,7 @@ import { useDeepLinkItem } from './use-deep-link-item';
  * The instructor's apply-to-train page. `?item=&kind=` preselects a course or programme;
  * `&application=` edits that pending application.
  */
-export function ApplyToTrainPage() {
+export function ApplyToTrainPage({ embedded = false }: { embedded?: boolean }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -41,20 +42,26 @@ export function ApplyToTrainPage() {
   const [resetKey, setResetKey] = useState(0);
 
   useEffect(() => {
+    if (embedded) return;
     replaceBreadcrumbs([
       { id: 'dashboard', title: 'Dashboard', url: dashboardUrl('instructor', 'overview') },
-      { id: 'training-hub', title: 'Training hub', url: dashboardUrl('instructor', 'training-hub') },
+      {
+        id: 'training-hub',
+        title: 'Training hub',
+        url: dashboardUrl('instructor', 'training-hub'),
+      },
       { id: 'apply', title: 'Apply to train', url: pathname, isLast: true },
     ]);
-  }, [replaceBreadcrumbs, pathname]);
+  }, [replaceBreadcrumbs, pathname, embedded]);
 
   const onReset = useCallback(() => {
     setResetKey(key => key + 1);
-    router.replace(pathname, { scroll: false });
-  }, [router, pathname]);
+    router.replace(embedded ? skillsMatchesHref('apply-to-train') : pathname, { scroll: false });
+  }, [router, pathname, embedded]);
 
   const waitingItem = Boolean(itemUuid) && deepLink.loading;
-  const waitingApplication = Boolean(applicationUuid) && edited.query.isLoading && !edited.application;
+  const waitingApplication =
+    Boolean(applicationUuid) && edited.query.isLoading && !edited.application;
 
   let body: React.ReactNode;
   if (itemUuid && deepLink.error) {
@@ -96,7 +103,9 @@ export function ApplyToTrainPage() {
         description='The creator has already decided on it.'
         action={
           <Button asChild variant='outline' size='sm'>
-            <Link href={trackApplicationHref(kind ?? 'course', itemUuid ?? '')}>View application</Link>
+            <Link href={trackApplicationHref(kind ?? 'course', itemUuid ?? '')}>
+              View application
+            </Link>
           </Button>
         }
       />
@@ -117,7 +126,11 @@ export function ApplyToTrainPage() {
     <div className='mx-auto w-full max-w-[1600px] space-y-5 px-3 py-4 sm:px-5 lg:px-6 2xl:max-w-[1840px]'>
       <PageHeader
         eyebrow={heading.eyebrow}
-        title={applicationUuid && heading.title === 'Apply to train' ? 'Edit your application' : heading.title}
+        title={
+          applicationUuid && heading.title === 'Apply to train'
+            ? 'Edit your application'
+            : heading.title
+        }
         description={heading.description}
         actions={
           <Button asChild variant='outline'>

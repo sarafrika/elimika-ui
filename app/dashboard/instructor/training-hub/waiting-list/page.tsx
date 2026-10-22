@@ -1,5 +1,5 @@
-import { InstructorWaitingListPage } from './_components/InstructorWaitingListPage';
+import { redirect } from 'next/navigation';
 
 export default function Page() {
-  return <InstructorWaitingListPage />;
+  redirect('/dashboard/instructor/enrollments?tab=waiting-list');
 }

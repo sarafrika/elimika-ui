@@ -1,7 +1,7 @@
-import { SharedAssessmentWorkspace } from '@/components/assessment/shared-assessment-workspace';
+import { redirect } from 'next/navigation';
 
 const AssessmentPage = () => {
-  return <SharedAssessmentWorkspace role='instructor' />;
+  redirect('/dashboard/instructor/training-hub?tab=assessment');
 };
 
 export default AssessmentPage;

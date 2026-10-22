@@ -83,7 +83,7 @@ export function OverviewLiveClassesPanel({ liveClasses }: OverviewLiveClassesPan
     <OverviewSectionShell
       title='Live Classes'
       onActionLabel='See All'
-      onActionHref='/dashboard/instructor/training-hub'
+      onActionHref='/dashboard/instructor/training-hub?tab=classes'
     >
       {liveClasses.length ? (
         <div className='space-y-3'>

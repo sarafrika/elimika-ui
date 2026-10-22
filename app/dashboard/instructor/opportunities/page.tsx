@@ -1,5 +1,13 @@
-import { FindWorkPage } from '@/src/features/instructor-jobs/find-work/find-work-page';
+import { redirect } from 'next/navigation';
+import {
+  skillsMatchesHref,
+  type SkillsMatchSearchParams,
+} from '@/src/features/dashboard/lib/skills-matches-url';
 
-export default function InstructorFindWorkPage() {
-  return <FindWorkPage />;
+export default async function InstructorFindWorkPage({
+  searchParams,
+}: {
+  searchParams: Promise<SkillsMatchSearchParams>;
+}) {
+  redirect(skillsMatchesHref('jobs', await searchParams));
 }

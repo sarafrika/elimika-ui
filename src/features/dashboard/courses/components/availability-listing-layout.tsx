@@ -2,6 +2,8 @@
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { StudentCourseAction } from './StudentCourseAction';
+import { studentClassEnrollmentPath } from '@/src/features/dashboard/lib/student-enrollment';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@radix-ui/react-checkbox';
 import { format } from 'date-fns';
@@ -487,11 +489,12 @@ export default function AvailabilityClassCard({
             {isStudentEnrolled ? (
               <Button className='bg-success hover:bg-success/90'>Enrolled</Button>
             ) : (
-              <Button
+              <StudentCourseAction
+                href={studentClassEnrollmentPath(cls)}
                 disabled={!canEnrollClass}
-                onClick={() => onEnroll(cls)} className='bg-primary hover:bg-primary/90'>
+                onContinue={() => onEnroll(cls)} className='bg-primary hover:bg-primary/90'>
                 Join Class
-              </Button>
+              </StudentCourseAction>
             )}
 
             <Button variant='outline' onClick={() => onViewCourse(cls)}>

@@ -9,6 +9,7 @@ import { WelcomeBanner } from '@/components/dashboard';
 import { Button } from '@/components/ui/button';
 import { useOrganisation } from '@/context/organisation-context';
 import { useUserProfile } from '@/context/profile-context';
+import { useUserDomain } from '../context/user-domain-context';
 
 type BadgeTone = 'default' | 'secondary' | 'success' | 'warning' | 'destructive' | 'outline';
 
@@ -68,24 +69,32 @@ export default DomainOverviewShell;
 function OverviewWelcome({ welcomeContent }: { welcomeContent?: ReactNode }) {
   const organisation = useOrganisation();
   const profile = useUserProfile();
+  const { activeDomain } = useUserDomain()
 
   const firstName = profile?.first_name?.trim();
   const orgName = organisation?.name?.trim();
-  const title = firstName
-    ? `Welcome back, ${firstName}`
-    : orgName
+
+  const isOrganisation = activeDomain === 'organisation';
+
+  const title = isOrganisation
+    ? orgName
       ? `Welcome, ${orgName}`
+      : 'Welcome back'
+    : firstName
+      ? `Welcome back, ${firstName}`
       : 'Welcome back';
+
+  const description = isOrganisation && orgName
+    ? `Here's what's happening across ${orgName} today.`
+    : "Here's what's happening across your account today.";
+
+
 
   return (
     <WelcomeBanner
       eyebrow={dateLabel()}
       title={title}
-      description={
-        orgName
-          ? `Here's what's happening across ${orgName} today.`
-          : "Here's what's happening across your account today."
-      }
+      description={description}
       content={welcomeContent}
       compact
       className='bg-primary/75'

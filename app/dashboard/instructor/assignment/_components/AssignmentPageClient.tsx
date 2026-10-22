@@ -26,7 +26,6 @@ import { format } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { useClassEnrollmentsMap } from '../../../../../hooks/use-enrollment-map';
 import { AssignmentCard } from './AssignmentCard';
-import { AssignmentHeader } from './AssignmentHeader';
 import { AssignmentInsights } from './AssignmentInsights';
 import { AssignmentQuickActions } from './AssignmentQuickActions';
 import { AssignmentToolbar } from './AssignmentToolbar';
@@ -478,7 +477,8 @@ export function AssignmentPageClient() {
   return (
     <main className='bg-background mb-10 p-3 sm:p-4 md:p-6'>
       <div className='mx-auto w-full max-w-screen-2xl space-y-4 sm:space-y-5'>
-        <AssignmentHeader />
+
+        <p className='text-muted-foreground text-sm'>Manage, track and grade student submissions</p>
 
         <AssignmentToolbar
           activeFilter={activeFilter}
