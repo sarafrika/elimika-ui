@@ -36,6 +36,7 @@ import {
   EventTypeEnum,
   EventTypeEnum2,
   EventTypeEnum3,
+  EventTypeEnum4,
   ExperienceLevelEnum,
   ExperienceTypeEnum,
   GenderEnum,
@@ -45,6 +46,7 @@ import {
   ItemsEnum,
   ItemsEnum2,
   ItemsEnum3,
+  ItemsEnum4,
   ItemTypeEnum,
   ItemTypeEnum2,
   LocationTypeEnum,
@@ -124,7 +126,6 @@ import {
   StatusEnum9,
   SubmissionTypesEnum,
   TemplateTypeEnum,
-  TransactionTypeEnum,
   TypeEnum,
   TypeEnum2,
   UserDomainEnum,
@@ -552,11 +553,6 @@ export const zRubricScoringLevel = z
       )
       .readonly()
       .optional(),
-    display_name: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
-      .readonly()
-      .optional(),
     performance_indicator: z
       .string()
       .describe(
@@ -574,6 +570,11 @@ export const zRubricScoringLevel = z
       .describe(
         '**[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).'
       )
+      .readonly()
+      .optional(),
+    display_name: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display name combining level name and points for UI.')
       .readonly()
       .optional(),
   })
@@ -2129,14 +2130,14 @@ export const zDifficultyLevel = z
       )
       .readonly()
       .optional(),
-    display_name: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display name including level order for UI presentation.')
-      .readonly()
-      .optional(),
     is_entry_level: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.')
+      .readonly()
+      .optional(),
+    display_name: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display name including level order for UI presentation.')
       .readonly()
       .optional(),
   })
@@ -4473,8 +4474,60 @@ export const zPageMetadata = z.object({
     .optional(),
   hasNext: z.boolean().optional(),
   hasPrevious: z.boolean().optional(),
-  first: z.boolean().optional(),
   last: z.boolean().optional(),
+  first: z.boolean().optional(),
+});
+
+/**
+ * One calendar month (UTC) of a wallet's activity
+ */
+export const zWalletStatement = z
+  .object({
+    month: z.string().describe('**[READ-ONLY]** The month, as YYYY-MM.').readonly().optional(),
+    currency_code: z
+      .string()
+      .describe('**[READ-ONLY]** Currency of every amount here.')
+      .readonly()
+      .optional(),
+    opening_balance: z
+      .number()
+      .describe('**[READ-ONLY]** Balance when the month began.')
+      .readonly()
+      .optional(),
+    money_in: z
+      .number()
+      .describe('**[READ-ONLY]** Everything that raised the balance.')
+      .readonly()
+      .optional(),
+    money_out: z
+      .number()
+      .describe('**[READ-ONLY]** Everything that lowered the balance.')
+      .readonly()
+      .optional(),
+    closing_balance: z
+      .number()
+      .describe('**[READ-ONLY]** Balance when the month ended, or now for the current month.')
+      .readonly()
+      .optional(),
+    transaction_count: z.coerce
+      .bigint()
+      .min(BigInt('-9223372036854775808'), {
+        message: 'Invalid value: Expected int64 to be >= -9223372036854775808',
+      })
+      .max(BigInt('9223372036854775807'), {
+        message: 'Invalid value: Expected int64 to be <= 9223372036854775807',
+      })
+      .describe('**[READ-ONLY]** Number of transactions in the month.')
+      .readonly()
+      .optional(),
+  })
+  .describe("One calendar month (UTC) of a wallet's activity");
+
+export const zApiResponseListWalletStatement = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zWalletStatement).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
 });
 
 /**
@@ -4583,22 +4636,12 @@ export const zApiResponsePagedDtoTrainingBranch = z.object({
 });
 
 export const zSortObject = z.object({
-  empty: z.boolean().optional(),
   sorted: z.boolean().optional(),
   unsorted: z.boolean().optional(),
+  empty: z.boolean().optional(),
 });
 
 export const zPageableObject = z.object({
-  offset: z.coerce
-    .bigint()
-    .min(BigInt('-9223372036854775808'), {
-      message: 'Invalid value: Expected int64 to be >= -9223372036854775808',
-    })
-    .max(BigInt('9223372036854775807'), {
-      message: 'Invalid value: Expected int64 to be <= 9223372036854775807',
-    })
-    .optional(),
-  sort: zSortObject.optional(),
   paged: z.boolean().optional(),
   pageNumber: z
     .number()
@@ -4613,6 +4656,16 @@ export const zPageableObject = z.object({
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
   unpaged: z.boolean().optional(),
+  offset: z.coerce
+    .bigint()
+    .min(BigInt('-9223372036854775808'), {
+      message: 'Invalid value: Expected int64 to be >= -9223372036854775808',
+    })
+    .max(BigInt('9223372036854775807'), {
+      message: 'Invalid value: Expected int64 to be <= 9223372036854775807',
+    })
+    .optional(),
+  sort: zSortObject.optional(),
 });
 
 export const zCellDto = z.object({
@@ -4677,6 +4730,9 @@ export const zPage = z.object({
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
+  pageable: zPageableObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   size: z
     .number()
     .int()
@@ -4690,16 +4746,13 @@ export const zPage = z.object({
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
+  sort: zSortObject.optional(),
   numberOfElements: z
     .number()
     .int()
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
-  sort: zSortObject.optional(),
-  pageable: zPageableObject.optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   empty: z.boolean().optional(),
 });
 
@@ -5326,6 +5379,9 @@ export const zWalletBalanceSummary = z
       })
       .optional(),
     transferred_out_total: z.number().optional(),
+    held_amount: z.number().optional(),
+    available_amount: z.number().optional(),
+    can_withdraw: z.boolean().optional(),
   })
   .describe('Read-only wallet balance for one currency');
 
@@ -5695,21 +5751,21 @@ export const zApiResponseListOrgInstructorSummary = z.object({
 });
 
 export const zLearnerCourseProgressView = z.object({
-  enrollmentUuid: z.string().uuid().optional(),
-  courseUuid: z.string().uuid().optional(),
-  courseName: z.string().optional(),
+  enrollment_uuid: z.string().uuid().optional(),
+  course_uuid: z.string().uuid().optional(),
+  course_name: z.string().optional(),
   status: z.string().optional(),
-  progressPercentage: z.number().optional(),
-  updatedDate: z.string().datetime().optional(),
+  progress_percentage: z.number().optional(),
+  updated_date: z.string().datetime().optional(),
 });
 
 export const zLearnerProgramProgressView = z.object({
-  enrollmentUuid: z.string().uuid().optional(),
-  programUuid: z.string().uuid().optional(),
-  programName: z.string().optional(),
+  enrollment_uuid: z.string().uuid().optional(),
+  program_uuid: z.string().uuid().optional(),
+  program_name: z.string().optional(),
   status: z.string().optional(),
-  progressPercentage: z.number().optional(),
-  updatedDate: z.string().datetime().optional(),
+  progress_percentage: z.number().optional(),
+  updated_date: z.string().datetime().optional(),
 });
 
 /**
@@ -8807,6 +8863,90 @@ export const zSchemaEnum4 = z.nativeEnum(SchemaEnum4);
 
 export const zSchemaEnum5 = z.nativeEnum(SchemaEnum5);
 
+export const zItemsEnum2 = z.nativeEnum(ItemsEnum2);
+
+/**
+ * Wallet ledger entry capturing balance changes
+ */
+export const zWalletTransaction = z
+  .object({
+    uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Unique identifier for the transaction.')
+      .readonly()
+      .optional(),
+    wallet_uuid: z
+      .string()
+      .uuid()
+      .describe('**[READ-ONLY]** Wallet UUID linked to this transaction.')
+      .readonly()
+      .optional(),
+    transaction_type: zItemsEnum2.optional(),
+    amount: z.number().describe('**[READ-ONLY]** Transaction amount.').readonly().optional(),
+    currency_code: z
+      .string()
+      .describe('**[READ-ONLY]** ISO currency code for the transaction.')
+      .readonly()
+      .optional(),
+    balance_before: z
+      .number()
+      .describe('**[READ-ONLY]** Wallet balance before the transaction.')
+      .readonly()
+      .optional(),
+    balance_after: z
+      .number()
+      .describe('**[READ-ONLY]** Wallet balance after the transaction.')
+      .readonly()
+      .optional(),
+    reference: z
+      .string()
+      .describe('**[READ-ONLY]** External reference identifier, if provided.')
+      .readonly()
+      .optional(),
+    description: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable description of the transaction.')
+      .readonly()
+      .optional(),
+    transfer_reference: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** Transfer group UUID when the transaction is part of a wallet transfer.'
+      )
+      .readonly()
+      .optional(),
+    counterparty_user_uuid: z
+      .string()
+      .uuid()
+      .describe(
+        '**[READ-ONLY]** Counterparty user UUID when the transaction involves another wallet.'
+      )
+      .readonly()
+      .optional(),
+    created_date: z
+      .string()
+      .datetime()
+      .describe('**[READ-ONLY]** Timestamp when the transaction was recorded.')
+      .readonly()
+      .optional(),
+  })
+  .describe('Wallet ledger entry capturing balance changes');
+
+export const zPagedDtoWalletTransaction = z.object({
+  content: z.array(zWalletTransaction).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoWalletTransaction = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoWalletTransaction.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
 export const zSchemaEnum6 = z.nativeEnum(SchemaEnum6);
 
 /**
@@ -9047,9 +9187,9 @@ export const zApiResponsePagedDtoInstructorObligation = z.object({
 
 export const zSchemaEnum9 = z.nativeEnum(SchemaEnum9).default('all');
 
-export const zItemsEnum2 = z.nativeEnum(ItemsEnum2);
-
 export const zItemsEnum3 = z.nativeEnum(ItemsEnum3);
+
+export const zItemsEnum4 = z.nativeEnum(ItemsEnum4);
 
 export const zSchemaEnum10 = z.nativeEnum(SchemaEnum10);
 
@@ -9563,14 +9703,14 @@ export const zLesson = z
       )
       .readonly()
       .optional(),
-    lesson_sequence: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the lesson is published and accessible to students.')
+      .readonly()
+      .optional(),
+    lesson_sequence: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted lesson sequence for display purposes.')
       .readonly()
       .optional(),
   })
@@ -9765,6 +9905,11 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.readonly().optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
@@ -9773,11 +9918,6 @@ export const zRubricMatrix = z
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -10190,21 +10330,9 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
-    is_completed: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).'
-      )
-      .readonly()
-      .optional(),
-    grade_display: z
+    performance_summary: z
       .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
-    time_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
       .readonly()
       .optional(),
     attempt_category: z
@@ -10212,9 +10340,21 @@ export const zQuizAttempt = z
       .describe('**[READ-ONLY]** Formatted category of the attempt based on outcome and status.')
       .readonly()
       .optional(),
-    performance_summary: z
+    time_display: z
       .string()
-      .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
+      .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
+    is_completed: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).'
+      )
       .readonly()
       .optional(),
   })
@@ -11111,8 +11251,8 @@ export const zCourseCreatorSkill = z
     created_by: z.string().readonly().optional(),
     updated_date: z.string().datetime().readonly().optional(),
     updated_by: z.string().readonly().optional(),
-    display_name: z.string().readonly().optional(),
     proficiency_description: z.string().readonly().optional(),
+    display_name: z.string().readonly().optional(),
   })
   .describe(
     'Technical or creative competency declared by a course creator with proficiency metadata'
@@ -11706,6 +11846,7 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
+    formatted_location: z.string().readonly().nullish(),
     has_location_coordinates: z
       .boolean()
       .describe(
@@ -11713,7 +11854,6 @@ export const zInstructor = z
       )
       .readonly()
       .optional(),
-    formatted_location: z.string().readonly().nullish(),
   })
   .describe('Instructor profile including location data for educational service delivery');
 
@@ -11809,11 +11949,6 @@ export const zInstructorSkill = z
       )
       .readonly()
       .optional(),
-    display_name: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted skill name for display in UI components.')
-      .readonly()
-      .optional(),
     summary: z
       .string()
       .describe('**[READ-ONLY]** Brief summary of the skill for display in skill lists.')
@@ -11822,6 +11957,11 @@ export const zInstructorSkill = z
     proficiency_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the proficiency level.')
+      .readonly()
+      .optional(),
+    display_name: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted skill name for display in UI components.')
       .readonly()
       .optional(),
   })
@@ -11923,11 +12063,6 @@ export const zInstructorProfessionalMembership = z
       )
       .readonly()
       .optional(),
-    is_valid: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership is currently valid and active.')
-      .readonly()
-      .optional(),
     summary: z
       .string()
       .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
@@ -11939,6 +12074,13 @@ export const zInstructorProfessionalMembership = z
       .readonly()
       .optional(),
     formatted_duration: z.string().readonly().nullish(),
+    membership_duration_months: z
+      .number()
+      .int()
+      .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+      .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+      .readonly()
+      .nullish(),
     membership_status: zMembershipStatusEnum.optional(),
     membership_period: z.string().readonly().nullish(),
     is_long_standing_member: z
@@ -11958,13 +12100,11 @@ export const zInstructorProfessionalMembership = z
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
       .readonly()
       .optional(),
-    membership_duration_months: z
-      .number()
-      .int()
-      .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
-      .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+    is_valid: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership is currently valid and active.')
       .readonly()
-      .nullish(),
+      .optional(),
   })
   .describe(
     'Professional membership record for instructors including associations, industry bodies, and certification organizations'
@@ -12418,11 +12558,6 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
-    is_expired: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-      .readonly()
-      .optional(),
     file_url: z
       .string()
       .describe(
@@ -12431,6 +12566,11 @@ export const zInstructorDocument = z
       .readonly()
       .optional(),
     verification_status: zVerificationStatusEnum2.optional(),
+    is_expired: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+      .readonly()
+      .optional(),
     file_size_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -12500,11 +12640,6 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
-  is_expired: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
-    .readonly()
-    .optional(),
   file_url: z
     .string()
     .describe(
@@ -12513,6 +12648,11 @@ export const zCourseCreatorDocumentDto = z.object({
     .readonly()
     .optional(),
   verification_status: zVerificationStatusEnum2.optional(),
+  is_expired: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
+    .readonly()
+    .optional(),
   file_size_formatted: z
     .string()
     .describe('**[READ-ONLY]** Human-readable formatted file size.')
@@ -14043,13 +14183,6 @@ export const zClassDefinition = z
       .readonly()
       .optional(),
     marketplace_job_uuid: z.string().uuid().readonly().nullish(),
-    is_standalone: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if this is a standalone class not associated with any course.'
-      )
-      .readonly()
-      .optional(),
     duration_minutes: z.coerce
       .bigint()
       .min(BigInt('-9223372036854775808'), {
@@ -14072,6 +14205,13 @@ export const zClassDefinition = z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable capacity information including waitlist availability.'
+      )
+      .readonly()
+      .optional(),
+    is_standalone: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if this is a standalone class not associated with any course.'
       )
       .readonly()
       .optional(),
@@ -14800,16 +14940,16 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
+      .readonly()
+      .optional(),
     assignment_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.'
       )
-      .readonly()
-      .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
     assignment_scope: z
@@ -14925,6 +15065,23 @@ export const zWallet = z
     transferred_out_total: z
       .number()
       .describe('**[READ-ONLY]** Lifetime money transferred out to other users.')
+      .readonly()
+      .optional(),
+    held_amount: z
+      .number()
+      .describe(
+        '**[READ-ONLY]** Money held for withdrawals still being paid out; not part of the balance.'
+      )
+      .readonly()
+      .optional(),
+    available_amount: z
+      .number()
+      .describe('**[READ-ONLY]** What can be withdrawn or spent now.')
+      .readonly()
+      .optional(),
+    can_withdraw: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether the caller may withdraw from this wallet.')
       .readonly()
       .optional(),
   })
@@ -15071,21 +15228,6 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
-      .readonly()
-      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -15101,6 +15243,21 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -15335,6 +15492,9 @@ export const zPageSessionReportSummary = z.object({
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
+  pageable: zPageableObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   size: z
     .number()
     .int()
@@ -15348,16 +15508,13 @@ export const zPageSessionReportSummary = z.object({
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
+  sort: zSortObject.optional(),
   numberOfElements: z
     .number()
     .int()
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
-  sort: zSortObject.optional(),
-  pageable: zPageableObject.optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   empty: z.boolean().optional(),
 });
 
@@ -15583,22 +15740,22 @@ export const zApiResponseGuardianStudentLink = z.object({
 });
 
 export const zGuardianStudentDashboardDto = z.object({
-  studentUuid: z.string().uuid().optional(),
-  studentName: z.string().optional(),
-  shareScope: zShareScopeEnum.optional(),
+  student_uuid: z.string().uuid().optional(),
+  student_name: z.string().optional(),
+  share_scope: zShareScopeEnum.optional(),
   status: zStatusEnum12.optional(),
-  courseProgress: z.array(zLearnerCourseProgressView).optional(),
-  programProgress: z.array(zLearnerProgramProgressView).optional(),
+  course_progress: z.array(zLearnerCourseProgressView).optional(),
+  program_progress: z.array(zLearnerProgramProgressView).optional(),
 });
 
 export const zGuardianStudentSummaryDto = z.object({
-  linkUuid: z.string().uuid().optional(),
-  studentUuid: z.string().uuid().optional(),
-  studentName: z.string().optional(),
-  relationshipType: zRelationshipTypeEnum2.optional(),
-  shareScope: zShareScopeEnum.optional(),
+  link_uuid: z.string().uuid().optional(),
+  student_uuid: z.string().uuid().optional(),
+  student_name: z.string().optional(),
+  relationship_type: zRelationshipTypeEnum2.optional(),
+  share_scope: zShareScopeEnum.optional(),
   status: zStatusEnum12.optional(),
-  primaryGuardian: z.boolean().optional(),
+  primary_guardian: z.boolean().optional(),
 });
 
 export const zApiResponseListGuardianStudentSummaryDto = z.object({
@@ -16133,11 +16290,6 @@ export const zEnrollment = z
       .describe("**[READ-ONLY]** The instructor's attendance comment for this session.")
       .readonly()
       .optional(),
-    is_active: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
-      .readonly()
-      .optional(),
     can_be_cancelled: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
@@ -16148,14 +16300,19 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
       .readonly()
       .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
       .readonly()
       .optional(),
-    did_attend: z
+    is_active: z
       .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .describe('**[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).')
       .readonly()
       .optional(),
   })
@@ -16918,91 +17075,70 @@ export const zOrganisationUserCreateRequestDto = z.object({
 });
 
 /**
- * **[READ-ONLY]** Transaction category for this wallet entry.
+ * **[READ-ONLY]** What happened.
  */
-export const zTransactionTypeEnum = z
-  .nativeEnum(TransactionTypeEnum)
-  .describe('**[READ-ONLY]** Transaction category for this wallet entry.')
+export const zEventTypeEnum2 = z
+  .nativeEnum(EventTypeEnum2)
+  .describe('**[READ-ONLY]** What happened.')
   .readonly();
 
 /**
- * Wallet ledger entry capturing balance changes
+ * One append-only entry in a wallet's audit trail
  */
-export const zWalletTransaction = z
+export const zWalletAuditEvent = z
   .object({
-    uuid: z
+    uuid: z.string().uuid().describe('**[READ-ONLY]** Event identifier.').readonly().optional(),
+    event_type: zEventTypeEnum2.optional(),
+    actor_kind: z
       .string()
-      .uuid()
-      .describe('**[READ-ONLY]** Unique identifier for the transaction.')
+      .describe('**[READ-ONLY]** SYSTEM for automatic changes, USER when a person made it.')
       .readonly()
       .optional(),
-    wallet_uuid: z
+    actor_user_uuid: z
       .string()
       .uuid()
-      .describe('**[READ-ONLY]** Wallet UUID linked to this transaction.')
+      .describe('**[READ-ONLY]** The person who made the change; null for the system.')
       .readonly()
       .optional(),
-    transaction_type: zTransactionTypeEnum.optional(),
-    amount: z.number().describe('**[READ-ONLY]** Transaction amount.').readonly().optional(),
     currency_code: z
       .string()
-      .describe('**[READ-ONLY]** ISO currency code for the transaction.')
-      .readonly()
-      .optional(),
-    balance_before: z
-      .number()
-      .describe('**[READ-ONLY]** Wallet balance before the transaction.')
-      .readonly()
-      .optional(),
-    balance_after: z
-      .number()
-      .describe('**[READ-ONLY]** Wallet balance after the transaction.')
+      .describe('**[READ-ONLY]** Currency the event concerns.')
       .readonly()
       .optional(),
     reference: z
       .string()
-      .describe('**[READ-ONLY]** External reference identifier, if provided.')
+      .describe('**[READ-ONLY]** Reference of the underlying record.')
       .readonly()
       .optional(),
-    description: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable description of the transaction.')
+    reason: z.string().describe('**[READ-ONLY]** Why it happened, in words.').readonly().optional(),
+    previous_values: z
+      .record(z.unknown())
+      .describe('**[READ-ONLY]** Values before the change.')
       .readonly()
       .optional(),
-    transfer_reference: z
-      .string()
-      .uuid()
-      .describe(
-        '**[READ-ONLY]** Transfer group UUID when the transaction is part of a wallet transfer.'
-      )
-      .readonly()
-      .optional(),
-    counterparty_user_uuid: z
-      .string()
-      .uuid()
-      .describe(
-        '**[READ-ONLY]** Counterparty user UUID when the transaction involves another wallet.'
-      )
+    updated_values: z
+      .record(z.unknown())
+      .describe('**[READ-ONLY]** Values after the change.')
       .readonly()
       .optional(),
     created_date: z
       .string()
       .datetime()
-      .describe('**[READ-ONLY]** Timestamp when the transaction was recorded.')
+      .describe('**[READ-ONLY]** When it happened.')
       .readonly()
       .optional(),
   })
-  .describe('Wallet ledger entry capturing balance changes');
+  .describe("One append-only entry in a wallet's audit trail");
 
-export const zPagedDtoWalletTransaction = z.object({
-  content: z.array(zWalletTransaction).optional(),
+export const zPagedDtoWalletAuditEvent = z.object({
+  content: z.array(zWalletAuditEvent).optional(),
   metadata: zPageMetadata.optional(),
   links: zPageLinks.optional(),
 });
 
-export const zApiResponsePagedDtoWalletTransaction = z.object({
+export const zApiResponsePagedDtoWalletAuditEvent = z.object({
   success: z.boolean().optional(),
-  data: zPagedDtoWalletTransaction.optional(),
+  data: zPagedDtoWalletAuditEvent.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -17303,8 +17439,8 @@ export const zApiResponseStudentQuizReview = z.object({
 /**
  * **[READ-ONLY]** What happened.
  */
-export const zEventTypeEnum2 = z
-  .nativeEnum(EventTypeEnum2)
+export const zEventTypeEnum3 = z
+  .nativeEnum(EventTypeEnum3)
   .describe('**[READ-ONLY]** What happened.')
   .readonly();
 
@@ -17327,7 +17463,7 @@ export const zTrainingApplicationEvent = z
       .describe('**[READ-ONLY]** The application the event belongs to.')
       .readonly()
       .optional(),
-    event_type: zEventTypeEnum2.optional(),
+    event_type: zEventTypeEnum3.optional(),
     actor_uuid: z.string().uuid().readonly().nullish(),
     actor_name: z.string().readonly().nullish(),
     created_date: z
@@ -17423,11 +17559,6 @@ export const zProgramEnrollment = z
       )
       .readonly()
       .optional(),
-    is_active: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
-      .readonly()
-      .optional(),
     enrollment_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
@@ -17450,6 +17581,11 @@ export const zProgramEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
+      .readonly()
+      .optional(),
+    is_active: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
   })
@@ -17550,11 +17686,6 @@ export const zCourseEnrollment = z
       )
       .readonly()
       .optional(),
-    is_active: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
-      .readonly()
-      .optional(),
     enrollment_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
@@ -17577,6 +17708,11 @@ export const zCourseEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
+      .readonly()
+      .optional(),
+    is_active: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.')
       .readonly()
       .optional(),
   })
@@ -18479,8 +18615,8 @@ export const zApiResponseListClassMarketplaceJobEligibility = z.object({
 /**
  * **[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.
  */
-export const zEventTypeEnum3 = z
-  .nativeEnum(EventTypeEnum3)
+export const zEventTypeEnum4 = z
+  .nativeEnum(EventTypeEnum4)
   .describe(
     '**[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.'
   )
@@ -18510,7 +18646,7 @@ export const zClassMarketplaceJobApplicationEvent = z
       .describe('**[READ-ONLY]** The job the application was made to.')
       .readonly()
       .optional(),
-    event_type: zEventTypeEnum3.optional(),
+    event_type: zEventTypeEnum4.optional(),
     actor_uuid: z.string().uuid().readonly().nullish(),
     actor_name: z.string().readonly().nullish(),
     interview_at: z.string().datetime().readonly().nullish(),
@@ -22756,7 +22892,9 @@ export const zApiResponseAssignmentAttachmentWritable = z.object({
  * Wallet ledger entry capturing balance changes
  */
 export const zWalletTransactionWritable = z
-  .record(z.unknown())
+  .object({
+    transaction_type: zItemsEnum2.optional(),
+  })
   .describe('Wallet ledger entry capturing balance changes');
 
 export const zPagedDtoWalletTransactionWritable = z.object({
@@ -22768,6 +22906,33 @@ export const zPagedDtoWalletTransactionWritable = z.object({
 export const zApiResponsePagedDtoWalletTransactionWritable = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoWalletTransactionWritable.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+export const zApiResponseListWalletStatementWritable = z.object({
+  success: z.boolean().optional(),
+  data: z.array(z.unknown()).optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * One append-only entry in a wallet's audit trail
+ */
+export const zWalletAuditEventWritable = z
+  .record(z.unknown())
+  .describe("One append-only entry in a wallet's audit trail");
+
+export const zPagedDtoWalletAuditEventWritable = z.object({
+  content: z.array(zWalletAuditEventWritable).optional(),
+  metadata: zPageMetadata.optional(),
+  links: zPageLinks.optional(),
+});
+
+export const zApiResponsePagedDtoWalletAuditEventWritable = z.object({
+  success: z.boolean().optional(),
+  data: zPagedDtoWalletAuditEventWritable.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -30260,6 +30425,9 @@ export const zListTransactions1Path = z.object({
 
 export const zListTransactions1Query = z.object({
   currency_code: z.string().optional(),
+  type: z.array(zItemsEnum2).optional(),
+  from: z.string().date().optional(),
+  to: z.string().date().optional(),
   pageable: zPageable,
 });
 
@@ -30267,6 +30435,55 @@ export const zListTransactions1Query = z.object({
  * OK
  */
 export const zListTransactions1Response = zApiResponsePagedDtoWalletTransaction;
+
+export const zExportTransactionsPath = z.object({
+  userUuid: z.string().uuid(),
+});
+
+export const zExportTransactionsQuery = z.object({
+  currency_code: z.string().optional(),
+  type: z.array(zItemsEnum2).optional(),
+  from: z.string().date().optional(),
+  to: z.string().date().optional(),
+});
+
+/**
+ * OK
+ */
+export const zExportTransactionsResponse = z.string().describe('OK');
+
+export const zListStatementsPath = z.object({
+  userUuid: z.string().uuid(),
+});
+
+export const zListStatementsQuery = z.object({
+  currency_code: z.string().optional(),
+  months: z
+    .number()
+    .int()
+    .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+    .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+    .optional()
+    .default(12),
+});
+
+/**
+ * OK
+ */
+export const zListStatementsResponse = zApiResponseListWalletStatement;
+
+export const zListAuditPath = z.object({
+  userUuid: z.string().uuid(),
+});
+
+export const zListAuditQuery = z.object({
+  pageable: zPageable,
+});
+
+/**
+ * OK
+ */
+export const zListAuditResponse = zApiResponsePagedDtoWalletAuditEvent;
 
 export const zGetAllUsersQuery = z.object({
   pageable: zPageable,
@@ -31332,6 +31549,9 @@ export const zListOrganisationWalletTransactionsPath = z.object({
 
 export const zListOrganisationWalletTransactionsQuery = z.object({
   currency_code: z.string().optional(),
+  type: z.array(zItemsEnum2).optional(),
+  from: z.string().date().optional(),
+  to: z.string().date().optional(),
   pageable: zPageable,
 });
 
@@ -31339,6 +31559,55 @@ export const zListOrganisationWalletTransactionsQuery = z.object({
  * OK
  */
 export const zListOrganisationWalletTransactionsResponse = zApiResponsePagedDtoWalletTransaction;
+
+export const zExportOrganisationWalletTransactionsPath = z.object({
+  organisationUuid: z.string().uuid(),
+});
+
+export const zExportOrganisationWalletTransactionsQuery = z.object({
+  currency_code: z.string().optional(),
+  type: z.array(zItemsEnum2).optional(),
+  from: z.string().date().optional(),
+  to: z.string().date().optional(),
+});
+
+/**
+ * OK
+ */
+export const zExportOrganisationWalletTransactionsResponse = z.string().describe('OK');
+
+export const zListOrganisationWalletStatementsPath = z.object({
+  organisationUuid: z.string().uuid(),
+});
+
+export const zListOrganisationWalletStatementsQuery = z.object({
+  currency_code: z.string().optional(),
+  months: z
+    .number()
+    .int()
+    .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+    .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+    .optional()
+    .default(12),
+});
+
+/**
+ * OK
+ */
+export const zListOrganisationWalletStatementsResponse = zApiResponseListWalletStatement;
+
+export const zListOrganisationWalletAuditPath = z.object({
+  organisationUuid: z.string().uuid(),
+});
+
+export const zListOrganisationWalletAuditQuery = z.object({
+  pageable: zPageable,
+});
+
+/**
+ * OK
+ */
+export const zListOrganisationWalletAuditResponse = zApiResponsePagedDtoWalletAuditEvent;
 
 export const zListRosterPath = z.object({
   organisationUuid: z.string().uuid(),
@@ -32998,13 +33267,13 @@ export const zSearchCoursesAndProgrammesQuery = z.object({
     )
     .optional(),
   level: z
-    .array(zItemsEnum2)
+    .array(zItemsEnum3)
     .describe(
       'Levels; repeatable or comma-separated. A course matches its difficulty; a programme matches when any member course has the level.'
     )
     .optional(),
   price: z
-    .array(zItemsEnum3)
+    .array(zItemsEnum4)
     .describe('free or paid; both (or none) means no price filter')
     .optional(),
   creator_uuid: z.string().uuid().describe('Only results by this course creator').optional(),

@@ -364,6 +364,7 @@ import type {
   GradeSubmissionResponse,
   JoinWaitlistResponse,
   ListAchievementsResponse,
+  ListAuditResponse,
   ListAvailabilityRulesResponse,
   ListBookingsResponse,
   ListCatalogItemsResponse,
@@ -391,6 +392,8 @@ import type {
   ListNotificationsResponse,
   ListObligationsResponse,
   ListOrganisationInvitationsResponse,
+  ListOrganisationWalletAuditResponse,
+  ListOrganisationWalletStatementsResponse,
   ListOrganisationWalletTransactionsResponse,
   ListPaymentsResponse,
   ListPendingCourseEditsResponse,
@@ -408,6 +411,7 @@ import type {
   ListSkills1Response,
   ListSkillsResponse,
   ListSourcesResponse,
+  ListStatementsResponse,
   ListTeamsResponse,
   ListTrainingApplicationsResponse,
   ListTrainingRateUpdatesResponse,
@@ -6712,6 +6716,56 @@ export const listTransactions1ResponseTransformer = async (
   return data;
 };
 
+const walletStatementSchemaResponseTransformer = (data: any) => {
+  if (data.transaction_count) {
+    data.transaction_count = BigInt(data.transaction_count.toString());
+  }
+  return data;
+};
+
+const apiResponseListWalletStatementSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => walletStatementSchemaResponseTransformer(item));
+  }
+  return data;
+};
+
+export const listStatementsResponseTransformer = async (
+  data: any
+): Promise<ListStatementsResponse> => {
+  data = apiResponseListWalletStatementSchemaResponseTransformer(data);
+  return data;
+};
+
+const walletAuditEventSchemaResponseTransformer = (data: any) => {
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const pagedDtoWalletAuditEventSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => walletAuditEventSchemaResponseTransformer(item));
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoWalletAuditEventSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoWalletAuditEventSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listAuditResponseTransformer = async (data: any): Promise<ListAuditResponse> => {
+  data = apiResponsePagedDtoWalletAuditEventSchemaResponseTransformer(data);
+  return data;
+};
+
 export const getAllUsersResponseTransformer = async (data: any): Promise<GetAllUsersResponse> => {
   data = apiResponsePagedDtoUserSchemaResponseTransformer(data);
   return data;
@@ -6846,6 +6900,13 @@ export const getStudentScheduleResponseTransformer = async (
   return data;
 };
 
+const pageableObjectSchemaResponseTransformer = (data: any) => {
+  if (data.offset) {
+    data.offset = BigInt(data.offset.toString());
+  }
+  return data;
+};
+
 const sessionReportSummarySchemaResponseTransformer = (data: any) => {
   if (data.session_start) {
     data.session_start = new Date(data.session_start);
@@ -6865,24 +6926,17 @@ const sessionReportSummarySchemaResponseTransformer = (data: any) => {
   return data;
 };
 
-const pageableObjectSchemaResponseTransformer = (data: any) => {
-  if (data.offset) {
-    data.offset = BigInt(data.offset.toString());
-  }
-  return data;
-};
-
 const pageSessionReportSummarySchemaResponseTransformer = (data: any) => {
   if (data.totalElements) {
     data.totalElements = BigInt(data.totalElements.toString());
+  }
+  if (data.pageable) {
+    data.pageable = pageableObjectSchemaResponseTransformer(data.pageable);
   }
   if (data.content) {
     data.content = data.content.map((item: any) =>
       sessionReportSummarySchemaResponseTransformer(item)
     );
-  }
-  if (data.pageable) {
-    data.pageable = pageableObjectSchemaResponseTransformer(data.pageable);
   }
   return data;
 };
@@ -7822,6 +7876,20 @@ export const listOrganisationWalletTransactionsResponseTransformer = async (
   return data;
 };
 
+export const listOrganisationWalletStatementsResponseTransformer = async (
+  data: any
+): Promise<ListOrganisationWalletStatementsResponse> => {
+  data = apiResponseListWalletStatementSchemaResponseTransformer(data);
+  return data;
+};
+
+export const listOrganisationWalletAuditResponseTransformer = async (
+  data: any
+): Promise<ListOrganisationWalletAuditResponse> => {
+  data = apiResponsePagedDtoWalletAuditEventSchemaResponseTransformer(data);
+  return data;
+};
+
 const studentGroupRosterEntrySchemaResponseTransformer = (data: any) => {
   if (data.dob) {
     data.dob = new Date(data.dob);
@@ -8345,27 +8413,27 @@ export const searchDocumentsResponseTransformer = async (
 };
 
 const learnerCourseProgressViewSchemaResponseTransformer = (data: any) => {
-  if (data.updatedDate) {
-    data.updatedDate = new Date(data.updatedDate);
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
   }
   return data;
 };
 
 const learnerProgramProgressViewSchemaResponseTransformer = (data: any) => {
-  if (data.updatedDate) {
-    data.updatedDate = new Date(data.updatedDate);
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
   }
   return data;
 };
 
 const guardianStudentDashboardDtoSchemaResponseTransformer = (data: any) => {
-  if (data.courseProgress) {
-    data.courseProgress = data.courseProgress.map((item: any) =>
+  if (data.course_progress) {
+    data.course_progress = data.course_progress.map((item: any) =>
       learnerCourseProgressViewSchemaResponseTransformer(item)
     );
   }
-  if (data.programProgress) {
-    data.programProgress = data.programProgress.map((item: any) =>
+  if (data.program_progress) {
+    data.program_progress = data.program_progress.map((item: any) =>
       learnerProgramProgressViewSchemaResponseTransformer(item)
     );
   }

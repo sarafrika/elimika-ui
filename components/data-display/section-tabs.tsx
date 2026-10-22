@@ -98,9 +98,10 @@ type SectionTabsProps<T extends string> = {
   hrefFor?: (value: T) => string;
   /**
    * `underline`: the dashboard 360 strip. `pill`: a card of pill tabs, as on the public
-   * course page. Both scroll sideways on phones instead of wrapping.
+   * course page. `chips`: separate rounded chips, the active one filled, as on the wallet.
+   * All scroll sideways on phones instead of wrapping.
    */
-  variant?: 'underline' | 'pill';
+  variant?: 'underline' | 'pill' | 'chips';
   /**
    * Pin the strip while the page scrolls. `top` clears whatever is already pinned above:
    * the public nav on public pages; on a dashboard page the scroll container sits under the
@@ -127,12 +128,16 @@ const LIST = {
   underline:
     'thin-scrollbar h-auto w-full justify-start gap-6 overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0 shadow-[inset_0_-1px_0_0_var(--color-border)]',
   pill: 'thin-scrollbar bg-card h-auto w-full justify-start gap-1 overflow-x-auto overflow-y-hidden rounded-2xl border p-1.5',
+  chips:
+    'thin-scrollbar h-auto w-full justify-start gap-2 overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0.5 pb-1',
 } as const;
 
 const TRIGGER = {
   underline:
     'group text-muted-foreground hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-primary h-11 flex-none gap-2 rounded-none border-0 border-b-2 border-transparent px-0 text-sm font-medium data-[state=active]:bg-transparent data-[state=active]:font-semibold data-[state=active]:shadow-none',
   pill: 'group text-muted-foreground hover:text-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary h-11 flex-none gap-2 rounded-[10px] px-4 text-sm font-medium data-[state=active]:font-semibold data-[state=active]:shadow-none',
+  chips:
+    'group bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:hover:bg-primary h-9 flex-none gap-1.5 rounded-full border px-3.5 text-sm font-medium data-[state=active]:shadow-none',
 } as const;
 
 /** Status chips (flags and error counts): one shape, toned with tokens, never a raw red. */
@@ -156,6 +161,8 @@ const COUNT = {
   underline:
     'bg-muted text-muted-foreground group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-sm px-1.5 font-mono text-[11px]',
   pill: 'bg-muted text-muted-foreground group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-semibold tabular-nums',
+  chips:
+    'bg-muted text-muted-foreground group-data-[state=active]:bg-primary-foreground/20 group-data-[state=active]:text-primary-foreground inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-semibold tabular-nums',
 } as const;
 
 /** The nearest scrolling ancestor: dashboards scroll an inner pane, not the window. */
@@ -259,7 +266,7 @@ export function SectionTabs<T extends string>({
             const describedBy = [errorId, flagId].filter(Boolean).join(' ') || undefined;
             const body = (
               <>
-                {Icon ? <Icon aria-hidden className='size-4' /> : null}
+                {Icon ? <Icon aria-hidden className={variant === 'chips' ? 'size-3.5' : 'size-4'} /> : null}
                 <span>{tab.label}</span>
                 {typeof tab.count === 'number' ? (
                   <span className={COUNT[variant]}>{tab.count}</span>

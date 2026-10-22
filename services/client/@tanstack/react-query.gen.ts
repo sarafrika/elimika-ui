@@ -226,6 +226,8 @@ import {
   enrollStudent,
   evaluateCourseRecommendations,
   experience,
+  exportOrganisationWalletTransactions,
+  exportTransactions,
   generateCertificateUrl,
   generateCourseCertificate,
   generateProgramCertificate,
@@ -522,6 +524,7 @@ import {
   joinWaitlist,
   listAchievements,
   listAll,
+  listAudit,
   listAvailabilityRules,
   listBookings,
   listCatalogItems,
@@ -553,6 +556,8 @@ import {
   listObligations,
   listOrganisationAgeGroups,
   listOrganisationInvitations,
+  listOrganisationWalletAudit,
+  listOrganisationWalletStatements,
   listOrganisationWalletTransactions,
   listPayments,
   listPendingCourseEdits,
@@ -570,6 +575,7 @@ import {
   listSkills,
   listSkills1,
   listSources,
+  listStatements,
   listTeams,
   listTestableEmails,
   listTiers,
@@ -1428,6 +1434,12 @@ import type {
   ExperienceData,
   ExperienceError,
   ExperienceResponse,
+  ExportOrganisationWalletTransactionsData,
+  ExportOrganisationWalletTransactionsError,
+  ExportOrganisationWalletTransactionsResponse,
+  ExportTransactionsData,
+  ExportTransactionsError,
+  ExportTransactionsResponse,
   GenerateCertificateUrlData,
   GenerateCertificateUrlError,
   GenerateCertificateUrlResponse,
@@ -2316,6 +2328,9 @@ import type {
   ListAllData,
   ListAllError,
   ListAllResponse,
+  ListAuditData,
+  ListAuditError,
+  ListAuditResponse,
   ListAvailabilityRulesData,
   ListAvailabilityRulesError,
   ListAvailabilityRulesResponse,
@@ -2409,6 +2424,12 @@ import type {
   ListOrganisationInvitationsData,
   ListOrganisationInvitationsError,
   ListOrganisationInvitationsResponse,
+  ListOrganisationWalletAuditData,
+  ListOrganisationWalletAuditError,
+  ListOrganisationWalletAuditResponse,
+  ListOrganisationWalletStatementsData,
+  ListOrganisationWalletStatementsError,
+  ListOrganisationWalletStatementsResponse,
   ListOrganisationWalletTransactionsData,
   ListOrganisationWalletTransactionsError,
   ListOrganisationWalletTransactionsResponse,
@@ -2460,6 +2481,9 @@ import type {
   ListSourcesData,
   ListSourcesError,
   ListSourcesResponse,
+  ListStatementsData,
+  ListStatementsError,
+  ListStatementsResponse,
   ListTeamsData,
   ListTeamsError,
   ListTeamsResponse,
@@ -19648,6 +19672,130 @@ export const listTransactions1InfiniteOptions = (options: Options<ListTransactio
     }
   );
 
+export const exportTransactionsQueryKey = (options: Options<ExportTransactionsData>) =>
+  createQueryKey('exportTransactions', options);
+
+/**
+ * Download wallet transactions as CSV
+ *
+ * Every matching row, newest first; dates are UTC and inclusive.
+ */
+export const exportTransactionsOptions = (options: Options<ExportTransactionsData>) =>
+  queryOptions<
+    ExportTransactionsResponse,
+    ExportTransactionsError,
+    ExportTransactionsResponse,
+    ReturnType<typeof exportTransactionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await exportTransactions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: exportTransactionsQueryKey(options),
+  });
+
+export const listStatementsQueryKey = (options: Options<ListStatementsData>) =>
+  createQueryKey('listStatements', options);
+
+/**
+ * List a user's monthly wallet statements
+ *
+ * Newest month first, UTC months; quiet months carry the balance over.
+ */
+export const listStatementsOptions = (options: Options<ListStatementsData>) =>
+  queryOptions<
+    ListStatementsResponse,
+    ListStatementsError,
+    ListStatementsResponse,
+    ReturnType<typeof listStatementsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listStatements({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listStatementsQueryKey(options),
+  });
+
+export const listAuditQueryKey = (options: Options<ListAuditData>) =>
+  createQueryKey('listAudit', options);
+
+/**
+ * List a user's wallet audit trail
+ *
+ * Append-only, newest first.
+ */
+export const listAuditOptions = (options: Options<ListAuditData>) =>
+  queryOptions<
+    ListAuditResponse,
+    ListAuditError,
+    ListAuditResponse,
+    ReturnType<typeof listAuditQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listAudit({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listAuditQueryKey(options),
+  });
+
+export const listAuditInfiniteQueryKey = (
+  options: Options<ListAuditData>
+): QueryKey<Options<ListAuditData>> => createQueryKey('listAudit', options, true);
+
+/**
+ * List a user's wallet audit trail
+ *
+ * Append-only, newest first.
+ */
+export const listAuditInfiniteOptions = (options: Options<ListAuditData>) =>
+  infiniteQueryOptions<
+    ListAuditResponse,
+    ListAuditError,
+    InfiniteData<ListAuditResponse>,
+    QueryKey<Options<ListAuditData>>,
+    number | Pick<QueryKey<Options<ListAuditData>>[0], 'body' | 'headers' | 'path' | 'query'>
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListAuditData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listAudit({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listAuditInfiniteQueryKey(options),
+    }
+  );
+
 export const getAllUsersQueryKey = (options: Options<GetAllUsersData>) =>
   createQueryKey('getAllUsers', options);
 
@@ -24223,6 +24371,146 @@ export const listOrganisationWalletTransactionsInfiniteOptions = (
         return data;
       },
       queryKey: listOrganisationWalletTransactionsInfiniteQueryKey(options),
+    }
+  );
+
+export const exportOrganisationWalletTransactionsQueryKey = (
+  options: Options<ExportOrganisationWalletTransactionsData>
+) => createQueryKey('exportOrganisationWalletTransactions', options);
+
+/**
+ * Download an organisation's wallet transactions as CSV
+ *
+ * Every matching row, newest first; dates are UTC and inclusive.
+ */
+export const exportOrganisationWalletTransactionsOptions = (
+  options: Options<ExportOrganisationWalletTransactionsData>
+) =>
+  queryOptions<
+    ExportOrganisationWalletTransactionsResponse,
+    ExportOrganisationWalletTransactionsError,
+    ExportOrganisationWalletTransactionsResponse,
+    ReturnType<typeof exportOrganisationWalletTransactionsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await exportOrganisationWalletTransactions({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: exportOrganisationWalletTransactionsQueryKey(options),
+  });
+
+export const listOrganisationWalletStatementsQueryKey = (
+  options: Options<ListOrganisationWalletStatementsData>
+) => createQueryKey('listOrganisationWalletStatements', options);
+
+/**
+ * List an organisation's monthly wallet statements
+ *
+ * Newest month first, UTC months; quiet months carry the balance over.
+ */
+export const listOrganisationWalletStatementsOptions = (
+  options: Options<ListOrganisationWalletStatementsData>
+) =>
+  queryOptions<
+    ListOrganisationWalletStatementsResponse,
+    ListOrganisationWalletStatementsError,
+    ListOrganisationWalletStatementsResponse,
+    ReturnType<typeof listOrganisationWalletStatementsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listOrganisationWalletStatements({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listOrganisationWalletStatementsQueryKey(options),
+  });
+
+export const listOrganisationWalletAuditQueryKey = (
+  options: Options<ListOrganisationWalletAuditData>
+) => createQueryKey('listOrganisationWalletAudit', options);
+
+/**
+ * List an organisation's wallet audit trail
+ *
+ * Append-only, newest first.
+ */
+export const listOrganisationWalletAuditOptions = (
+  options: Options<ListOrganisationWalletAuditData>
+) =>
+  queryOptions<
+    ListOrganisationWalletAuditResponse,
+    ListOrganisationWalletAuditError,
+    ListOrganisationWalletAuditResponse,
+    ReturnType<typeof listOrganisationWalletAuditQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listOrganisationWalletAudit({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listOrganisationWalletAuditQueryKey(options),
+  });
+
+export const listOrganisationWalletAuditInfiniteQueryKey = (
+  options: Options<ListOrganisationWalletAuditData>
+): QueryKey<Options<ListOrganisationWalletAuditData>> =>
+  createQueryKey('listOrganisationWalletAudit', options, true);
+
+/**
+ * List an organisation's wallet audit trail
+ *
+ * Append-only, newest first.
+ */
+export const listOrganisationWalletAuditInfiniteOptions = (
+  options: Options<ListOrganisationWalletAuditData>
+) =>
+  infiniteQueryOptions<
+    ListOrganisationWalletAuditResponse,
+    ListOrganisationWalletAuditError,
+    InfiniteData<ListOrganisationWalletAuditResponse>,
+    QueryKey<Options<ListOrganisationWalletAuditData>>,
+    | number
+    | Pick<
+        QueryKey<Options<ListOrganisationWalletAuditData>>[0],
+        'body' | 'headers' | 'path' | 'query'
+      >
+  >(
+    {
+      queryFn: async ({ pageParam, queryKey, signal }) => {
+        const page: Pick<
+          QueryKey<Options<ListOrganisationWalletAuditData>>[0],
+          'body' | 'headers' | 'path' | 'query'
+        > =
+          typeof pageParam === 'object'
+            ? pageParam
+            : {
+                query: {
+                  pageable: { page: pageParam },
+                },
+              };
+        const params = createInfiniteParams(queryKey, page);
+        const { data } = await listOrganisationWalletAudit({
+          ...options,
+          ...params,
+          signal,
+          throwOnError: true,
+        });
+        return data;
+      },
+      queryKey: listOrganisationWalletAuditInfiniteQueryKey(options),
     }
   );
 

@@ -1,47 +1,43 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { ArrowLeftRight, FileText, Landmark, LayoutDashboard, ShieldCheck, Undo2 } from 'lucide-react';
+import { useState } from 'react';
+import { TrainingOrdersDashboard } from '@/app/dashboard/_components/wallet/TrainingOrdersDashboard';
 import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
-import { Button } from '@/components/ui/button';
-import { EARNER_FILTERS, earnerTotals } from '@/components/money/earner';
-import { formatMoney, formatSignedMoney } from '@/components/money/format';
-import { type LedgerEntry, statementEntries } from '@/components/money/ledger';
+import { formatMoney } from '@/components/money/format';
+import type { LedgerEntry } from '@/components/money/ledger';
 import { LedgerPanel } from '@/components/money/ledger-panel';
-import { MoneyPage } from '@/components/money/money-page';
 import { WalletTransferSheet } from '@/components/money/wallet-transfer-sheet';
+import { Button } from '@/components/ui/button';
+import {
+  AccountCards,
+  AuditPanel,
+  RefundsPanel,
+  StatementsPanel,
+  TransactionsPanel,
+} from '@/components/wallet/wallet-panels';
+import { invalidateWallet, useWalletFigures, type WalletScope } from '@/components/wallet/wallet-scope';
+import { WalletShell } from '@/components/wallet/wallet-shell';
 import { useUserProfile } from '@/context/profile-context';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
-import {
-  getMyCourseEarningsOptions,
-  getWalletOptions,
-  getWalletQueryKey,
-  listTransactions1Options,
-  listTransactions1QueryKey,
-} from '@/services/client/@tanstack/react-query.gen';
+import { getMyCourseEarningsOptions } from '@/services/client/@tanstack/react-query.gen';
 
-const TABS = ['statement', 'courses'] as const;
-const PAGE = { pageable: { page: 0, size: 100 } };
+const TABS = ['dashboard', 'accounts', 'transactions', 'refunds', 'statements', 'audit'] as const;
+const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
 
-/** A course creator's share of every class sold on their courses, and the total per course. */
+/** A course creator's share of every class sold on their courses, per course, and every movement of it. */
 export default function CourseCreatorWalletPage() {
   const user = useUserProfile();
   const userUuid = user?.uuid ?? '';
+  const scope: WalletScope = { kind: 'user', userUuid };
   const queryClient = useQueryClient();
-  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'statement');
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'dashboard');
   const [transferOpen, setTransferOpen] = useState(false);
+  const { figures, isLoading } = useWalletFigures(scope);
+  const currency = figures?.currency ?? 'KES';
 
-  const wallet = useQuery({ ...getWalletOptions({ path: { userUuid } }), enabled: !!userUuid });
-  const transactions = useQuery({ ...listTransactions1Options({ path: { userUuid }, query: PAGE }), enabled: !!userUuid });
-  const earnings = useQuery({ ...getMyCourseEarningsOptions(), enabled: tab === 'courses' });
-
-  const txns = transactions.data?.data?.content ?? [];
-  const entries = useMemo(() => statementEntries(txns), [txns]);
-  const totals = earnerTotals(wallet.data?.data);
-  const balance = Number(wallet.data?.data?.balance_amount ?? 0);
-  const currency = wallet.data?.data?.currency_code ?? 'KES';
-  const withdrawn = totals.transferredOut;
-
+  const earnings = useQuery({ ...getMyCourseEarningsOptions(), enabled: tab === 'accounts' });
   const courseRows = earnings.data?.data ?? [];
   const { courseMap } = useCoursesByIds(courseRows.map(row => row.course_uuid ?? ''));
   const byCourse: LedgerEntry[] = courseRows.map(row => ({
@@ -57,42 +53,53 @@ export default function CourseCreatorWalletPage() {
 
   return (
     <>
-      <MoneyPage
-        eyebrow='Wallet'
-        title='Wallet'
-        description='Your share of every class sold on your courses, with the platform fee charged on it.'
-        actions={
-          <Button variant='outline' onClick={() => setTransferOpen(true)} disabled={balance <= 0}>
-            Transfer
-          </Button>
-        }
-        loadingStats={wallet.isLoading || transactions.isLoading}
-        stats={[
-          { label: 'Balance', value: formatMoney(balance, currency), hint: 'What the platform holds for you' },
-          { label: 'Your shares', value: formatMoney(totals.shares, currency), hint: `${totals.sales} class ${totals.sales === 1 ? 'sale' : 'sales'}` },
-          { label: 'Platform fees', value: formatSignedMoney(totals.fees, 'out', currency), hint: 'Charged on your shares' },
-          { label: 'Transferred out', value: formatMoney(withdrawn, currency), hint: withdrawn ? 'Sent to other users' : 'Nothing sent yet' },
-        ]}
+      <WalletShell
+        scope={scope}
+        title='Course Creator Wallet'
+        description='Class orders for your courses, delivery progress and wallet activity.'
         tabs={[
-          { id: 'statement', label: 'Statement', count: entries.length },
-          { id: 'courses', label: 'By course' },
+          { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { id: 'accounts', label: 'Accounts', icon: Landmark },
+          { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
+          { id: 'refunds', label: 'Refunds', icon: Undo2 },
+          { id: 'statements', label: 'Statements', icon: FileText },
+          { id: 'audit', label: 'Audit', icon: ShieldCheck },
         ]}
         tab={tab}
         onTabChange={setTab}
         hrefFor={hrefFor}
+        actions={
+          <Button variant='outline' onClick={() => setTransferOpen(true)} disabled={!figures || figures.available <= 0}>
+            Transfer
+          </Button>
+        }
       >
-        <SectionTabPanel value='statement'>
-          <LedgerPanel
-            title='Statement'
-            description='Money in and out of your wallet.'
-            entries={entries}
-            loading={transactions.isLoading}
-            filters={EARNER_FILTERS}
-            emptyTitle='Nothing here yet'
-            emptyDescription='When a class on one of your courses is paid for, your share appears here.'
-          />
+        <SectionTabPanel value='dashboard'>
+          {tab === 'dashboard' ? <TrainingOrdersDashboard role='course_creator' /> : null}
         </SectionTabPanel>
-        <SectionTabPanel value='courses'>
+        <SectionTabPanel value='accounts' className='space-y-5'>
+          <AccountCards
+            loading={isLoading}
+            cards={[
+              {
+                label: 'Earnings',
+                value: formatMoney(figures?.available ?? 0, currency),
+                hint: `Available now · ${figures?.sales ?? 0} class ${figures?.sales === 1 ? 'sale' : 'sales'} so far`,
+                tone: 'success',
+              },
+              {
+                label: 'Held for withdrawals',
+                value: formatMoney(figures?.held ?? 0, currency),
+                hint: figures?.held ? 'Being sent to M-Pesa' : 'Nothing in progress',
+                tone: 'warning',
+              },
+              {
+                label: 'Platform fees',
+                value: formatMoney(figures?.fees ?? 0, currency),
+                hint: `Charged on ${formatMoney(figures?.shares ?? 0, currency)} of shares`,
+              },
+            ]}
+          />
           <LedgerPanel
             title='By course'
             description='What each of your courses has earned you, net of platform fees.'
@@ -102,17 +109,32 @@ export default function CourseCreatorWalletPage() {
             emptyDescription='Each course appears here once one of its classes sells.'
           />
         </SectionTabPanel>
-      </MoneyPage>
+        <SectionTabPanel value='transactions'>
+          <TransactionsPanel scope={scope} active={tab === 'transactions'} filterTypes={EARNER_TYPES} />
+        </SectionTabPanel>
+        <SectionTabPanel value='refunds'>
+          <RefundsPanel
+            scope={scope}
+            active={tab === 'refunds'}
+            types={['SALE_REVERSAL']}
+            description='Shares taken back when a class of your course was refunded or corrected.'
+            emptyDescription='When a class sale is reversed, the share taken back from you appears here.'
+          />
+        </SectionTabPanel>
+        <SectionTabPanel value='statements'>
+          <StatementsPanel scope={scope} active={tab === 'statements'} />
+        </SectionTabPanel>
+        <SectionTabPanel value='audit'>
+          <AuditPanel scope={scope} active={tab === 'audit'} selfUuid={userUuid} />
+        </SectionTabPanel>
+      </WalletShell>
       <WalletTransferSheet
         open={transferOpen}
         onOpenChange={setTransferOpen}
         userUuid={userUuid}
-        balance={balance}
+        balance={figures?.available ?? 0}
         currency={currency}
-        onTransferred={() => {
-          void queryClient.invalidateQueries({ queryKey: getWalletQueryKey({ path: { userUuid } }) });
-          void queryClient.invalidateQueries({ queryKey: listTransactions1QueryKey({ path: { userUuid }, query: PAGE }) });
-        }}
+        onTransferred={() => void invalidateWallet(queryClient)}
       />
     </>
   );

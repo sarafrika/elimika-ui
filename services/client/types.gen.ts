@@ -634,10 +634,6 @@ export type RubricScoringLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
-   */
-  readonly display_name?: string;
-  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
@@ -649,6 +645,10 @@ export type RubricScoringLevel = {
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
   readonly is_highest_level?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
+   */
+  readonly display_name?: string;
 };
 
 export type ApiResponseRubricScoringLevel = {
@@ -806,13 +806,13 @@ export type RubricMatrix = {
    */
   readonly matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1212,25 +1212,25 @@ export type QuizAttempt = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
+   * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
-  readonly is_completed?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
-   */
-  readonly time_display?: string;
+  readonly performance_summary?: string;
   /**
    * **[READ-ONLY]** Formatted category of the attempt based on outcome and status.
    */
   readonly attempt_category?: string;
   /**
-   * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
+   * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
-  readonly performance_summary?: string;
+  readonly time_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
+   */
+  readonly is_completed?: boolean;
 };
 
 /**
@@ -2363,13 +2363,13 @@ export type Instructor = {
    */
   readonly is_profile_complete?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
-   */
-  readonly has_location_coordinates?: boolean;
-  /**
    * **[READ-ONLY]** Formatted location coordinates as a string. Returns null if location coordinates are not available.
    */
   readonly formatted_location?: string | null;
+  /**
+   * **[READ-ONLY]** Indicates if the instructor has both latitude and longitude coordinates configured.
+   */
+  readonly has_location_coordinates?: boolean;
 };
 
 /**
@@ -2427,10 +2427,6 @@ export type InstructorSkill = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted skill name for display in UI components.
-   */
-  readonly display_name?: string;
-  /**
    * **[READ-ONLY]** Brief summary of the skill for display in skill lists.
    */
   readonly summary?: string;
@@ -2438,6 +2434,10 @@ export type InstructorSkill = {
    * **[READ-ONLY]** Human-readable description of the proficiency level.
    */
   readonly proficiency_description?: string;
+  /**
+   * **[READ-ONLY]** Formatted skill name for display in UI components.
+   */
+  readonly display_name?: string;
 };
 
 export type ApiResponseInstructorSkill = {
@@ -2496,10 +2496,6 @@ export type InstructorProfessionalMembership = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
-   */
-  readonly is_valid?: boolean;
-  /**
    * **[READ-ONLY]** Brief summary of the membership for display in listings.
    */
   readonly summary?: string;
@@ -2511,6 +2507,10 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -2534,9 +2534,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
    */
-  readonly membership_duration_months?: number | null;
+  readonly is_valid?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2836,14 +2836,14 @@ export type InstructorDocument = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
   verification_status?: VerificationStatusEnum2;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -3616,13 +3616,13 @@ export type Lesson = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted lesson sequence for display purposes.
-   */
-  readonly lesson_sequence?: string;
-  /**
    * **[READ-ONLY]** Indicates if the lesson is published and accessible to students.
    */
   readonly is_published?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted lesson sequence for display purposes.
+   */
+  readonly lesson_sequence?: string;
 };
 
 export type ApiResponseLesson = {
@@ -4155,8 +4155,8 @@ export type CourseCreatorSkill = {
   readonly created_by?: string;
   readonly updated_date?: Date;
   readonly updated_by?: string;
-  readonly display_name?: string;
   readonly proficiency_description?: string;
+  readonly display_name?: string;
 };
 
 export type ApiResponseCourseCreatorSkill = {
@@ -4294,14 +4294,14 @@ export type CourseCreatorDocumentDto = {
   readonly updated_date?: Date;
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
-   */
-  readonly is_expired?: boolean;
-  /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
   verification_status?: VerificationStatusEnum2;
+  /**
+   * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
+   */
+  readonly is_expired?: boolean;
   /**
    * **[READ-ONLY]** Human-readable formatted file size.
    */
@@ -4518,13 +4518,13 @@ export type DifficultyLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display name including level order for UI presentation.
-   */
-  readonly display_name?: string;
-  /**
    * **[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.
    */
   readonly is_entry_level?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted display name including level order for UI presentation.
+   */
+  readonly display_name?: string;
 };
 
 export type ApiResponseDifficultyLevel = {
@@ -5073,10 +5073,6 @@ export type ClassDefinition = {
    */
   readonly marketplace_job_uuid?: string | null;
   /**
-   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
-   */
-  readonly is_standalone?: boolean;
-  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
@@ -5088,6 +5084,10 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
+   */
+  readonly is_standalone?: boolean;
 };
 
 /**
@@ -5704,13 +5704,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
-   */
-  readonly assignment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
+   */
+  readonly assignment_category?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -5968,6 +5968,18 @@ export type Wallet = {
    * **[READ-ONLY]** Lifetime money transferred out to other users.
    */
   readonly transferred_out_total?: number;
+  /**
+   * **[READ-ONLY]** Money held for withdrawals still being paid out; not part of the balance.
+   */
+  readonly held_amount?: number;
+  /**
+   * **[READ-ONLY]** What can be withdrawn or spent now.
+   */
+  readonly available_amount?: number;
+  /**
+   * **[READ-ONLY]** Whether the caller may withdraw from this wallet.
+   */
+  readonly can_withdraw?: boolean;
 };
 
 /**
@@ -6156,18 +6168,6 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
-   */
-  readonly can_be_started?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
-   */
-  readonly can_be_ended?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -6179,6 +6179,18 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
 };
 
 export type AggregatesDto = {
@@ -7933,10 +7945,6 @@ export type Enrollment = {
    */
   readonly attendance_comment?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
-   */
-  readonly is_active?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
@@ -7945,13 +7953,17 @@ export type Enrollment = {
    */
   readonly is_attendance_marked?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
+   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
    */
-  readonly did_attend?: boolean;
+  readonly is_active?: boolean;
 };
 
 /**
@@ -9629,8 +9641,8 @@ export type PageMetadata = {
   totalPages?: number;
   hasNext?: boolean;
   hasPrevious?: boolean;
-  first?: boolean;
   last?: boolean;
+  first?: boolean;
 };
 
 export type PagedDtoWalletTransaction = {
@@ -9651,7 +9663,7 @@ export type WalletTransaction = {
    * **[READ-ONLY]** Wallet UUID linked to this transaction.
    */
   readonly wallet_uuid?: string;
-  transaction_type?: TransactionTypeEnum;
+  transaction_type?: ItemsEnum2;
   /**
    * **[READ-ONLY]** Transaction amount.
    */
@@ -9686,6 +9698,107 @@ export type WalletTransaction = {
   readonly counterparty_user_uuid?: string;
   /**
    * **[READ-ONLY]** Timestamp when the transaction was recorded.
+   */
+  readonly created_date?: Date;
+};
+
+export type ApiResponseListWalletStatement = {
+  success?: boolean;
+  data?: Array<WalletStatement>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * One calendar month (UTC) of a wallet's activity
+ */
+export type WalletStatement = {
+  /**
+   * **[READ-ONLY]** The month, as YYYY-MM.
+   */
+  readonly month?: string;
+  /**
+   * **[READ-ONLY]** Currency of every amount here.
+   */
+  readonly currency_code?: string;
+  /**
+   * **[READ-ONLY]** Balance when the month began.
+   */
+  readonly opening_balance?: number;
+  /**
+   * **[READ-ONLY]** Everything that raised the balance.
+   */
+  readonly money_in?: number;
+  /**
+   * **[READ-ONLY]** Everything that lowered the balance.
+   */
+  readonly money_out?: number;
+  /**
+   * **[READ-ONLY]** Balance when the month ended, or now for the current month.
+   */
+  readonly closing_balance?: number;
+  /**
+   * **[READ-ONLY]** Number of transactions in the month.
+   */
+  readonly transaction_count?: bigint;
+};
+
+export type ApiResponsePagedDtoWalletAuditEvent = {
+  success?: boolean;
+  data?: PagedDtoWalletAuditEvent;
+  message?: string;
+  error?: unknown;
+};
+
+export type PagedDtoWalletAuditEvent = {
+  content?: Array<WalletAuditEvent>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+/**
+ * One append-only entry in a wallet's audit trail
+ */
+export type WalletAuditEvent = {
+  /**
+   * **[READ-ONLY]** Event identifier.
+   */
+  readonly uuid?: string;
+  event_type?: EventTypeEnum2;
+  /**
+   * **[READ-ONLY]** SYSTEM for automatic changes, USER when a person made it.
+   */
+  readonly actor_kind?: string;
+  /**
+   * **[READ-ONLY]** The person who made the change; null for the system.
+   */
+  readonly actor_user_uuid?: string;
+  /**
+   * **[READ-ONLY]** Currency the event concerns.
+   */
+  readonly currency_code?: string;
+  /**
+   * **[READ-ONLY]** Reference of the underlying record.
+   */
+  readonly reference?: string;
+  /**
+   * **[READ-ONLY]** Why it happened, in words.
+   */
+  readonly reason?: string;
+  /**
+   * **[READ-ONLY]** Values before the change.
+   */
+  readonly previous_values?: {
+    [key: string]: unknown;
+  };
+  /**
+   * **[READ-ONLY]** Values after the change.
+   */
+  readonly updated_values?: {
+    [key: string]: unknown;
+  };
+  /**
+   * **[READ-ONLY]** When it happened.
    */
   readonly created_date?: Date;
 };
@@ -9977,24 +10090,24 @@ export type ApiResponsePageSessionReportSummary = {
 export type PageSessionReportSummary = {
   totalElements?: bigint;
   totalPages?: number;
-  size?: number;
-  content?: Array<SessionReportSummary>;
-  number?: number;
-  numberOfElements?: number;
-  sort?: SortObject;
   pageable?: PageableObject;
   first?: boolean;
   last?: boolean;
+  size?: number;
+  content?: Array<SessionReportSummary>;
+  number?: number;
+  sort?: SortObject;
+  numberOfElements?: number;
   empty?: boolean;
 };
 
 export type PageableObject = {
-  offset?: bigint;
-  sort?: SortObject;
   paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
   unpaged?: boolean;
+  offset?: bigint;
+  sort?: SortObject;
 };
 
 /**
@@ -10020,9 +10133,9 @@ export type SessionReportSummary = {
 };
 
 export type SortObject = {
-  empty?: boolean;
   sorted?: boolean;
   unsorted?: boolean;
+  empty?: boolean;
 };
 
 export type ApiResponseListOrganisationTimetableEntry = {
@@ -10256,14 +10369,14 @@ export type PagedDtoBookingResponse = {
 export type Page = {
   totalElements?: bigint;
   totalPages?: number;
-  size?: number;
-  content?: Array<unknown>;
-  number?: number;
-  numberOfElements?: number;
-  sort?: SortObject;
   pageable?: PageableObject;
   first?: boolean;
   last?: boolean;
+  size?: number;
+  content?: Array<unknown>;
+  number?: number;
+  sort?: SortObject;
+  numberOfElements?: number;
   empty?: boolean;
 };
 
@@ -10869,7 +10982,7 @@ export type TrainingApplicationEvent = {
    * **[READ-ONLY]** The application the event belongs to.
    */
   readonly application_uuid?: string;
-  event_type?: EventTypeEnum2;
+  event_type?: EventTypeEnum3;
   /**
    * **[READ-ONLY]** The user who took the step; null for system actions.
    */
@@ -10984,10 +11097,6 @@ export type ProgramEnrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
-   */
-  readonly is_active?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -11003,6 +11112,10 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   */
+  readonly is_active?: boolean;
 };
 
 export type ApiResponseListCourse = {
@@ -11131,6 +11244,9 @@ export type WalletBalanceSummary = {
   platform_fees_total?: number;
   sales_count?: bigint;
   transferred_out_total?: number;
+  held_amount?: number;
+  available_amount?: number;
+  can_withdraw?: boolean;
 };
 
 export type ApiResponseListStudentGroup = {
@@ -12025,30 +12141,30 @@ export type PagedDtoInstructorDocument = {
 };
 
 export type GuardianStudentDashboardDto = {
-  studentUuid?: string;
-  studentName?: string;
-  shareScope?: ShareScopeEnum;
+  student_uuid?: string;
+  student_name?: string;
+  share_scope?: ShareScopeEnum;
   status?: StatusEnum12;
-  courseProgress?: Array<LearnerCourseProgressView>;
-  programProgress?: Array<LearnerProgramProgressView>;
+  course_progress?: Array<LearnerCourseProgressView>;
+  program_progress?: Array<LearnerProgramProgressView>;
 };
 
 export type LearnerCourseProgressView = {
-  enrollmentUuid?: string;
-  courseUuid?: string;
-  courseName?: string;
+  enrollment_uuid?: string;
+  course_uuid?: string;
+  course_name?: string;
   status?: string;
-  progressPercentage?: number;
-  updatedDate?: Date;
+  progress_percentage?: number;
+  updated_date?: Date;
 };
 
 export type LearnerProgramProgressView = {
-  enrollmentUuid?: string;
-  programUuid?: string;
-  programName?: string;
+  enrollment_uuid?: string;
+  program_uuid?: string;
+  program_name?: string;
   status?: string;
-  progressPercentage?: number;
-  updatedDate?: Date;
+  progress_percentage?: number;
+  updated_date?: Date;
 };
 
 export type ApiResponseListGuardianStudentSummaryDto = {
@@ -12059,13 +12175,13 @@ export type ApiResponseListGuardianStudentSummaryDto = {
 };
 
 export type GuardianStudentSummaryDto = {
-  linkUuid?: string;
-  studentUuid?: string;
-  studentName?: string;
-  relationshipType?: RelationshipTypeEnum2;
-  shareScope?: ShareScopeEnum;
+  link_uuid?: string;
+  student_uuid?: string;
+  student_name?: string;
+  relationship_type?: RelationshipTypeEnum2;
+  share_scope?: ShareScopeEnum;
   status?: StatusEnum12;
-  primaryGuardian?: boolean;
+  primary_guardian?: boolean;
 };
 
 export type ApiResponsePublicGuardianInvitation = {
@@ -13710,10 +13826,6 @@ export type CourseEnrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
-   */
-  readonly is_active?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
   readonly enrollment_category?: string;
@@ -13729,6 +13841,10 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   */
+  readonly is_active?: boolean;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -14396,7 +14512,7 @@ export type ClassMarketplaceJobApplicationEvent = {
    * **[READ-ONLY]** The job the application was made to.
    */
   readonly job_uuid?: string;
-  event_type?: EventTypeEnum3;
+  event_type?: EventTypeEnum4;
   /**
    * **[READ-ONLY]** The user who took the step; null for system actions such as expiry.
    */
@@ -15804,6 +15920,17 @@ export const SchemaEnum5 = {
 
 export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
 
+export const ItemsEnum2 = {
+  DEPOSIT: 'DEPOSIT',
+  SALE: 'SALE',
+  TRANSFER_IN: 'TRANSFER_IN',
+  TRANSFER_OUT: 'TRANSFER_OUT',
+  PLATFORM_FEE: 'PLATFORM_FEE',
+  SALE_REVERSAL: 'SALE_REVERSAL',
+} as const;
+
+export type ItemsEnum2 = (typeof ItemsEnum2)[keyof typeof ItemsEnum2];
+
 export const SchemaEnum6 = {
   DRAFT: 'draft',
   IN_REVIEW: 'in_review',
@@ -15841,17 +15968,17 @@ export const SchemaEnum9 = {
 
 export type SchemaEnum9 = (typeof SchemaEnum9)[keyof typeof SchemaEnum9];
 
-export const ItemsEnum2 = {
+export const ItemsEnum3 = {
   BEGINNER: 'beginner',
   INTERMEDIATE: 'intermediate',
   ADVANCED: 'advanced',
 } as const;
 
-export type ItemsEnum2 = (typeof ItemsEnum2)[keyof typeof ItemsEnum2];
-
-export const ItemsEnum3 = { FREE: 'free', PAID: 'paid' } as const;
-
 export type ItemsEnum3 = (typeof ItemsEnum3)[keyof typeof ItemsEnum3];
+
+export const ItemsEnum4 = { FREE: 'free', PAID: 'paid' } as const;
+
+export type ItemsEnum4 = (typeof ItemsEnum4)[keyof typeof ItemsEnum4];
 
 export const SchemaEnum10 = {
   RELEVANCE: 'relevance',
@@ -17112,21 +17239,21 @@ export const DomainNameEnum2 = {
 export type DomainNameEnum2 = (typeof DomainNameEnum2)[keyof typeof DomainNameEnum2];
 
 /**
- * **[READ-ONLY]** Transaction category for this wallet entry.
+ * **[READ-ONLY]** What happened.
  */
-export const TransactionTypeEnum = {
-  DEPOSIT: 'DEPOSIT',
-  SALE: 'SALE',
-  TRANSFER_IN: 'TRANSFER_IN',
-  TRANSFER_OUT: 'TRANSFER_OUT',
-  PLATFORM_FEE: 'PLATFORM_FEE',
-  SALE_REVERSAL: 'SALE_REVERSAL',
+export const EventTypeEnum2 = {
+  DEPOSIT_RECORDED: 'DEPOSIT_RECORDED',
+  SALE_SHARE_CREDITED: 'SALE_SHARE_CREDITED',
+  PLATFORM_FEE_CHARGED: 'PLATFORM_FEE_CHARGED',
+  TRANSFER_SENT: 'TRANSFER_SENT',
+  TRANSFER_RECEIVED: 'TRANSFER_RECEIVED',
+  SALE_SHARE_REVERSED: 'SALE_SHARE_REVERSED',
 } as const;
 
 /**
- * **[READ-ONLY]** Transaction category for this wallet entry.
+ * **[READ-ONLY]** What happened.
  */
-export type TransactionTypeEnum = (typeof TransactionTypeEnum)[keyof typeof TransactionTypeEnum];
+export type EventTypeEnum2 = (typeof EventTypeEnum2)[keyof typeof EventTypeEnum2];
 
 /**
  * ACTIVE once any domain is approved; PENDING_APPROVAL while every requested domain awaits review
@@ -17209,7 +17336,7 @@ export type StatusEnum23 = (typeof StatusEnum23)[keyof typeof StatusEnum23];
 /**
  * **[READ-ONLY]** What happened.
  */
-export const EventTypeEnum2 = {
+export const EventTypeEnum3 = {
   SUBMITTED: 'submitted',
   EDITED: 'edited',
   OPENED_BY_CREATOR: 'opened_by_creator',
@@ -17226,7 +17353,7 @@ export const EventTypeEnum2 = {
 /**
  * **[READ-ONLY]** What happened.
  */
-export type EventTypeEnum2 = (typeof EventTypeEnum2)[keyof typeof EventTypeEnum2];
+export type EventTypeEnum3 = (typeof EventTypeEnum3)[keyof typeof EventTypeEnum3];
 
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
@@ -17416,7 +17543,7 @@ export type ApplicationStatusEnum =
 /**
  * **[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.
  */
-export const EventTypeEnum3 = {
+export const EventTypeEnum4 = {
   APPLIED: 'applied',
   REAPPLIED: 'reapplied',
   SHORTLISTED: 'shortlisted',
@@ -17432,7 +17559,7 @@ export const EventTypeEnum3 = {
 /**
  * **[READ-ONLY]** What happened. interviewing is an interview invitation and assigned is the class being created.
  */
-export type EventTypeEnum3 = (typeof EventTypeEnum3)[keyof typeof EventTypeEnum3];
+export type EventTypeEnum4 = (typeof EventTypeEnum4)[keyof typeof EventTypeEnum4];
 
 /**
  * Class visibility
@@ -21244,6 +21371,33 @@ export type PagedDtoWalletTransactionWritable = {
  * Wallet ledger entry capturing balance changes
  */
 export type WalletTransactionWritable = {
+  transaction_type?: ItemsEnum2;
+};
+
+export type ApiResponseListWalletStatementWritable = {
+  success?: boolean;
+  data?: Array<unknown>;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponsePagedDtoWalletAuditEventWritable = {
+  success?: boolean;
+  data?: PagedDtoWalletAuditEventWritable;
+  message?: string;
+  error?: unknown;
+};
+
+export type PagedDtoWalletAuditEventWritable = {
+  content?: Array<WalletAuditEventWritable>;
+  metadata?: PageMetadata;
+  links?: PageLinks;
+};
+
+/**
+ * One append-only entry in a wallet's audit trail
+ */
+export type WalletAuditEventWritable = {
   [key: string]: unknown;
 };
 
@@ -40836,6 +40990,9 @@ export type ListTransactions1Data = {
   };
   query: {
     currency_code?: string;
+    type?: Array<ItemsEnum2>;
+    from?: Date;
+    to?: Date;
     pageable: Pageable;
   };
   url: '/api/v1/wallets/{userUuid}/transactions';
@@ -40863,6 +41020,110 @@ export type ListTransactions1Responses = {
 
 export type ListTransactions1Response =
   ListTransactions1Responses[keyof ListTransactions1Responses];
+
+export type ExportTransactionsData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: {
+    currency_code?: string;
+    type?: Array<ItemsEnum2>;
+    from?: Date;
+    to?: Date;
+  };
+  url: '/api/v1/wallets/{userUuid}/transactions.csv';
+};
+
+export type ExportTransactionsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ExportTransactionsError = ExportTransactionsErrors[keyof ExportTransactionsErrors];
+
+export type ExportTransactionsResponses = {
+  /**
+   * OK
+   */
+  200: string;
+};
+
+export type ExportTransactionsResponse =
+  ExportTransactionsResponses[keyof ExportTransactionsResponses];
+
+export type ListStatementsData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query?: {
+    currency_code?: string;
+    months?: number;
+  };
+  url: '/api/v1/wallets/{userUuid}/statements';
+};
+
+export type ListStatementsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListStatementsError = ListStatementsErrors[keyof ListStatementsErrors];
+
+export type ListStatementsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListWalletStatement;
+};
+
+export type ListStatementsResponse = ListStatementsResponses[keyof ListStatementsResponses];
+
+export type ListAuditData = {
+  body?: never;
+  path: {
+    userUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/wallets/{userUuid}/audit';
+};
+
+export type ListAuditErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListAuditError = ListAuditErrors[keyof ListAuditErrors];
+
+export type ListAuditResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoWalletAuditEvent;
+};
+
+export type ListAuditResponse = ListAuditResponses[keyof ListAuditResponses];
 
 export type GetAllUsersData = {
   body?: never;
@@ -44263,6 +44524,9 @@ export type ListOrganisationWalletTransactionsData = {
   };
   query: {
     currency_code?: string;
+    type?: Array<ItemsEnum2>;
+    from?: Date;
+    to?: Date;
     pageable: Pageable;
   };
   url: '/api/v1/organisations/{organisationUuid}/wallet/transactions';
@@ -44291,6 +44555,115 @@ export type ListOrganisationWalletTransactionsResponses = {
 
 export type ListOrganisationWalletTransactionsResponse =
   ListOrganisationWalletTransactionsResponses[keyof ListOrganisationWalletTransactionsResponses];
+
+export type ExportOrganisationWalletTransactionsData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query?: {
+    currency_code?: string;
+    type?: Array<ItemsEnum2>;
+    from?: Date;
+    to?: Date;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/wallet/transactions.csv';
+};
+
+export type ExportOrganisationWalletTransactionsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ExportOrganisationWalletTransactionsError =
+  ExportOrganisationWalletTransactionsErrors[keyof ExportOrganisationWalletTransactionsErrors];
+
+export type ExportOrganisationWalletTransactionsResponses = {
+  /**
+   * OK
+   */
+  200: string;
+};
+
+export type ExportOrganisationWalletTransactionsResponse =
+  ExportOrganisationWalletTransactionsResponses[keyof ExportOrganisationWalletTransactionsResponses];
+
+export type ListOrganisationWalletStatementsData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query?: {
+    currency_code?: string;
+    months?: number;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/wallet/statements';
+};
+
+export type ListOrganisationWalletStatementsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListOrganisationWalletStatementsError =
+  ListOrganisationWalletStatementsErrors[keyof ListOrganisationWalletStatementsErrors];
+
+export type ListOrganisationWalletStatementsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListWalletStatement;
+};
+
+export type ListOrganisationWalletStatementsResponse =
+  ListOrganisationWalletStatementsResponses[keyof ListOrganisationWalletStatementsResponses];
+
+export type ListOrganisationWalletAuditData = {
+  body?: never;
+  path: {
+    organisationUuid: string;
+  };
+  query: {
+    pageable: Pageable;
+  };
+  url: '/api/v1/organisations/{organisationUuid}/wallet/audit';
+};
+
+export type ListOrganisationWalletAuditErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListOrganisationWalletAuditError =
+  ListOrganisationWalletAuditErrors[keyof ListOrganisationWalletAuditErrors];
+
+export type ListOrganisationWalletAuditResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponsePagedDtoWalletAuditEvent;
+};
+
+export type ListOrganisationWalletAuditResponse =
+  ListOrganisationWalletAuditResponses[keyof ListOrganisationWalletAuditResponses];
 
 export type ListRosterData = {
   body?: never;
@@ -49669,11 +50042,11 @@ export type SearchCoursesAndProgrammesData = {
     /**
      * Levels; repeatable or comma-separated. A course matches its difficulty; a programme matches when any member course has the level.
      */
-    level?: Array<ItemsEnum2>;
+    level?: Array<ItemsEnum3>;
     /**
      * free or paid; both (or none) means no price filter
      */
-    price?: Array<ItemsEnum3>;
+    price?: Array<ItemsEnum4>;
     /**
      * Only results by this course creator
      */

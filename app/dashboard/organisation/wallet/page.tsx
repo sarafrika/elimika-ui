@@ -1,25 +1,32 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { ArrowLeftRight, Coins, FileText, Landmark, LayoutDashboard, Receipt, ShieldCheck, Undo2, Users } from 'lucide-react';
+import { useState } from 'react';
+import { surfaceTheme } from '@/components/data-display/page-shell';
 import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
-import { EARNER_FILTERS, earnerTotals } from '@/components/money/earner';
+import { StatCard } from '@/components/data-display/stat-tile';
 import { formatMoney, formatSignedMoney } from '@/components/money/format';
-import { type LedgerEntry, type ObligationLike, obligationEntries, statementEntries } from '@/components/money/ledger';
+import { type LedgerEntry, type ObligationLike, obligationEntries } from '@/components/money/ledger';
 import { LedgerPanel } from '@/components/money/ledger-panel';
-import { MoneyPage } from '@/components/money/money-page';
 import { RecordPaymentSheet } from '@/components/money/money-sheets';
-import { useOrganisation } from '@/context/organisation-context';
-import { useClassDefinitionsByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import {
-  getOrganisationWalletOptions,
-  getOrganisationWalletQueryKey,
-  listObligationsOptions,
-  listObligationsQueryKey,
-  listOrganisationWalletTransactionsOptions,
-} from '@/services/client/@tanstack/react-query.gen';
+  AccountCards,
+  AuditPanel,
+  RecentTransactions,
+  RefundsPanel,
+  StatementsPanel,
+  TransactionsPanel,
+} from '@/components/wallet/wallet-panels';
+import { invalidateWallet, useWalletFigures, type WalletScope } from '@/components/wallet/wallet-scope';
+import { WalletShell } from '@/components/wallet/wallet-shell';
+import { useOrganisation } from '@/context/organisation-context';
+import { useUserProfile } from '@/context/profile-context';
+import { useClassDefinitionsByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
+import { listObligationsOptions, listObligationsQueryKey } from '@/services/client/@tanstack/react-query.gen';
 
-const TABS = ['statement', 'payables'] as const;
+const TABS = ['dashboard', 'accounts', 'transactions', 'refunds', 'statements', 'audit'] as const;
+const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
 const PAGE = { pageable: { page: 0, size: 100 } };
 const PAYABLE_FILTERS = [
   { id: 'all', label: 'All sessions' },
@@ -29,28 +36,20 @@ const PAYABLE_FILTERS = [
 
 type Obligation = ObligationLike & { instructor_uuid?: string; class_definition_uuid?: string };
 
-/** An organisation's share of classes taught by instructors it hired, and what it owes them. */
+/** An organisation's share of classes taught by instructors it hired, what it owes them, and every movement. */
 export default function OrganisationWalletPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
+  const user = useUserProfile();
+  const scope: WalletScope = { kind: 'organisation', organisationUuid };
   const queryClient = useQueryClient();
-  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'statement');
+  const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'dashboard');
   const [settling, setSettling] = useState<LedgerEntry<Obligation> | null>(null);
+  const { figures, isLoading } = useWalletFigures(scope);
+  const currency = figures?.currency ?? 'KES';
 
-  const wallet = useQuery({ ...getOrganisationWalletOptions({ path: { organisationUuid } }), enabled: !!organisationUuid });
-  const transactions = useQuery({
-    ...listOrganisationWalletTransactionsOptions({ path: { organisationUuid }, query: PAGE }),
-    enabled: !!organisationUuid,
-  });
   const obligationQuery = { path: { organisationUuid }, query: PAGE };
   const obligations = useQuery({ ...listObligationsOptions(obligationQuery), enabled: !!organisationUuid });
-
-  const txns = transactions.data?.data?.content ?? [];
-  const entries = useMemo(() => statementEntries(txns), [txns]);
-  const totals = earnerTotals(wallet.data?.data);
-  const balance = Number(wallet.data?.data?.balance_amount ?? 0);
-  const currency = wallet.data?.data?.currency_code ?? 'KES';
-
   const obligationList = (obligations.data?.data?.content ?? []) as Obligation[];
   const { instructorMap } = useInstructorsByIds(obligationList.map(o => o.instructor_uuid ?? ''));
   const { classDefinitionMap } = useClassDefinitionsByIds(obligationList.map(o => o.class_definition_uuid ?? ''));
@@ -61,40 +60,69 @@ export default function OrganisationWalletPage() {
   const payables = obligationEntries(obligationList, { canSettle: true, title: titleOf });
   const owedList = obligationList.filter(o => (o.status ?? '').toUpperCase() === 'ACCRUED');
   const owed = owedList.reduce((sum, o) => sum + Number(o.rate_amount ?? 0), 0);
+  const sessions = `${owedList.length} delivered ${owedList.length === 1 ? 'session' : 'sessions'}`;
 
   return (
     <>
-      <MoneyPage
+      <WalletShell
+        scope={scope}
         eyebrow='Finance'
-        title='Wallet'
-        description='Your share of classes taught by instructors you hired through jobs. You pay those instructors from it.'
-        loadingStats={wallet.isLoading || transactions.isLoading}
-        stats={[
-          { label: 'Balance', value: formatMoney(balance, currency), hint: 'What the platform holds for you' },
-          { label: 'Delivery shares', value: formatMoney(totals.shares, currency), hint: `${totals.sales} class ${totals.sales === 1 ? 'sale' : 'sales'}` },
-          { label: 'Platform fees', value: formatSignedMoney(totals.fees, 'out', currency), hint: 'Charged on your shares' },
-          { label: 'Owed to instructors', value: formatMoney(owed, currency), hint: `${owedList.length} delivered ${owedList.length === 1 ? 'session' : 'sessions'}` },
-        ]}
+        title='Organisation Wallet'
+        description='Class orders delivered by your organisation, what you owe hired instructors, and wallet activity.'
         tabs={[
-          { id: 'statement', label: 'Statement', count: entries.length },
-          { id: 'payables', label: 'Instructor payables', count: owedList.length || null },
+          { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { id: 'accounts', label: 'Accounts', icon: Landmark, count: owedList.length || null },
+          { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
+          { id: 'refunds', label: 'Refunds', icon: Undo2 },
+          { id: 'statements', label: 'Statements', icon: FileText },
+          { id: 'audit', label: 'Audit', icon: ShieldCheck },
         ]}
         tab={tab}
         onTabChange={setTab}
         hrefFor={hrefFor}
       >
-        <SectionTabPanel value='statement'>
-          <LedgerPanel
-            title='Statement'
-            description='Money in and out of your wallet.'
-            entries={entries}
-            loading={transactions.isLoading}
-            filters={EARNER_FILTERS}
-            emptyTitle='Nothing here yet'
-            emptyDescription='When a class taught by an instructor you hired is paid for, your share appears here.'
-          />
+        <SectionTabPanel value='dashboard' className='space-y-5'>
+          <section aria-label='Summary' className={surfaceTheme.statGrid}>
+            <StatCard
+              label='Delivery shares'
+              value={formatMoney(figures?.shares ?? 0, currency)}
+              hint={`${figures?.sales ?? 0} class ${figures?.sales === 1 ? 'sale' : 'sales'}`}
+              icon={Coins}
+              tone='success'
+            />
+            <StatCard
+              label='Platform fees'
+              value={formatSignedMoney(figures?.fees ?? 0, 'out', currency)}
+              hint='Charged on your shares'
+              icon={Receipt}
+            />
+            <StatCard label='Owed to instructors' value={formatMoney(owed, currency)} hint={sessions} icon={Users} tone='warning' />
+          </section>
+          <RecentTransactions scope={scope} active={tab === 'dashboard'} onViewAll={() => setTab('transactions')} />
         </SectionTabPanel>
-        <SectionTabPanel value='payables'>
+        <SectionTabPanel value='accounts' className='space-y-5'>
+          <AccountCards
+            loading={isLoading}
+            cards={[
+              {
+                label: 'Earnings',
+                value: formatMoney(figures?.available ?? 0, currency),
+                hint: 'Available now',
+                tone: 'success',
+              },
+              {
+                label: 'Held for withdrawals',
+                value: formatMoney(figures?.held ?? 0, currency),
+                hint: figures?.held ? 'Being sent to M-Pesa' : 'Nothing in progress',
+                tone: 'warning',
+              },
+              {
+                label: 'Owed to instructors',
+                value: formatMoney(owed, currency),
+                hint: `${sessions} · you pay these off-platform`,
+              },
+            ]}
+          />
           <LedgerPanel
             title='Instructor payables'
             description='Delivered sessions you owe your hired instructors for.'
@@ -106,7 +134,30 @@ export default function OrganisationWalletPage() {
             onAction={entry => setSettling(entry as LedgerEntry<Obligation>)}
           />
         </SectionTabPanel>
-      </MoneyPage>
+        <SectionTabPanel value='transactions'>
+          <TransactionsPanel
+            scope={scope}
+            active={tab === 'transactions'}
+            filterTypes={EARNER_TYPES}
+            exportName='organisation-wallet-transactions.csv'
+          />
+        </SectionTabPanel>
+        <SectionTabPanel value='refunds'>
+          <RefundsPanel
+            scope={scope}
+            active={tab === 'refunds'}
+            types={['SALE_REVERSAL']}
+            description='Shares taken back when a class your organisation delivered was refunded or corrected.'
+            emptyDescription='When a class sale is reversed, the share taken back appears here.'
+          />
+        </SectionTabPanel>
+        <SectionTabPanel value='statements'>
+          <StatementsPanel scope={scope} active={tab === 'statements'} />
+        </SectionTabPanel>
+        <SectionTabPanel value='audit'>
+          <AuditPanel scope={scope} active={tab === 'audit'} selfUuid={user?.uuid} />
+        </SectionTabPanel>
+      </WalletShell>
       <RecordPaymentSheet
         organisationUuid={organisationUuid}
         obligation={settling?.source ?? null}
@@ -114,7 +165,7 @@ export default function OrganisationWalletPage() {
         onOpenChange={open => !open && setSettling(null)}
         onRecorded={() => {
           void queryClient.invalidateQueries({ queryKey: listObligationsQueryKey(obligationQuery) });
-          void queryClient.invalidateQueries({ queryKey: getOrganisationWalletQueryKey({ path: { organisationUuid } }) });
+          void invalidateWallet(queryClient);
         }}
       />
     </>

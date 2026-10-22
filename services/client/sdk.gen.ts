@@ -371,6 +371,7 @@ import {
   gradeSubmissionResponseTransformer,
   joinWaitlistResponseTransformer,
   listAchievementsResponseTransformer,
+  listAuditResponseTransformer,
   listAvailabilityRulesResponseTransformer,
   listBookingsResponseTransformer,
   listCatalogItemsResponseTransformer,
@@ -398,6 +399,8 @@ import {
   listNotificationsResponseTransformer,
   listObligationsResponseTransformer,
   listOrganisationInvitationsResponseTransformer,
+  listOrganisationWalletAuditResponseTransformer,
+  listOrganisationWalletStatementsResponseTransformer,
   listOrganisationWalletTransactionsResponseTransformer,
   listPaymentsResponseTransformer,
   listPendingCourseEditsResponseTransformer,
@@ -415,6 +418,7 @@ import {
   listSkills1ResponseTransformer,
   listSkillsResponseTransformer,
   listSourcesResponseTransformer,
+  listStatementsResponseTransformer,
   listTeamsResponseTransformer,
   listTrainingApplicationsResponseTransformer,
   listTrainingRateUpdatesResponseTransformer,
@@ -1268,6 +1272,12 @@ import type {
   ExperienceData,
   ExperienceErrors,
   ExperienceResponses,
+  ExportOrganisationWalletTransactionsData,
+  ExportOrganisationWalletTransactionsErrors,
+  ExportOrganisationWalletTransactionsResponses,
+  ExportTransactionsData,
+  ExportTransactionsErrors,
+  ExportTransactionsResponses,
   GenerateCertificateUrlData,
   GenerateCertificateUrlErrors,
   GenerateCertificateUrlResponses,
@@ -2156,6 +2166,9 @@ import type {
   ListAllData,
   ListAllErrors,
   ListAllResponses,
+  ListAuditData,
+  ListAuditErrors,
+  ListAuditResponses,
   ListAvailabilityRulesData,
   ListAvailabilityRulesErrors,
   ListAvailabilityRulesResponses,
@@ -2249,6 +2262,12 @@ import type {
   ListOrganisationInvitationsData,
   ListOrganisationInvitationsErrors,
   ListOrganisationInvitationsResponses,
+  ListOrganisationWalletAuditData,
+  ListOrganisationWalletAuditErrors,
+  ListOrganisationWalletAuditResponses,
+  ListOrganisationWalletStatementsData,
+  ListOrganisationWalletStatementsErrors,
+  ListOrganisationWalletStatementsResponses,
   ListOrganisationWalletTransactionsData,
   ListOrganisationWalletTransactionsErrors,
   ListOrganisationWalletTransactionsResponses,
@@ -2300,6 +2319,9 @@ import type {
   ListSourcesData,
   ListSourcesErrors,
   ListSourcesResponses,
+  ListStatementsData,
+  ListStatementsErrors,
+  ListStatementsResponses,
   ListTeamsData,
   ListTeamsErrors,
   ListTeamsResponses,
@@ -14446,6 +14468,63 @@ export const listTransactions1 = <ThrowOnError extends boolean = false>(
   );
 
 /**
+ * Download wallet transactions as CSV
+ *
+ * Every matching row, newest first; dates are UTC and inclusive.
+ */
+export const exportTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<ExportTransactionsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ExportTransactionsResponses,
+    ExportTransactionsErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/transactions.csv',
+    ...options,
+  });
+
+/**
+ * List a user's monthly wallet statements
+ *
+ * Newest month first, UTC months; quiet months carry the balance over.
+ */
+export const listStatements = <ThrowOnError extends boolean = false>(
+  options: Options<ListStatementsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<ListStatementsResponses, ListStatementsErrors, ThrowOnError>({
+    responseTransformer: listStatementsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/statements',
+    ...options,
+  });
+
+/**
+ * List a user's wallet audit trail
+ *
+ * Append-only, newest first.
+ */
+export const listAudit = <ThrowOnError extends boolean = false>(
+  options: Options<ListAuditData, ThrowOnError>
+) =>
+  (options.client ?? client).get<ListAuditResponses, ListAuditErrors, ThrowOnError>({
+    responseTransformer: listAuditResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/wallets/{userUuid}/audit',
+    ...options,
+  });
+
+/**
  * Get all users
  *
  * Fetches a paginated list of all users in the system. Supports pagination and sorting by any user field.
@@ -16399,6 +16478,71 @@ export const listOrganisationWalletTransactions = <ThrowOnError extends boolean 
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/organisations/{organisationUuid}/wallet/transactions',
+    ...options,
+  });
+
+/**
+ * Download an organisation's wallet transactions as CSV
+ *
+ * Every matching row, newest first; dates are UTC and inclusive.
+ */
+export const exportOrganisationWalletTransactions = <ThrowOnError extends boolean = false>(
+  options: Options<ExportOrganisationWalletTransactionsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ExportOrganisationWalletTransactionsResponses,
+    ExportOrganisationWalletTransactionsErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/transactions.csv',
+    ...options,
+  });
+
+/**
+ * List an organisation's monthly wallet statements
+ *
+ * Newest month first, UTC months; quiet months carry the balance over.
+ */
+export const listOrganisationWalletStatements = <ThrowOnError extends boolean = false>(
+  options: Options<ListOrganisationWalletStatementsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListOrganisationWalletStatementsResponses,
+    ListOrganisationWalletStatementsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listOrganisationWalletStatementsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/statements',
+    ...options,
+  });
+
+/**
+ * List an organisation's wallet audit trail
+ *
+ * Append-only, newest first.
+ */
+export const listOrganisationWalletAudit = <ThrowOnError extends boolean = false>(
+  options: Options<ListOrganisationWalletAuditData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListOrganisationWalletAuditResponses,
+    ListOrganisationWalletAuditErrors,
+    ThrowOnError
+  >({
+    responseTransformer: listOrganisationWalletAuditResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/organisations/{organisationUuid}/wallet/audit',
     ...options,
   });
 
