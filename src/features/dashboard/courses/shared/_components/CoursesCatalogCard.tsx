@@ -1,15 +1,14 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
-import { StudentCourseAction } from '../../components/StudentCourseAction';
-import { getEnrollHref } from './courses-data';
 import type { CoursesCatalogCardData } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { Award, BookOpen, Calendar, Search, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { StudentCourseAction } from '../../components/StudentCourseAction';
 import { CourseCatalogCardLayout } from './CourseCatalogCardLayout';
+import { getEnrollHref } from './courses-data';
 
 type CoursesCatalogCardProps = {
   card: CoursesCatalogCardData;
@@ -73,7 +72,7 @@ export function CoursesCatalogCard({ card, type }: CoursesCatalogCardProps) {
         Join Class
       </StudentCourseAction>
 
-      {activeDomain === 'instructor' && isTrainingApplication && (
+      {/* {activeDomain === 'instructor' && isTrainingApplication && (
         <Button
           type='button'
           className={cn(
@@ -86,7 +85,7 @@ export function CoursesCatalogCard({ card, type }: CoursesCatalogCardProps) {
           <BookOpen className='size-4' />
           {card.ctaLabel}
         </Button>
-      )}
+      )} */}
 
       {!isTrainingApplication &&
         type !== 'general' &&

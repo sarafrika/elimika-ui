@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  ArrowUpRight,
-  BookOpen,
-  ClipboardCheck,
-  Medal,
-  QrCode,
-  Star
-} from 'lucide-react';
+import { ArrowUpRight, BookOpen, ClipboardCheck, Medal, QrCode, Star } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,7 +10,13 @@ import { Progress } from '@/components/ui/progress';
 
 import { useState } from 'react';
 import { LinkShareCard } from '../../../../../components/shared/link-share-card';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '../../../../../components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../../../../../components/ui/dialog';
 import { buildSocialShareUrl, openShareWindow } from '../../../../../lib/share';
 import { socialShareActions } from '../../../instructor/classes/overview/[id]/page';
 import { Donut, StatCard, type SkillsWalletData } from './SkillsWalletShared';
@@ -29,8 +28,8 @@ type SkillsWalletCompetenciesTabProps = {
 export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTabProps) {
   const [shareOpen, setShareOpen] = useState(false);
 
-  const skillsWalletShareLink = `https://`
-  const userName = data?.studentName!
+  const skillsWalletShareLink = `https://`;
+  const userName = data?.studentName!;
 
   const competencies = data.competencies;
   const total = competencies.length || 1;
@@ -47,15 +46,19 @@ export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTa
       <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
         <div>
           <h2 className='text-xl font-semibold'>My Competencies</h2>
-          <p className='text-sm text-muted-foreground'>
+          <p className='text-muted-foreground text-sm'>
             Completed class work and assessment badges earned from proven learning outcomes.
           </p>
         </div>
-        <div className='flex items-center gap-2'>
-          <Button disabled={true} className='bg-primary hover:bg-primary/90 disabled:cursor-not-allowed'>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Button
+            disabled={true}
+            className='bg-primary hover:bg-primary/90 disabled:cursor-not-allowed'
+          >
             <ArrowUpRight className='h-3 w-3' /> Add Evidence
           </Button>
-          <Button variant='outline'
+          <Button
+            variant='outline'
             onClick={() => {
               setShareOpen(true);
             }}
@@ -66,12 +69,22 @@ export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTa
       </div>
 
       <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-5'>
-        <Card className='rounded-sm p-0'>
-          <CardContent className='flex items-center gap-4 p-4'>
-            <Donut value={average} size={105} stroke={10} label='OVERALL' sub={`${competencies.length} badges`} />
-            <div>
-              <p className='text-sm text-muted-foreground'>Competency Average</p>
-              <p className='mt-1 text-xs text-muted-foreground'>Across completed classes and assessments</p>
+        <Card className='min-w-0 rounded-sm p-0'>
+          <CardContent className='flex min-w-0 flex-wrap items-center justify-center gap-4 p-4'>
+            <div className='shrink-0'>
+              <Donut
+                value={average}
+                size={105}
+                stroke={10}
+                label='OVERALL'
+                sub={`${competencies.length} badges`}
+              />
+            </div>
+            <div className='min-w-0 flex-1 basis-32 break-words'>
+              <p className='text-muted-foreground text-sm'>Competency Average</p>
+              <p className='text-muted-foreground mt-1 text-xs'>
+                Across completed classes and assessments
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -118,25 +131,25 @@ export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTa
                 <CardContent className='px-4 py-3'>
                   <div className='flex items-start justify-between gap-2'>
                     <div className='min-w-0 flex-1'>
-                      <p className='break-words font-semibold'>{record.competency}</p>
-                      <p className='mt-1 text-xs text-muted-foreground'>{sourceLabel}</p>
+                      <p className='font-semibold break-words'>{record.competency}</p>
+                      <p className='text-muted-foreground mt-1 text-xs'>{sourceLabel}</p>
                       <div className='mt-2 flex flex-wrap gap-1.5'>
-                        <Badge variant='outline' className='text-start max-w-full truncate text-xs'>
+                        <Badge variant='outline' className='max-w-full truncate text-start text-xs'>
                           {record.skill}
                         </Badge>
-                        <Badge className='max-w-full truncate border-0 bg-success/10 text-xs text-success'>
+                        <Badge className='bg-success/10 text-success max-w-full truncate border-0 text-xs'>
                           {record.level}
                         </Badge>
-                        <Badge className='text-start max-w-full truncate border-0 bg-primary/10 text-xs text-primary'>
+                        <Badge className='bg-primary/10 text-primary max-w-full truncate border-0 text-start text-xs'>
                           {record.badge}
                         </Badge>
                       </div>
                     </div>
-                    <ArrowUpRight className='h-4 w-4 shrink-0 text-muted-foreground' />
+                    <ArrowUpRight className='text-muted-foreground h-4 w-4 shrink-0' />
                   </div>
 
                   <div className='mt-4'>
-                    <div className='mb-1 flex items-center justify-between gap-2 text-xs text-muted-foreground'>
+                    <div className='text-muted-foreground mb-1 flex items-center justify-between gap-2 text-xs'>
                       <span className='inline-flex min-w-0 items-center gap-1 truncate'>
                         <SourceIcon className='h-3.5 w-3.5 shrink-0' />
                         <span className='truncate'>{record.evidence_count} evidence</span>
@@ -144,13 +157,13 @@ export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTa
                       <span className='shrink-0'>{record.last_updated}</span>
                     </div>
                     <Progress value={record.pct} className='h-1.5' />
-                    <div className='mt-1 flex items-center justify-between gap-2 text-xs text-muted-foreground'>
+                    <div className='text-muted-foreground mt-1 flex items-center justify-between gap-2 text-xs'>
                       <span className='tabular-nums'>{record.pct}% complete</span>
                       <span className='truncate'>{record.level_num}</span>
                     </div>
                   </div>
 
-                  <div className='mt-3 flex items-center gap-1.5 text-xs font-medium text-primary'>
+                  <div className='text-primary mt-3 flex items-center gap-1.5 text-xs font-medium'>
                     {record.course_id ? (
                       <BookOpen className='h-3.5 w-3.5 shrink-0' />
                     ) : (

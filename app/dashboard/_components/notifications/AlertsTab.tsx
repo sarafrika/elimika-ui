@@ -93,7 +93,38 @@ function priorityVariant(priority: string) {
   return 'outline';
 }
 
-function metadataValue(value: unknown) {
+const UUID_VALUE = /\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi;
+
+function notificationDisplayText(value: string) {
+  // Hide raw UUIDs in titles, bodies and metadata without changing the API payload used by actions.
+  return value.replace(UUID_VALUE, '').trim();
+}
+
+function isVisibleMetadataKey(key: string) {
+  // Display-only rule: hide uuid, *_uuid and camelCase UUID fields, including future API fields.
+  // Keep the original notification intact: routing and read/archive actions still need its IDs.
+  return !/uuid/i.test(key);
+}
+
+function visibleMetadataValue(value: unknown): unknown {
+  if (typeof value === 'string') return notificationDisplayText(value) || null;
+  if (Array.isArray(value)) {
+    const items = value.map(visibleMetadataValue).filter(item => item !== null && item !== undefined);
+    return items.length ? items : null;
+  }
+  if (typeof value === 'object' && value !== null) {
+    // Apply the same rule recursively so serializing nested metadata cannot expose UUIDs.
+    const entries = Object.entries(value)
+      .filter(([key]) => isVisibleMetadataKey(key))
+      .map(([key, item]) => [key, visibleMetadataValue(item)] as const)
+      .filter(([, item]) => item !== null && item !== undefined);
+    return entries.length ? Object.fromEntries(entries) : null;
+  }
+  return value;
+}
+
+function metadataValue(rawValue: unknown) {
+  const value = visibleMetadataValue(rawValue);
   if (value === null || value === undefined || value === '') {
     return null;
   }
@@ -136,6 +167,7 @@ function hireBlockedEntries(notification: UserNotification) {
 function metadataEntries(notification: UserNotification) {
   if (HIRE_BLOCKED_TYPE.test(notification.type)) return hireBlockedEntries(notification);
   return Object.entries(notification.metadata ?? {})
+    .filter(([key]) => isVisibleMetadataKey(key))
     .map(([key, value]) => [notificationTypeLabel(key), metadataValue(value)] as const)
     .filter((entry): entry is readonly [string, string] => Boolean(entry[1]))
     .slice(0, 4);
@@ -364,7 +396,7 @@ export function AlertsTab() {
                             <div className='min-w-0'>
                               <div className='flex min-w-0 items-center gap-2'>
                                 <h3 className='truncate text-sm font-semibold'>
-                                  {notification.title}
+                                  {notificationDisplayText(notification.title)}
                                 </h3>
                                 {unread ? (
                                   <div className='bg-primary h-2 w-2 rounded-full' />
@@ -394,7 +426,7 @@ export function AlertsTab() {
                           </div>
 
                           <p className='text-muted-foreground mb-3 text-sm leading-6'>
-                            {notification.body}
+                            {notificationDisplayText(notification.body)}
                           </p>
 
                           <div className='mb-3 flex flex-wrap gap-2'>

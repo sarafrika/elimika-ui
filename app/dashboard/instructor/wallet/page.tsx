@@ -88,6 +88,7 @@ export default function InstructorWalletPage() {
         tab={tab}
         onTabChange={setTab}
         hrefFor={hrefFor}
+        scrollButtons
         onWithdraw={() => setWithdrawOpen(true)}
         actions={
           <Button variant='outline' onClick={() => setTransferOpen(true)} disabled={!figures || figures.available <= 0}>

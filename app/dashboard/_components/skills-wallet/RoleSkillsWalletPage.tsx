@@ -1032,6 +1032,7 @@ function ProfileSkillsWalletPage({
     verificationEvents: data.verificationEvents,
   };
 
+
   return (
     <div className={`${surfaceTheme.pageWide} py-4`}>
       <div className={surfaceTheme.pageStack}>
@@ -1046,14 +1047,15 @@ function ProfileSkillsWalletPage({
           }
         />
 
-        <div>
+        <div className='min-w-0'>
           <SectionTabs
             tabs={TABS}
             value={tab}
             onValueChange={setTab}
             hrefFor={hrefFor}
             label='Wallet sections'
-            variant='pill'
+            variant='training-hub'
+            scrollButtons
             sticky
           >
             <SectionTabPanel value='overview'>
