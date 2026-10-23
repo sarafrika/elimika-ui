@@ -16,10 +16,10 @@ test.describe('Student wallet', () => {
 
     await page.goto('/dashboard/student/wallet');
 
-    await expect(page.getByRole('heading', { name: 'My payments' })).toBeVisible();
     const summary = page.getByRole('region', { name: 'Summary' });
     await expect(summary).toContainText('KES 28,000');
     await expect(summary).toContainText('KES 49,500');
+    await page.getByRole('tab', { name: /Payments/ }).click();
     const payments = page.getByRole('region', { name: 'Payments' });
     await expect(payments.getByRole('listitem')).toHaveCount(3);
 
@@ -33,7 +33,7 @@ test.describe('Student wallet', () => {
     const api = await signedInAs(page, 'student', baseURL ?? '');
     api.get(/\/api\/v1\/commerce\/orders\/mine/, paged(ORDERS));
     await api.install(page);
-    await page.goto('/dashboard/student/wallet');
+    await page.goto('/dashboard/student/wallet?tab=payments');
 
     await page.getByRole('listitem').filter({ hasText: 'AI and ML' }).getByRole('button', { name: 'Receipt' }).click();
 
@@ -62,18 +62,18 @@ test.describe('Student wallet', () => {
     await expect(page.getByText('Payment received. Your seat is confirmed.')).toBeVisible();
   });
 
-  test('the Balance tab is deep-linkable and explains an empty balance', async ({ page, baseURL }) => {
+  test('the Payments tab is deep-linkable and Dashboard is the default', async ({ page, baseURL }) => {
     const api = await signedInAs(page, 'student', baseURL ?? '');
     api
       .get(/\/api\/v1\/commerce\/orders\/mine/, paged(ORDERS))
       .get(/\/api\/v1\/wallets\/[^/]+\/transactions/, paged([]));
     await api.install(page);
 
-    await page.goto('/dashboard/student/wallet?tab=balance');
+    await page.goto('/dashboard/student/wallet?tab=payments');
 
-    await expect(page.getByRole('tab', { name: /Balance/ })).toHaveAttribute('aria-selected', 'true');
-    await expect(page.getByText('No credits yet')).toBeVisible();
-    await page.getByRole('tab', { name: /Payments/ }).click();
+    await expect(page.getByRole('tab', { name: /Payments/ })).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByRole('region', { name: 'Payments' })).toBeVisible();
+    await page.getByRole('tab', { name: 'Dashboard' }).click();
     await expect(page).toHaveURL(/\/dashboard\/student\/wallet$/);
   });
 });
