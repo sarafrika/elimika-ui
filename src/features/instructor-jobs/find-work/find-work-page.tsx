@@ -50,7 +50,6 @@ import { useSearchIssue, useSearchQuery } from '@/hooks/use-search-query';
 import { isSearchUnavailable } from '@/lib/api-errors';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob } from '@/services/client/types.gen';
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { skillsMatchesHref } from '@/src/features/dashboard/lib/skills-matches-url';
 import { useNearMe } from '@/src/features/near-me/near-me';
 import { NearMeControl } from '@/src/features/near-me/near-me-control';
@@ -312,18 +311,12 @@ export function FindWorkPage({ embedded = false }: { embedded?: boolean }) {
           }
         /> */}
 
-        <div className='flex flex-wrap gap-2 self-end justify-end'>
+        <div className='flex flex-wrap justify-end gap-2 self-end'>
           {embedded && (
             <Button asChild variant='outline'>
               <Link href={hiredJobsHref()}>Hired jobs</Link>
             </Button>
           )}
-          <Button asChild variant='outline'>
-            <Link href={dashboardUrl('instructor', 'rate-card')}>
-              <Layers aria-hidden />
-              Rate cards
-            </Link>
-          </Button>
         </div>
 
         {!embedded && <JobsSectionTabs />}

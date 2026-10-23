@@ -1,3 +1,4 @@
+import type { UserDomain } from '@/lib/types';
 import {
   BadgeCheck,
   BarChart3,
@@ -14,6 +15,7 @@ import {
   ClipboardList,
   Clock,
   DollarSign,
+  FileStack,
   FileText,
   GraduationCap,
   HandCoins,
@@ -42,7 +44,6 @@ import {
   Wrench
 } from 'lucide-react';
 import type { ComponentType } from 'react';
-import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -308,6 +309,11 @@ export default {
           title: 'Skills Matches',
           url: '/dashboard/skills-matches',
           icon: Sparkles,
+        },
+        {
+          title: 'My Rate Cards',
+          url: '/dashboard/rate-card',
+          icon: FileStack,
         },
         {
           title: 'Start Course',

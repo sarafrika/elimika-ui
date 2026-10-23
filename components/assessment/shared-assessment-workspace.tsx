@@ -1,34 +1,10 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import {
-  ArrowUpRight,
-  BookOpen,
-  BriefcaseBusiness,
-  CalendarDays,
-  ChevronDown,
-  Clock3,
-  FileText,
-  FolderOpen,
-  ListFilter,
-  Menu,
-  MoreHorizontal,
-  Plus,
-  Search,
-  Settings2,
-  UploadCloud,
-} from 'lucide-react';
-import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  hasApiError,
-  nextWorkbookPage,
-  WORKBOOK_PAGE_SIZE,
-} from '@/components/lesson/workbook-data';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -39,1380 +15,777 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useAssignmentsByIds } from '@/hooks/use-batched-lookups';
-import useInstructorClassesWithDetails from '@/hooks/use-instructor-classes';
-import { STALE_TIMES } from '@/lib/query-client';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 import {
-  getAssignmentSchedulesOptions,
-  getEnrollmentsForClassOptions,
-  searchSubmissionsInfiniteOptions,
-} from '@/services/client/@tanstack/react-query.gen';
-import type {
-  Assignment,
-  AssignmentSubmission,
-  ClassAssignmentSchedule,
-} from '@/services/client/types.gen';
-import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+  BarChart3,
+  ClipboardList,
+  Download,
+  FileSpreadsheet,
+  Home,
+  Search,
+  Sparkles,
+  X,
+} from 'lucide-react';
+import Link from 'next/link';
+import { useDeferredValue, useMemo, useState } from 'react';
 import {
-  getStudentAssignmentSubmissionState,
-  useStudentAssignmentData,
-} from '@/src/features/dashboard/student-assessment/useStudentAssignmentData';
-import { useUserProfile } from '../../context/profile-context';
+  assessmentStatusLabels,
+  type AssessmentRole,
+  type AssessmentRow,
+  type AssessmentStatus,
+  type AssessmentResultRow,
+} from './assessment-list-data';
+import { useAssessmentListData } from './use-assessment-list-data';
+import { useResultStudents } from './use-result-students';
+import { AssessmentCompetenciesTab } from './AssessmentCompetenciesTab';
 
-type AssessmentWorkspaceRole = 'student' | 'instructor';
-type AssessmentTab = 'active' | 'completed' | 'competencies';
-type AssessmentSort = 'newest' | 'due-soon' | 'title';
-type AssessmentStatus = 'in-progress' | 'pending-review' | 'completed' | 'overdue';
-type AssessmentStatusFilter = 'all' | AssessmentStatus;
+const tabs = [
+  { value: 'overview', label: 'Overview', icon: Home },
+  { value: 'all', label: 'All Assessments', icon: ClipboardList },
+  { value: 'results', label: 'Results', icon: FileSpreadsheet },
+  { value: 'competencies', label: 'Competencies', icon: Sparkles },
+] as const;
+type AssessmentTab = (typeof tabs)[number]['value'];
 
-type AssessmentListItem = {
-  assignmentUuid?: string;
-  courseUuid?: string;
-  classUuid?: string;
-  category: string;
-  comments?: string;
-  dueAt: number | null;
-  dueLabel: string;
-  fileName: string;
-  fileSize: string;
-  gradeDisplay?: string;
-  id: string;
-  learnerName: string;
-  points: number;
-  percentage?: number | null;
-  score: number | null;
-  skill: string;
-  status: AssessmentStatus;
-  statusLabel: string;
-  submissionUuid?: string;
-  submittedAt: string;
-  summary: string;
-  title: string;
+const statusTone: Record<AssessmentStatus, string> = {
+  upcoming: 'bg-info/10 text-info',
+  pending: 'bg-muted text-muted-foreground',
+  'in-progress': 'bg-primary/10 text-primary',
+  'awaiting-grading': 'bg-warning/10 text-warning-foreground',
+  completed: 'bg-success/10 text-success',
+  overdue: 'bg-destructive/10 text-destructive',
+  returned: 'bg-warning/10 text-warning-foreground',
 };
 
-type AssignmentScheduleWithClass = ClassAssignmentSchedule & {
-  classTitle: string;
-  classUuid: string;
-  courseTitle: string;
-};
-
-type Competency = {
-  accent: string;
-  artifacts: string;
-  dueLabel: string;
-  id: string;
-  level: string;
-  metric: string;
-  progress: number;
-  score: string;
-  status: string;
-  title: string;
-  trend: string;
-};
-
-const competencies: Competency[] = [];
-
-// [
-//   {
-//     accent: 'bg-warning',
-//     artifacts: '6 Projects',
-//     dueLabel: 'Due in 2 days',
-//     id: 'uvx-design',
-//     level: 'Intermediate',
-//     metric: 'Progress manages',
-//     progress: 54,
-//     score: '9.20',
-//     status: 'Intermediate',
-//     title: 'UVX Design',
-//     trend: 'Needs improvement',
-//   },
-//   {
-//     accent: 'bg-primary',
-//     artifacts: '4.1 points',
-//     dueLabel: 'Due in 1 day',
-//     id: 'graphic-design',
-//     level: 'Proficient',
-//     metric: 'Highly stated',
-//     progress: 72,
-//     score: '4.5',
-//     status: 'Proficient',
-//     title: 'Graphic Design',
-//     trend: '4.5 / 5',
-//   },
-//   {
-//     accent: 'bg-destructive',
-//     artifacts: '10 Projects',
-//     dueLabel: '1 week ago',
-//     id: 'public-speaking',
-//     level: 'Advanced',
-//     metric: 'Export speaker',
-//     progress: 82,
-//     score: '4.5',
-//     status: 'Advanced',
-//     title: 'Public Speaking',
-//     trend: '4.5 / 5',
-//   },
-//   {
-//     accent: 'bg-success',
-//     artifacts: '8 Projects',
-//     dueLabel: 'Last reviewed',
-//     id: 'digital-marketing',
-//     level: 'Intermediate',
-//     metric: 'Project complete',
-//     progress: 62,
-//     score: '4.5',
-//     status: 'Intermediate',
-//     title: 'Digital Marketing',
-//     trend: '2 / 8',
-//   },
-//   {
-//     accent: 'bg-secondary',
-//     artifacts: '3 reports',
-//     dueLabel: 'Due in 3 days',
-//     id: 'html-css',
-//     level: 'Intermediate',
-//     metric: 'Code review',
-//     progress: 46,
-//     score: '3.8',
-//     status: 'Intermediate',
-//     title: 'HTML & CSS',
-//     trend: '4 Projects',
-//   },
-//   {
-//     accent: 'bg-muted-foreground',
-//     artifacts: '10 documents',
-//     dueLabel: 'Needs action',
-//     id: 'data-analysis',
-//     level: 'Needs improvement',
-//     metric: 'Report quality',
-//     progress: 34,
-//     score: '3.2',
-//     status: 'Needs improvement',
-//     title: 'Data Analysis',
-//     trend: 'Needs improvement',
-//   },
-// ];
-
-type TopStudent = {
-  name: string;
-  profile_image?: string;
-  due: string;
-};
-
-const topStudents: TopStudent[] = [];
-// [ // { avatar: '', due: 'Overdue', initials: 'SO', name: 'Sarah Otieno' }, // { avatar: '', due: '1 day', initials: 'NA', name: 'Nathaniel' }, // { avatar: '', due: '3 days', initials: 'DA', name: 'Daniel' }, // ];
-
-function formatDate(value?: string | Date | null, options?: Intl.DateTimeFormatOptions) {
-  if (!value) return 'No deadline';
-
-  const date = value instanceof Date ? value : new Date(value);
-  if (Number.isNaN(date.getTime())) return 'No deadline';
-
-  return new Intl.DateTimeFormat(
-    'en-US',
-    options ?? { month: 'short', day: 'numeric', year: 'numeric' }
-  ).format(date);
+function dateLabel(value: number | null) {
+  return value == null
+    ? 'No deadline'
+    : new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(value);
 }
 
-function getDateTime(value?: string | Date | null) {
-  if (!value) return null;
-
-  const date = value instanceof Date ? value : new Date(value);
-  const time = date.getTime();
-
-  return Number.isNaN(time) ? null : time;
-}
-
-function formatBytes(value?: bigint | number | null) {
-  if (value == null) return 'No file';
-
-  const size = typeof value === 'bigint' ? Number(value) : value;
-  if (!Number.isFinite(size) || size <= 0) return 'No file';
-
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let resolved = size;
-  let unitIndex = 0;
-
-  while (resolved >= 1024 && unitIndex < units.length - 1) {
-    resolved /= 1024;
-    unitIndex += 1;
-  }
-
-  return `${resolved >= 10 || unitIndex === 0 ? Math.round(resolved) : resolved.toFixed(1)} ${units[unitIndex]}`;
-}
-
-function isSubmissionGraded(submission: AssignmentSubmission) {
-  const status = String(submission.status ?? '').toUpperCase();
-
-  return Boolean(submission.is_graded || submission.graded_at || status === 'GRADED');
-}
-
-function getAverageScore(submissions: AssignmentSubmission[]) {
-  const gradedScores = submissions
-    .map(submission => submission.score)
-    .filter((score): score is number => typeof score === 'number');
-
-  if (gradedScores.length === 0) return null;
-
-  return Math.round(gradedScores.reduce((total, score) => total + score, 0) / gradedScores.length);
-}
-
-function getAveragePercentage(submissions: AssignmentSubmission[]) {
-  const gradedPercentages = submissions
-    .map(submission => submission.percentage)
-    .filter((percentage): percentage is number => typeof percentage === 'number');
-
-  if (gradedPercentages.length === 0) return null;
-
-  return Math.round(
-    gradedPercentages.reduce((total, percentage) => total + percentage, 0) /
-      gradedPercentages.length
+function Score({ value }: { value: number | null }) {
+  if (value == null) return <span className='text-muted-foreground'>—</span>;
+  return (
+    <div className='min-w-24 space-y-1'>
+      <span className='text-xs font-medium tabular-nums'>{Math.round(value * 10) / 10}%</span>
+      <Progress
+        value={Math.max(0, Math.min(value, 100))}
+        className='h-1.5'
+        aria-label={`Score: ${Math.round(value)}%`}
+      />
+    </div>
   );
 }
 
-function mapAssignmentToAssessment({
-  assignment,
-  schedule,
-  submissions,
-  totalLearners,
-}: {
-  assignment: Assignment;
-  schedule: AssignmentScheduleWithClass;
-  submissions: AssignmentSubmission[];
-  totalLearners: number;
-}): AssessmentListItem {
-  const submittedCount = submissions.length;
-  const gradedCount = submissions.filter(isSubmissionGraded).length;
-  const dueAt = schedule.due_at ?? assignment.due_date;
-  const dueTime = getDateTime(dueAt);
-  const isFullyGraded = submittedCount > 0 && gradedCount === submittedCount;
-  const status: AssessmentStatus = isFullyGraded
-    ? 'completed'
-    : dueTime != null && dueTime < Date.now()
-      ? 'overdue'
-      : submittedCount > 0
-        ? 'pending-review'
-        : 'in-progress';
+function AssessmentTable({ rows, role }: { rows: AssessmentRow[]; role: AssessmentRole }) {
+  return (
+    <div className='border-border bg-card min-w-0 overflow-hidden rounded-xl border'>
+      <Table className='min-w-[980px]' aria-label='Issued assessments'>
+        <TableHeader>
+          <TableRow>
+            <TableHead className='pl-5'>Assessment</TableHead>
+            <TableHead>Course</TableHead>
+            <TableHead>Class</TableHead>
+            <TableHead>Instructor</TableHead>
+            {role === 'instructor' && <TableHead className='text-right'>Learners</TableHead>}
+            <TableHead>Due / Date</TableHead>
+            <TableHead>{role === 'instructor' ? 'Avg. Score' : 'Your Score'}</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className='pr-5 text-right'>Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map(row => (
+            <TableRow key={row.id}>
+              <TableCell className='max-w-72 py-4 pl-5 whitespace-normal'>
+                <Link
+                  href={row.href}
+                  className='text-foreground hover:text-primary font-medium hover:underline'
+                >
+                  {row.title}
+                </Link>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  {row.kind === 'quiz'
+                    ? 'Quiz · Automatically graded'
+                    : 'Assignment · Instructor graded'}
+                </p>
+              </TableCell>
+              <TableCell className='max-w-48 whitespace-normal'>
+                {row.classMeta.courseTitle}
+              </TableCell>
+              <TableCell>
+                <Badge variant='secondary' className='max-w-48 whitespace-normal'>
+                  {row.classMeta.title}
+                </Badge>
+              </TableCell>
+              <TableCell className='max-w-40 whitespace-normal'>{row.instructorName}</TableCell>
+              {role === 'instructor' && (
+                <TableCell className='text-right tabular-nums'>
+                  {row.classMeta.learners ?? '—'}
+                </TableCell>
+              )}
+              <TableCell>{dateLabel(row.dueAt)}</TableCell>
+              <TableCell>
+                <Score value={row.percentage} />
+              </TableCell>
+              <TableCell>
+                <Badge variant='secondary' className={statusTone[row.status]}>
+                  {assessmentStatusLabels[row.status]}
+                </Badge>
+              </TableCell>
+              <TableCell className='pr-5 text-right'>
+                <Button asChild variant='outline' size='sm'>
+                  <Link href={row.href}>
+                    {role === 'instructor'
+                      ? row.kind === 'quiz'
+                        ? 'View results'
+                        : 'View submissions'
+                      : row.status === 'completed'
+                        ? 'View result'
+                        : 'Open assessment'}
+                  </Link>
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
 
-  return {
-    assignmentUuid: assignment.uuid,
-    category: assignment.assignment_category || 'Assignment',
-    dueAt: dueTime,
-    dueLabel: dueAt ? `Due ${formatDate(dueAt)}` : 'No due date',
-    fileName: assignment.rubric_uuid ? 'Rubric attached' : 'No rubric',
-    fileSize: `${submittedCount}/${totalLearners || submittedCount} submitted`,
-    gradeDisplay:
-      submittedCount > 0 ? `${gradedCount}/${submittedCount} submissions graded` : 'No submissions',
-    id: `assignment_${assignment.uuid}_${schedule.classUuid}`,
-    learnerName: `${submittedCount}/${totalLearners || submittedCount} learners submitted`,
-    percentage: getAveragePercentage(submissions),
-    points: assignment.max_points ?? submissions[0]?.max_score ?? 100,
-    score: getAverageScore(submissions),
-    skill: schedule.courseTitle,
-    status,
-    statusLabel:
-      status === 'completed'
-        ? 'Graded'
-        : status === 'overdue'
-          ? 'Overdue'
-          : submittedCount > 0
-            ? 'Ready to grade'
-            : 'Awaiting submissions',
-    submittedAt: `${gradedCount}/${submittedCount} graded`,
-    summary:
-      assignment.description ||
-      assignment.instructions ||
-      `${schedule.classTitle} assignment for ${schedule.courseTitle}`,
-    title: assignment.title,
+function ResultsTable({
+  rows,
+  names,
+  avatars,
+  loadingNames,
+  role,
+}: {
+  rows: AssessmentResultRow[];
+  names: Record<string, string>;
+  avatars: Record<string, string | undefined>;
+  loadingNames: boolean;
+  role: AssessmentRole;
+}) {
+  return (
+    <div className='border-border bg-card min-w-0 overflow-hidden rounded-xl border'>
+      <Table className='min-w-[1040px]' aria-label='Student assessment results'>
+        <TableHeader>
+          <TableRow>
+            <TableHead className='pl-5'>Student</TableHead>
+            <TableHead>Assessment</TableHead>
+            <TableHead>Class / Course</TableHead>
+            <TableHead>Submitted</TableHead>
+            <TableHead>Score</TableHead>
+            <TableHead>Result</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className='pr-5 text-right'>Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map(row => (
+            <TableRow key={row.id}>
+              <TableCell className='max-w-48 py-4 pl-5 whitespace-normal'>
+                <div className='flex items-center gap-3'>
+                  <Avatar className='size-9'>
+                    <AvatarImage
+                      src={avatars[row.enrollmentUuid]}
+                      alt={`${names[row.enrollmentUuid] || 'Student'} avatar`}
+                    />
+                    <AvatarFallback className='text-xs'>
+                      {names[row.enrollmentUuid]
+                        ?.split(/\s+/)
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map(part => part[0])
+                        .join('')
+                        .toUpperCase() || '?'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className='min-w-0'>
+                    {names[row.enrollmentUuid] ? (
+                      <p className='font-medium'>{names[row.enrollmentUuid]}</p>
+                    ) : loadingNames ? (
+                      <Skeleton className='h-4 w-28' />
+                    ) : (
+                      <p className='text-muted-foreground text-xs'>Name unavailable</p>
+                    )}
+                    <p className='text-muted-foreground mt-1 text-xs'>
+                      Enrollment {row.enrollmentUuid.slice(0, 8)}
+                    </p>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell className='max-w-64 whitespace-normal'>
+                <Link href={row.href} className='hover:text-primary font-medium hover:underline'>
+                  {row.assessment.title}
+                </Link>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  {row.assessment.kind === 'quiz' ? 'Quiz · Automatically graded' : 'Assignment'}
+                </p>
+              </TableCell>
+              <TableCell className='max-w-48 whitespace-normal'>
+                <p className='font-bold'>{row.assessment.classMeta.title}</p>
+                <p className='text-muted-foreground mt-1 text-xs'>
+                  {row.assessment.classMeta.courseTitle}
+                </p>
+              </TableCell>
+              <TableCell>{row.submittedAt == null ? '—' : dateLabel(row.submittedAt)}</TableCell>
+              <TableCell className='tabular-nums'>
+                <div className='space-y-1'>
+                  {row.score != null && (
+                    <p className='text-muted-foreground text-xs'>
+                      {row.maxScore == null ? row.score : `${row.score} / ${row.maxScore}`}
+                    </p>
+                  )}
+                  <Score value={row.percentage} />
+                </div>
+              </TableCell>
+              <TableCell className='max-w-48 whitespace-normal'>
+                {row.grade ? (
+                  <Badge variant='secondary' className='whitespace-normal'>
+                    {row.grade}
+                  </Badge>
+                ) : (
+                  <span className='text-muted-foreground text-xs'>
+                    {row.status === 'awaiting-grading' ? 'Awaiting grading' : 'Band unavailable'}
+                  </span>
+                )}
+              </TableCell>
+              <TableCell>
+                <Badge variant='secondary' className={statusTone[row.status]}>
+                  {assessmentStatusLabels[row.status]}
+                </Badge>
+              </TableCell>
+              <TableCell className='pr-5 text-right'>
+                <Button asChild variant='outline' size='sm'>
+                  <Link href={row.href}>
+                    {role === 'instructor' && row.assessment.kind === 'assignment'
+                      ? 'Review submission'
+                      : 'View result'}
+                  </Link>
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function FilterSelect({
+  label,
+  value,
+  onChange,
+  options,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
+}) {
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger aria-label={label} className='bg-card h-9 w-full min-w-0'>
+        <SelectValue placeholder={label} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value='all'>{label}: All</SelectItem>
+        {options.map(option => (
+          <SelectItem key={option.value} value={option.value}>
+            {option.label}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function downloadCsv(data: Array<Array<string | number | null>>, fileName: string) {
+  const cell = (value: string | number | null) => {
+    // Keep spreadsheet formula prefixes inert when an assessment title is user authored.
+    const text = String(value ?? '');
+    return `"${(/^[=+\-@\t\r]/.test(text) ? `'${text}` : text).replaceAll('"', '""')}"`;
   };
+  const content = data.map(row => row.map(cell).join(',')).join('\r\n');
+  const url = URL.createObjectURL(
+    new Blob(['\uFEFF', content], { type: 'text/csv;charset=utf-8;' })
+  );
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
-function getFilteredAssessments(
-  data: AssessmentListItem[],
-  tab: AssessmentTab,
-  search: string,
-  skill: string,
-  statusFilter: AssessmentStatusFilter,
-  sort: AssessmentSort
-) {
-  const query = search.trim().toLowerCase();
-
-  return data
-    .filter(assessment => {
-      const status = getAssessmentStatus(assessment);
-      const matchesTab =
-        tab === 'active'
-          ? status !== 'completed'
-          : tab === 'completed'
-            ? status === 'completed'
-            : true;
-      const matchesSearch =
-        !query ||
-        [assessment.title, assessment.learnerName, assessment.summary, assessment.skill]
-          .join(' ')
-          .toLowerCase()
-          .includes(query);
-      const matchesSkill = skill === 'all' || assessment.skill === skill;
-      const matchesStatus = statusFilter === 'all' || status === statusFilter;
-
-      return matchesTab && matchesSearch && matchesSkill && matchesStatus;
-    })
-    .sort((left, right) => {
-      if (sort === 'title') return left.title.localeCompare(right.title);
-
-      if (sort === 'due-soon') {
-        return (left.dueAt ?? Number.MAX_SAFE_INTEGER) - (right.dueAt ?? Number.MAX_SAFE_INTEGER);
-      }
-
-      const leftTime = new Date(left.submittedAt).getTime();
-      const rightTime = new Date(right.submittedAt).getTime();
-
-      return (Number.isNaN(rightTime) ? 0 : rightTime) - (Number.isNaN(leftTime) ? 0 : leftTime);
-    });
-}
-
-function getFilteredCompetencies(
-  data: Competency[],
-  search: string,
-  skill: string,
-  statusFilter: AssessmentStatusFilter,
-  sort: AssessmentSort
-) {
-  const query = search.trim().toLowerCase();
-
-  return data
-    .filter(competency => {
-      const matchesSearch =
-        !query ||
-        [
-          competency.title,
-          competency.level,
-          competency.metric,
-          competency.status,
-          competency.artifacts,
-          competency.trend,
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(query);
-      const matchesSkill = skill === 'all' || competency.title === skill;
-      const matchesStatus =
-        statusFilter === 'all' ||
-        (statusFilter === 'completed'
-          ? competency.progress >= 80
-          : statusFilter === 'in-progress'
-            ? competency.progress > 0 && competency.progress < 80
-            : false);
-
-      return matchesSearch && matchesSkill && matchesStatus;
-    })
-    .sort((left, right) => {
-      if (sort === 'title') return left.title.localeCompare(right.title);
-      if (sort === 'due-soon') return left.dueLabel.localeCompare(right.dueLabel);
-
-      return right.progress - left.progress;
-    });
-}
-
-function isAssessmentOverdue(assessment: AssessmentListItem) {
-  return (
-    assessment.status !== 'completed' && assessment.dueAt != null && assessment.dueAt < Date.now()
+function exportAssessments(rows: AssessmentRow[], role: AssessmentRole) {
+  downloadCsv(
+    [
+      [
+        'Assessment',
+        'Type',
+        'Course',
+        'Class',
+        'Instructor',
+        'Due',
+        role === 'instructor' ? 'Average score (%)' : 'Your score (%)',
+        'Status',
+      ],
+      ...rows.map(row => [
+        row.title,
+        row.kind,
+        row.classMeta.courseTitle,
+        row.classMeta.title,
+        row.instructorName,
+        dateLabel(row.dueAt),
+        row.percentage,
+        assessmentStatusLabels[row.status],
+      ]),
+    ],
+    'assessments.csv'
   );
 }
 
-function getAssessmentStatus(assessment: AssessmentListItem): AssessmentStatus {
-  return isAssessmentOverdue(assessment) ? 'overdue' : assessment.status;
-}
-
-function getAssessmentStatusLabel(assessment: AssessmentListItem) {
-  return getAssessmentStatus(assessment) === 'overdue' ? 'Overdue' : assessment.statusLabel;
-}
-
-function getAssessmentDueLabel(assessment: AssessmentListItem) {
-  if (isAssessmentOverdue(assessment)) {
-    return assessment.dueAt ? `Overdue since ${formatDate(new Date(assessment.dueAt))}` : 'Overdue';
-  }
-
-  return assessment.dueLabel;
-}
-
-function StatusBadge({ assessment }: { assessment: AssessmentListItem }) {
-  const status = getAssessmentStatus(assessment);
-
-  return (
-    <Badge
-      className={cn(
-        'h-6 rounded-md px-2.5 text-xs font-medium',
-        status === 'in-progress' && 'bg-primary/10 text-primary hover:bg-primary/10',
-        status === 'pending-review' && 'bg-success/10 text-success hover:bg-success/10',
-        status === 'completed' && 'bg-success/10 text-success hover:bg-success/10',
-        status === 'overdue' && 'bg-destructive/10 text-destructive hover:bg-destructive/10'
-      )}
-    >
-      {getAssessmentStatusLabel(assessment)}
-    </Badge>
+function exportResults(rows: AssessmentResultRow[], names: Record<string, string>) {
+  downloadCsv(
+    [
+      [
+        'Student',
+        'Enrollment',
+        'Assessment',
+        'Type',
+        'Course',
+        'Class',
+        'Submitted',
+        'Score',
+        'Max score',
+        'Percentage',
+        'Result',
+        'Status',
+      ],
+      ...rows.map(row => [
+        names[row.enrollmentUuid] || '',
+        row.enrollmentUuid,
+        row.assessment.title,
+        row.assessment.kind,
+        row.assessment.classMeta.courseTitle,
+        row.assessment.classMeta.title,
+        row.submittedAt == null ? '' : dateLabel(row.submittedAt),
+        row.score,
+        row.maxScore,
+        row.percentage,
+        row.grade,
+        assessmentStatusLabels[row.status],
+      ]),
+    ],
+    'assessment-results.csv'
   );
 }
 
-function TabsBar({
-  activeCount,
-  activeTab,
-  completedCount,
-  competenciesCount,
-  onTabChange,
-}: {
-  activeCount: number;
-  activeTab: AssessmentTab;
-  completedCount: number;
-  competenciesCount: number;
-  onTabChange: (tab: AssessmentTab) => void;
-}) {
-  const tabs = [
-    { count: activeCount, label: 'Active', value: 'active' as const },
-    { count: completedCount, label: 'Completed', value: 'completed' as const },
-    { count: competenciesCount, label: 'Competencies', value: 'competencies' as const },
-  ];
-
-  return (
-    <div className='flex flex-wrap items-center gap-2'>
-      {tabs.map(tab => (
-        <Button
-          aria-pressed={activeTab === tab.value}
-          variant={activeTab === tab.value ? 'default' : 'outline'}
-          className='h-7 rounded-full px-4 text-xs'
-          key={tab.value}
-          onClick={() => onTabChange(tab.value)}
-          type='button'
-        >
-          {tab.label}
-          {tab.value === 'competencies' || activeTab === tab.value ? ` (${tab.count})` : ''}
-        </Button>
-      ))}
-    </div>
+function StudentAssessmentList({ role }: { role: AssessmentRole }) {
+  const { rows, resultRows, isLoading, isError, retry } = useAssessmentListData(role);
+  const [tab, setTab] = useState<AssessmentTab>('overview');
+  const [search, setSearch] = useState('');
+  const query = useDeferredValue(search.trim().toLowerCase());
+  const [course, setCourse] = useState('all');
+  const [classId, setClassId] = useState('all');
+  const [instructor, setInstructor] = useState('all');
+  const [kind, setKind] = useState('all');
+  const [status, setStatus] = useState('all');
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
+  const options = useMemo(() => {
+    const collect = (
+      getValue: (row: AssessmentRow) => string,
+      getLabel: (row: AssessmentRow) => string
+    ) =>
+      [
+        ...new Map(
+          rows
+            .filter(row => getValue(row))
+            .map(row => [getValue(row), { value: getValue(row), label: getLabel(row) }])
+        ).values(),
+      ].sort((a, b) => a.label.localeCompare(b.label));
+    return {
+      courses: collect(
+        row => row.classMeta.courseUuid,
+        row => row.classMeta.courseTitle
+      ),
+      classes: collect(
+        row => row.classMeta.uuid,
+        row => row.classMeta.title
+      ),
+      instructors: collect(
+        row => row.instructorUuid,
+        row => row.instructorName
+      ),
+    };
+  }, [rows]);
+  const filtered = useMemo(
+    () =>
+      rows
+        .filter(
+          row =>
+            (course === 'all' || row.classMeta.courseUuid === course) &&
+            (classId === 'all' || row.classMeta.uuid === classId) &&
+            // (instructor === 'all' || row.instructorUuid === instructor) &&
+            (kind === 'all' || row.kind === kind) &&
+            (status === 'all' || row.status === status) &&
+            (!query ||
+              [
+                row.title,
+                row.classMeta.courseTitle,
+                row.classMeta.title,
+                row.instructorName,
+                row.kind,
+              ]
+                .join(' ')
+                .toLowerCase()
+                .includes(query))
+        )
+        .sort((a, b) => b.issuedAt - a.issuedAt || a.title.localeCompare(b.title)),
+    [rows, course, classId, instructor, kind, status, tab, query]
   );
-}
-
-function HeaderActions({ role }: { role: AssessmentWorkspaceRole }) {
-  return (
-    <div className='grid w-full gap-2 sm:w-auto sm:grid-cols-2'>
-      <Button className='h-10 justify-center rounded-md px-4' type='button'>
-        {role === 'instructor' ? (
-          <>
-            <Plus className='size-4' />
-            Add Assessments
-          </>
-        ) : (
-          <>
-            <UploadCloud className='size-4' />
-            Submit Assessment
-          </>
-        )}
-      </Button>
-      <Button className='h-10 justify-center rounded-md px-4' variant='outline' type='button'>
-        <FolderOpen className='size-4' />
-        View Report
-      </Button>
-    </div>
+  const filteredResults = useMemo(
+    () =>
+      resultRows.filter(row => {
+        const assessment = row.assessment;
+        return (
+          (course === 'all' || assessment.classMeta.courseUuid === course) &&
+          (classId === 'all' || assessment.classMeta.uuid === classId) &&
+          (kind === 'all' || assessment.kind === kind) &&
+          (status === 'all' || row.status === status) &&
+          (!query ||
+            [
+              assessment.title,
+              assessment.classMeta.courseTitle,
+              assessment.classMeta.title,
+              assessment.instructorName,
+              assessment.kind,
+            ]
+              .join(' ')
+              .toLowerCase()
+              .includes(query))
+        );
+      }),
+    [resultRows, course, classId, kind, status, query]
   );
-}
+  const rowCount = tab === 'results' ? filteredResults.length : filtered.length;
+  const totalPages = Math.max(1, Math.ceil(rowCount / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const shownRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const shownResults = useMemo(
+    () =>
+      tab === 'results'
+        ? filteredResults.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+        : [],
+    [tab, filteredResults, currentPage]
+  );
+  const resultStudents = useResultStudents(shownResults, role);
+  const metrics = useMemo(() => {
+    const scored = rows.flatMap(row => (row.percentage == null ? [] : [row.percentage]));
+    return [
+      { label: 'Total Assessments', value: rows.length, accent: 'border-l-primary' },
+      {
+        label: 'Quizzes',
+        value: rows.filter(row => row.kind === 'quiz').length,
+        accent: 'border-l-info',
+      },
+      {
+        label: 'Assignments',
+        value: rows.filter(row => row.kind === 'assignment').length,
+        accent: 'border-l-primary',
+      },
+      {
+        label: 'Awaiting Grading',
+        value: rows.filter(row => row.status === 'awaiting-grading').length,
+        accent: 'border-l-warning',
+      },
+      {
+        label: 'Completed',
+        value: rows.filter(row => row.status === 'completed').length,
+        accent: 'border-l-success',
+      },
+      {
+        label: 'Overdue',
+        value: rows.filter(row => row.status === 'overdue').length,
+        accent: 'border-l-destructive',
+      },
+      {
+        label: 'Average Score',
+        value: scored.length
+          ? `${Math.round(scored.reduce((a, b) => a + b, 0) / scored.length)}%`
+          : '—',
+        accent: 'border-l-info',
+      },
+    ];
+  }, [rows]);
+  const hasFilters =
+    Boolean(search) || [course, classId, instructor, kind, status].some(value => value !== 'all');
+  const changeFilter = (setter: (value: string) => void) => (value: string) => {
+    setter(value);
+    setPage(1);
+  };
+  const resetFilters = () => {
+    setSearch('');
+    setCourse('all');
+    setClassId('all');
+    setInstructor('all');
+    setKind('all');
+    setStatus('all');
+    setPage(1);
+  };
 
-function SearchAndFilters({
-  onSearchChange,
-  onSkillChange,
-  onSortChange,
-  onStatusChange,
-  search,
-  skill,
-  skills,
-  sort,
-  status,
-}: {
-  onSearchChange: (value: string) => void;
-  onSkillChange: (value: string) => void;
-  onSortChange: (value: AssessmentSort) => void;
-  onStatusChange: (value: AssessmentStatusFilter) => void;
-  search: string;
-  skill: string;
-  skills: string[];
-  sort: AssessmentSort;
-  status: AssessmentStatusFilter;
-}) {
-  return (
-    <div className='grid items-center gap-3 md:grid-cols-[minmax(0,1fr)_140px_150px_130px]'>
+  const filters = (
+    <div className='space-y-3'>
       <div className='relative'>
         <Search className='text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2' />
         <Input
-          className='bg-background h-10 rounded-md pr-10 pl-10'
-          onChange={event => onSearchChange(event.target.value)}
-          placeholder='Search assessments...'
+          type='search'
           value={search}
+          onChange={event => changeFilter(setSearch)(event.target.value)}
+          aria-label='Search assessments'
+          placeholder='Search assessments, courses, classes or instructors'
+          className='bg-card h-10 pl-9'
         />
-        <Settings2 className='text-muted-foreground absolute top-1/2 right-3 size-4 -translate-y-1/2' />
       </div>
-
-      <Select value={skill} onValueChange={onSkillChange}>
-        <SelectTrigger className='bg-background h-10 w-full rounded-md'>
-          <SelectValue placeholder='All Skills' />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value='all'>All Skills</SelectItem>
-          {skills.map(item => (
-            <SelectItem key={item} value={item}>
-              {item}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select value={sort} onValueChange={value => onSortChange(value as AssessmentSort)}>
-        <SelectTrigger className='bg-background h-10 w-full rounded-md'>
-          <span className='inline-flex items-center gap-2'>
-            <Menu className='size-4' />
-            <SelectValue placeholder='Newest' />
-          </span>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value='newest'>Newest</SelectItem>
-          <SelectItem value='due-soon'>Due soon</SelectItem>
-          <SelectItem value='title'>Title</SelectItem>
-        </SelectContent>
-      </Select>
-      <Select
-        value={status}
-        onValueChange={value => onStatusChange(value as AssessmentStatusFilter)}
-      >
-        <SelectTrigger className='bg-background h-10 w-full rounded-md'>
-          <span className='inline-flex items-center gap-2'>
-            <ListFilter className='size-4' />
-            <SelectValue placeholder='Filters' />
-          </span>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value='all'>All Statuses</SelectItem>
-          <SelectItem value='in-progress'>In Progress</SelectItem>
-          <SelectItem value='pending-review'>Pending Review</SelectItem>
-          <SelectItem value='completed'>Completed</SelectItem>
-          <SelectItem value='overdue'>Overdue</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-function EmptyAssessmentsState() {
-  return (
-    <div className='border-border bg-card text-muted-foreground flex min-h-[220px] flex-col items-center justify-center rounded-md border p-8 text-center text-sm'>
-      <FileText className='text-primary/70 mb-3 size-10' />
-      <p className='text-foreground text-base font-semibold'>No assessments found</p>
-      <p className='mt-1 max-w-md'>
-        Try a different search term, skill, status, or sort option to find matching assessments.
-      </p>
-    </div>
-  );
-}
-
-function AssessmentCard({
-  assessment,
-  role,
-}: {
-  assessment: AssessmentListItem;
-  role: AssessmentWorkspaceRole;
-}) {
-  const primaryAction =
-    role === 'instructor'
-      ? assessment.score === null
-        ? 'Grade Submissions'
-        : 'View Submissions'
-      : assessment.score === null
-        ? 'Awaiting Grade'
-        : 'View Grade';
-
-  const viewSubmissionHref = assessment.assignmentUuid
-    ? roleScopedDashboardPath(
-        role,
-        `/dashboard/assignment/assignment_${assessment.assignmentUuid}?course_uuid=${assessment.courseUuid}&classId=${assessment.classUuid}`
-      )
-    : undefined;
-
-  const viewGradeDetailsHref = assessment.assignmentUuid
-    ? roleScopedDashboardPath(role, `/dashboard/assignment/${assessment.assignmentUuid}`)
-    : undefined;
-
-  const actionHref = role === 'instructor' ? viewSubmissionHref : viewGradeDetailsHref;
-
-  return (
-    <article className='border-border/70 bg-card w-full min-w-0 overflow-hidden rounded-md border shadow-xs'>
-      <div className='border-border/60 flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-start sm:justify-between'>
-        <div className='min-w-0 flex-1'>
-          <h3 className='truncate text-base font-semibold sm:text-xl'>{assessment.title}</h3>
-
-          <p className='text-muted-foreground mt-2 text-xs sm:text-sm'>
-            Submitted by {assessment.learnerName} on {assessment.submittedAt}
-          </p>
-        </div>
-
-        <div className='shrink-0'>
-          <StatusBadge assessment={assessment} />
-        </div>
+      <div className='grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-5'>
+        <FilterSelect
+          label='Course'
+          value={course}
+          onChange={changeFilter(setCourse)}
+          options={options.courses}
+        />
+        <FilterSelect
+          label='Class'
+          value={classId}
+          onChange={changeFilter(setClassId)}
+          options={options.classes}
+        />
+        {/* <FilterSelect
+                label='Instructor'
+                value={instructor}
+                onChange={changeFilter(setInstructor)}
+                options={options.instructors}
+              /> */}
+        <FilterSelect
+          label='Assessment Type'
+          value={kind}
+          onChange={changeFilter(setKind)}
+          options={[
+            { value: 'quiz', label: 'Quiz' },
+            { value: 'assignment', label: 'Assignment' },
+          ]}
+        />
+        <FilterSelect
+          label='Status'
+          value={status}
+          onChange={changeFilter(setStatus)}
+          options={Object.entries(assessmentStatusLabels).map(([value, label]) => ({
+            value,
+            label,
+          }))}
+        />
       </div>
-
-      <div className='border-border/60 space-y-4 border-b p-4'>
-        {/* <div className="flex min-w-0 items-start gap-2">
-          <Star className="text-warning fill-warning mt-0.5 size-4 shrink-0" />
-
-          <div className="text-muted-foreground min-w-0 text-sm">
-            <RichTextPreview html={assessment.summary} />
-          </div>
-        </div> */}
-
-        <div className='grid gap-3 md:grid-cols-[120px_minmax(0,1fr)_auto] md:items-center'>
-          <Badge className='bg-primary/15 text-primary inline-flex items-center rounded-full px-3 py-0.5 text-xs font-medium'>
-            {assessment.category}
-          </Badge>
-
-          <div className='text-muted-foreground flex min-w-0 flex-wrap items-center gap-2 text-sm'>
-            <FileText className='text-primary size-4 shrink-0' />
-
-            <span className='text-foreground min-w-0 truncate font-medium'>
-              {assessment.fileName}
-            </span>
-
-            <span className='shrink-0'>({assessment.fileSize})</span>
-          </div>
-
-          {actionHref ? (
-            <Button
-              asChild
-              className='h-9 w-full rounded-md px-5 sm:w-auto'
-              disabled={role === 'student' && assessment.score === null}
-              type='button'
-            >
-              <Link href={actionHref}>
-                {primaryAction}
-                <ArrowUpRight className='size-4' />
-              </Link>
-            </Button>
-          ) : (
-            <Button className='h-9 w-full rounded-md px-5 sm:w-auto' disabled type='button'>
-              {primaryAction}
-              <ArrowUpRight className='size-4' />
-            </Button>
-          )}
-        </div>
-      </div>
-
-      <footer className='flex flex-wrap items-center gap-x-4 gap-y-2 p-4 text-xs sm:text-sm'>
-        <span className='text-muted-foreground'>
-          Grade:{' '}
-          <span className='text-foreground font-medium'>
-            {assessment.gradeDisplay || `${assessment.score ?? '----'} / ${assessment.points}`}
-          </span>
-        </span>
-
-        {typeof assessment.percentage === 'number' ? (
-          <span className='text-muted-foreground'>
-            Percentage:{' '}
-            <span className='text-foreground font-medium'>{assessment.percentage}%</span>
-          </span>
-        ) : null}
-
-        <span
-          className={cn(
-            'text-muted-foreground',
-            isAssessmentOverdue(assessment) && 'text-destructive font-medium'
-          )}
-        >
-          {getAssessmentDueLabel(assessment)}
-        </span>
-
-        <button
-          className='text-muted-foreground hover:text-foreground ml-auto shrink-0'
-          type='button'
-        >
-          <MoreHorizontal className='size-5' />
-        </button>
-      </footer>
-    </article>
-  );
-}
-
-function AssessmentCardSkeleton() {
-  return (
-    <article className='border-border/70 bg-card rounded-md border shadow-xs'>
-      <div className='border-border/60 flex items-start justify-between gap-4 border-b p-4'>
-        <div className='min-w-0 flex-1 space-y-2'>
-          <Skeleton className='h-6 w-52' />
-          <Skeleton className='h-4 w-60' />
-        </div>
-        <Skeleton className='h-6 w-24 rounded-md' />
-      </div>
-      <div className='border-border/60 space-y-4 border-b p-4'>
-        <Skeleton className='h-16 w-full' />
-        <div className='grid gap-3 md:grid-cols-[120px_minmax(0,1fr)_auto]'>
-          <Skeleton className='h-8 w-24 rounded-md' />
-          <Skeleton className='h-8 w-full rounded-md' />
-          <Skeleton className='h-9 w-36 rounded-md' />
-        </div>
-      </div>
-      <div className='flex flex-wrap items-center gap-x-6 gap-y-2 p-4'>
-        <Skeleton className='h-4 w-32' />
-        <Skeleton className='h-4 w-24' />
-      </div>
-    </article>
-  );
-}
-
-function AssessmentOverview({
-  activeCount,
-  completedCount,
-  overdueCount,
-  pendingCount,
-}: {
-  activeCount: number;
-  completedCount: number;
-  overdueCount: number;
-  pendingCount: number;
-}) {
-  return (
-    <section className='border-border/70 bg-card rounded-md border p-4 shadow-xs'>
-      <div className='mb-4 flex items-center justify-between gap-3'>
-        <h3 className='font-semibold'>Assessment Overview</h3>
-        <Button className='h-8 rounded-md text-xs' variant='outline' type='button'>
-          <UploadCloud className='size-3.5' />
-          Assessments
+      {hasFilters && (
+        <Button variant='ghost' size='sm' onClick={resetFilters}>
+          <X className='size-4' />
+          Clear filters
         </Button>
-      </div>
-      <div className='grid grid-cols-4 gap-3 border-b pb-4 text-center'>
-        {[
-          [String(activeCount), 'Active'],
-          [String(completedCount), 'Completed'],
-          [String(pendingCount), 'Pending'],
-          [String(overdueCount), 'Overdue'],
-        ].map(([value, label]) => (
-          <div key={label}>
-            <p className='text-primary text-2xl font-semibold'>{value}</p>
-            <p className='text-muted-foreground text-xs'>{label}</p>
-          </div>
-        ))}
-      </div>
-      <div className='space-y-2 pt-4 text-sm'>
-        <p className='text-muted-foreground flex items-center gap-2'>
-          <BriefcaseBusiness className='text-primary size-4' />
-          {activeCount} in progress
-        </p>
-        <p className='text-muted-foreground flex items-center gap-2'>
-          <Clock3 className='text-warning size-4' />
-          {overdueCount} overdue
-        </p>
-      </div>
-    </section>
-  );
-}
-
-function Deadlines({ items }: { items: AssessmentListItem[] }) {
-  return (
-    <section className='border-border/70 bg-card rounded-md border p-4 shadow-xs'>
-      <h3 className='mb-4 font-semibold'>Upcoming Deadlines</h3>
-      <div className='space-y-3'>
-        {items.slice(0, 3).map(assessment => {
-          const overdue = isAssessmentOverdue(assessment);
-
-          return (
-            <div
-              className={cn(
-                'flex gap-2 rounded-md border border-transparent p-2 text-sm',
-                overdue && 'border-destructive/20 bg-destructive/10 text-destructive'
-              )}
-              key={assessment.id}
-            >
-              <CalendarDays
-                className={cn(
-                  'mt-0.5 size-4 shrink-0',
-                  overdue ? 'text-destructive' : 'text-primary'
-                )}
-              />
-              <div className='min-w-0'>
-                <p className='font-medium'>{assessment.title}</p>
-                <p className={cn('text-muted-foreground', overdue && 'text-destructive/80')}>
-                  {getAssessmentDueLabel(assessment)}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </section>
-  );
-}
-
-function TopStudentsPanel() {
-  return (
-    <section className='border-border/70 bg-card rounded-md border p-4 shadow-xs'>
-      <div className='mb-4 flex items-center justify-between'>
-        <h3 className='font-semibold'>Assessment Overview</h3>
-        <Button className='h-8 rounded-md text-xs' variant='outline' type='button'>
-          <UploadCloud className='size-3.5' />
-          Assessments
-        </Button>
-      </div>
-      <div className='bg-background relative overflow-hidden rounded-md border p-4'>
-        <p className='mb-4 flex items-center gap-2 text-sm font-semibold'>
-          <Clock3 className='text-primary size-4' />
-          Top Students
-        </p>
-        <div className='relative z-10 space-y-3'>
-          {topStudents.length > 0 ? (
-            topStudents.map(student => (
-              <div className='flex items-center gap-3' key={student.name}>
-                <Avatar className='size-7'>
-                  <AvatarImage src={student.avatar} alt={student.name} />
-                  <AvatarFallback>{student.initials}</AvatarFallback>
-                </Avatar>
-                <span className='min-w-0 flex-1 truncate text-sm font-medium'>{student.name}</span>
-                <span className='text-muted-foreground text-xs'>{student.due}</span>
-              </div>
-            ))
-          ) : (
-            <div className='flex flex-col items-center justify-center rounded-lg border border-dashed py-6 text-center'>
-              <p className='text-sm font-medium'>No students yet</p>
-              <p className='text-muted-foreground mt-1 text-xs'>
-                Top performing students will appear here.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function CompetencyCard({ competency }: { competency: Competency }) {
-  return (
-    <article className='border-border/70 bg-card grid gap-4 rounded-md border p-4 shadow-xs min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(150px,0.9fr)]'>
-      <div className='min-w-0'>
-        <div className='mb-3 flex items-start justify-between gap-3'>
-          <div>
-            <h3 className='font-semibold'>{competency.title}</h3>
-            <p className='text-muted-foreground mt-1 text-xs'>{competency.artifacts}</p>
-          </div>
-          <Badge className='bg-success/10 text-success hover:bg-success/10'>
-            {competency.level}
-          </Badge>
-        </div>
-        <div className='flex items-center gap-2'>
-          <span
-            className={cn(
-              'inline-flex size-6 items-center justify-center rounded-sm',
-              competency.accent
-            )}
-          >
-            <BookOpen className='text-primary-foreground size-3.5' />
-          </span>
-          <span className='bg-primary text-primary-foreground inline-flex size-6 items-center justify-center rounded-sm text-xs font-bold'>
-            AI
-          </span>
-          <span className='text-muted-foreground ml-auto text-xs'>{competency.dueLabel}</span>
-        </div>
-      </div>
-      <div className='space-y-2'>
-        <div className='flex justify-between gap-3 text-xs'>
-          <span className='text-muted-foreground'>{competency.metric}</span>
-          <span className='font-semibold'>{competency.trend}</span>
-        </div>
-        <Progress className='h-1.5' value={competency.progress} indicatorClassName='bg-success' />
-        <div className='flex justify-between gap-3 text-xs'>
-          <span className='text-muted-foreground'>{competency.status}</span>
-          <span className='font-semibold'>{competency.score}</span>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function CompetencyChart({ compact = false }: { compact?: boolean }) {
-  return (
-    <section className='border-border/70 bg-card rounded-md border p-4 shadow-xs'>
-      <div className='mb-4 flex items-center justify-between gap-3'>
-        <div className='flex min-w-0 items-center gap-2'>
-          <h2 className='text-xl font-semibold'>Competency Chart</h2>
-        </div>
-        <Button className='h-8 rounded-md text-xs' variant='outline' type='button'>
-          Assessments
-          <ChevronDown className='size-3.5' />
-        </Button>
-      </div>
-      <div className='space-y-3'>
-        {competencies.length === 0 ? (
-          <div className='border-border/60 bg-card/80 flex min-h-[160px] flex-col items-center justify-center rounded-xl border border-dashed px-4 py-6 text-center'>
-            <p className='text-foreground text-sm font-semibold'>No competencies yet</p>
-            <p className='text-muted-foreground mt-1 text-xs'>
-              Competencies will appear here once they are added.
-            </p>
-          </div>
-        ) : (
-          (compact ? competencies.slice(0, 4) : competencies).map(competency => (
-            <CompetencyCard competency={competency} key={competency.id} />
-          ))
-        )}
-      </div>
-    </section>
-  );
-}
-
-function CompetenciesGrid({ items }: { items: Competency[] }) {
-  return (
-    <div className='grid gap-4 min-[1400px]:grid-cols-3 lg:grid-cols-2'>
-      {items.length > 0 ? (
-        items.map(competency => <CompetencyCard competency={competency} key={competency.id} />)
-      ) : (
-        <div className='min-[1400px]:col-span-3 lg:col-span-2'>
-          <EmptyAssessmentsState />
-        </div>
       )}
     </div>
   );
-}
-
-function StudentAssessmentList({ role }: { role: AssessmentWorkspaceRole }) {
-  const [activeTab, setActiveTab] = useState<AssessmentTab>('active');
-  const [search, setSearch] = useState('');
-  const [skill, setSkill] = useState('all');
-  const [sort, setSort] = useState<AssessmentSort>('newest');
-  const [statusFilter, setStatusFilter] = useState<AssessmentStatusFilter>('all');
-  const { assignmentRows, isLoading } = useStudentAssignmentData();
-
-  // UPDATE DATA POINTS
-  const studentAssessments = useMemo<AssessmentListItem[]>(
-    () =>
-      assignmentRows.map(row => {
-        const status = getStudentAssignmentSubmissionState(row);
-        const primaryAttachment = row.attachments[0];
-        const dueAt = row.schedule?.due_at ?? row.assignment?.due_date;
-        const dueTime = getDateTime(dueAt);
-        const skillLabel =
-          row.classMeta.courseTitle || row.assignment.assignment_category || 'Assignment';
-
-        return {
-          category: row.assignment.assignment_category || 'Assignment',
-          assignmentUuid: row.assignment?.uuid,
-          classUuid: row.classMeta?.classUuid,
-          courseUuid: row.classMeta?.courseUuid,
-          dueAt: dueTime,
-          dueLabel: dueAt ? `Due ${formatDate(dueAt)}` : 'Self paced',
-          fileName:
-            primaryAttachment?.original_filename ||
-            primaryAttachment?.stored_filename ||
-            'No attachment',
-          fileSize: formatBytes(primaryAttachment?.file_size_bytes),
-          id: row.assignment.uuid || `${row.classMeta.classUuid}-${row.assignment.title}`,
-          learnerName: 'You',
-          points: row.assignment.max_points ?? row.latestSubmission?.max_score ?? 100,
-          score: row.latestSubmission?.score ?? null,
-          skill: skillLabel,
-          status:
-            status.key === 'graded'
-              ? 'completed'
-              : status.key === 'submitted'
-                ? 'pending-review'
-                : status.label === 'Overdue'
-                  ? 'overdue'
-                  : 'in-progress',
-          statusLabel: status.label,
-          submittedAt: formatDate(
-            row.latestSubmission?.submitted_at ||
-              row.latestSubmission?.updated_date ||
-              row.latestSubmission?.created_date ||
-              dueAt
-          ),
-          summary:
-            row.assignment.description ||
-            row.assignment.instructions ||
-            `${row.classMeta.classTitle} in ${row.classMeta.courseTitle}`,
-          title: row.assignment.title,
-        };
-      }),
-    [assignmentRows]
-  );
-
-  const filteredAssessments = useMemo(
-    () => getFilteredAssessments(studentAssessments, activeTab, search, skill, statusFilter, sort),
-    [activeTab, search, skill, sort, statusFilter, studentAssessments]
-  );
-
-  const filteredCompetencies = useMemo(
-    () => getFilteredCompetencies(competencies, search, skill, statusFilter, sort),
-    [search, skill, sort, statusFilter]
-  );
-
-  const skills = useMemo(
-    () =>
-      Array.from(
-        new Set([
-          ...studentAssessments.map(assessment => assessment.skill),
-          ...competencies.map(competency => competency.title),
-        ])
-      ).sort(),
-    [studentAssessments]
-  );
-
-  const activeCount = studentAssessments.filter(
-    assessment => getAssessmentStatus(assessment) !== 'completed'
-  ).length;
-  const completedCount = studentAssessments.filter(
-    assessment => getAssessmentStatus(assessment) === 'completed'
-  ).length;
-  const pendingCount = studentAssessments.filter(
-    assessment =>
-      getAssessmentStatus(assessment) === 'in-progress' ||
-      getAssessmentStatus(assessment) === 'pending-review'
-  ).length;
-  const overdueCount = studentAssessments.filter(
-    assessment => getAssessmentStatus(assessment) === 'overdue'
-  ).length;
-  const upcomingDeadlines = useMemo(
-    () =>
-      [...studentAssessments]
-        .filter(assessment => assessment.dueAt != null && assessment.status !== 'completed')
-        .sort((left, right) => (left.dueAt ?? 0) - (right.dueAt ?? 0)),
-    [studentAssessments]
-  );
 
   return (
-    <main className='min-h-screen overflow-hidden'>
-      <section className='w-full space-y-5 px-4 py-4 sm:px-6'>
-        <div className='border-border/70 bg-card rounded-md border p-4 shadow-xs sm:p-5'>
-          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-            <div className='min-w-0 space-y-4'>
-              <h1 className='truncate text-2xl font-semibold'>
-                {activeTab === 'competencies'
-                  ? `Competencies (${competencies.length})`
-                  : 'Assessments & Competencies'}
-              </h1>
-              <TabsBar
-                activeCount={activeCount}
-                activeTab={activeTab}
-                completedCount={completedCount}
-                competenciesCount={competencies.length}
-                onTabChange={setActiveTab}
-              />
-            </div>
-            <HeaderActions role={role} />
-          </div>
+    <section className='w-full min-w-0 space-y-6 p-3 sm:p-6' aria-label='Assessments workspace'>
+      <header className='flex flex-wrap items-start justify-between gap-4'>
+        <div className='min-w-0 space-y-1'>
+          <p className='text-muted-foreground text-sm'>
+            {role === 'instructor'
+              ? 'Monitor all quizzes and assignments issued across your classes.'
+              : 'Track quizzes and assignments issued by your instructors, and review your results.'}
+          </p>
         </div>
+        <Button
+          variant='outline'
+          size='sm'
+          onClick={() =>
+            tab === 'results'
+              ? exportResults(shownResults, resultStudents.names)
+              : exportAssessments(filtered, role)
+          }
+          disabled={
+            isLoading ||
+            isError ||
+            rowCount === 0 ||
+            tab === 'competencies' ||
+            (tab === 'results' && resultStudents.isLoading && !resultStudents.isError)
+          }
+        >
+          <Download className='size-4' /> {tab === 'results' ? 'Export page' : 'Export'}
+        </Button>
+      </header>
 
-        <div className='space-y-5'>
-          <SearchAndFilters
-            onSearchChange={setSearch}
-            onSkillChange={setSkill}
-            onSortChange={setSort}
-            onStatusChange={setStatusFilter}
-            search={search}
-            skill={skill}
-            skills={skills}
-            sort={sort}
-            status={statusFilter}
-          />
+      <nav aria-label='Assessment sections' className='flex flex-wrap gap-2'>
+        {tabs.map(item => {
+          const Icon = item.icon;
+          return (
+            <Button
+              key={item.value}
+              type='button'
+              variant={tab === item.value ? 'default' : 'outline'}
+              aria-pressed={tab === item.value}
+              onClick={() => {
+                setTab(item.value);
+                setPage(1);
+              }}
+              className='h-7 rounded-full px-4 text-xs'
+            >
+              <Icon className='size-3.5' />
+              {item.label}
+            </Button>
+          );
+        })}
+      </nav>
 
-          {activeTab === 'competencies' ? (
-            <CompetenciesGrid items={filteredCompetencies} />
-          ) : (
-            <div className='grid items-start gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,380px)]'>
-              <div className='flex flex-col gap-5'>
-                {isLoading ? (
-                  Array.from({ length: 3 }).map((_, index) => (
-                    <AssessmentCardSkeleton key={`assessment-skeleton-${index}`} />
-                  ))
-                ) : filteredAssessments.length > 0 ? (
-                  filteredAssessments.map(assessment => (
-                    <AssessmentCard assessment={assessment} key={assessment.id} role={role} />
-                  ))
+      {tab === 'overview' && (
+        <div
+          className='grid grid-cols-2 gap-3 lg:grid-cols-4 2xl:grid-cols-7'
+          aria-label='Assessment summary'
+        >
+          {metrics.map(metric => (
+            <Card key={metric.label} className={cn('min-w-0 border-l-4 py-0', metric.accent)}>
+              <CardContent className='p-4'>
+                {isLoading || isError ? (
+                  <Skeleton className='mb-1 h-8 w-14' />
                 ) : (
-                  <EmptyAssessmentsState />
+                  <p className='text-foreground text-2xl font-bold tracking-tight tabular-nums'>
+                    {metric.value}
+                  </p>
                 )}
-              </div>
-              <div className='grid gap-5 min-[1400px]:block min-[1400px]:space-y-5 lg:grid-cols-2'>
-                <AssessmentOverview
-                  activeCount={activeCount}
-                  completedCount={completedCount}
-                  overdueCount={overdueCount}
-                  pendingCount={pendingCount}
-                />
-                <Deadlines items={upcomingDeadlines} />
-              </div>
-            </div>
-          )}
-
-          <div className='grid gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,380px)]'>
-            <CompetencyChart compact={activeTab !== 'competencies'} />
-            <TopStudentsPanel />
-          </div>
+                <p className='text-muted-foreground text-xs font-medium'>{metric.label}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </section>
-    </main>
+      )}
+
+      {tab === 'competencies' ? (
+        <AssessmentCompetenciesTab
+          rows={filtered}
+          results={resultRows}
+          filters={filters}
+          isLoading={isLoading}
+          isError={isError}
+          hasFilters={hasFilters}
+          onRetry={retry}
+        />
+      ) : (
+        <>
+          {filters}
+          {isError ? (
+            <EmptyState
+              icon={ClipboardList}
+              title='Unable to load assessments'
+              description='Some assessment data could not be loaded. Try again to see complete results.'
+              action={<Button onClick={retry}>Try again</Button>}
+            />
+          ) : isLoading ? (
+            <div className='space-y-3' role='status' aria-label='Loading assessments'>
+              {Array.from({ length: 5 }, (_, index) => (
+                <Skeleton key={index} className='h-16 w-full rounded-xl' />
+              ))}
+            </div>
+          ) : rowCount === 0 ? (
+            <EmptyState
+              icon={tab === 'results' ? BarChart3 : ClipboardList}
+              title={
+                hasFilters
+                  ? 'No assessments match'
+                  : tab === 'results'
+                    ? 'No results yet'
+                    : 'No assessments issued yet'
+              }
+              description={
+                hasFilters
+                  ? 'Adjust the filters above.'
+                  : tab === 'results'
+                    ? 'Results will appear after students submit their assessments.'
+                    : 'Quizzes and assignments will appear here when issued to a class.'
+              }
+              variant='card'
+            />
+          ) : (
+            <>
+              {tab === 'results' ? (
+                <>
+                  {resultStudents.isError && (
+                    <div className='text-muted-foreground flex flex-wrap items-center gap-2 text-sm'>
+                      <p>Some student details could not be loaded.</p>
+                      <Button variant='outline' size='sm' onClick={resultStudents.retry}>
+                        Retry student details
+                      </Button>
+                    </div>
+                  )}
+                  <ResultsTable
+                    rows={shownResults}
+                    names={resultStudents.names}
+                    avatars={resultStudents.avatars}
+                    loadingNames={resultStudents.isLoading && !resultStudents.isError}
+                    role={role}
+                  />
+                </>
+              ) : (
+                <AssessmentTable rows={shownRows} role={role} />
+              )}
+              <div className='text-muted-foreground flex flex-wrap items-center justify-between gap-3 text-sm'>
+                <p>
+                  {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, rowCount)} of{' '}
+                  {rowCount} {tab === 'results' ? 'results' : 'assessments'}
+                </p>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    disabled={currentPage === 1}
+                    onClick={() => setPage(currentPage - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <span>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    disabled={currentPage === totalPages}
+                    onClick={() => setPage(currentPage + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      )}
+    </section>
   );
 }
 
-export function SharedAssessmentWorkspace({ role }: { role: AssessmentWorkspaceRole }) {
-  // Both roles render the learner list today; the grading workspace mounts only where wired.
+export function SharedAssessmentWorkspace({ role }: { role: AssessmentRole }) {
   return <StudentAssessmentList role={role} />;
 }
 
 export function InstructorAssessmentWorkspace() {
-  const role: AssessmentWorkspaceRole = 'instructor';
-  const userProfile = useUserProfile();
-  const instructor = userProfile?.instructor;
-
-  const [activeTab, setActiveTab] = useState<AssessmentTab>('active');
-  const [search, setSearch] = useState('');
-  const [skill, setSkill] = useState('all');
-  const [sort, setSort] = useState<AssessmentSort>('newest');
-  const [statusFilter, setStatusFilter] = useState<AssessmentStatusFilter>('all');
-  const [selectedClassUuid, setSelectedClassUuid] = useState<string>();
-  const { classes: rawClasses, loading: classesLoading } = useInstructorClassesWithDetails(
-    instructor?.uuid
-  );
-
-  const classes = useMemo(() => {
-    const seen = new Set<string>();
-    return rawClasses.filter(classItem => {
-      const uuid = classItem.uuid;
-      if (!uuid || seen.has(uuid)) return false;
-      seen.add(uuid);
-      return true;
-    });
-  }, [rawClasses]);
-
-  // Only the selected class loads its schedules, enrollments and submissions.
-  const activeClass = classes.find(classItem => classItem.uuid === selectedClassUuid) ?? classes[0];
-  const activeClassUuid = activeClass?.uuid;
-
-  const enrollmentQuery = useQuery({
-    ...getEnrollmentsForClassOptions({ path: { uuid: activeClassUuid as string } }),
-    enabled: Boolean(activeClassUuid),
-    staleTime: STALE_TIMES.live,
-  });
-
-  const scheduleQuery = useQuery({
-    ...getAssignmentSchedulesOptions({ path: { classUuid: activeClassUuid as string } }),
-    enabled: Boolean(activeClassUuid),
-    staleTime: STALE_TIMES.live,
-  });
-
-  const assignmentSchedules = useMemo<AssignmentScheduleWithClass[]>(() => {
-    if (!activeClass?.uuid) return [];
-    return ((scheduleQuery.data?.data ?? []) as ClassAssignmentSchedule[]).map(schedule => ({
-      ...schedule,
-      classTitle: activeClass.title || 'Class',
-      classUuid: activeClass.uuid as string,
-      courseTitle: activeClass.course?.name || 'Course',
-    }));
-  }, [activeClass, scheduleQuery.data]);
-
-  const uniqueAssignmentUuids = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          assignmentSchedules
-            .map(item => item.assignment_uuid)
-            .filter((uuid): uuid is string => Boolean(uuid))
-        )
-      ),
-    [assignmentSchedules]
-  );
-
-  const { assignmentMap, isLoading: assignmentsLoading } =
-    useAssignmentsByIds(uniqueAssignmentUuids);
-
-  // One paged search covers every assignment of the selected class.
-  const assignmentIdFilter = useMemo(
-    () => [...uniqueAssignmentUuids].sort().join(','),
-    [uniqueAssignmentUuids]
-  );
-  const submissionsQuery = useInfiniteQuery({
-    ...searchSubmissionsInfiniteOptions({
-      query: {
-        searchParams: { assignmentUuid_in: assignmentIdFilter },
-        pageable: { size: WORKBOOK_PAGE_SIZE },
-      },
-    }),
-    initialPageParam: 0,
-    getNextPageParam: nextWorkbookPage,
-    enabled: Boolean(assignmentIdFilter),
-    staleTime: STALE_TIMES.live,
-  });
-  const {
-    fetchNextPage: fetchMoreSubmissions,
-    hasNextPage: moreSubmissions,
-    isFetching: fetchingSubmissions,
-  } = submissionsQuery;
-  const submissionError =
-    submissionsQuery.isError || Boolean(submissionsQuery.data?.pages.some(hasApiError));
-
-  useEffect(() => {
-    if (moreSubmissions && !fetchingSubmissions && !submissionError) void fetchMoreSubmissions();
-  }, [fetchMoreSubmissions, fetchingSubmissions, moreSubmissions, submissionError]);
-
-  const assignmentSubmissionMap = useMemo(() => {
-    const map = new Map<string, AssignmentSubmission[]>();
-    const pages = submissionsQuery.data?.pages ?? [];
-    for (const page of pages) {
-      if (hasApiError(page)) continue;
-      for (const submission of (page.data?.content ?? []) as AssignmentSubmission[]) {
-        const assignmentUuid = submission.assignment_uuid;
-        if (!assignmentUuid) continue;
-        map.set(assignmentUuid, [...(map.get(assignmentUuid) ?? []), submission]);
-      }
-    }
-    return map;
-  }, [submissionsQuery.data]);
-
-  const totalLearners = enrollmentQuery.data?.data?.length ?? 0;
-
-  const instructorAssessments = useMemo(
-    () =>
-      assignmentSchedules
-        .map(schedule => {
-          const assignmentUuid = schedule.assignment_uuid;
-          const assignment = assignmentUuid ? assignmentMap.get(assignmentUuid) : null;
-          if (!assignment?.uuid) return null;
-
-          return mapAssignmentToAssessment({
-            assignment,
-            schedule,
-            submissions: assignmentSubmissionMap.get(assignment.uuid) ?? [],
-            totalLearners,
-          });
-        })
-        .filter((assessment): assessment is AssessmentListItem => assessment !== null),
-    [assignmentMap, assignmentSchedules, assignmentSubmissionMap, totalLearners]
-  );
-  const filteredAssessments = useMemo(
-    () =>
-      getFilteredAssessments(instructorAssessments, activeTab, search, skill, statusFilter, sort),
-    [activeTab, instructorAssessments, search, skill, sort, statusFilter]
-  );
-
-  const filteredCompetencies = useMemo(
-    () => getFilteredCompetencies(competencies, search, skill, statusFilter, sort),
-    [search, skill, sort, statusFilter]
-  );
-
-  const activeCount = instructorAssessments.filter(
-    assessment => getAssessmentStatus(assessment) !== 'completed'
-  ).length;
-  const completedCount = instructorAssessments.filter(
-    assessment => getAssessmentStatus(assessment) === 'completed'
-  ).length;
-  const overdueCount = instructorAssessments.filter(
-    assessment => getAssessmentStatus(assessment) === 'overdue'
-  ).length;
-  const pendingCount = instructorAssessments.filter(
-    assessment =>
-      getAssessmentStatus(assessment) === 'in-progress' ||
-      getAssessmentStatus(assessment) === 'pending-review'
-  ).length;
-  const skills = Array.from(
-    new Set([
-      ...instructorAssessments.map(assessment => assessment.skill),
-      ...competencies.map(competency => competency.title),
-    ])
-  ).sort();
-  const upcomingDeadlines = [...instructorAssessments]
-    .filter(assessment => assessment.dueAt != null && assessment.status !== 'completed')
-    .sort((left, right) => (left.dueAt ?? 0) - (right.dueAt ?? 0));
-
-  const isLoading =
-    classesLoading ||
-    (scheduleQuery.isLoading && !scheduleQuery.data) ||
-    assignmentsLoading ||
-    submissionsQuery.isLoading ||
-    Boolean(moreSubmissions && !submissionError);
-
-  return (
-    <main className='bg-muted/30 min-h-screen overflow-hidden'>
-      <section className='mx-auto w-full space-y-5 px-4 py-4 sm:px-6 lg:px-8'>
-        <div className='border-border/70 bg-card rounded-md border p-4 shadow-xs sm:p-5'>
-          <div className='flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
-            <div className='min-w-0 space-y-4'>
-              <h1 className='truncate text-2xl font-semibold'>
-                {activeTab === 'competencies'
-                  ? `Competencies (${competencies.length})`
-                  : 'Assessments & Competencies'}
-              </h1>
-              <TabsBar
-                activeCount={activeCount}
-                activeTab={activeTab}
-                completedCount={completedCount}
-                competenciesCount={competencies.length}
-                onTabChange={setActiveTab}
-              />
-            </div>
-            <HeaderActions role={role} />
-          </div>
-        </div>
-
-        <div className='space-y-5'>
-          {classes.length > 1 ? (
-            <Select value={activeClassUuid} onValueChange={setSelectedClassUuid}>
-              <SelectTrigger className='bg-background h-10 w-full rounded-md sm:w-80'>
-                <SelectValue placeholder='Select a class' />
-              </SelectTrigger>
-              <SelectContent>
-                {classes.map(classItem => (
-                  <SelectItem key={classItem.uuid} value={classItem.uuid as string}>
-                    {classItem.title || 'Class'}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : null}
-          <SearchAndFilters
-            onSearchChange={setSearch}
-            onSkillChange={setSkill}
-            onSortChange={setSort}
-            onStatusChange={setStatusFilter}
-            search={search}
-            skill={skill}
-            skills={skills}
-            sort={sort}
-            status={statusFilter}
-          />
-
-          {activeTab === 'competencies' ? (
-            <CompetenciesGrid items={filteredCompetencies} />
-          ) : (
-            <div className='grid items-start gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
-              <div className='flex flex-col gap-5'>
-                {isLoading ? (
-                  Array.from({ length: 3 }).map((_, index) => (
-                    <AssessmentCardSkeleton key={`grading-skeleton-${index}`} />
-                  ))
-                ) : filteredAssessments.length > 0 ? (
-                  filteredAssessments.map(assessment => (
-                    <AssessmentCard assessment={assessment} key={assessment.id} role={role} />
-                  ))
-                ) : (
-                  <EmptyAssessmentsState />
-                )}
-              </div>
-              <div className='grid gap-5 min-[1400px]:block min-[1400px]:space-y-5 lg:grid-cols-2'>
-                <AssessmentOverview
-                  activeCount={activeCount}
-                  completedCount={completedCount}
-                  overdueCount={overdueCount}
-                  pendingCount={pendingCount}
-                />
-                <Deadlines items={upcomingDeadlines} />
-              </div>
-            </div>
-          )}
-
-          <div className='grid gap-5 min-[1400px]:grid-cols-[minmax(0,1fr)_minmax(280px,340px)]'>
-            <CompetencyChart compact={activeTab !== 'competencies'} />
-            <TopStudentsPanel />
-          </div>
-        </div>
-      </section>
-    </main>
-  );
+  return <StudentAssessmentList role='instructor' />;
 }

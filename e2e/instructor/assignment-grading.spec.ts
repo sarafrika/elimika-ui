@@ -1,9 +1,12 @@
 import { expect, test } from '@playwright/test';
 import {
   CLASS_ID,
+  COURSE_ID,
   COURSE_ENROLMENT_ID,
   INSTRUCTOR,
   LESSON_ID,
+  LEARNERS,
+  SESSION_ID,
   mockInstructorWorkbook,
   mockLessonScoring,
 } from '../fixtures/session-report';
@@ -160,4 +163,57 @@ test('missing class context does not send placeholder task or enrollment request
   await expect(page.getByText('Select a task from your class assignments')).toBeVisible();
   expect(api.calls.some(call => /\{[^}]+\}|%7B/i.test(call.path))).toBe(false);
   expect(api.callsTo('GET', /\/submissions|\/attempts|\/enrollments/)).toHaveLength(0);
+});
+
+test('a student result link resolves its course enrollment and focuses the right learner', async ({
+  page,
+}) => {
+  const api = mockTasks()
+    .get(new RegExp(`^/api/v1/classes/${CLASS_ID}/enrollments$`), [
+      {
+        uuid: 'amani-session-enrollment',
+        student_uuid: LEARNERS.amani.uuid,
+        scheduled_instance_uuid: SESSION_ID,
+        status: 'ATTENDED',
+      },
+      {
+        uuid: 'brian-session-enrollment',
+        student_uuid: LEARNERS.brian.uuid,
+        scheduled_instance_uuid: SESSION_ID,
+        status: 'ATTENDED',
+      },
+    ])
+    .get(new RegExp(`^/api/v1/courses/${COURSE_ID}/enrollments$`), request => {
+      const page = Number(new URL(request.url()).searchParams.get('page') ?? 0);
+      return {
+        content:
+          page === 0
+            ? [
+                {
+                  uuid: 'brian-course-enrollment',
+                  course_uuid: COURSE_ID,
+                  student_uuid: LEARNERS.brian.uuid,
+                  status: 'ACTIVE',
+                },
+              ]
+            : [
+                {
+                  uuid: COURSE_ENROLMENT_ID,
+                  course_uuid: COURSE_ID,
+                  student_uuid: LEARNERS.amani.uuid,
+                  status: 'ACTIVE',
+                },
+              ],
+        metadata: { totalPages: 2 },
+      };
+    });
+  await api.install(page);
+  await page.goto(`${quizUrl}&enrollment=${COURSE_ENROLMENT_ID}`);
+  await expect(
+    page.getByRole('button', { name: 'View results for Rudiments quiz for Amani Wekesa' })
+  ).toBeVisible();
+  await expect(page.getByText('Brian Otieno', { exact: true })).toHaveCount(0);
+  expect(api.callsTo('GET', new RegExp(`^/api/v1/courses/${COURSE_ID}/enrollments$`))).toHaveLength(
+    2
+  );
 });

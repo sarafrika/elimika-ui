@@ -1,5 +1,6 @@
 import { useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
+import { hasApiError } from '@/components/lesson/workbook-data';
 import { STALE_TIMES } from '@/lib/query-client';
 import type {
   ClassAssignmentSchedule,
@@ -14,12 +15,14 @@ type ScheduleBatchResult = {
   data?: GetAssessmentSchedulesResponse;
   isLoading: boolean;
   error: unknown;
+  refetch: () => Promise<unknown>;
 };
 
 function combineAssessmentSchedules(results: ScheduleBatchResult[]) {
   const assignmentSchedules: ClassAssignmentSchedule[] = [];
   const quizSchedules: ClassQuizSchedule[] = [];
   for (const result of results) {
+    if (hasApiError(result.data)) continue;
     assignmentSchedules.push(...(result.data?.data?.assignment_schedules ?? []));
     quizSchedules.push(...(result.data?.data?.quiz_schedules ?? []));
   }
@@ -28,6 +31,8 @@ function combineAssessmentSchedules(results: ScheduleBatchResult[]) {
     quizSchedules,
     isLoading: results.some(result => result.isLoading),
     error: results.find(result => result.error)?.error ?? null,
+    isError: results.some(result => result.error || hasApiError(result.data)),
+    refetch: () => Promise.all(results.map(result => result.refetch())),
   };
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { AsyncSection } from '@/components/data/async-section';
+import { ImageWithFallback } from '@/components/data/image-with-fallback';
 import { statusLabel } from '@/components/profile-job-marketplace/application-status';
 import { hiredJobData } from '@/components/profile-job-marketplace/hired-jobs';
 import { Badge } from '@/components/ui/badge';
@@ -19,8 +20,9 @@ import { toApplyItem } from '@/src/features/apply-to-train/types';
 import { skillsMatchesHref } from '@/src/features/dashboard/lib/skills-matches-url';
 import { applicationPageHref, jobPageHref } from '@/src/features/instructor-jobs/job-routes';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, CalendarDays, FolderKanban } from 'lucide-react';
+import { ArrowRight, BookOpen, CalendarDays, FolderKanban, GraduationCap } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, type ReactNode } from 'react';
 
@@ -173,6 +175,7 @@ export default function AllMatchesTab() {
             )}
           </div>
         </OverviewSection>
+
         <OverviewSection
           title='Apply to Train'
           description='Courses and programmes accepting training applications.'
@@ -195,12 +198,34 @@ export default function AllMatchesTab() {
                 href={instructorApplyToTrainHref(item)}
                 className={previewClasses}
               >
-                <p className='text-foreground font-medium'>{item.title}</p>
-                <p className='text-muted-foreground text-sm'>
-                  {item.kind === 'program' ? 'Programme' : 'Course'}
-                  {item.creator ? ` · ${item.creator}` : ''}
-                </p>
-                {item.matchesSkills && <Badge variant='secondary'>Matches your skills</Badge>}
+                <div className='flex items-start gap-3'>
+                  <div className='bg-muted relative size-16 shrink-0 overflow-hidden rounded-md'>
+                    <ImageWithFallback
+                      src={toAuthenticatedMediaUrl(item.thumbnailUrl)}
+                      alt=''
+                      fill
+                      sizes='64px'
+                      className='object-cover'
+                      fallback={
+                        <div className='text-muted-foreground flex size-full items-center justify-center'>
+                          {item.kind === 'program' ? (
+                            <GraduationCap className='size-6' aria-hidden='true' />
+                          ) : (
+                            <BookOpen className='size-6' aria-hidden='true' />
+                          )}
+                        </div>
+                      }
+                    />
+                  </div>
+                  <div className='min-w-0 flex-1 space-y-1'>
+                    <p className='text-foreground font-medium break-words'>{item.title}</p>
+                    <p className='text-muted-foreground text-sm'>
+                      {item.kind === 'program' ? 'Programme' : 'Course'}
+                      {item.creator ? ` · ${item.creator}` : ''}
+                    </p>
+                    {item.matchesSkills && <Badge variant='secondary'>Matches your skills</Badge>}
+                  </div>
+                </div>
               </Link>
             ))}
           </div>

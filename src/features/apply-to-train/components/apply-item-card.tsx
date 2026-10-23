@@ -41,9 +41,15 @@ export function ApplyItemCard({
   const reapply = status === 'rejected' || status === 'revoked';
 
   return (
-    <div className={cn('relative rounded-2xl', selected && 'ring-primary ring-2 ring-offset-2 ring-offset-background')}>
+    <div
+      className={cn(
+        'relative rounded-2xl',
+        selected && 'ring-primary ring-offset-background ring-2 ring-offset-2'
+      )}
+    >
       <CourseCatalogCardLayout
         showRating={false}
+        onDetails={onDetails}
         card={{
           contentKind: item.kind,
           title: item.title,
@@ -84,18 +90,15 @@ export function ApplyItemCard({
           </>
         }
       >
-        <div className='grid grid-cols-[1fr_2fr] gap-2'>
-          <Button type='button' variant='outline' onClick={onDetails}>
-            Details
-          </Button>
+        <div className='w-full'>
           {locked && item.application ? (
-            <Button asChild variant='outline'>
+            <Button asChild variant='outline' className='w-full'>
               <Link href={trackApplicationHref(item.kind, item.uuid)}>
                 {status === 'approved' ? 'View approval' : 'Track application'}
               </Link>
             </Button>
           ) : (
-            <Button type='button' onClick={onChoose} aria-pressed={selected}>
+            <Button type='button' className='w-full' onClick={onChoose} aria-pressed={selected}>
               {selected ? (
                 <>
                   <Check aria-hidden /> Selected
@@ -111,7 +114,7 @@ export function ApplyItemCard({
       </CourseCatalogCardLayout>
 
       {selected ? (
-        <span className='bg-primary text-primary-foreground absolute top-3 right-3 z-20 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm'>
+        <span className='bg-primary text-primary-foreground pointer-events-none absolute top-3 right-3 z-20 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm'>
           <Check aria-hidden className='size-3.5' />
           Selected
         </span>
@@ -119,7 +122,7 @@ export function ApplyItemCard({
       {status ? (
         <span
           className={cn(
-            'bg-card absolute top-3 left-3 z-20 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm',
+            'bg-card pointer-events-none absolute top-3 left-3 z-20 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm',
             status === 'approved' && 'text-success',
             status === 'pending' && 'text-warning',
             reapply && 'text-destructive'
