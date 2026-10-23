@@ -71,14 +71,15 @@ export default function SkillsWallet() {
           }
         />
 
-        <div>
+        <div className='min-w-0'>
           <SectionTabs
             tabs={TABS}
             value={tab}
             onValueChange={setTab}
             hrefFor={hrefFor}
             label='Wallet sections'
-            variant='pill'
+            variant='training-hub'
+            scrollButtons
             sticky
           >
             <SectionTabPanel value='overview'>
@@ -144,8 +145,6 @@ export default function SkillsWallet() {
           </SectionTabs>
         </div>
       </div>
-
-
 
       {achievementOpen && canAddAchievement && (
         <AddAchievementDialog

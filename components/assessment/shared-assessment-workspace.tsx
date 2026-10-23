@@ -38,14 +38,15 @@ import Link from 'next/link';
 import { useDeferredValue, useMemo, useState } from 'react';
 import {
   assessmentStatusLabels,
+  type AssessmentResultRow,
   type AssessmentRole,
   type AssessmentRow,
   type AssessmentStatus,
-  type AssessmentResultRow,
 } from './assessment-list-data';
+import { AssessmentCompetenciesTab } from './AssessmentCompetenciesTab';
+import { StudentCredentialStats } from './StudentCredentialStats';
 import { useAssessmentListData } from './use-assessment-list-data';
 import { useResultStudents } from './use-result-students';
-import { AssessmentCompetenciesTab } from './AssessmentCompetenciesTab';
 
 const tabs = [
   { value: 'overview', label: 'Overview', icon: Home },
@@ -634,6 +635,8 @@ function StudentAssessmentList({ role }: { role: AssessmentRole }) {
           <Download className='size-4' /> {tab === 'results' ? 'Export page' : 'Export'}
         </Button>
       </header>
+
+      {role === 'student' && <StudentCredentialStats />}
 
       <nav aria-label='Assessment sections' className='flex flex-wrap gap-2'>
         {tabs.map(item => {

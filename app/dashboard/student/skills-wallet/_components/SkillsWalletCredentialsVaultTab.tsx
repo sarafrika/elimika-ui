@@ -15,7 +15,6 @@ import { toast } from 'sonner';
 
 import {
   fmtDate,
-  StatCard,
   type CredentialRecord,
   type SkillsWalletData,
 } from './SkillsWalletShared';
@@ -77,47 +76,6 @@ export function SkillsWalletCredentialsVaultTab({
       setExporting(false);
     }
   };
-  const verified = rows.filter(item => item.status === 'Verified').length;
-  const pending = rows.filter(item => item.status === 'Pending').length;
-  const expired = rows.filter(item => item.status === 'Expired').length;
-  const organizations = new Set(rows.map(item => item.org)).size;
-
-  const stats = [
-    {
-      icon: ShieldCheck,
-      label: 'Total Credentials',
-      value: rows.length,
-      tint: 'bg-primary/10 text-primary',
-    },
-    {
-      icon: CheckCircle2,
-      label: 'Verified',
-      value: verified,
-      sub: `${rows.length ? Math.round((verified / rows.length) * 100) : 0}% of total`,
-      tint: 'bg-success/10 text-success',
-    },
-    {
-      icon: Clock,
-      label: 'Pending',
-      value: pending,
-      sub: `${rows.length ? Math.round((pending / rows.length) * 100) : 0}% of total`,
-      tint: 'bg-warning/10 text-warning',
-    },
-    {
-      icon: XCircle,
-      label: 'Expired',
-      value: expired,
-      sub: `${rows.length ? Math.round((expired / rows.length) * 100) : 0}% of total`,
-      tint: 'bg-destructive/10 text-destructive',
-    },
-    {
-      icon: Award,
-      label: 'Issuing Orgs',
-      value: organizations,
-      tint: 'bg-secondary text-secondary-foreground',
-    },
-  ];
-
   const StatusBadge = ({ status }: { status: string }) => {
     if (status === 'Verified') {
       return (
@@ -169,12 +127,6 @@ export function SkillsWalletCredentialsVaultTab({
         includes verification proofs for sharing.
       </p>
 
-      <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-5'>
-        {stats.map(stat => (
-          <StatCard key={stat.label} {...stat} />
-        ))}
-      </div>
-
       <div className='grid gap-4 md:grid-cols-2 xl:grid-cols-4'>
         {rows.length > 0 ? (
           rows.map(item => (
@@ -184,6 +136,7 @@ export function SkillsWalletCredentialsVaultTab({
               tabIndex={-1}
               className='overflow-hidden rounded-sm pt-0'
             >
+              {/* // here show a preview of the uploaded credentials instead of this blank background with the award icon */}
               <div className='from-primary/10 to-success/10 relative grid h-28 place-items-center bg-gradient-to-br'>
                 <Award className='text-primary h-10 w-10' />
                 <div className='absolute top-2 right-2'>
@@ -196,12 +149,6 @@ export function SkillsWalletCredentialsVaultTab({
                 <p className='text-muted-foreground mt-1 text-xs'>
                   Issued: {fmtDate(item.issued_at)}
                 </p>
-                <div className='mt-2'>
-                  <p className='text-muted-foreground text-[10px] tracking-wider uppercase'>
-                    Credential ID
-                  </p>
-                  <p className='font-mono text-xs'>{item.credential_code}</p>
-                </div>
                 <div className='mt-3 flex items-center gap-1'>
                   <WalletShareButton
                     compact

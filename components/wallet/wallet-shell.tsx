@@ -20,6 +20,8 @@ interface WalletShellProps<T extends string> {
   tab: T;
   onTabChange: (tab: T) => void;
   hrefFor?: (tab: T) => string;
+  /** Show horizontal scroll arrows when the wallet tabs overflow. */
+  scrollButtons?: boolean;
   /** Buttons beside the balances, e.g. Transfer. */
   actions?: ReactNode;
   /** Opens the withdraw flow; the button shows only when the server says the caller may withdraw. */
@@ -38,6 +40,7 @@ export function WalletShell<T extends string>({
   tab,
   onTabChange,
   hrefFor,
+  scrollButtons = false,
   actions,
   onWithdraw,
   children,
@@ -50,7 +53,7 @@ export function WalletShell<T extends string>({
   ];
 
   return (
-    <div className={cn(surfaceTheme.page, 'space-y-5')}>
+    <div className={cn(surfaceTheme.page, 'min-w-0 space-y-5')}>
       <PageHeader
         eyebrow={eyebrow}
         title={title}
@@ -77,7 +80,15 @@ export function WalletShell<T extends string>({
           </div>
         }
       />
-      <SectionTabs label={`${title} sections`} variant='chips' tabs={tabs} value={tab} onValueChange={onTabChange} hrefFor={hrefFor}>
+      <SectionTabs
+        label={`${title} sections`}
+        variant='chips'
+        tabs={tabs}
+        value={tab}
+        onValueChange={onTabChange}
+        hrefFor={hrefFor}
+        scrollButtons={scrollButtons}
+      >
         {children}
       </SectionTabs>
     </div>

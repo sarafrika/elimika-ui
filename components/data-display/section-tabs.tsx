@@ -1,6 +1,6 @@
 'use client';
 
-import type { LucideIcon } from 'lucide-react';
+import { ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import {
@@ -16,6 +16,7 @@ import {
 } from 'react';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { useSearchState } from '@/hooks/use-search-state';
 import { enumParam } from '@/lib/search-state';
 import { cn } from '@/lib/utils';
@@ -99,9 +100,10 @@ type SectionTabsProps<T extends string> = {
   /**
    * `underline`: the dashboard 360 strip. `pill`: a card of pill tabs, as on the public
    * course page. `chips`: separate rounded chips, the active one filled, as on the wallet.
+   * `training-hub`: the separate bordered pills used by Training Hub.
    * All scroll sideways on phones instead of wrapping.
    */
-  variant?: 'underline' | 'pill' | 'chips';
+  variant?: 'underline' | 'pill' | 'chips' | 'training-hub';
   /**
    * Pin the strip while the page scrolls. `top` clears whatever is already pinned above:
    * the public nav on public pages; on a dashboard page the scroll container sits under the
@@ -112,6 +114,8 @@ type SectionTabsProps<T extends string> = {
   children: ReactNode;
   className?: string;
   listClassName?: string;
+  /** Show arrow buttons when the tab strip overflows horizontally. */
+  scrollButtons?: boolean;
   /**
    * Extra classes for the pinned bar (only used with `sticky`), e.g. `bg-card` on a page
    * whose surface is a card. It already has a solid `bg-background` and a shadow once stuck.
@@ -130,6 +134,8 @@ const LIST = {
   pill: 'thin-scrollbar bg-card h-auto w-full justify-start gap-1 overflow-x-auto overflow-y-hidden rounded-2xl border p-1.5',
   chips:
     'thin-scrollbar h-auto w-full justify-start gap-2 overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0.5 pb-1',
+  'training-hub':
+    'thin-scrollbar h-auto w-full justify-start gap-2 overflow-x-auto overflow-y-hidden rounded-none bg-transparent p-0 pb-1',
 } as const;
 
 const TRIGGER = {
@@ -138,6 +144,8 @@ const TRIGGER = {
   pill: 'group text-muted-foreground hover:text-foreground data-[state=active]:bg-primary/10 data-[state=active]:text-primary h-11 flex-none gap-2 rounded-[10px] px-4 text-sm font-medium data-[state=active]:font-semibold data-[state=active]:shadow-none',
   chips:
     'group bg-background text-muted-foreground border-border hover:bg-muted hover:text-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:border-primary data-[state=active]:hover:bg-primary h-9 flex-none gap-1.5 rounded-full border px-3.5 text-sm font-medium data-[state=active]:shadow-none',
+  'training-hub':
+    'group border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground flex-none gap-2 rounded-full border px-4 py-1.5 font-normal data-[state=active]:shadow-sm',
 } as const;
 
 /** Status chips (flags and error counts): one shape, toned with tokens, never a raw red. */
@@ -162,6 +170,8 @@ const COUNT = {
     'bg-muted text-muted-foreground group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground flex h-5 min-w-5 items-center justify-center rounded-sm px-1.5 font-mono text-[11px]',
   pill: 'bg-muted text-muted-foreground group-data-[state=active]:bg-primary group-data-[state=active]:text-primary-foreground inline-flex h-[22px] min-w-[22px] items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-semibold tabular-nums',
   chips:
+    'bg-muted text-muted-foreground group-data-[state=active]:bg-primary-foreground/20 group-data-[state=active]:text-primary-foreground inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-semibold tabular-nums',
+  'training-hub':
     'bg-muted text-muted-foreground group-data-[state=active]:bg-primary-foreground/20 group-data-[state=active]:text-primary-foreground inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-semibold tabular-nums',
 } as const;
 
@@ -231,10 +241,45 @@ export function SectionTabs<T extends string>({
   children,
   className,
   listClassName,
+  scrollButtons = false,
   stickyClassName,
   errorCounts,
 }: SectionTabsProps<T>) {
   const baseId = useId();
+  const navigationRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [scrollState, setScrollState] = useState({ overflow: false, left: false, right: false });
+  const updateScrollState = useCallback(() => {
+    const navigation = navigationRef.current;
+    const list = listRef.current;
+    if (!navigation || !list) return;
+    setScrollState({
+      // Use the full row so adding the arrows cannot create overflow by itself.
+      overflow: list.scrollWidth > navigation.clientWidth + 1,
+      left: list.scrollLeft > 1,
+      right: list.scrollLeft + list.clientWidth < list.scrollWidth - 1,
+    });
+  }, []);
+  useEffect(() => {
+    if (!scrollButtons) return;
+    const navigation = navigationRef.current;
+    const list = listRef.current;
+    if (!navigation || !list) return;
+    updateScrollState();
+    const observer = new ResizeObserver(updateScrollState);
+    observer.observe(navigation);
+    observer.observe(list);
+    for (const child of list.children) observer.observe(child);
+    return () => observer.disconnect();
+  }, [scrollButtons, tabs, updateScrollState]);
+  useEffect(() => {
+    if (!scrollButtons) return;
+    listRef.current?.querySelector<HTMLElement>('[data-state="active"]')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'nearest',
+    });
+  }, [scrollButtons, value]);
   const { ref: stickyRef, stuck } = useStuck(Boolean(sticky));
   const stickyStyle: CSSProperties | undefined = sticky
     ? { top: typeof sticky === 'object' ? (sticky.top ?? 0) : 0 }
@@ -244,63 +289,125 @@ export function SectionTabs<T extends string>({
     <Tabs
       value={value}
       onValueChange={next => onValueChange(next as T)}
-      className={cn('gap-[18px]', className)}
+      className={cn('min-w-0 gap-[18px]', className)}
     >
       <div
         ref={sticky ? stickyRef : undefined}
         data-stuck={sticky ? stuck : undefined}
         className={cn(
           // Printing shows every panel, so the strip that switches between them goes.
-          'print:hidden',
+          'min-w-0 print:hidden',
           sticky && 'bg-background sticky z-30 transition-shadow data-[stuck=true]:shadow-sm',
           sticky && stickyClassName
         )}
         style={stickyStyle}
       >
-        <TabsList aria-label={label} className={cn(LIST[variant], listClassName)}>
-          {tabs.map(tab => {
-            const Icon = tab.icon;
-            const errors = errorCounts?.[tab.id] ?? tab.errorCount ?? 0;
-            const errorId = errors > 0 ? `${baseId}-${tab.id}-errors` : undefined;
-            const flagId = tab.flag ? `${baseId}-${tab.id}-flag` : undefined;
-            const describedBy = [errorId, flagId].filter(Boolean).join(' ') || undefined;
-            const body = (
-              <>
-                {Icon ? <Icon aria-hidden className={variant === 'chips' ? 'size-3.5' : 'size-4'} /> : null}
-                <span>{tab.label}</span>
-                {typeof tab.count === 'number' ? (
-                  <span className={COUNT[variant]}>{tab.count}</span>
-                ) : null}
-                {tab.flag && flagId ? <TabFlag id={flagId} flag={tab.flag} /> : null}
-                {errorId ? (
-                  <TabFlag id={errorId} flag={{ label: errorCountLabel(errors), tone: 'danger' }} />
-                ) : null}
-              </>
-            );
-            return hrefFor ? (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                className={TRIGGER[variant]}
-                aria-describedby={describedBy}
-                asChild
-              >
-                <Link href={hrefFor(tab.id)} scroll={false} onClick={keepInPage}>
+        <div
+          ref={navigationRef}
+          className={cn('min-w-0', scrollButtons && 'flex items-center gap-1')}
+        >
+          {scrollButtons && scrollState.overflow && (
+            <Button
+              type='button'
+              variant='outline'
+              size='icon'
+              className={cn(
+                'size-7 shrink-0 rounded-full',
+                variant === 'training-hub' &&
+                  'border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+              aria-label='Scroll tabs left'
+              aria-controls={`${baseId}-tabs`}
+              disabled={!scrollState.left}
+              onClick={() => listRef.current?.scrollBy({ left: -280, behavior: 'smooth' })}
+            >
+              <ChevronLeft className='size-4' />
+            </Button>
+          )}
+          <TabsList
+            ref={listRef}
+            id={`${baseId}-tabs`}
+            aria-label={label}
+            onScroll={scrollButtons ? updateScrollState : undefined}
+            className={cn(
+              LIST[variant],
+              scrollButtons &&
+                'min-w-0 flex-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden',
+              listClassName
+            )}
+          >
+            {tabs.map(tab => {
+              const Icon = tab.icon;
+              const errors = errorCounts?.[tab.id] ?? tab.errorCount ?? 0;
+              const errorId = errors > 0 ? `${baseId}-${tab.id}-errors` : undefined;
+              const flagId = tab.flag ? `${baseId}-${tab.id}-flag` : undefined;
+              const describedBy = [errorId, flagId].filter(Boolean).join(' ') || undefined;
+              const body = (
+                <>
+                  {Icon ? (
+                    <Icon
+                      aria-hidden
+                      className={
+                        variant === 'chips' || variant === 'training-hub' ? 'size-3.5' : 'size-4'
+                      }
+                    />
+                  ) : null}
+                  <span>{tab.label}</span>
+                  {typeof tab.count === 'number' ? (
+                    <span className={COUNT[variant]}>{tab.count}</span>
+                  ) : null}
+                  {tab.flag && flagId ? <TabFlag id={flagId} flag={tab.flag} /> : null}
+                  {errorId ? (
+                    <TabFlag
+                      id={errorId}
+                      flag={{ label: errorCountLabel(errors), tone: 'danger' }}
+                    />
+                  ) : null}
+                </>
+              );
+              return hrefFor ? (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className={TRIGGER[variant]}
+                  aria-describedby={describedBy}
+                  asChild
+                >
+                  <Link href={hrefFor(tab.id)} scroll={false} onClick={keepInPage}>
+                    {body}
+                  </Link>
+                </TabsTrigger>
+              ) : (
+                <TabsTrigger
+                  key={tab.id}
+                  value={tab.id}
+                  className={TRIGGER[variant]}
+                  aria-describedby={describedBy}
+                >
                   {body}
-                </Link>
-              </TabsTrigger>
-            ) : (
-              <TabsTrigger
-                key={tab.id}
-                value={tab.id}
-                className={TRIGGER[variant]}
-                aria-describedby={describedBy}
-              >
-                {body}
-              </TabsTrigger>
-            );
-          })}
-        </TabsList>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+          {scrollButtons && scrollState.overflow && (
+            <Button
+              type='button'
+              variant='outline'
+              size='icon'
+              className={cn(
+                'size-7 shrink-0 rounded-full',
+                variant === 'training-hub' &&
+                  'border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+              aria-label='Scroll tabs right'
+              aria-controls={`${baseId}-tabs`}
+              disabled={!scrollState.right}
+              onClick={() => listRef.current?.scrollBy({ left: 280, behavior: 'smooth' })}
+            >
+              <ChevronRight className='size-4' />
+            </Button>
+          )}
+        </div>
       </div>
       {children}
     </Tabs>
@@ -356,7 +463,12 @@ export function UnderlineTabs({
   className?: string;
 }) {
   return (
-    <div className={cn('flex gap-6 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_0_var(--color-border)]', className)}>
+    <div
+      className={cn(
+        'flex gap-6 overflow-x-auto overflow-y-hidden shadow-[inset_0_-1px_0_0_var(--color-border)]',
+        className
+      )}
+    >
       {tabs.map(tab => {
         const isActive = tab.id === active;
         return (

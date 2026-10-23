@@ -106,7 +106,7 @@ export function ApplyItemCard({
               ) : reapply ? (
                 'Reapply'
               ) : (
-                'Choose'
+                'Apply'
               )}
             </Button>
           )}
