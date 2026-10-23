@@ -475,21 +475,19 @@ function TabsBar({
   ];
 
   return (
-    <div className='flex flex-wrap items-center gap-3'>
+    <div className='flex flex-wrap items-center gap-2'>
       {tabs.map(tab => (
-        <button
+        <Button
           aria-pressed={activeTab === tab.value}
-          className={cn(
-            'text-muted-foreground hover:text-foreground h-9 rounded-md px-3 text-sm font-medium transition',
-            activeTab === tab.value && 'bg-background text-foreground ring-border shadow-sm ring-1'
-          )}
+          variant={activeTab === tab.value ? 'default' : 'outline'}
+          className='h-7 rounded-full px-4 text-xs'
           key={tab.value}
           onClick={() => onTabChange(tab.value)}
           type='button'
         >
           {tab.label}
           {tab.value === 'competencies' || activeTab === tab.value ? ` (${tab.count})` : ''}
-        </button>
+        </Button>
       ))}
     </div>
   );

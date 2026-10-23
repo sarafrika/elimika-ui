@@ -1,5 +1,6 @@
 'use client';
 
+import { isTaskGraded, isTaskSubmitted } from '@/components/lesson/grading';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useUserProfile } from '@/context/profile-context';
 import { useAssignmentsByIds, useQuizzesByIds } from '@/hooks/use-batched-lookups';
@@ -23,11 +24,10 @@ import type {
 } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { useClassEnrollmentsMap } from '../../../../../hooks/use-enrollment-map';
 import { AssignmentCard } from './AssignmentCard';
 import { AssignmentInsights } from './AssignmentInsights';
-import { AssignmentQuickActions } from './AssignmentQuickActions';
 import { AssignmentToolbar } from './AssignmentToolbar';
 import type { AssignmentCardData, AssignmentStatus } from './assignment-types';
 
@@ -82,10 +82,9 @@ function formatDueLabel(value?: Date | string) {
 function getTaskStatus(
   dueAt: Date | string | undefined,
   submissionCount: number,
-  gradedCount: number,
-  taskType: 'assignment' | 'quiz'
+  gradedCount: number
 ): Exclude<AssignmentStatus, 'all'> {
-  if (taskType === 'assignment' && submissionCount > 0 && gradedCount >= submissionCount) {
+  if (submissionCount > 0 && gradedCount >= submissionCount) {
     return 'graded';
   }
 
@@ -101,8 +100,9 @@ function getTaskStatus(
 }
 
 export function AssignmentPageClient() {
-  const [activeFilter, setActiveFilter] = useState<AssignmentStatus>('pending');
+  const [activeFilter, setActiveFilter] = useState<AssignmentStatus>('all');
   const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search.trim().toLowerCase());
   const profile = useUserProfile();
   const instructorUuid = profile?.instructor?.uuid;
   const instructorName = profile?.instructor?.full_name || profile?.full_name || 'Instructor';
@@ -150,7 +150,7 @@ export function AssignmentPageClient() {
 
   const assignmentSchedules = useMemo<AssignmentScheduleWithClass[]>(
     () =>
-      classes.flatMap((item, index) =>
+      uniqueClasses.flatMap((item, index) =>
         ((assignmentScheduleQueries[index]?.data?.data ?? []) as ClassAssignmentSchedule[]).map(
           schedule => ({
             ...schedule,
@@ -158,18 +158,18 @@ export function AssignmentPageClient() {
           })
         )
       ),
-    [assignmentScheduleQueries, classes]
+    [assignmentScheduleQueries, uniqueClasses]
   );
 
   const quizSchedules = useMemo<QuizScheduleWithClass[]>(
     () =>
-      classes.flatMap((item, index) =>
+      uniqueClasses.flatMap((item, index) =>
         ((quizScheduleQueries[index]?.data?.data ?? []) as ClassQuizSchedule[]).map(schedule => ({
           ...schedule,
           classUuid: item.uuid as string,
         }))
       ),
-    [classes, quizScheduleQueries]
+    [uniqueClasses, quizScheduleQueries]
   );
 
   const uniqueAssignmentUuids = useMemo(
@@ -265,17 +265,19 @@ export function AssignmentPageClient() {
           ? assignmentMapMemo.get(schedule.assignment_uuid)
           : null;
 
-        const submissions = assignmentSubmissionMap.get(schedule.assignment_uuid ?? '') ?? [];
+        const submissions = (
+          assignmentSubmissionMap.get(schedule.assignment_uuid ?? '') ?? []
+        ).filter(isTaskSubmitted);
         const submissionCount = submissions.length;
 
-        const gradedCount = submissions.filter(item => item.is_graded || item.graded_at).length;
+        const gradedCount = submissions.filter(isTaskGraded).length;
         const lessonInfo = lessonMap.get(schedule.lesson_uuid);
         const classInfo = classMap.get(schedule.classUuid);
 
         const uniqueCount = new Set(classInfo?.enrollment?.map(e => e.student_uuid) ?? []).size;
 
         const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
-        const status = getTaskStatus(schedule.due_at, submissionCount, gradedCount, 'assignment');
+        const status = getTaskStatus(schedule.due_at, submissionCount, gradedCount);
         const pendingBadge =
           gradedCount < submissionCount ? `${submissionCount - gradedCount} Pending` : null;
         const metricLabel =
@@ -293,7 +295,7 @@ export function AssignmentPageClient() {
           availableCount: totalLearners - uniqueCount,
           dueLabel: formatDueLabel(schedule.due_at || assignment?.due_date),
           iconTone: status === 'overdue' ? 'amber' : 'blue',
-          id: `assignment_${assignment?.uuid ?? schedule.uuid ?? ''}`,
+          id: `assignment_${schedule.assignment_uuid ?? ''}`,
           instructor: instructorName,
           lesson: lessonInfo?.lessonTitle || 'Lesson',
           lessonUuid: schedule.lesson_uuid,
@@ -331,25 +333,21 @@ export function AssignmentPageClient() {
         const attempts = quizAttemptMap.get(schedule.quiz_uuid ?? '') ?? [];
         const submissionCount = attempts.length;
 
-        const completedCount = attempts.filter(
-          item => item.is_completed || item.submitted_at
-        ).length;
+        const completedCount = attempts.filter(isTaskSubmitted).length;
         const lessonInfo = lessonMap.get(schedule.lesson_uuid);
         const classInfo = classMap.get(schedule.classUuid);
 
         const uniqueCount = new Set(classInfo?.enrollment?.map(e => e.student_uuid)).size;
 
         const totalLearners = classEnrollmentsMap.get(schedule.classUuid)?.length ?? 0;
-        const status = getTaskStatus(schedule.due_at, submissionCount, completedCount, 'quiz');
-        const pendingBadge =
-          completedCount < submissionCount ? `${submissionCount - completedCount} Pending` : null;
+        const status = getTaskStatus(schedule.due_at, submissionCount, completedCount);
         const metricLabel =
           uniqueCount > 0
             ? `${Math.round((submissionCount / uniqueCount) * 100)}% attempted`
             : null;
 
         const quizCard: AssignmentCardData = {
-          ctaLabel: 'View Submissions',
+          ctaLabel: 'View results',
           classUuid: schedule.classUuid,
           scheduleUuid: schedule?.uuid as string,
           classTitle: classInfo?.title || 'Class',
@@ -359,7 +357,7 @@ export function AssignmentPageClient() {
           availableCount: totalLearners - uniqueCount,
           dueLabel: formatDueLabel(schedule.due_at),
           iconTone: status === 'overdue' ? 'amber' : 'blue',
-          id: `quiz_${quiz?.uuid ?? schedule.uuid ?? ''}`,
+          id: `quiz_${schedule.quiz_uuid ?? ''}`,
           instructor: instructorName,
           lesson: lessonInfo?.lessonTitle || 'Lesson',
           lessonUuid: schedule.lesson_uuid,
@@ -368,21 +366,18 @@ export function AssignmentPageClient() {
               ? `${submissionCount}/${uniqueCount || submissionCount} attempts`
               : `${uniqueCount ?? 0} enrolled`,
           status,
-          statusLabel: status.charAt(0).toUpperCase() + status.slice(1),
+          statusLabel:
+            status === 'graded'
+              ? 'Results available'
+              : status.charAt(0).toUpperCase() + status.slice(1),
           studentSummary: classInfo?.title || classInfo?.course?.name || 'Class',
           subtitle: quiz?.title || 'Quiz',
           submissionCount,
           taskType: 'quiz',
         };
 
-        if (pendingBadge) {
-          quizCard.badge = pendingBadge;
-        }
         if (metricLabel) {
           quizCard.metricLabel = metricLabel;
-        }
-        if (quiz?.rubric_uuid) {
-          quizCard.rubricUuid = quiz.rubric_uuid;
         }
 
         return quizCard;
@@ -406,7 +401,7 @@ export function AssignmentPageClient() {
   ]);
 
   const filteredAssignments = useMemo(() => {
-    const query = search.trim().toLowerCase();
+    const query = deferredSearch;
 
     return taskCards.filter(item => {
       const matchesFilter = activeFilter === 'all' || item.status === activeFilter;
@@ -420,7 +415,7 @@ export function AssignmentPageClient() {
 
       return matchesFilter && matchesSearch;
     });
-  }, [activeFilter, search, taskCards]);
+  }, [activeFilter, deferredSearch, taskCards]);
 
   const scheduleLoading =
     assignmentScheduleQueries.some(query => query.isPending) ||
@@ -475,10 +470,13 @@ export function AssignmentPageClient() {
   }, [analyticsQuery, pendingGradingData?.data, taskCards]);
 
   return (
-    <main className='bg-background mb-10 p-3 sm:p-4 md:p-6'>
-      <div className='mx-auto w-full max-w-screen-2xl space-y-4 sm:space-y-5'>
+    <main className='bg-background mb-10 p-3 sm:p-4 md:p-6 max-w-7xl'>
+      <div className='w-full min-w-0 space-y-4 sm:space-y-5'>
+        <p className='text-muted-foreground text-sm'>
+          Grade assignment submissions and view automatic quiz results
+        </p>
 
-        <p className='text-muted-foreground text-sm'>Manage, track and grade student submissions</p>
+        <AssignmentInsights insights={insights} />
 
         <AssignmentToolbar
           activeFilter={activeFilter}
@@ -487,48 +485,41 @@ export function AssignmentPageClient() {
           setSearch={setSearch}
         />
 
-        <div className='grid gap-5 xl:grid-cols-[minmax(0,1fr)_360px]'>
-          <section className='min-w-0 space-y-5'>
-            {isInitialLoading ? (
-              <div className='grid gap-4 sm:grid-cols-2 xl:grid-cols-1'>
-                {Array.from({ length: 4 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className='border-border/70 bg-card rounded-2xl border p-4 shadow-sm'
-                  >
-                    <div className='flex items-center justify-between gap-3'>
-                      <Skeleton className='h-5 w-32 rounded-full' />
-                      <Skeleton className='h-8 w-20 rounded-full' />
-                    </div>
-                    <div className='mt-4 space-y-3'>
-                      <Skeleton className='h-5 w-3/4 rounded-full' />
-                      <Skeleton className='h-4 w-1/2 rounded-full' />
-                      <div className='flex gap-2'>
-                        <Skeleton className='h-10 w-10 rounded-xl' />
-                        <Skeleton className='h-10 flex-1 rounded-xl' />
-                      </div>
+        <section className='min-w-0 space-y-5'>
+          {isInitialLoading ? (
+            <div className='grid gap-4 sm:grid-cols-2'>
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className='border-border/70 bg-card rounded-2xl border p-4 shadow-sm'
+                >
+                  <div className='flex items-center justify-between gap-3'>
+                    <Skeleton className='h-5 w-32 rounded-full' />
+                    <Skeleton className='h-8 w-20 rounded-full' />
+                  </div>
+                  <div className='mt-4 space-y-3'>
+                    <Skeleton className='h-5 w-3/4 rounded-full' />
+                    <Skeleton className='h-4 w-1/2 rounded-full' />
+                    <div className='flex gap-2'>
+                      <Skeleton className='h-10 w-10 rounded-xl' />
+                      <Skeleton className='h-10 flex-1 rounded-xl' />
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : filteredAssignments.length > 0 ? (
-              <div className='flex flex-row flex-wrap gap-4'>
-                {filteredAssignments.map((assignment, index) => (
-                  <AssignmentCard key={`${assignment.id}-${index}`} assignment={assignment} />
-                ))}
-              </div>
-            ) : (
-              <div className='border-border/70 bg-card text-muted-foreground rounded-xl border border-dashed p-4 text-xs shadow-sm sm:p-6 sm:text-sm'>
-                No lesson tasks with student submissions were found for this instructor yet.
-              </div>
-            )}
-          </section>
-
-          <aside className='space-y-4'>
-            <AssignmentInsights insights={insights} />
-            <AssignmentQuickActions insights={insights} />
-          </aside>
-        </div>
+                </div>
+              ))}
+            </div>
+          ) : filteredAssignments.length > 0 ? (
+            <div className='flex flex-row flex-wrap gap-4'>
+              {filteredAssignments.map((assignment, index) => (
+                <AssignmentCard key={`${assignment.id}-${index}`} assignment={assignment} />
+              ))}
+            </div>
+          ) : (
+            <div className='border-border/70 bg-card text-muted-foreground rounded-xl border border-dashed p-4 text-xs shadow-sm sm:p-6 sm:text-sm'>
+              No lesson tasks with student submissions were found for this instructor yet.
+            </div>
+          )}
+        </section>
       </div>
     </main>
   );

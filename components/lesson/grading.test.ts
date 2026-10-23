@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { AssignmentSubmission, QuizAttempt } from '@/services/client/types.gen';
-import { taskGradeLabel } from './grading';
+import { quizResultLabel, taskGradeLabel } from './grading';
 
 const assignment: AssignmentSubmission = {
   assignment_uuid: 'assignment',
@@ -65,4 +65,13 @@ test('recognizes lowercase unfinished and submitted statuses', () => {
   assert.equal(taskGradeLabel({ ...quiz, status: 'in_progress' }), 'Not submitted');
   assert.equal(taskGradeLabel({ ...assignment, status: 'in_review' }), 'Not graded');
   assert.equal(taskGradeLabel({ ...quiz, status: 'submitted', score: 6 }), 'Not graded');
+});
+
+test('quiz results show automatic scores after submission without requiring manual grading', () => {
+  assert.equal(quizResultLabel({ ...quiz, score: 6, max_score: 8 }), '6 / 8');
+  assert.equal(quizResultLabel({ ...quiz, status: 'submitted', score: 0, max_score: 8 }), '0 / 8');
+  assert.equal(quizResultLabel({ ...quiz, status: 'GRADED', score: 8 }), '8');
+  assert.equal(quizResultLabel(quiz), 'Results pending');
+  assert.equal(quizResultLabel(undefined), 'Not submitted');
+  assert.equal(quizResultLabel({ ...quiz, status: 'IN_PROGRESS', score: 0 }), 'Not submitted');
 });

@@ -30,9 +30,9 @@ export function PageHeader({ title, description, eyebrow, actions, className }: 
         className='from-primary to-primary/50 absolute -left-4 top-0 hidden h-8 w-1 rounded-full bg-gradient-to-b sm:block'
       />
       <div className='min-w-0 space-y-1'>
-        {eyebrow && (
+        {/* {eyebrow && (
           <div className='text-xs font-semibold uppercase tracking-wider text-primary'>{eyebrow}</div>
-        )}
+        )} */}
         <h1 className='text-2xl font-bold tracking-tight text-foreground sm:text-3xl'>{title}</h1>
         {description && <p className='max-w-5xl text-sm text-muted-foreground'>{description}</p>}
       </div>

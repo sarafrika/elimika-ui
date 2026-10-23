@@ -57,7 +57,7 @@ export function TrainingHubToolbar({
                 type='button'
                 variant={isActive ? 'default' : 'outline'}
                 onClick={() => onTypeChange(filter.value)}
-                className='h-9 rounded-full px-4 text-xs'
+                className='h-7 rounded-full px-4 text-xs'
               >
                 {filter.label}
               </Button>

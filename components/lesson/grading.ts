@@ -43,6 +43,12 @@ export function isValidGrade(value: string, maximum: number) {
   );
 }
 
+export function quizResultLabel(record: TaskGradeRecord | undefined) {
+  if (!record || !isTaskSubmitted(record)) return 'Not submitted';
+  if (record.score == null) return record.grade_display || 'Results pending';
+  return record.max_score == null ? String(record.score) : `${record.score} / ${record.max_score}`;
+}
+
 export function newestSubmissionsFirst<T extends { submitted_at?: Date | null }>(items: T[]) {
   return [...items].sort(
     (a, b) =>

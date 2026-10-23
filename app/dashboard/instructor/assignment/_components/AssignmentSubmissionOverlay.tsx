@@ -1,494 +1,146 @@
-// @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import { useClassDetails } from '@/hooks/use-class-details';
-import { useClassRoster } from '@/hooks/use-class-roster';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import { WorkbookError } from '@/components/lesson/WorkbookError';
+import { WorkbookLoading } from '@/components/lesson/WorkbookLoading';
+import { hasApiError } from '@/components/lesson/workbook-data';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
   getAssignmentByUuidOptions,
-  getAssignmentSubmissionsOptions,
-  getQuizAttemptsOptions,
+  getAssignmentSchedulesOptions,
+  getClassDefinitionOptions,
   getQuizByUuidOptions,
-  getRubricMatrixOptions,
-  getSubmissionAttachmentsOptions,
-  gradeSubmissionMutation,
+  getQuizSchedulesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { AssignmentSubmission, QuizAttempt, RubricMatrix } from '@/services/client/types.gen';
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { Bell, PanelLeft, PanelRight, Search } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
-import { useCourseEnrollmentsMap } from '../../../../../hooks/use-enrollment-map';
-import { SubmissionInsightsPanel } from './SubmissionInsightsPanel';
-import { SubmissionStudentList } from './SubmissionStudentList';
-import { SubmissionWorkspace } from './SubmissionWorkspace';
-import type { AssignmentCardData, SubmissionStudent } from './assignment-types';
+import { useQuery } from '@tanstack/react-query';
+import dynamic from 'next/dynamic';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
-type AssignmentSubmissionOverlayProps = {
-  taskId: string;
-};
+const LessonGradingPanel = dynamic(
+  () => import('@/components/lesson/LessonGradingPanel').then(module => module.LessonGradingPanel),
+  { loading: () => <WorkbookLoading /> }
+);
 
-function formatDateLabel(value?: string | Date) {
-  if (!value) return 'No due date';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? 'No due date' : `Due ${format(date, 'MMM dd, yyyy')}`;
-}
+export function AssignmentSubmissionOverlay({ taskId }: { taskId: string }) {
+  const params = useSearchParams();
+  const classId = params.get('classId') ?? '';
+  const scheduleId = params.get('scheduleId');
+  const kind = taskId.startsWith('assignment_')
+    ? 'assignment'
+    : taskId.startsWith('quiz_')
+      ? 'quiz'
+      : undefined;
+  const uuid = kind ? taskId.slice(kind.length + 1) : '';
 
-function parseTaskId(taskId: string) {
-  if (taskId.startsWith('assignment_')) {
-    return { taskType: 'assignment' as const, uuid: taskId.replace('assignment_', '') };
-  }
-
-  if (taskId.startsWith('quiz_')) {
-    return { taskType: 'quiz' as const, uuid: taskId.replace('quiz_', '') };
-  }
-
-  return null;
-}
-
-function detectSubmissionKind(
-  submission: AssignmentSubmission | null,
-  attempt: QuizAttempt | null
-) {
-  if (attempt) return 'quiz' as const;
-  if (!submission) return 'text' as const;
-  const fileUrl = submission.file_urls?.[0]?.toLowerCase();
-  if (!fileUrl) return submission.submission_text ? ('text' as const) : ('document' as const);
-  if (fileUrl.endsWith('.mp3') || fileUrl.endsWith('.wav') || fileUrl.endsWith('.m4a')) {
-    return 'audio' as const;
-  }
-  return 'document' as const;
-}
-
-export function AssignmentSubmissionOverlay({ taskId }: AssignmentSubmissionOverlayProps) {
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const searchParams = useSearchParams();
-  const classId = searchParams.get('classId') ?? '';
-  const courseId = searchParams.get('course_uuid') ?? '';
-  const parsedTask = parseTaskId(taskId);
-  const [search, setSearch] = useState('');
-  const [selectedStudentId, setSelectedStudentId] = useState('');
-  const [score, setScore] = useState('');
-  const [comments, setComments] = useState('');
-
-  const { data: classDetails } = useClassDetails(classId);
-  const { rosterAllEnrollments } = useClassRoster(classId);
-
-  const assignmentQuery = useQuery({
-    ...getAssignmentByUuidOptions({ path: { uuid: parsedTask?.uuid as string } }),
-    enabled: parsedTask?.taskType === 'assignment' && !!parsedTask.uuid,
+  const classQuery = useQuery({
+    ...getClassDefinitionOptions({ path: { uuid: classId } }),
+    enabled: Boolean(classId),
+    staleTime: STALE_TIMES.entity,
+  });
+  const assignment = useQuery({
+    ...getAssignmentByUuidOptions({ path: { uuid } }),
+    enabled: Boolean(uuid && kind === 'assignment'),
+    staleTime: STALE_TIMES.entity,
+  });
+  const quiz = useQuery({
+    ...getQuizByUuidOptions({ path: { uuid } }),
+    enabled: Boolean(uuid && kind === 'quiz'),
+    staleTime: STALE_TIMES.entity,
+  });
+  const assignmentSchedules = useQuery({
+    ...getAssignmentSchedulesOptions({ path: { classUuid: classId } }),
+    enabled: Boolean(classId && kind === 'assignment'),
+    staleTime: STALE_TIMES.live,
+  });
+  const quizSchedules = useQuery({
+    ...getQuizSchedulesOptions({ path: { classUuid: classId } }),
+    enabled: Boolean(classId && kind === 'quiz'),
+    staleTime: STALE_TIMES.live,
   });
 
-  const quizQuery = useQuery({
-    ...getQuizByUuidOptions({ path: { uuid: parsedTask?.uuid as string } }),
-    enabled: true,
-  });
-
-  const assignmentSubmissionsQuery = useQuery({
-    ...getAssignmentSubmissionsOptions({ path: { assignmentUuid: parsedTask?.uuid as string } }),
-    enabled: parsedTask?.taskType === 'assignment' && !!parsedTask?.uuid,
-  });
-
-  const quizAttemptsQuery = useQuery({
-    ...getQuizAttemptsOptions({
-      path: { quizUuid: parsedTask?.uuid as string },
-      query: { pageable: { page: 0, size: 100 } },
-    }),
-    enabled: parsedTask?.taskType === 'quiz' && !!parsedTask?.uuid,
-  });
-
-  const task = assignmentQuery.data?.data ?? quizQuery.data?.data ?? null;
-  // Narrowed view: assignment-only fields (due_date, max_points) live on the assignment
-  // query's payload, which is only populated for assignment tasks.
-  const assignmentTask = assignmentQuery.data?.data ?? null;
-
-  const course = classDetails.course;
-  const lessonTitle =
-    classDetails.lessons.find(lesson => lesson.uuid === task?.lesson_uuid)?.title || 'Lesson';
-  const rubricUuid = task?.rubric_uuid ?? null;
-
-  const rubricQuery = useQueries({
-    queries: rubricUuid
-      ? [
-          {
-            ...getRubricMatrixOptions({ path: { rubricUuid } }),
-            enabled: !!rubricUuid,
-          },
-        ]
-      : [],
-  });
-
-  const rubricMatrix = (rubricQuery[0]?.data?.data as RubricMatrix | undefined) ?? null;
-
-  const { courseEnrollmentMap } = useCourseEnrollmentsMap([courseId]);
-  const submissions = assignmentSubmissionsQuery.data?.data ?? [];
-
-  const enrollments = courseEnrollmentMap?.[courseId]?.enrollments ?? [];
-
-  // Fetch attachments for every submission
-  const attachmentQueries = useQueries({
-    queries: submissions.map(submission =>
-      getSubmissionAttachmentsOptions({
-        path: {
-          assignmentUuid: submission.assignment_uuid,
-          submissionUuid: submission.uuid as string,
-        },
-      })
-    ),
-  });
-
-  // Build lookup table
-  const attachmentsBySubmissionId = useMemo(() => {
-    return submissions.reduce<Record<string, unknown[]>>((acc, submission, index) => {
-      acc[submission.uuid as string] = attachmentQueries[index]?.data?.data ?? [];
-
-      return acc;
-    }, {});
-  }, [submissions, attachmentQueries]);
-
-  // Enrich submissions
-  const enrichedSubmissions = useMemo(
-    () =>
-      submissions.map(submission => ({
-        ...submission,
-
-        student_uuid: enrollments.find(enrollment => enrollment.uuid === submission.enrollment_uuid)
-          ?.student_uuid,
-
-        attachments: attachmentsBySubmissionId[submission.uuid as string] ?? [],
-      })),
-    [submissions, enrollments, attachmentsBySubmissionId]
-  );
-
-  const attempts = quizAttemptsQuery.data?.data?.content ?? [];
-
-  const students = useMemo<SubmissionStudent[]>(() => {
-    if (parsedTask?.taskType === 'assignment') {
-      return enrichedSubmissions
-        .map(submission => {
-          const rosterEntry = rosterAllEnrollments.find(
-            entry => entry?.enrollment?.student_uuid === submission?.student_uuid
-          );
-
-          if (!rosterEntry?.enrollment?.uuid) return null;
-
-          return {
-            attendanceLabel: rosterEntry.enrollment.did_attend ? 'Present' : 'Pending',
-            comments: submission.instructor_comments ? [submission.instructor_comments] : [],
-            fileUrls: submission.file_urls ?? [],
-            id: rosterEntry.enrollment.uuid,
-            student_uuid: submission?.student_uuid as string,
-            insightLabel: submission.is_graded ? 'Graded' : 'Awaiting review',
-            name: rosterEntry.user?.full_name || 'Student',
-            roleLabel: rosterEntry.user?.email || 'Learner',
-            score: submission.score ?? 0,
-            sections: [],
-            submissionKind: detectSubmissionKind(submission, null),
-            submissionStatus:
-              submission.submission_status_display ||
-              (submission.is_graded ? 'Graded' : 'Submitted'),
-            submissionText: submission.submission_text,
-            submittedAt: submission.submitted_at
-              ? new Date(submission.submitted_at).toISOString()
-              : undefined,
-          } satisfies SubmissionStudent;
-        })
-        .filter((item): item is SubmissionStudent => item !== null);
-    }
-
-    return attempts
-      .map(attempt => {
-        const rosterEntry = rosterAllEnrollments.find(
-          entry => entry?.enrollment?.student_uuid === attempt?.student_uuid
+  const taskQuery = kind === 'assignment' ? assignment : quiz;
+  const schedulesQuery = kind === 'assignment' ? assignmentSchedules : quizSchedules;
+  const task = hasApiError(taskQuery.data) ? undefined : taskQuery.data?.data;
+  const classDefinition = hasApiError(classQuery.data)
+    ? undefined
+    : classQuery.data?.data?.class_definition;
+  const schedule = hasApiError(schedulesQuery.data)
+    ? undefined
+    : kind === 'assignment'
+      ? assignmentSchedules.data?.data?.find(
+          item => item.assignment_uuid === uuid && (!scheduleId || item.uuid === scheduleId)
+        )
+      : quizSchedules.data?.data?.find(
+          item => item.quiz_uuid === uuid && (!scheduleId || item.uuid === scheduleId)
         );
-        if (!rosterEntry?.enrollment?.uuid) return null;
-
-        return {
-          attendanceLabel: rosterEntry.enrollment.did_attend ? 'Present' : 'Pending',
-          comments: [],
-          id: rosterEntry.enrollment.uuid,
-          student_uuid: attempt?.student_uuid as string,
-          insightLabel: attempt.is_passed ? 'Passed' : 'Needs review',
-          name: rosterEntry.user?.full_name || 'Student',
-          roleLabel: rosterEntry.user?.email || 'Learner',
-          score: attempt.score ?? 0,
-          sections: [],
-          submissionKind: 'quiz',
-          submissionStatus: attempt.grade_display || `${attempt.status}`,
-          submittedAt: attempt.submitted_at
-            ? new Date(attempt.submitted_at).toISOString()
-            : undefined,
-        } satisfies SubmissionStudent;
-      })
-      .filter((item): item is SubmissionStudent => item !== null);
-  }, [attempts, parsedTask?.taskType, rosterAllEnrollments, submissions]);
-
-  const filteredStudents = useMemo(
-    () =>
-      students.filter(student => student.name.toLowerCase().includes(search.trim().toLowerCase())),
-    [search, students]
-  );
-
-  const selectedStudent =
-    filteredStudents.find(student => student.id === selectedStudentId) ??
-    students.find(student => student.id === selectedStudentId) ??
-    filteredStudents[0] ??
-    students[0];
-
-  const selectedSubmission =
-    parsedTask?.taskType === 'assignment'
-      ? (enrichedSubmissions.find(item => item.student_uuid === selectedStudent?.student_uuid) ??
-        null)
-      : null;
-  const selectedAttempt =
-    parsedTask?.taskType === 'quiz'
-      ? (attempts.find(item => item.student_uuid === selectedStudent?.student_uuid) ?? null)
-      : null;
-
-  const gradeSubmissionMut = useMutation(gradeSubmissionMutation());
-
-  const assignmentCard = useMemo<AssignmentCardData | null>(() => {
-    if (!task || !parsedTask) return null;
-    return {
-      ctaLabel: parsedTask.taskType === 'assignment' ? 'Grade Submission' : 'View Attempt',
-      dueLabel: formatDateLabel(
-        (parsedTask.taskType === 'assignment'
-          ? assignmentTask?.due_date
-          : selectedAttempt?.submitted_at) ?? undefined
-      ),
-      iconTone: 'blue',
-      id: taskId,
-      uuid: task.uuid,
-      instructor: classDetails.class?.title || 'Instructor task',
-      lesson: lessonTitle,
-      lessonUuid: task.lesson_uuid,
-      rubricUuid,
-      status: parsedTask.taskType === 'assignment' ? 'ongoing' : 'graded',
-      statusLabel: parsedTask.taskType === 'assignment' ? 'Submission' : 'Attempt',
-      studentSummary: course?.name,
-      subtitle: task.title,
-      taskType: parsedTask.taskType,
-      max_point: assignmentTask?.max_points,
-    };
-  }, [
-    classDetails.class?.title,
-    course?.name,
-    lessonTitle,
-    parsedTask,
-    rubricUuid,
-    selectedAttempt?.submitted_at,
-    task,
-    taskId,
-  ]);
-
-  const handleClose = () => {
-    router.push('/dashboard/instructor/training-hub?tab=assignment');
-  };
-
-  const handleGradeSubmission = () => {
-    if (!parsedTask || parsedTask.taskType !== 'assignment' || !selectedSubmission?.uuid) return;
-
-    const maxScore = selectedSubmission.max_score ?? assignmentTask?.max_points ?? 100;
-    const numericScore = Number(score || selectedSubmission.score || 0);
-
-    if (!Number.isFinite(numericScore)) {
-      toast.error('Enter a valid score before saving.');
-      return;
-    }
-
-    gradeSubmissionMut.mutate(
-      {
-        path: {
-          assignmentUuid: parsedTask.uuid,
-          submissionUuid: selectedSubmission.uuid,
-        },
-        query: {
-          comments: comments || selectedSubmission.instructor_comments || undefined,
-          maxScore,
-          score: numericScore,
-        },
-      },
-      {
-        onSuccess: () => {
-          toast.success('Submission graded successfully.');
-          queryClient.invalidateQueries({
-            queryKey: getAssignmentSubmissionsOptions({
-              path: { assignmentUuid: parsedTask.uuid },
-            }).queryKey,
-          });
-        },
-        onError: error => {
-          toast.error(error instanceof Error ? error.message : 'Failed to grade submission.');
-        },
-      }
-    );
-  };
-
-  if (!parsedTask || !assignmentCard) {
-    return (
-      <div className='text-muted-foreground p-6 text-sm'>This task could not be resolved.</div>
-    );
-  }
 
   return (
-    <div className='fixed inset-0 z-[100]'>
-      <header className='bg-primary text-primary-foreground flex h-16 items-center justify-between gap-3 border-b px-4 shadow-sm'>
-        <div className='flex min-w-0 items-center gap-3'>
-          <span className='flex h-9 w-9 items-center justify-center rounded-full text-lg font-semibold'>
-            {filteredStudents.length}
-          </span>
-          <div className='min-w-0'>
-            <h1 className='truncate text-lg font-semibold'>
-              {assignmentCard.lesson} · {assignmentCard.subtitle}
-            </h1>
-            <p className='text-primary-foreground/80 truncate text-xs'>
-              Submission workspace · {assignmentCard.dueLabel}
-            </p>
-          </div>
+    <main className='bg-background space-y-6 p-4 md:p-6'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <div>
+          <h1 className='text-xl font-semibold'>{task?.title || 'Student submissions'}</h1>
+          <p className='text-muted-foreground text-sm'>
+            {classDefinition?.title}
+            {kind === 'quiz' ? ' · Automatic quiz results' : ' · Assignment submissions'}
+          </p>
         </div>
+        <Button asChild variant='outline'>
+          <Link href='/dashboard/instructor/training-hub?tab=assignment'>Back to assignments</Link>
+        </Button>
+      </div>
 
-        <div className='hidden min-w-0 flex-1 justify-center lg:flex'>
-          <div className='relative w-full max-w-xl'>
-            <Search className='text-primary-foreground/70 absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2' />
-            <Input
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-              placeholder='Search students'
-              className='text-primary-foreground placeholder:text-primary-foreground/60 h-11 rounded-full border-white/15 bg-white/10 pl-11'
+      {!kind || !uuid || !classId ? (
+        <EmptyState
+          title='Select a task from your class assignments'
+          description='Open the assignment or quiz from the assignments list to review its students.'
+        />
+      ) : classQuery.isLoading || taskQuery.isLoading || schedulesQuery.isLoading ? (
+        <WorkbookLoading />
+      ) : [classQuery, taskQuery, schedulesQuery].some(
+          query => query.isError || hasApiError(query.data)
+        ) ? (
+        <WorkbookError
+          title='Unable to load this task'
+          retry={() => {
+            void classQuery.refetch();
+            void taskQuery.refetch();
+            void schedulesQuery.refetch();
+          }}
+        />
+      ) : !task || !schedule || !classDefinition?.course_uuid ? (
+        <EmptyState title='This task is not available for this class' />
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {kind === 'quiz' ? 'Student quiz results' : 'Student assignment grading'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <LessonGradingPanel
+              key={`${classId}-${taskId}-${schedule.uuid}`}
+              scope='class'
+              classId={classId}
+              courseId={classDefinition.course_uuid}
+              tasks={[
+                {
+                  id: taskId,
+                  uuid,
+                  kind,
+                  title: task.title,
+                  rubricId: kind === 'assignment' ? task.rubric_uuid : undefined,
+                  maxPoints:
+                    kind === 'assignment' && 'max_points' in task ? task.max_points : undefined,
+                  schedule,
+                },
+              ]}
             />
-          </div>
-        </div>
-
-        <div className='flex items-center gap-2'>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button
-                variant='ghost'
-                size='sm'
-                className='text-primary-foreground gap-2 hover:bg-white/10 xl:hidden'
-              >
-                <PanelLeft className='h-4 w-4' />
-                Students
-              </Button>
-            </SheetTrigger>
-            <SheetContent side='left' className='w-[88vw] max-w-sm p-0'>
-              <SheetHeader className='sr-only'>
-                <SheetTitle>Student submissions</SheetTitle>
-                <SheetDescription>Select a student submission to review.</SheetDescription>
-              </SheetHeader>
-              <SubmissionStudentList
-                onClose={handleClose}
-                onSelect={setSelectedStudentId}
-                search={search}
-                selectedStudentId={selectedStudent?.id ?? ''}
-                setSearch={setSearch}
-                showCloseAction={false}
-                students={filteredStudents}
-              />
-            </SheetContent>
-          </Sheet>
-
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button
-                variant='ghost'
-                size='sm'
-                className='text-primary-foreground gap-2 hover:bg-white/10 xl:hidden'
-              >
-                <PanelRight className='h-4 w-4' />
-                Insights
-              </Button>
-            </SheetTrigger>
-            <SheetContent side='right' className='w-[92vw] max-w-sm p-0'>
-              <SheetHeader className='sr-only'>
-                <SheetTitle>Submission insights</SheetTitle>
-                <SheetDescription>
-                  Review grading insights and actions for this student.
-                </SheetDescription>
-              </SheetHeader>
-              {selectedStudent ? (
-                <SubmissionInsightsPanel
-                  rubricMatrix={rubricMatrix}
-                  showFooterAction={false}
-                  student={selectedStudent}
-                  taskType={parsedTask.taskType}
-                />
-              ) : null}
-            </SheetContent>
-          </Sheet>
-
-          <Button variant='ghost' size='icon' className='text-primary-foreground hover:bg-white/10'>
-            <Bell className='h-4 w-4' />
-          </Button>
-          <Button
-            variant='ghost'
-            onClick={handleClose}
-            className='text-primary-foreground hover:bg-white/10'
-          >
-            Close
-          </Button>
-        </div>
-      </header>
-
-      <section className='grid h-[calc(100vh-4rem)] min-h-0 xl:grid-cols-[300px_minmax(0,1fr)_340px]'>
-        <div className='hidden min-h-0 min-w-0 overflow-hidden xl:block'>
-          <SubmissionStudentList
-            onClose={handleClose}
-            onSelect={setSelectedStudentId}
-            search={search}
-            selectedStudentId={selectedStudent?.id ?? ''}
-            setSearch={setSearch}
-            students={filteredStudents}
-          />
-        </div>
-
-        <div className='min-h-0 min-w-0 overflow-hidden'>
-          <SubmissionWorkspace
-            assignment={assignmentCard}
-            comments={comments}
-            onCloseDetails={handleClose}
-            onCommentsChange={setComments}
-            onGradeSubmission={handleGradeSubmission}
-            onScoreChange={setScore}
-            rubricMatrix={rubricMatrix}
-            score={score}
-            student={selectedStudent}
-            submission={selectedSubmission}
-            taskType={parsedTask.taskType}
-            quizAttempt={selectedAttempt}
-            isSavingGrade={gradeSubmissionMut.isPending}
-          />
-        </div>
-
-        <div className='min-h-0 min-w-0 overflow-hidden border-l xl:block'>
-          {selectedStudent ? (
-            <SubmissionInsightsPanel
-              rubricMatrix={rubricMatrix}
-              student={selectedStudent}
-              taskType={parsedTask.taskType}
-            />
-          ) : (
-            <div className='text-foreground flex h-full flex-col items-center justify-center px-4 text-center'>
-              <div className='mb-2 text-lg font-medium'>No student selected</div>
-              <p className='text-sm'>
-                Choose a student from the list to view their submission insights.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-    </div>
+          </CardContent>
+        </Card>
+      )}
+    </main>
   );
 }
