@@ -15,7 +15,7 @@ export function WalletTxnRow({ txn, action }: { txn: WalletTransaction; action?:
   const type = txn.transaction_type ?? '';
 
   return (
-    <div className='flex items-center justify-between gap-3 py-3'>
+    <li className='flex items-center justify-between gap-3 py-3'>
       <div className='flex min-w-0 items-center gap-3'>
         <span
           aria-hidden
@@ -48,6 +48,6 @@ export function WalletTxnRow({ txn, action }: { txn: WalletTransaction; action?:
         </div>
         {action}
       </div>
-    </div>
+    </li>
   );
 }
