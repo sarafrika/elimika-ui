@@ -297,6 +297,7 @@ export function AssignmentCard({ assignment }: AssignmentCardProps) {
                   query: {
                     ...(assignment.courseId && { course_uuid: assignment.courseId }),
                     ...(assignment.classUuid && { classId: assignment.classUuid }),
+                    ...(assignment.scheduleUuid && { scheduleId: assignment.scheduleUuid }),
                   },
                 }}
               >

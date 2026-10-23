@@ -1,84 +1,83 @@
+'use client';
+
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { TableCell, TableRow } from '@/components/ui/table';
+import { parseApiDate } from '@/lib/date';
+import type { StudentRosterEntry } from '../types';
 import { ProgressBar } from './ProgressBar';
 import { StatusBadge } from './StatusBadge';
 
-import { useRouter } from 'next/navigation';
-import type { StudentRosterEntry } from '../types';
-
-interface StudentRowProps {
-  student: StudentRosterEntry;
-}
-
-export function StudentRow({ student }: StudentRowProps) {
+export function StudentRow({ student }: { student: StudentRosterEntry }) {
   const router = useRouter();
   const classCount = student.classes.length;
   const courseCount = student.courses.length;
-  const joinedDate = student.profile?.created_date ? new Date(student.profile.created_date) : null;
+  const courseNames = student.courses.map(course => course.name).filter(Boolean);
+  const joined = parseApiDate(student.student.joinedAt ?? student.profile?.created_date);
+  const href = `/dashboard/instructor/students/${student.student.user_uuid}?sId=${student.student.uuid}`;
 
   return (
-    <tr
-      onClick={() =>
-        router.push(
-          `/dashboard/instructor/students/${student?.student?.user_uuid}?sId=${student?.student?.uuid}`
-        )
-      }
-      className='border-border hover:bg-muted/40 cursor-pointer border-b transition-colors'
-    >
-      {/* Student */}
-      <td className='px-2 py-3'>
-        <div className='flex min-w-0 items-center gap-2.5'>
-          <div
-            className={`flex min-h-8 min-w-8 items-center justify-center rounded-full text-xs font-semibold uppercase ${student.student.avatarColor}`}
-          >
-            {student.student.initials}
-          </div>
+    <TableRow onClick={() => router.push(href)} className='hover:bg-muted/30 cursor-pointer'>
+      <TableCell className='px-5 py-3.5'>
+        <div className='flex min-w-48 items-center gap-3'>
+          <Avatar className='size-9 shrink-0'>
+            <AvatarFallback className={`text-xs font-semibold ${student.student.avatarColor}`}>
+              {student.student.initials}
+            </AvatarFallback>
+          </Avatar>
           <div className='min-w-0'>
-            <p className='text-foreground truncate text-sm font-semibold'>
+            <Link
+              href={href}
+              onClick={event => event.stopPropagation()}
+              className='text-foreground text-sm font-semibold hover:underline'
+            >
               {student.student.full_name}
+            </Link>
+            <p className='text-muted-foreground mt-0.5 text-xs tabular-nums'>
+              ID {student.student.uuid.slice(0, 8)}
             </p>
-            <p className='text-muted-foreground text-xs'>ID: {student.student.uuid.slice(0, 8)}</p>
           </div>
         </div>
-      </td>
-
-      {/* Courses */}
-      <td className='hidden px-2 py-3 sm:table-cell'>
-        <div className='text-foreground space-y-0.5 text-sm font-medium'>
-          {student.courses
-            .map(c => c?.name)
-            .filter(Boolean)
-            .map((name, i) => (
-              <p key={i} className='truncate'>
-                {name}
-              </p>
-            ))}
-        </div>
-
-        <p className='text-muted-foreground space-x-1 text-xs'>
-          {courseCount} {courseCount === 1 ? 'course' : 'courses'} •{'  '}
-          {classCount} {classCount === 1 ? 'class' : 'classes'}
+      </TableCell>
+      <TableCell className='w-80 max-w-80 min-w-64 px-5 py-3.5 whitespace-normal'>
+        <p className='text-foreground text-[13px] font-semibold'>
+          {courseNames[0] || student.classes[0]?.title || 'No course assigned'}
         </p>
-      </td>
-
-      {/* Status */}
-      <td className='items-center py-3'>
+        {courseNames.length > 1 && (
+          <p className='text-muted-foreground mt-0.5 line-clamp-2 text-xs leading-relaxed'>
+            {courseNames.slice(1).join(' · ')}
+          </p>
+        )}
+        <p className='text-muted-foreground mt-1 flex items-center gap-1.5 text-xs'>
+          <span>
+            {courseCount} {courseCount === 1 ? 'course' : 'courses'}
+          </span>
+          <span aria-hidden='true' className='bg-muted-foreground/60 size-0.5 rounded-full' />
+          <span>
+            {classCount} {classCount === 1 ? 'class' : 'classes'}
+          </span>
+        </p>
+      </TableCell>
+      <TableCell className='px-5 py-3.5'>
         <StatusBadge status={student.status} />
-      </td>
-
-      {/* Progress */}
-      <td className='hidden px-2 py-3 md:table-cell'>
+      </TableCell>
+      <TableCell className='min-w-32 px-5 py-3.5'>
         <ProgressBar value={student.progress} />
-      </td>
-
-      {/* Joined date */}
-      <td className='hidden px-4 py-3 md:table-cell'>
-        {joinedDate && !isNaN(joinedDate.getTime())
-          ? new Intl.DateTimeFormat('en-GB', {
+      </TableCell>
+      <TableCell className='text-muted-foreground px-5 py-3.5 text-[13px] tabular-nums'>
+        {joined ? (
+          <time dateTime={joined.toISOString()}>
+            {new Intl.DateTimeFormat('en-GB', {
               day: '2-digit',
-              month: '2-digit',
+              month: 'short',
               year: 'numeric',
-            }).format(joinedDate)
-          : '—'}
-      </td>
-    </tr>
+            }).format(joined.toDate())}
+          </time>
+        ) : (
+          '—'
+        )}
+      </TableCell>
+    </TableRow>
   );
 }

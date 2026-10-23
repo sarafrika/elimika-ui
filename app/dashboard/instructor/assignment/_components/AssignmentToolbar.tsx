@@ -2,7 +2,6 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 import { Search } from 'lucide-react';
 import { assignmentFilters } from './assignment-data';
 import type { AssignmentStatus } from './assignment-types';
@@ -23,19 +22,15 @@ export function AssignmentToolbar({
   return (
     <div className=''>
       <div className='flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center xl:justify-between'>
-        <div className='bg-muted/50 grid grid-cols-2 gap-1.5 rounded-lg p-1 sm:flex sm:flex-wrap sm:gap-2'>
+        <div className='flex flex-wrap gap-2'>
           {assignmentFilters.map(filter => (
             <Button
               key={filter.value}
               type='button'
-              variant='ghost'
+              variant={activeFilter === filter.value ? 'default' : 'outline'}
+              aria-pressed={activeFilter === filter.value}
               onClick={() => onFilterChange(filter.value)}
-              className={cn(
-                'h-9 rounded-xl px-3 text-xs font-semibold transition-all sm:h-10 sm:px-4 sm:text-sm',
-                activeFilter === filter.value
-                  ? 'bg-background text-foreground ring-border hover:bg-background shadow-sm ring-1'
-                  : 'text-muted-foreground hover:bg-background/70 hover:text-foreground'
-              )}
+              className='h-7 rounded-full px-4 text-xs'
             >
               {filter.label}
             </Button>

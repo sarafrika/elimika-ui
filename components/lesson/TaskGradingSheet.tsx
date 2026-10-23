@@ -4,6 +4,7 @@ import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tansta
 import dynamic from 'next/dynamic';
 import { type ReactNode, useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { useUserProfile } from '@/context/profile-context';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -31,15 +32,13 @@ import { STALE_TIMES } from '@/lib/query-client';
 import { calculateRubricGrade, type RubricGradeSelections } from '@/lib/rubric-grading';
 import {
   getAssignmentSubmissionsQueryKey,
-  getQuizAttemptsQueryKey,
+  getPendingGradingQueryKey,
+  getSubmissionAnalyticsQueryKey,
   getRubricMatrixOptions,
   getStudentQuizReviewOptions,
-  getStudentQuizReviewQueryKey,
   getSubmissionAttachmentsOptions,
-  gradeQuizTextResponseMutation,
   gradeSubmissionMutation,
   searchAttemptsInfiniteOptions,
-  searchAttemptsQueryKey,
   searchSubmissionsInfiniteOptions,
   searchSubmissionsQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -49,8 +48,8 @@ import {
   isTaskGraded,
   isTaskSubmitted,
   isValidGrade,
-  isWrittenQuestion,
   newestSubmissionsFirst,
+  quizResultLabel,
   taskGradeLabel,
 } from './grading';
 import type { LessonGradingTask } from './LessonGradingPanel';
@@ -68,7 +67,9 @@ const AttachmentPreview = dynamic(
 
 const RubricGradingMatrix = dynamic(
   () =>
-    import('@/components/assessment/RubricGradingMatrix').then(module => module.RubricGradingMatrix),
+    import('@/components/assessment/RubricGradingMatrix').then(
+      module => module.RubricGradingMatrix
+    ),
   { loading: () => <WorkbookLoading /> }
 );
 
@@ -99,7 +100,9 @@ export function TaskGradingSheet({
             {studentName} · {props.task.title}
           </SheetTitle>
           <SheetDescription>
-            Review this student's work and save a score and feedback.
+            {props.task.kind === 'quiz'
+              ? "Review this student's automatically graded quiz results."
+              : "Review this student's work and save a score and feedback."}
           </SheetDescription>
         </SheetHeader>
         <div className='min-h-0 flex-1 space-y-5 overflow-y-auto p-4'>
@@ -112,7 +115,7 @@ export function TaskGradingSheet({
               }}
             />
           ) : (
-            <QuizGrading {...props} />
+            <QuizResults task={props.task} enrollmentId={props.enrollmentId} />
           )}
         </div>
       </SheetContent>
@@ -219,6 +222,8 @@ function AssignmentSubmissionGrade({
 }) {
   const client = useQueryClient();
   const mutation = useMutation(gradeSubmissionMutation());
+  const profile = useUserProfile();
+  const instructorUuid = profile?.instructor?.uuid;
   const maxScore = submission.max_score ?? task.maxPoints;
   const isReadOnly = isTaskGraded(submission);
 
@@ -270,6 +275,16 @@ function AssignmentSubmissionGrade({
             toast.success('Assignment grade saved.');
             await Promise.all([
               client.invalidateQueries({
+                queryKey: getSubmissionAnalyticsQueryKey({ path: { assignmentUuid: task.uuid } }),
+              }),
+              ...(instructorUuid
+                ? [
+                    client.invalidateQueries({
+                      queryKey: getPendingGradingQueryKey({ path: { instructorUuid } }),
+                    }),
+                  ]
+                : []),
+              client.invalidateQueries({
                 queryKey: getAssignmentSubmissionsQueryKey({ path: { assignmentUuid: task.uuid } }),
               }),
               client.invalidateQueries({
@@ -307,7 +322,10 @@ function AssignmentGradeForm({
 }
 
 // A rubric's score is its plain sum out of its own maximum, never the assignment's configured maximum.
-function RubricGradeForm({ rubricId, ...props }: Omit<GradeFormProps, 'maximum'> & { rubricId: string }) {
+function RubricGradeForm({
+  rubricId,
+  ...props
+}: Omit<GradeFormProps, 'maximum'> & { rubricId: string }) {
   const [selections, setSelections] = useState<RubricGradeSelections>({});
   const query = useQuery({
     ...getRubricMatrixOptions({ path: { rubricUuid: rubricId } }),
@@ -319,23 +337,20 @@ function RubricGradeForm({ rubricId, ...props }: Omit<GradeFormProps, 'maximum'>
     () =>
       sourceMatrix?.rubric.uuid
         ? {
-          ...sourceMatrix,
-          rubric: { ...sourceMatrix.rubric, uuid: sourceMatrix.rubric.uuid },
-          criteria: sourceMatrix.criteria.flatMap(criterion =>
-            criterion.uuid ? [{ ...criterion, uuid: criterion.uuid }] : []
-          ),
-          scoring_levels: sourceMatrix.scoring_levels.flatMap(level =>
-            level.uuid ? [{ ...level, uuid: level.uuid }] : []
-          ),
-        }
+            ...sourceMatrix,
+            rubric: { ...sourceMatrix.rubric, uuid: sourceMatrix.rubric.uuid },
+            criteria: sourceMatrix.criteria.flatMap(criterion =>
+              criterion.uuid ? [{ ...criterion, uuid: criterion.uuid }] : []
+            ),
+            scoring_levels: sourceMatrix.scoring_levels.flatMap(level =>
+              level.uuid ? [{ ...level, uuid: level.uuid }] : []
+            ),
+          }
         : undefined,
     [sourceMatrix]
   );
   const grade = useMemo(
-    () =>
-      sourceMatrix
-        ? calculateRubricGrade(sourceMatrix, selections)
-        : undefined,
+    () => (sourceMatrix ? calculateRubricGrade(sourceMatrix, selections) : undefined),
     [sourceMatrix, selections]
   );
 
@@ -429,7 +444,7 @@ function SubmissionFiles({
   );
 }
 
-function QuizGrading({ task, enrollmentId, onGraded }: GradingProps) {
+function QuizResults({ task, enrollmentId }: Pick<GradingProps, 'task' | 'enrollmentId'>) {
   const [selectedId, setSelectedId] = useState('');
   const query = useInfiniteQuery({
     ...searchAttemptsInfiniteOptions({
@@ -483,16 +498,16 @@ function QuizGrading({ task, enrollmentId, onGraded }: GradingProps) {
             (!isTaskSubmitted(attempt) ? (
               <EmptyState
                 title='Quiz in progress'
-                description='Grading becomes available once the student submits this attempt.'
+                description='Results become available once the student submits this attempt.'
               />
             ) : (
-              <QuizAttemptGrade key={attempt.uuid} attempt={attempt} onGraded={onGraded} />
+              <QuizAttemptResults key={attempt.uuid} attempt={attempt} />
             ))}
         </>
       ) : (
         <EmptyState
           title='No quiz attempt yet'
-          description='This quiz is assigned to the student. Their submitted answers will appear here for grading.'
+          description='This quiz is assigned to the student. Their submitted answers and automatic results will appear here.'
         />
       )}
       {query.hasNextPage && (
@@ -508,16 +523,7 @@ function QuizGrading({ task, enrollmentId, onGraded }: GradingProps) {
   );
 }
 
-function QuizAttemptGrade({
-  attempt,
-  onGraded,
-}: {
-  attempt: QuizAttempt;
-  onGraded: (grade: string) => void;
-}) {
-  const client = useQueryClient();
-  const mutation = useMutation(gradeQuizTextResponseMutation());
-  const isReadOnly = isTaskGraded(attempt);
+function QuizAttemptResults({ attempt }: { attempt: QuizAttempt }) {
   // Mounted only for an identified, submitted attempt.
   const options = {
     path: { quizUuid: attempt.quiz_uuid, attemptUuid: attempt.uuid! },
@@ -538,16 +544,18 @@ function QuizAttemptGrade({
   return (
     <div className='space-y-5'>
       <p className='text-muted-foreground text-sm'>
-        Objective answers are graded automatically. Grade each written answer below.
+        Quizzes are graded automatically. Review the student’s answers and results below.
       </p>
       <Badge variant='secondary'>
-        {review.status ?? attempt.status} · {review.score ?? attempt.score ?? 0} /{' '}
-        {review.max_score ?? attempt.max_score ?? 0}
+        {quizResultLabel({
+          ...attempt,
+          score: review.score ?? attempt.score,
+          max_score: review.max_score ?? attempt.max_score,
+        })}
       </Badge>
       {[...review.questions]
         .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0))
         .map((question, index) => {
-          const written = isWrittenQuestion(question.question_type);
           const selectedOption = question.options?.find(
             option => option.uuid === question.response?.selected_option_uuid
           );
@@ -560,64 +568,10 @@ function QuizAttemptGrade({
                   selectedOption?.option_text ||
                   'No answer provided'}
               </div>
-              {written && question.uuid ? (
-                <GradeForm
-                  key={`${question.uuid}-${question.response?.points_earned}`}
-                  maximum={question.points ?? 0}
-                  initialScore={question.response?.points_earned}
-                  isPending={mutation.isPending}
-                  isReadOnly={isReadOnly}
-                  label={`Score for question ${index + 1}`}
-                  onSave={async (points, feedback) => {
-                    if (
-                      !attempt.quiz_uuid ||
-                      !attempt.uuid ||
-                      !question.uuid ||
-                      !isTaskSubmitted(attempt) ||
-                      mutation.isPending
-                    )
-                      return;
-                    const response = await mutation.mutateAsync({
-                      path: {
-                        quizUuid: attempt.quiz_uuid,
-                        attemptUuid: attempt.uuid,
-                        questionUuid: question.uuid,
-                      },
-                      body: { points, feedback: feedback || null },
-                    });
-                    if (hasApiError(response))
-                      throw new Error(response.message || 'Unable to save grade.');
-                    const updated = response.data;
-                    onGraded(
-                      updated?.status.toUpperCase() === 'GRADED'
-                        ? taskGradeLabel(updated)
-                        : 'Grading in progress'
-                    );
-                    toast.success('Quiz response grade saved.');
-                    await Promise.all([
-                      client.invalidateQueries({ queryKey: getStudentQuizReviewQueryKey(options) }),
-                      client.invalidateQueries({
-                        queryKey: getQuizAttemptsQueryKey({
-                          path: { quizUuid: attempt.quiz_uuid },
-                          query: { pageable: {} },
-                        }),
-                      }),
-                      client.invalidateQueries({
-                        queryKey: searchAttemptsQueryKey({
-                          query: {
-                            searchParams: {},
-                            pageable: {},
-                          },
-                        }),
-                      }),
-                    ]);
-                  }}
-                />
-              ) : (
-                <p className='text-muted-foreground text-sm'>
-                  Auto-graded: {question.response?.points_earned ?? 0} / {question.points ?? 0}
-                </p>
-              )}
+              <p className='text-muted-foreground text-sm'>
+                Auto-graded: {question.response?.points_earned ?? 'Pending'} /{' '}
+                {question.points ?? '—'}
+              </p>
             </section>
           );
         })}

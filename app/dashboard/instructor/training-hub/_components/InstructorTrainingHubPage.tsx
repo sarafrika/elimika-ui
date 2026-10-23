@@ -12,12 +12,13 @@ import {
   ClipboardCheck,
   ClipboardList,
   FileCheck2,
+  FolderKanban,
   Users,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ReportsDueSection } from './ReportsDueSection';
+import { EmptyState } from '../../../../../components/ui/empty-state';
 import { TrainingHubSectionHeader } from './TrainingHubSectionHeader';
 
 function TabLoading() {
@@ -49,6 +50,10 @@ const AssessmentTab = dynamic(
     import('@/components/assessment/shared-assessment-workspace').then(
       module => module.SharedAssessmentWorkspace
     ),
+  { loading: TabLoading }
+);
+const AttendanceTab = dynamic(
+  () => import('./TrainingHubAttendanceTab').then(module => module.TrainingHubAttendanceTab),
   { loading: TabLoading }
 );
 
@@ -133,9 +138,9 @@ export function InstructorTrainingHubPage() {
         description='Manage your courses, classes, assignments, and assessments in one place.'
       />
 
-      <div className='w-full 2xl:max-w-[80%] mt-4'>
+      {/* <div className='w-full 2xl:max-w-[80%] mt-4'>
         <ReportsDueSection />
-      </div>
+      </div> */}
 
       <section className='grid w-full max-w-full min-w-0 gap-4 overflow-hidden sm:w-full'>
         <div className='min-w-0 space-y-3 overflow-hidden'>
@@ -214,11 +219,16 @@ export function InstructorTrainingHubPage() {
             <TabsContent value='assessment' className='min-w-0'>
               <AssessmentTab role='instructor' />
             </TabsContent>
-            <TabsContent value='progress'>
-              <div>Coming soon</div>
+            <TabsContent value='progress' className='p-3'>
+              <EmptyState
+                icon={FolderKanban}
+                title='Progress tracking is not yet available'
+                description='Your learning progress, completed activities, and assessment results will appear here when they become available.'
+              />
             </TabsContent>
-            <TabsContent value='attendance'>
-              <div>Coming soon</div>
+
+            <TabsContent value='attendance' className='min-w-0'>
+              <AttendanceTab />
             </TabsContent>
           </Tabs>
         </div>

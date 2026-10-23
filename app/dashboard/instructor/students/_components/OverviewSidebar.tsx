@@ -1,90 +1,50 @@
 'use client';
 
-import { ArrowRight, CheckCircle, GraduationCap, Users } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
-
+import { useState } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import type { InstructorStudentsData } from '../data';
 import { CourseList } from './CourseList';
-import { OverviewStats } from './OverviewStats';
 import { RecentActivityList } from './RecentActivityList';
 
 export function OverviewSidebar({ data }: { data: InstructorStudentsData }) {
-  const router = useRouter();
-
-  const [showAllCourses, setShowAllCourses] = useState(false);
-
+  const [showAllActivity, setShowAllActivity] = useState(false);
   const { recentActivities, classes, students } = data;
 
-  const stats = useMemo(() => {
-    const totalStudents = students.length;
-    const enrolledStudents = students.filter(student => student.status === 'Enrolled').length;
-    const graduatedStudents = students.filter(student => student.status === 'Graduated').length;
-
-    return [
-      {
-        value: totalStudents,
-        label: 'Total Students',
-        icon: <Users className='h-5 w-5' />,
-      },
-      {
-        value: enrolledStudents,
-        label: 'Enrolled',
-        icon: <GraduationCap className='h-5 w-5' />,
-        highlight: true,
-      },
-      {
-        value: graduatedStudents,
-        label: 'Graduated',
-        icon: <CheckCircle className='h-5 w-5' />,
-      },
-    ];
-  }, [students]);
-
-  const visibleClasses = showAllCourses ? classes : classes.slice(0, 5);
-
   return (
-    <aside className='w-full shrink-0 space-y-5 xl:w-90'>
-      <section className='bg-card border-border space-y-3 rounded-xl border p-4'>
-        <h2 className='text-foreground text-base font-semibold'>Overview</h2>
-
-        <OverviewStats stats={stats} />
-      </section>
-
-      <section className='bg-card border-border space-y-3 rounded-xl border p-4'>
-        <div className='flex items-center justify-between'>
-          <h2 className='text-foreground text-base font-semibold'>Courses You Teach</h2>
-
-          <button
-            onClick={() => setShowAllCourses(prev => !prev)}
-            className='text-primary hover:bg-primary/5 cursor-pointer rounded-sm p-2 text-xs font-medium'
+    <aside className='grid w-full min-w-0 grid-cols-1 items-start gap-5 lg:grid-cols-2'>
+      <Card className='min-w-0 gap-0 rounded-2xl py-0 shadow-none'>
+        <CardHeader className='flex flex-row items-center justify-between gap-3 px-5 pt-4 pb-2'>
+          <h3 className='text-sm font-semibold'>Classes you teach</h3>
+          <Button asChild variant='link' size='sm' className='h-auto shrink-0 p-0 text-xs'>
+            <Link href='/dashboard/instructor/training-hub?tab=classes'>View all</Link>
+          </Button>
+        </CardHeader>
+        <CardContent className='px-5 pb-4'>
+          <CourseList classes={classes.slice(0, 5)} />
+        </CardContent>
+      </Card>
+      <Card className='min-w-0 gap-0 rounded-2xl py-0 shadow-none'>
+        <CardHeader className='flex flex-row items-center justify-between gap-3 px-5 pt-4 pb-2'>
+          <h3 className='text-sm font-semibold'>Recent activity</h3>
+          <Button
+            variant='link'
+            size='sm'
+            className='h-auto shrink-0 p-0 text-xs'
+            disabled={recentActivities.length <= 2}
+            onClick={() => setShowAllActivity(previous => !previous)}
           >
-            {showAllCourses ? 'Show less' : 'View all'}
-          </button>
-        </div>
-
-        <CourseList classes={visibleClasses} />
-
-        <button
-          onClick={() => router.push('/dashboard/instructor/training-hub')}
-          className='text-primary hover:bg-primary/5 flex w-full cursor-pointer items-center justify-between rounded-sm p-2 text-sm font-medium'
-        >
-          View all courses
-          <ArrowRight className='h-4 w-4' />
-        </button>
-      </section>
-
-      <section className='bg-card border-border space-y-3 rounded-xl border p-4'>
-        <div className='flex items-center justify-between'>
-          <h2 className='text-foreground text-base font-semibold'>Recent Activity</h2>
-
-          <button className='text-primary hover:bg-primary/5 cursor-pointer rounded-sm p-2 text-xs font-medium'>
-            View all
-          </button>
-        </div>
-
-        <RecentActivityList activities={recentActivities} />
-      </section>
+            {showAllActivity ? 'Show less' : 'View all'}
+          </Button>
+        </CardHeader>
+        <CardContent className='px-5 pb-4'>
+          <RecentActivityList
+            activities={showAllActivity ? recentActivities : recentActivities.slice(0, 2)}
+            students={students}
+          />
+        </CardContent>
+      </Card>
     </aside>
   );
 }

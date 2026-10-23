@@ -5,12 +5,7 @@ import dynamic from 'next/dynamic';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -33,18 +28,15 @@ import {
   getCourseEnrollmentsInfiniteOptions,
   getEnrollmentsForClassOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { ClassAssignmentSchedule, ClassQuizSchedule } from '@/services/client/types.gen';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import { isTaskGraded, isTaskSubmitted, taskGradeLabel } from './grading';
+import { isTaskGraded, isTaskSubmitted, quizResultLabel, taskGradeLabel } from './grading';
 import { useLessonTaskGrades } from './useLessonTaskGrades';
 import { invalidateSessionReportData } from './session-report-cache';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
 import { useWorkbookNavigation } from './useWorkbookNavigation';
-import {
-  hasApiError,
-  nextWorkbookPage,
-  WORKBOOK_PAGE_SIZE,
-} from './workbook-data';
+import { hasApiError, nextWorkbookPage, WORKBOOK_PAGE_SIZE } from './workbook-data';
 
 const LessonScoringSheet = dynamic(
   () => import('./LessonScoringSheet').then(module => module.LessonScoringSheet),
@@ -64,6 +56,7 @@ export type LessonGradingTask = {
   maxPoints?: number;
   rubricId?: string | null;
   dueAt?: Date;
+  schedule?: ClassAssignmentSchedule | ClassQuizSchedule;
 };
 
 export function LessonGradingPanel({
@@ -72,12 +65,14 @@ export function LessonGradingPanel({
   lessonId,
   sessionId,
   tasks,
+  scope = 'session',
 }: {
   classId: string;
   courseId: string;
   lessonId?: string;
   sessionId?: string;
   tasks: LessonGradingTask[];
+  scope?: 'session' | 'class';
 }) {
   const client = useQueryClient();
   const { searchParams, navigate } = useWorkbookNavigation();
@@ -91,10 +86,14 @@ export function LessonGradingPanel({
     enrollmentId: string;
     task: LessonGradingTask;
   } | null>(null);
-  const [scoring, setScoring] = useState<{ enrollmentId: string; studentName: string } | null>(null);
+  const [scoring, setScoring] = useState<{ enrollmentId: string; studentName: string } | null>(
+    null
+  );
 
   // A lesson is scored on a rubric only when the course's evaluation plan has a per-lesson rubric component.
-  const courseAssessments = useCourseAssessmentsByCourseUuids([courseId]);
+  const courseAssessments = useCourseAssessmentsByCourseUuids(
+    scope === 'session' ? [courseId] : []
+  );
   const hasLessonRubric = courseAssessments.items.some(
     assessment => assessment.per_lesson && assessment.rubric_uuid
   );
@@ -103,7 +102,7 @@ export function LessonGradingPanel({
     ...getEnrollmentsForClassOptions({
       path: { uuid: classId },
     }),
-    enabled: Boolean(classId && sessionId),
+    enabled: Boolean(classId && (scope === 'class' || sessionId)),
     staleTime: STALE_TIMES.live,
   });
 
@@ -119,7 +118,7 @@ export function LessonGradingPanel({
     }),
     initialPageParam: 0,
     getNextPageParam: nextWorkbookPage,
-    enabled: Boolean(courseId && sessionId),
+    enabled: Boolean(courseId && (scope === 'class' || sessionId)),
     staleTime: STALE_TIMES.live,
   });
 
@@ -131,19 +130,17 @@ export function LessonGradingPanel({
         (rosterQuery.data?.data ?? [])
           .filter(
             entry =>
-              entry.scheduled_instance_uuid === sessionId &&
-              ['ENROLLED', 'ATTENDED', 'ABSENT'].includes(entry.status ?? '')
+              (scope === 'class' || entry.scheduled_instance_uuid === sessionId) &&
+              ['ENROLLED', 'ATTENDED', 'ABSENT'].includes(entry.status?.toUpperCase() ?? '')
           )
           .map(entry => [entry.student_uuid, entry])
       ).values(),
     ];
-  }, [rosterQuery.data, sessionId]);
+  }, [rosterQuery.data, sessionId, scope]);
 
   const visibleRoster = useMemo(
     () =>
-      focusedEnrollmentId
-        ? roster.filter(entry => entry.uuid === focusedEnrollmentId)
-        : roster,
+      focusedEnrollmentId ? roster.filter(entry => entry.uuid === focusedEnrollmentId) : roster,
     [roster, focusedEnrollmentId]
   );
 
@@ -161,19 +158,14 @@ export function LessonGradingPanel({
     [courseQuery.data, courseId]
   );
 
-  const studentIds = useMemo(
-    () => visibleRoster.map(entry => entry.student_uuid),
-    [visibleRoster]
-  );
+  const studentIds = useMemo(() => visibleRoster.map(entry => entry.student_uuid), [visibleRoster]);
 
   const students = useStudentsByIds(studentIds);
 
   const userIds = useMemo(
     () =>
       studentIds.flatMap(id =>
-        students.studentMap[id]?.user_uuid
-          ? [students.studentMap[id].user_uuid]
-          : []
+        students.studentMap[id]?.user_uuid ? [students.studentMap[id].user_uuid] : []
       ),
     [studentIds, students.studentMap]
   );
@@ -183,19 +175,17 @@ export function LessonGradingPanel({
   const rows = useMemo(
     () =>
       visibleRoster
-        .map(entry => ({
-          studentId: entry.student_uuid,
-          enrollmentId: courseEnrollments.get(entry.student_uuid)?.uuid,
-          name:
-            users.userMap[
-              students.studentMap[entry.student_uuid]?.user_uuid
-            ]?.full_name ||
-            students.studentMap[entry.student_uuid]?.full_name ||
-            'Student',
-        }))
-        .filter(entry =>
-          focusedEnrollmentId || entry.name.toLowerCase().includes(deferredSearch)
-        ),
+        .map(entry => {
+          const student = students.studentMap[entry.student_uuid];
+          const user = student?.user_uuid ? users.userMap[student.user_uuid] : undefined;
+          const name = user?.full_name || student?.full_name;
+          return {
+            studentId: entry.student_uuid,
+            enrollmentId: courseEnrollments.get(entry.student_uuid)?.uuid,
+            name: typeof name === 'string' && name.trim() ? name : 'Student',
+          };
+        })
+        .filter(entry => focusedEnrollmentId || entry.name.toLowerCase().includes(deferredSearch)),
     [
       visibleRoster,
       courseEnrollments,
@@ -207,27 +197,17 @@ export function LessonGradingPanel({
   );
 
   const enrollmentIds = useMemo(
-    () =>
-      rows.flatMap(student =>
-        student.enrollmentId ? [student.enrollmentId] : []
-      ),
+    () => rows.flatMap(student => (student.enrollmentId ? [student.enrollmentId] : [])),
     [rows]
   );
 
   const grades = useLessonTaskGrades(tasks, enrollmentIds);
 
-  if (!sessionId) {
-    return (
-      <EmptyState title='Select a class session to grade its students' />
-    );
+  if (scope === 'session' && !sessionId) {
+    return <EmptyState title='Select a class session to grade its students' />;
   }
 
-  if (
-    rosterQuery.isLoading ||
-    courseQuery.isLoading ||
-    students.isLoading ||
-    users.isLoading
-  ) {
+  if (rosterQuery.isLoading || courseQuery.isLoading || students.isLoading || users.isLoading) {
     return <WorkbookLoading />;
   }
 
@@ -255,11 +235,15 @@ export function LessonGradingPanel({
   return (
     <div className='space-y-6'>
       <div className='space-y-2'>
-        <h2 className='text-xl font-semibold'>Grading</h2>
+        <h2 className='text-xl font-semibold'>
+          {tasks.length > 0 && tasks.every(task => task.kind === 'quiz')
+            ? 'Quiz results'
+            : 'Grading'}
+        </h2>
 
         <p className='text-muted-foreground text-sm'>
-          Review each student's assigned tasks for this lesson and save their
-          grades.
+          Review assignment submissions and save grades. Quizzes are graded automatically; view each
+          student's results.
         </p>
 
         <div className='flex flex-wrap items-center gap-2'>
@@ -289,7 +273,9 @@ export function LessonGradingPanel({
       </div>
 
       {!roster.length ? (
-        <EmptyState title='No students enrolled in this session' />
+        <EmptyState
+          title={`No students enrolled in this ${scope === 'class' ? 'class' : 'session'}`}
+        />
       ) : !rows.length ? (
         <EmptyState
           title={
@@ -317,13 +303,10 @@ export function LessonGradingPanel({
                 </Avatar>
 
                 <div className='min-w-0'>
-                  <CardTitle className='truncate text-base'>
-                    {student.name}
-                  </CardTitle>
+                  <CardTitle className='truncate text-base'>{student.name}</CardTitle>
 
                   <p className='text-muted-foreground text-sm'>
-                    {tasks.length} assigned{' '}
-                    {tasks.length === 1 ? 'task' : 'tasks'}
+                    {tasks.length} assigned {tasks.length === 1 ? 'task' : 'tasks'}
                   </p>
                 </div>
 
@@ -363,9 +346,7 @@ export function LessonGradingPanel({
                     <TableBody>
                       {tasks.map(task => {
                         const gradeResult = (
-                          task.kind === 'assignment'
-                            ? grades.submissionMap
-                            : grades.attemptMap
+                          task.kind === 'assignment' ? grades.submissionMap : grades.attemptMap
                         ).get(`${student.enrollmentId}-${task.uuid}`);
 
                         const isLoading =
@@ -374,15 +355,13 @@ export function LessonGradingPanel({
                             : grades.quizLoading;
 
                         const hasError =
-                          task.kind === 'assignment'
-                            ? grades.assignmentError
-                            : grades.quizError;
+                          task.kind === 'assignment' ? grades.assignmentError : grades.quizError;
 
                         const canReview = Boolean(
                           student.enrollmentId &&
-                          !isLoading &&
-                          !hasError &&
-                          isTaskSubmitted(gradeResult)
+                            !isLoading &&
+                            !hasError &&
+                            isTaskSubmitted(gradeResult)
                         );
 
                         const isGraded = isTaskGraded(gradeResult);
@@ -392,18 +371,14 @@ export function LessonGradingPanel({
                             {/* Task */}
                             <TableCell className='py-4'>
                               <div className='min-w-0'>
-                                <p className='font-medium whitespace-normal'>
-                                  {task.title}
-                                </p>
+                                <p className='font-medium whitespace-normal'>{task.title}</p>
                               </div>
                             </TableCell>
 
                             {/* Type */}
                             <TableCell className='py-4'>
                               <Badge variant='secondary' className='font-normal'>
-                                {task.kind === 'assignment'
-                                  ? 'Assignment'
-                                  : 'Quiz'}
+                                {task.kind === 'assignment' ? 'Assignment' : 'Quiz'}
                               </Badge>
                             </TableCell>
 
@@ -411,9 +386,7 @@ export function LessonGradingPanel({
                             <TableCell className='py-4'>
                               <div className='space-y-1 text-sm'>
                                 <div>
-                                  <span className='text-muted-foreground mr-1.5'>
-                                    Submission
-                                  </span>
+                                  <span className='text-muted-foreground mr-1.5'>Submission</span>
                                   <span className='whitespace-nowrap'>
                                     {formatDateTime(task?.schedule?.due_at, {
                                       fallback: 'No deadline',
@@ -422,48 +395,45 @@ export function LessonGradingPanel({
                                 </div>
 
                                 <div>
-                                  <span className='text-muted-foreground mr-1.5'>
-                                    Grading
-                                  </span>
-                                  <span className='whitespace-nowrap'>
-                                    {formatDateTime(
-                                      task?.schedule?.grading_due_at,
-                                      {
-                                        fallback: 'No deadline',
-                                      }
-                                    )}
-                                  </span>
+                                  {task.kind === 'quiz' ? (
+                                    <span className='text-muted-foreground'>
+                                      Automatically graded
+                                    </span>
+                                  ) : (
+                                    <>
+                                      <span className='text-muted-foreground mr-1.5'>Grading</span>
+                                      <span className='whitespace-nowrap'>
+                                        {formatDateTime(
+                                          task.schedule && 'grading_due_at' in task.schedule
+                                            ? task.schedule.grading_due_at
+                                            : task.dueAt,
+                                          { fallback: 'No deadline' }
+                                        )}
+                                      </span>
+                                    </>
+                                  )}
                                 </div>
                               </div>
                             </TableCell>
 
                             {/* Grade */}
                             <TableCell className='py-4'>
-                              {!student.enrollmentId &&
-                                courseQuery.hasNextPage ? (
+                              {!student.enrollmentId && courseQuery.hasNextPage ? (
                                 <span className='text-muted-foreground text-sm'>
                                   Student record not loaded
                                 </span>
                               ) : isLoading ? (
-                                <Skeleton
-                                  className='h-5 w-24'
-                                  aria-label='Loading grade'
-                                />
+                                <Skeleton className='h-5 w-24' aria-label='Loading grade' />
                               ) : hasError ? (
-                                <Button
-                                  variant='ghost'
-                                  size='sm'
-                                  onClick={grades.refetch}
-                                >
+                                <Button variant='ghost' size='sm' onClick={grades.refetch}>
                                   Retry
                                 </Button>
                               ) : (
                                 <div className='space-y-0.5'>
                                   <Badge variant='outline'>
-                                    {taskGradeLabel(
-                                      gradeResult,
-                                      task.maxPoints
-                                    )}
+                                    {task.kind === 'quiz'
+                                      ? quizResultLabel(gradeResult)
+                                      : taskGradeLabel(gradeResult, task.maxPoints)}
                                   </Badge>
                                 </div>
                               )}
@@ -485,10 +455,19 @@ export function LessonGradingPanel({
                                     task,
                                   });
                                 }}
-                                aria-label={`${isGraded ? 'Review' : 'Review and grade'
-                                  } ${task.title} for ${student.name}`}
+                                aria-label={`${
+                                  task.kind === 'quiz'
+                                    ? 'View results for'
+                                    : isGraded
+                                      ? 'Review'
+                                      : 'Review and grade'
+                                } ${task.title} for ${student.name}`}
                               >
-                                {isGraded ? 'Review' : 'Review & grade'}
+                                {task.kind === 'quiz'
+                                  ? 'View results'
+                                  : isGraded
+                                    ? 'Review'
+                                    : 'Review & grade'}
                               </Button>
                             </TableCell>
                           </TableRow>

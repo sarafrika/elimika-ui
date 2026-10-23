@@ -4,26 +4,18 @@ interface ProgressBarProps {
 }
 
 export function ProgressBar({ value }: ProgressBarProps) {
-  const safeValue = Math.max(0, Math.min(100, value));
-
-  const getColorClass = (value: number) => {
-    if (value === 100) return 'bg-primary';
-    if (value >= 70) return 'bg-primary/80';
-    if (value >= 40) return 'bg-primary/60';
-    return 'bg-primary/40';
-  };
+  const safeValue = Number.isFinite(value) ? Math.max(0, Math.min(100, value)) : 0;
 
   return (
-    <div className='flex w-full min-w-[80px] flex-col items-center gap-2'>
-      <span className='text-foreground w-9 self-start text-start text-sm font-medium'>
-        {safeValue}%
-      </span>
+    <div className='flex w-full min-w-20 flex-col items-start gap-1.5'>
+      <span className='text-foreground text-xs font-semibold tabular-nums'>{safeValue}%</span>
 
-      <div className='bg-muted h-1.5 w-full min-w-[48px] overflow-hidden rounded-full'>
+      <div className='bg-border h-1.25 w-full overflow-hidden rounded-full'>
         <div
-          className={`h-full rounded-full transition-all ${getColorClass(safeValue)}`}
+          className='bg-primary h-full rounded-full transition-all'
           style={{ width: `${safeValue}%` }}
           role='progressbar'
+          aria-label='Course progress'
           aria-valuenow={safeValue}
           aria-valuemin={0}
           aria-valuemax={100}
