@@ -14,7 +14,13 @@ import Spinner from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import type { Withdrawal } from '@/services/client/types.gen';
 import type { WalletScope } from './wallet-scope';
-import { REVIEW_FLAG_LABELS, useWithdrawals, WITHDRAWAL_STATUS, withdrawalActions } from './withdrawal-api';
+import {
+  REVIEW_FLAG_LABELS,
+  usePayoutRules,
+  useWithdrawals,
+  WITHDRAWAL_STATUS,
+  withdrawalActions,
+} from './withdrawal-api';
 
 const FILTERS: { id: string; label: string; statuses?: string[] }[] = [
   { id: 'all', label: 'All' },
@@ -103,6 +109,15 @@ export function WithdrawalsPanel({
   const actions = withdrawalActions(scope);
   const [open, setOpen] = useState<Withdrawal | null>(null);
   const [busy, setBusy] = useState(false);
+  const { rules } = usePayoutRules(active);
+  // Say why there is no Withdraw button instead of leaving it out silently.
+  const blocked = onWithdraw
+    ? null
+    : rules?.withdrawals_enabled === false
+      ? 'Withdrawals to M-Pesa are not open yet. Your balance stays safely in the wallet until they are.'
+      : rules && scope.kind === 'organisation' && !canApprove
+        ? 'Only payout approvers can withdraw from the organisation wallet. Any admin can name approvers under Payout details.'
+        : null;
 
   const act = async (call: () => Promise<{ error?: string; data?: Withdrawal }>, success: string) => {
     setBusy(true);
@@ -132,6 +147,7 @@ export function WithdrawalsPanel({
             </Button>
           ) : null}
         </div>
+        {blocked ? <p className='bg-muted text-muted-foreground rounded-md px-3 py-2 text-sm'>{blocked}</p> : null}
         <div className='flex flex-wrap gap-2'>
           {FILTERS.map(f => (
             <Button
@@ -157,9 +173,9 @@ export function WithdrawalsPanel({
             description='Withdrawals you make to M-Pesa appear here with their receipts.'
           />
         ) : (
-          <div className='divide-y'>
+          <ul className='divide-y'>
             {query.rows.map(w => (
-              <div key={w.uuid} className='flex items-center justify-between gap-3 py-3'>
+              <li key={w.uuid} className='flex items-center justify-between gap-3 py-3'>
                 <div className='flex min-w-0 items-center gap-3'>
                   <span aria-hidden className='bg-warning/10 text-warning grid size-8 shrink-0 place-items-center rounded-full'>
                     <ArrowUpRight className='size-4' />
@@ -181,9 +197,9 @@ export function WithdrawalsPanel({
                     View
                   </Button>
                 </div>
-              </div>
+              </li>
             ))}
-          </div>
+          </ul>
         )}
         {query.hasNextPage ? (
           <div className='flex justify-center pt-3'>
