@@ -12,8 +12,9 @@ const withdrawal = (status: string, extra: Record<string, unknown> = {}) => ({
   requested_by_user_uuid: USER, created_date: '2026-10-23T08:00:00Z', review_flags: [], ...extra,
 });
 
-async function instructorWallet(page: Page, baseURL: string, canWithdraw: boolean, rules = RULES, methods = [METHOD]) {
-  const api = await signedInAs(page, 'instructor', baseURL, 23880);
+async function instructorWallet(page: Page, baseURL: string, canWithdraw: boolean, rules = RULES, methods = [METHOD],
+  role: 'instructor' | 'course_creator' = 'instructor') {
+  const api = await signedInAs(page, role, baseURL, 23880);
   api
     .get(/\/api\/v1\/wallets\/[^/]+$/, { uuid: 'w1', user_uuid: USER, owner_type: 'USER', owner_uuid: USER, currency_code: 'KES',
       balance_amount: 23880, held_amount: 0, available_amount: 23880, can_withdraw: canWithdraw })
@@ -25,8 +26,9 @@ async function instructorWallet(page: Page, baseURL: string, canWithdraw: boolea
 }
 
 test.describe('Withdrawals', () => {
-  test('an instructor withdraws to M-Pesa with the SMS code and sees it paid', async ({ page, baseURL }) => {
-    const api = await instructorWallet(page, baseURL ?? '', true);
+  for (const [role, path, who] of [['instructor', 'instructor', 'an instructor'], ['course_creator', 'course-creator', 'a course creator']] as const) {
+  test(`${who} withdraws to M-Pesa with the SMS code and sees it paid`, async ({ page, baseURL }) => {
+    const api = await instructorWallet(page, baseURL ?? '', true, RULES, [METHOD], role);
     api
       .on('POST', /\/api\/v1\/wallets\/[^/]+\/withdrawals$/, {
         withdrawal: withdrawal('AWAITING_CONFIRMATION'),
@@ -36,7 +38,7 @@ test.describe('Withdrawals', () => {
       .get(/\/api\/v1\/wallets\/[^/]+\/withdrawals\/wd-1$/, withdrawal('PAID', { mpesa_receipt: 'TJL4DE02A5' }));
     await api.install(page);
 
-    await page.goto('/dashboard/instructor/wallet?tab=withdrawals');
+    await page.goto(`/dashboard/${path}/wallet?tab=withdrawals`);
     await page.getByRole('button', { name: 'Withdraw', exact: true }).first().click();
     const sheet = page.getByRole('dialog');
     await sheet.getByLabel('Amount (KES)').fill('2000');
@@ -54,6 +56,7 @@ test.describe('Withdrawals', () => {
     expect((request?.body as { idempotency_key?: string }).idempotency_key).toBeTruthy();
     expect(api.callsTo('POST', /\/confirm$/)[0]?.body).toEqual({ code: '574851' });
   });
+  }
 
   test('asks for a payout number before anything else', async ({ page, baseURL }) => {
     const api = await instructorWallet(page, baseURL ?? '', true, RULES, []);
