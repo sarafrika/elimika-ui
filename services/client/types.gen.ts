@@ -608,17 +608,17 @@ export type AssessmentRubric = {
    */
   readonly is_published?: boolean;
   /**
-   * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
+   * **[READ-ONLY]** Formatted category of the rubric based on its type.
    */
-  readonly usage_status?: string;
+  readonly rubric_category?: string;
   /**
    * **[READ-ONLY]** Scope of the rubric usage. All rubrics are general-use and can be associated with multiple courses.
    */
   readonly assessment_scope?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the rubric based on its type.
+   * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
-  readonly rubric_category?: string;
+  readonly usage_status?: string;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -906,13 +906,13 @@ export type RubricScoring = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Expected score range for this performance level.
-   */
-  readonly score_range?: string;
-  /**
    * **[READ-ONLY]** Classification of performance expectation level.
    */
   readonly performance_expectation?: string;
+  /**
+   * **[READ-ONLY]** Expected score range for this performance level.
+   */
+  readonly score_range?: string;
   /**
    * **[READ-ONLY]** Indicates if this scoring level represents passing performance.
    */
@@ -3209,21 +3209,21 @@ export type Course = {
    */
   readonly accepts_new_enrollments?: boolean;
   /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
    */
   readonly has_multiple_categories?: boolean;
   /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
+   * **[READ-ONLY]** Human-readable format of total course duration.
    */
-  readonly category_count?: number;
+  readonly total_duration_display?: string;
   /**
    * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
    */
   readonly lifecycle_stage?: string;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
 };
 
 /**
@@ -5751,13 +5751,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
-   */
-  readonly assignment_category?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
    */
   readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
+   */
+  readonly assignment_category?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -9915,8 +9915,8 @@ export type PageMetadata = {
   totalPages?: number;
   hasNext?: boolean;
   hasPrevious?: boolean;
-  first?: boolean;
   last?: boolean;
+  first?: boolean;
 };
 
 export type PagedDtoWithdrawal = {
@@ -10120,6 +10120,10 @@ export type PayoutRules = {
    * Hours a newly added number is held before it can receive money
    */
   new_number_hold_hours?: bigint;
+  /**
+   * False while withdrawals are switched off for everyone
+   */
+  withdrawals_enabled?: boolean;
 };
 
 export type ApiResponsePagedDtoUser = {
@@ -10410,12 +10414,12 @@ export type PageSessionReportSummary = {
   totalElements?: bigint;
   totalPages?: number;
   pageable?: PageableObject;
+  first?: boolean;
+  last?: boolean;
   size?: number;
   content?: Array<SessionReportSummary>;
   number?: number;
   sort?: SortObject;
-  first?: boolean;
-  last?: boolean;
   numberOfElements?: number;
   empty?: boolean;
 };
@@ -10689,12 +10693,12 @@ export type Page = {
   totalElements?: bigint;
   totalPages?: number;
   pageable?: PageableObject;
+  first?: boolean;
+  last?: boolean;
   size?: number;
   content?: Array<unknown>;
   number?: number;
   sort?: SortObject;
-  first?: boolean;
-  last?: boolean;
   numberOfElements?: number;
   empty?: boolean;
 };
@@ -11416,14 +11420,6 @@ export type ProgramEnrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the program.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
   readonly enrollment_duration?: string;
@@ -11431,6 +11427,14 @@ export type ProgramEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the program.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
    */
@@ -14152,14 +14156,6 @@ export type CourseEnrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
-   */
-  readonly enrollment_category?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the student's progress in the course.
-   */
-  readonly progress_display?: string;
-  /**
    * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
   readonly enrollment_duration?: string;
@@ -14167,6 +14163,14 @@ export type CourseEnrollment = {
    * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
    */
   readonly status_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted category of the enrollment based on current status.
+   */
+  readonly enrollment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the student's progress in the course.
+   */
+  readonly progress_display?: string;
   /**
    * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
    */
@@ -17651,6 +17655,7 @@ export const EventTypeEnum2 = {
   PAYOUT_APPROVER_REMOVED: 'PAYOUT_APPROVER_REMOVED',
   WITHDRAWAL_REQUESTED: 'WITHDRAWAL_REQUESTED',
   WITHDRAWAL_CONFIRMED: 'WITHDRAWAL_CONFIRMED',
+  WITHDRAWAL_HELD: 'WITHDRAWAL_HELD',
   WITHDRAWAL_SECOND_APPROVED: 'WITHDRAWAL_SECOND_APPROVED',
   WITHDRAWAL_APPROVED: 'WITHDRAWAL_APPROVED',
   WITHDRAWAL_REJECTED: 'WITHDRAWAL_REJECTED',

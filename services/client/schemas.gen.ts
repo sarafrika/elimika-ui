@@ -1206,10 +1206,10 @@ export const AssessmentRubricSchema = {
       example: true,
       readOnly: true,
     },
-    usage_status: {
+    rubric_category: {
       type: 'string',
-      description: '**[READ-ONLY]** Comprehensive status indicating usage and accessibility.',
-      example: 'Active Public Rubric',
+      description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
+      example: 'Performance Assessment',
       readOnly: true,
     },
     assessment_scope: {
@@ -1219,10 +1219,10 @@ export const AssessmentRubricSchema = {
       example: 'General Use',
       readOnly: true,
     },
-    rubric_category: {
+    usage_status: {
       type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
-      example: 'Performance Assessment',
+      description: '**[READ-ONLY]** Comprehensive status indicating usage and accessibility.',
+      example: 'Active Public Rubric',
       readOnly: true,
     },
   },
@@ -1799,16 +1799,16 @@ export const RubricScoringSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
-    score_range: {
-      type: 'string',
-      description: '**[READ-ONLY]** Expected score range for this performance level.',
-      example: '5 points',
-      readOnly: true,
-    },
     performance_expectation: {
       type: 'string',
       description: '**[READ-ONLY]** Classification of performance expectation level.',
       example: 'Exceptional Performance',
+      readOnly: true,
+    },
+    score_range: {
+      type: 'string',
+      description: '**[READ-ONLY]** Expected score range for this performance level.',
+      example: '5 points',
       readOnly: true,
     },
     is_passing_level: {
@@ -6673,23 +6673,16 @@ export const CourseSchema = {
       example: true,
       readOnly: true,
     },
-    total_duration_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Human-readable format of total course duration.',
-      example: '40 hours 30 minutes',
-      readOnly: true,
-    },
     has_multiple_categories: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the course belongs to multiple categories.',
       example: true,
       readOnly: true,
     },
-    category_count: {
-      type: 'integer',
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of categories this course belongs to.',
-      example: 2,
+    total_duration_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Human-readable format of total course duration.',
+      example: '40 hours 30 minutes',
       readOnly: true,
     },
     lifecycle_stage: {
@@ -6697,6 +6690,13 @@ export const CourseSchema = {
       description:
         "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage.",
       example: 'Published and Active',
+      readOnly: true,
+    },
+    category_count: {
+      type: 'integer',
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of categories this course belongs to.',
+      example: 2,
       readOnly: true,
     },
   },
@@ -12192,17 +12192,17 @@ export const AssignmentSchema = {
       example: 'instructor@sarafrika.com',
       readOnly: true,
     },
+    points_display: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
+      example: '100.00 points',
+      readOnly: true,
+    },
     assignment_category: {
       type: 'string',
       description:
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.',
       example: 'Theory Assignment',
-      readOnly: true,
-    },
-    points_display: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted display of the maximum points for this assignment.',
-      example: '100.00 points',
       readOnly: true,
     },
     assignment_scope: {
@@ -19506,10 +19506,10 @@ export const PageMetadataSchema = {
     hasPrevious: {
       type: 'boolean',
     },
-    first: {
+    last: {
       type: 'boolean',
     },
-    last: {
+    first: {
       type: 'boolean',
     },
   },
@@ -19864,6 +19864,10 @@ export const PayoutRulesSchema = {
       type: 'integer',
       format: 'int64',
       description: 'Hours a newly added number is held before it can receive money',
+    },
+    withdrawals_enabled: {
+      type: 'boolean',
+      description: 'False while withdrawals are switched off for everyone',
     },
   },
 } as const;
@@ -20513,6 +20517,12 @@ export const PageSessionReportSummarySchema = {
     pageable: {
       $ref: '#/components/schemas/PageableObject',
     },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
+    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -20529,12 +20539,6 @@ export const PageSessionReportSummarySchema = {
     },
     sort: {
       $ref: '#/components/schemas/SortObject',
-    },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
     },
     numberOfElements: {
       type: 'integer',
@@ -21148,6 +21152,12 @@ export const PageSchema = {
     pageable: {
       $ref: '#/components/schemas/PageableObject',
     },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
+    },
     size: {
       type: 'integer',
       format: 'int32',
@@ -21162,12 +21172,6 @@ export const PageSchema = {
     },
     sort: {
       $ref: '#/components/schemas/SortObject',
-    },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
     },
     numberOfElements: {
       type: 'integer',
@@ -22959,18 +22963,6 @@ export const ProgramEnrollmentSchema = {
       example: 'system@sarafrika.com',
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Program Enrollment',
-      readOnly: true,
-    },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_duration: {
       type: 'string',
       description:
@@ -22983,6 +22975,18 @@ export const ProgramEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed program with final grade of 87.25',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Program Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the program.",
+      example: '100.00% Complete',
       readOnly: true,
     },
     is_active: {
@@ -27915,18 +27919,6 @@ export const CourseEnrollmentSchema = {
       example: 'system@sarafrika.com',
       readOnly: true,
     },
-    enrollment_category: {
-      type: 'string',
-      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
-      example: 'Completed Enrollment',
-      readOnly: true,
-    },
-    progress_display: {
-      type: 'string',
-      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
-      example: '100.00% Complete',
-      readOnly: true,
-    },
     enrollment_duration: {
       type: 'string',
       description:
@@ -27939,6 +27931,18 @@ export const CourseEnrollmentSchema = {
       description:
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.',
       example: 'Successfully completed with final grade of 85.50',
+      readOnly: true,
+    },
+    enrollment_category: {
+      type: 'string',
+      description: '**[READ-ONLY]** Formatted category of the enrollment based on current status.',
+      example: 'Completed Enrollment',
+      readOnly: true,
+    },
+    progress_display: {
+      type: 'string',
+      description: "**[READ-ONLY]** Formatted display of the student's progress in the course.",
+      example: '100.00% Complete',
       readOnly: true,
     },
     is_active: {
@@ -33020,6 +33024,7 @@ export const EventTypeEnum2Schema = {
     'PAYOUT_APPROVER_REMOVED',
     'WITHDRAWAL_REQUESTED',
     'WITHDRAWAL_CONFIRMED',
+    'WITHDRAWAL_HELD',
     'WITHDRAWAL_SECOND_APPROVED',
     'WITHDRAWAL_APPROVED',
     'WITHDRAWAL_REJECTED',
