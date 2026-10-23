@@ -3,7 +3,6 @@
 import { ALL_CATEGORIES, CategoryTabs } from '@/components/category-tabs';
 import NotesModal from '@/components/custom-modals/notes-modal';
 import { surfaceTheme } from '@/components/data-display';
-import { FacetChips, FacetChipsSkeleton } from '@/components/search/facet-chips';
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
 import { Button } from '@/components/ui/button';
@@ -1621,7 +1620,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         />
       </div>
 
-      <div className='space-y-6'>
+      <div className=''>
         <div className='mt-4 space-y-2'>
           <SearchQueryInput
             search={search}
@@ -1649,7 +1648,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
           className='mx-0 px-0 sm:mx-0 sm:px-0'
         />
 
-        {!searchDown ? (
+        {/* {!searchDown ? (
           coursesLoading || programsLoading ? (
             <div className='flex flex-wrap gap-6'>
               <FacetChipsSkeleton chips={4} />
@@ -1676,7 +1675,7 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
               />
             </div>
           )
-        ) : null}
+        ) : null} */}
 
         <section className='space-y-2'>
           <div className=''>

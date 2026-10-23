@@ -1,6 +1,6 @@
 'use client';
 
-import { BriefcaseBusiness, Layers } from 'lucide-react';
+import { BriefcaseBusiness } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo } from 'react';
 
@@ -9,7 +9,6 @@ import { PageHeader } from '@/components/dashboard/page-header';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { JobsSectionTabs } from '@/src/features/instructor-jobs/components/jobs-section-tabs';
 import { BlockedWeek } from '@/src/features/instructor-jobs/hired/components/blocked-week';
 import { useNextClassSessions } from '@/src/features/instructor-jobs/hired/use-next-class-sessions';
@@ -57,14 +56,6 @@ export function HiredJobsPage() {
         <PageHeader
           title='Jobs'
           description='Class jobs posted by organisations. Check the fit before you apply, then follow each application through to the class.'
-          actions={
-            <Button variant='outline' asChild>
-              <Link href={dashboardUrl('instructor', 'rate-card')}>
-                <Layers className='size-4' />
-                Rate cards
-              </Link>
-            </Button>
-          }
         />
         <JobsSectionTabs />
 

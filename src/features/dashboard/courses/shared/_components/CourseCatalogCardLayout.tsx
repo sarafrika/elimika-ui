@@ -43,6 +43,8 @@ type CourseCatalogCardLayoutProps = {
   children: ReactNode;
   /** Off where reviews mean nothing, e.g. the apply-to-train picker. */
   showRating?: boolean;
+  /** Opens details in place, with the card's action controls remaining independent. */
+  onDetails?: () => void;
 };
 
 const imageToneClasses = {
@@ -59,6 +61,7 @@ export function CourseCatalogCardLayout({
   stats,
   children,
   showRating = true,
+  onDetails,
 }: CourseCatalogCardLayoutProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
   const videoUrl = toAuthenticatedMediaUrl(card.videoUrl);
@@ -77,6 +80,16 @@ export function CourseCatalogCardLayout({
         >
           <span className='sr-only'>Open {title}</span>
         </IntentLink>
+      ) : onDetails ? (
+        <Button
+          type='button'
+          variant='ghost'
+          onClick={onDetails}
+          aria-haspopup='dialog'
+          className='absolute inset-0 z-[1] h-full w-full rounded-[inherit] p-0 hover:bg-transparent focus-visible:ring-inset'
+        >
+          <span className='sr-only'>Open details for {title}</span>
+        </Button>
       ) : null}
 
       <div className='relative shrink-0'>

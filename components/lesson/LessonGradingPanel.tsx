@@ -2,7 +2,7 @@
 
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import dynamic from 'next/dynamic';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -138,12 +138,6 @@ export function LessonGradingPanel({
     ];
   }, [rosterQuery.data, sessionId, scope]);
 
-  const visibleRoster = useMemo(
-    () =>
-      focusedEnrollmentId ? roster.filter(entry => entry.uuid === focusedEnrollmentId) : roster,
-    [roster, focusedEnrollmentId]
-  );
-
   const courseEnrollments = useMemo(
     () =>
       new Map(
@@ -157,6 +151,29 @@ export function LessonGradingPanel({
       ),
     [courseQuery.data, courseId]
   );
+
+  const visibleRoster = useMemo(
+    () =>
+      focusedEnrollmentId
+        ? roster.filter(
+            entry =>
+              entry.uuid === focusedEnrollmentId ||
+              courseEnrollments.get(entry.student_uuid)?.uuid === focusedEnrollmentId
+          )
+        : roster,
+    [roster, focusedEnrollmentId, courseEnrollments]
+  );
+  const { hasNextPage, isFetching, fetchNextPage } = courseQuery;
+  const resolvingFocus = Boolean(
+    focusedEnrollmentId &&
+      visibleRoster.length === 0 &&
+      hasNextPage &&
+      !courseQuery.isError &&
+      !courseQuery.data?.pages.some(hasApiError)
+  );
+  useEffect(() => {
+    if (resolvingFocus && !isFetching) void fetchNextPage();
+  }, [resolvingFocus, isFetching, fetchNextPage]);
 
   const studentIds = useMemo(() => visibleRoster.map(entry => entry.student_uuid), [visibleRoster]);
 
@@ -207,7 +224,13 @@ export function LessonGradingPanel({
     return <EmptyState title='Select a class session to grade its students' />;
   }
 
-  if (rosterQuery.isLoading || courseQuery.isLoading || students.isLoading || users.isLoading) {
+  if (
+    rosterQuery.isLoading ||
+    courseQuery.isLoading ||
+    resolvingFocus ||
+    students.isLoading ||
+    users.isLoading
+  ) {
     return <WorkbookLoading />;
   }
 

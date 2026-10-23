@@ -89,7 +89,7 @@ export function StepCourse({
         </div>
       </div>
 
-      <div role='group' aria-label='Filter' className='flex flex-wrap gap-2'>
+      {/* <div role='group' aria-label='Filter' className='flex flex-wrap gap-2'>
         {FIT_PILLS.map(pill => (
           <Pill
             key={pill.value}
@@ -110,7 +110,7 @@ export function StepCourse({
             }
           />
         ))}
-      </div>
+      </div> */}
 
       {catalogue.unavailable ? (
         <SearchUnavailable

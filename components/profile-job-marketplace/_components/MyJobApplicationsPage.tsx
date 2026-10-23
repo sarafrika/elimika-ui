@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { BriefcaseBusiness, CalendarClock, Layers } from 'lucide-react';
+import { BriefcaseBusiness, CalendarClock } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
@@ -14,7 +14,6 @@ import { STALE_TIMES } from '@/lib/query-client';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJobApplication } from '@/services/client';
 import { listMyApplicationsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import {
   dayAndTime,
   isClosedApplication,
@@ -103,13 +102,6 @@ export function MyJobApplicationsPage({ embedded = false }: { embedded?: boolean
             </Button>
           }
         /> */}
-
-        <Button className='mx-w-fit self-end' variant='outline' asChild>
-          <Link href={dashboardUrl('instructor', 'rate-card')}>
-            <Layers className='size-4' />
-            View Rate cards
-          </Link>
-        </Button>
 
         {!embedded && <JobsSectionTabs />}
 

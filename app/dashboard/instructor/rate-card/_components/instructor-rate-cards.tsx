@@ -1,10 +1,11 @@
 'use client';
 
-import { ChevronLeft, Layers, Pencil, SearchX } from 'lucide-react';
+import { Layers, Pencil, SearchX } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
+import { PageHeader } from '@/components/dashboard/page-header';
 import { AsyncSection } from '@/components/data/async-section';
 import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
 import { RateUpdateStatus } from '@/components/rate-card/rate-update-status';
@@ -40,7 +41,6 @@ function applyHref(kind: TrainingApplicationKind, parentUuid: string, applicatio
 
 /** The instructor's rate cards: one per course or program they applied to train. */
 export function InstructorRateCards() {
-  const router = useRouter();
   const instructor = useInstructor();
   const instructorUuid = instructor?.uuid ?? '';
   const searchParams = useSearchParams();
@@ -95,15 +95,11 @@ export function InstructorRateCards() {
   }, [linkKey, linked, linkBasis]);
 
   return (
-    <div className='mx-auto w-full max-w-6xl space-y-6 px-4 py-4 pb-10 sm:px-6'>
-      <Button type='button' onClick={() => router.back()}>
-        <ChevronLeft /> Back
-      </Button>
-
-      {/* <PageHeader
-        title='Rate cards'
+    <div className='w-full max-w-7xl space-y-6 px-4 py-4 pb-10 sm:px-6'>
+      <PageHeader
+        title='My Rate Cards'
         description='The rates each course creator approved for you, per training method and billing basis. Jobs can only hire you on a basis you have an approved rate for.'
-      /> */}
+      />
 
       {linkParent && !loading && !error && !linked ? (
         <EmptyState
