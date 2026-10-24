@@ -35,6 +35,7 @@ export function SkillsWalletCredentialsVaultTab({
   );
   const [downloading, setDownloading] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [failedPreviewIds, setFailedPreviewIds] = useState<Record<string, boolean>>({});
   useEffect(() => {
     const focusCredential = () => {
       const prefix = '#credentials/';
@@ -136,9 +137,24 @@ export function SkillsWalletCredentialsVaultTab({
               tabIndex={-1}
               className='overflow-hidden rounded-sm pt-0'
             >
-              {/* // here show a preview of the uploaded credentials instead of this blank background with the award icon */}
-              <div className='from-primary/10 to-success/10 relative grid h-28 place-items-center bg-gradient-to-br'>
-                <Award className='text-primary h-10 w-10' />
+              <div className='from-primary/10 to-success/10 relative h-28 overflow-hidden bg-gradient-to-br'>
+                {item.document_url && !failedPreviewIds[item.id] ? (
+                  <img
+                    src={toAuthenticatedMediaUrl(item.document_url) ?? item.document_url}
+                    alt={`${item.name} preview`}
+                    className='h-full w-full object-cover'
+                    onError={() =>
+                      setFailedPreviewIds(prev => ({
+                        ...prev,
+                        [item.id]: true,
+                      }))
+                    }
+                  />
+                ) : (
+                  <div className='grid h-full w-full place-items-center'>
+                    <Award className='text-primary h-10 w-10' />
+                  </div>
+                )}
                 <div className='absolute top-2 right-2'>
                   <StatusBadge status={item.status} />
                 </div>

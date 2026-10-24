@@ -1,7 +1,9 @@
 import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle, BarChart3, Clock3, FileCheck2 } from 'lucide-react';
 
 type AssignmentInsightsProps = {
+  isLoading?: boolean;
   insights: {
     averageSignal: string;
     overdueTasks: number;
@@ -11,7 +13,7 @@ type AssignmentInsightsProps = {
   };
 };
 
-export function AssignmentInsights({ insights }: AssignmentInsightsProps) {
+export function AssignmentInsights({ insights, isLoading = false }: AssignmentInsightsProps) {
   const insightMetrics = [
     {
       changeText: `${insights.totalTasks} task${insights.totalTasks === 1 ? '' : 's'} with activity`,
@@ -37,7 +39,11 @@ export function AssignmentInsights({ insights }: AssignmentInsightsProps) {
   ];
 
   return (
-    <section aria-label='Assignment insights' className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+    <section
+      aria-label='Assignment insights'
+      aria-busy={isLoading}
+      className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'
+    >
       {insightMetrics.map(metric => {
         const Icon = metric.icon;
 
@@ -49,11 +55,19 @@ export function AssignmentInsights({ insights }: AssignmentInsightsProps) {
               </span>
               <div className='min-w-0 space-y-1'>
                 <h2 className='text-muted-foreground text-sm font-medium'>{metric.title}</h2>
-                <p className='text-foreground text-2xl font-bold tabular-nums sm:text-3xl'>
-                  {metric.value}
-                </p>
+                {isLoading ? (
+                  <Skeleton className='h-8 w-16 sm:h-9' />
+                ) : (
+                  <p className='text-foreground text-2xl font-bold tabular-nums sm:text-3xl'>
+                    {metric.value}
+                  </p>
+                )}
                 {metric.changeText ? (
-                  <p className='text-muted-foreground text-xs'>{metric.changeText}</p>
+                  isLoading ? (
+                    <Skeleton className='h-4 w-32' />
+                  ) : (
+                    <p className='text-muted-foreground text-xs'>{metric.changeText}</p>
+                  )
                 ) : null}
               </div>
             </CardContent>

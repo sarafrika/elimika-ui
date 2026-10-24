@@ -1,12 +1,9 @@
 'use client';
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, ArrowUpRight, FileText, Landmark, LayoutDashboard, ShieldCheck, Smartphone, Undo2 } from 'lucide-react';
-import { useState } from 'react';
 import { TrainingOrdersDashboard } from '@/app/dashboard/_components/wallet/TrainingOrdersDashboard';
 import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
 import { formatMoney } from '@/components/money/format';
-import { type ObligationLike, obligationEntries } from '@/components/money/ledger';
+import { obligationEntries, type ObligationLike } from '@/components/money/ledger';
 import { LedgerPanel } from '@/components/money/ledger-panel';
 import { WalletTransferSheet } from '@/components/money/wallet-transfer-sheet';
 import { Button } from '@/components/ui/button';
@@ -28,6 +25,9 @@ import {
   getStatementOptions,
   listInstructorObligationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeftRight, ArrowUpRight, FileText, Landmark, LayoutDashboard, ShieldCheck, Smartphone, Undo2 } from 'lucide-react';
+import { useState } from 'react';
 
 const TABS = ['dashboard', 'accounts', 'transactions', 'withdrawals', 'payout', 'refunds', 'statements', 'audit'] as const;
 const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'WITHDRAWAL', 'WITHDRAWAL_REVERSAL', 'PAYOUT_FEE', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];

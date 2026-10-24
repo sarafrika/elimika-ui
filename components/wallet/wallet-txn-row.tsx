@@ -1,10 +1,15 @@
-import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
-import type { ReactNode } from 'react';
+'use client';
+
 import { formatMoney, formatMoneyDate, formatSignedMoney } from '@/components/money/format';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogTrigger } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import type { WalletTransaction } from '@/services/client/types.gen';
+import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { transactionTypeLabel } from './wallet-labels';
+import { WalletTransactionDetails } from './wallet-transaction-details';
 
 /** One ledger row as the wallet has always shown it: direction, what, when, balance before and after. */
 export function WalletTxnRow({ txn, action }: { txn: WalletTransaction; action?: ReactNode }) {

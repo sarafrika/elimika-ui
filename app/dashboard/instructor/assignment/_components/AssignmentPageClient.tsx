@@ -24,7 +24,7 @@ import type {
 } from '@/services/client/types.gen';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { useDeferredValue, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useClassEnrollmentsMap } from '../../../../../hooks/use-enrollment-map';
 import { AssignmentCard } from './AssignmentCard';
 import { AssignmentInsights } from './AssignmentInsights';
@@ -100,7 +100,7 @@ function getTaskStatus(
 }
 
 export function AssignmentPageClient() {
-  const [activeFilter, setActiveFilter] = useState<AssignmentStatus>('all');
+  const [selectedFilter, setSelectedFilter] = useState<AssignmentStatus | null>(null);
   const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search.trim().toLowerCase());
   const profile = useUserProfile();
@@ -111,7 +111,7 @@ export function AssignmentPageClient() {
   const uniqueClasses = useMemo(() => dedupeByKey(classes, item => item.uuid ?? null), [classes]);
 
   const classUuids = useMemo(() => uniqueClasses.map(c => c.uuid ?? ''), [uniqueClasses]);
-  const { classEnrollmentsMap } = useClassEnrollmentsMap(classUuids);
+  const { classEnrollmentsMap, isLoading: enrollmentsLoading } = useClassEnrollmentsMap(classUuids);
 
   const uniqueCourses = useMemo(
     () => dedupeByKey(uniqueClasses, item => item.course_uuid ?? null),
@@ -400,6 +400,43 @@ export function AssignmentPageClient() {
     quizSchedules,
   ]);
 
+  const filterCounts = useMemo(() => {
+    const counts: Record<AssignmentStatus, number> = {
+      all: taskCards.length,
+      pending: 0,
+      overdue: 0,
+      graded: 0,
+      ongoing: 0,
+    };
+    for (const task of taskCards) counts[task.status] += 1;
+    return counts;
+  }, [taskCards]);
+
+  const scheduleLoading =
+    assignmentScheduleQueries.some(query => query.isPending) ||
+    quizScheduleQueries.some(query => query.isPending);
+
+  const isInitialLoading =
+    loading ||
+    scheduleLoading ||
+    enrollmentsLoading ||
+    assignmentsLoading ||
+    quizzesLoading ||
+    lessonQueries.some(query => query.isPending) ||
+    assignmentSubmissionQueries.some(query => query.isPending) ||
+    quizAttemptQueries.some(query => query.isPending);
+
+  const defaultFilter: AssignmentStatus =
+    filterCounts.pending > 0 ? 'pending' : filterCounts.overdue > 0 ? 'overdue' : 'graded';
+  const activeFilter = selectedFilter ?? (isInitialLoading ? 'pending' : defaultFilter);
+
+  // Choose once after the task data is ready, then preserve the selected tab on refetches.
+  useEffect(() => {
+    if (!isInitialLoading && selectedFilter === null) {
+      setSelectedFilter(defaultFilter);
+    }
+  }, [defaultFilter, isInitialLoading, selectedFilter]);
+
   const filteredAssignments = useMemo(() => {
     const query = deferredSearch;
 
@@ -417,14 +454,7 @@ export function AssignmentPageClient() {
     });
   }, [activeFilter, deferredSearch, taskCards]);
 
-  const scheduleLoading =
-    assignmentScheduleQueries.some(query => query.isPending) ||
-    quizScheduleQueries.some(query => query.isPending);
-
-  const hasScheduleData = assignmentSchedules.length + quizSchedules.length > 0;
-  const isInitialLoading = loading || (!hasScheduleData && scheduleLoading);
-
-  const { data: pendingGradingData } = useQuery({
+  const { data: pendingGradingData, isPending: pendingGradingLoading } = useQuery({
     ...getPendingGradingOptions({ path: { instructorUuid: instructorUuid as string } }),
     enabled: !!instructorUuid,
     gcTime: QUERY_GC_TIME,
@@ -444,6 +474,9 @@ export function AssignmentPageClient() {
       ...SUBMISSION_QUERY_OPTIONS,
     })),
   });
+
+  const insightsLoading =
+    isInitialLoading || pendingGradingLoading || analyticsQuery.some(query => query.isPending);
 
   const insights = useMemo(() => {
     const totalTasks = taskCards.length;
@@ -470,24 +503,30 @@ export function AssignmentPageClient() {
   }, [analyticsQuery, pendingGradingData?.data, taskCards]);
 
   return (
-    <main className='bg-background mb-10 p-3 sm:p-4 md:p-6 max-w-7xl'>
+    <main className='bg-background mb-10 max-w-7xl p-3 sm:p-4 md:p-6'>
       <div className='w-full min-w-0 space-y-4 sm:space-y-5'>
         <p className='text-muted-foreground text-sm'>
           Grade assignment submissions and view automatic quiz results
         </p>
 
-        <AssignmentInsights insights={insights} />
+        <AssignmentInsights insights={insights} isLoading={insightsLoading} />
 
         <AssignmentToolbar
           activeFilter={activeFilter}
-          onFilterChange={setActiveFilter}
+          counts={filterCounts}
+          isLoading={isInitialLoading}
+          onFilterChange={setSelectedFilter}
           search={search}
           setSearch={setSearch}
         />
 
-        <section className='min-w-0 space-y-5'>
+        <section aria-busy={isInitialLoading} className='min-w-0 space-y-5'>
           {isInitialLoading ? (
-            <div className='grid gap-4 sm:grid-cols-2'>
+            <div
+              role='status'
+              aria-label='Loading assignments'
+              className='grid gap-4 sm:grid-cols-2'
+            >
               {Array.from({ length: 4 }).map((_, index) => (
                 <div
                   key={index}
