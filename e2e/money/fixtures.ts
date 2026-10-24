@@ -12,11 +12,19 @@ export const CHILD_B = '00000000-0000-4000-8000-0000000000a2';
 
 /** A class sale share and the platform fee charged on it, newest first, as the API returns them. */
 export const shareWithFee = (balanceAfter: number, share: number, fee: number, title: string) => [
-  { uuid: 'fee-1', transaction_type: 'PLATFORM_FEE', amount: fee, currency_code: 'KES', balance_after: balanceAfter,
-    reference: 'order-31:line-1:delivery:fee', description: `Platform fee - Class sale share - ${title}`, created_date: '2026-10-20T11:05:00Z' },
-  { uuid: 'sale-1', transaction_type: 'SALE', amount: share, currency_code: 'KES', balance_after: balanceAfter + fee,
-    reference: 'order-31:line-1:delivery', description: `Class sale share - ${title}`, created_date: '2026-10-20T11:05:00Z' },
+  { uuid: 'fee-1', transaction_type: 'PLATFORM_FEE', amount: fee, currency_code: 'KES', balance_before: balanceAfter + fee,
+    balance_after: balanceAfter, reference: 'order-31:line-1:delivery:fee', description: `Platform fee - Class sale share - ${title}`,
+    created_date: '2026-10-20T11:05:00Z' },
+  { uuid: 'sale-1', transaction_type: 'SALE', amount: share, currency_code: 'KES', balance_before: balanceAfter + fee - share,
+    balance_after: balanceAfter + fee, reference: 'order-31:line-1:delivery', description: `Class sale share - ${title}`,
+    created_date: '2026-10-20T11:05:00Z' },
 ];
+
+/** Answers a transactions list, honouring the type filter the way the API does. */
+export const transactionsOf = (rows: { transaction_type: string }[]) => (request: { url(): string }) => {
+  const types = new URL(request.url()).searchParams.getAll('type').flatMap(t => t.split(','));
+  return paged(types.length ? rows.filter(r => types.includes(r.transaction_type)) : rows);
+};
 
 export const order = (id: string, displayId: string, status: string, total: number, title: string, createdAt: string, studentUuid?: string) => ({
   id, display_id: displayId, payment_status: status, currency_code: 'KES', subtotal: total, total, created_at: createdAt,

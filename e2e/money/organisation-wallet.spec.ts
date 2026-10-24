@@ -27,12 +27,13 @@ test.describe('Organisation wallet', () => {
 
     await page.goto('/dashboard/organisation/wallet');
 
-    await expect(page.getByRole('heading', { name: 'Wallet' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Organisation Wallet' })).toBeVisible();
+    await expect(page.getByRole('definition').first()).toHaveText('KES 123,840');
     const summary = page.getByRole('region', { name: 'Summary' });
-    await expect(summary).toContainText('KES 123,840');
+    await expect(summary).toContainText('KES 33,600');
     await expect(summary).toContainText('− KES 3,360');
     await expect(summary).toContainText('KES 10,500');
-    await expect(page.getByRole('listitem').filter({ hasText: 'Class sale share' })).toContainText('+ KES 30,240');
+    await expect(page.getByRole('listitem').filter({ hasText: 'Class sale share', hasNotText: 'Platform fee' })).toContainText('+ KES 33,600');
   });
 
   test('records paying an instructor for a delivered session', async ({ page, baseURL }) => {
@@ -40,7 +41,7 @@ test.describe('Organisation wallet', () => {
     api.on('POST', new RegExp(`/api/v1/organisations/${ORG}/instructor-obligations/ob-1/settle$`), { ...OBLIGATIONS[0], status: 'SETTLED' });
     await api.install(page);
 
-    await page.goto('/dashboard/organisation/wallet?tab=payables');
+    await page.goto('/dashboard/organisation/wallet?tab=accounts');
 
     const payables = page.getByRole('region', { name: 'Instructor payables' });
     await expect(payables.getByRole('listitem')).toHaveCount(2);

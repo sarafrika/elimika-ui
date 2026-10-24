@@ -2,7 +2,7 @@ import type { BrowserContext } from '@playwright/test';
 import { encode } from 'next-auth/jwt';
 import { E2E_AUTH_SECRET } from '../../playwright.config';
 
-export type E2eRole = 'instructor' | 'organisation_user' | 'student' | 'parent' | 'course_creator';
+export type E2eRole = 'instructor' | 'organisation_user' | 'student' | 'parent' | 'course_creator' | 'admin';
 
 export type E2eUser = {
   uuid: string;

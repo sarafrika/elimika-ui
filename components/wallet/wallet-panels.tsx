@@ -133,11 +133,11 @@ export function TransactionsPanel({
         ) : query.rows.length === 0 ? (
           <EmptyState variant='compact' icon={ArrowLeftRight} title={emptyTitle} description={emptyDescription} />
         ) : (
-          <div className='divide-y'>
+          <ul className='divide-y'>
             {query.rows.map(txn => (
               <WalletTxnRow key={txn.uuid} txn={txn} />
             ))}
-          </div>
+          </ul>
         )}
         <LoadMore show={query.hasNextPage} loading={query.isFetchingNextPage} onClick={query.fetchNextPage} />
       </CardContent>
@@ -317,11 +317,11 @@ export function RecentTransactions({
             description='Wallet activity will appear here once money moves.'
           />
         ) : (
-          <div className='divide-y'>
+          <ul className='divide-y'>
             {rows.map(txn => (
               <WalletTxnRow key={txn.uuid} txn={txn} />
             ))}
-          </div>
+          </ul>
         )}
       </CardContent>
     </Card>

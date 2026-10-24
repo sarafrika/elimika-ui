@@ -812,14 +812,14 @@ export const zRubricScoring = z
       )
       .readonly()
       .optional(),
-    score_range: z
-      .string()
-      .describe('**[READ-ONLY]** Expected score range for this performance level.')
-      .readonly()
-      .optional(),
     performance_expectation: z
       .string()
       .describe('**[READ-ONLY]** Classification of performance expectation level.')
+      .readonly()
+      .optional(),
+    score_range: z
+      .string()
+      .describe('**[READ-ONLY]** Expected score range for this performance level.')
       .readonly()
       .optional(),
     is_passing_level: z
@@ -4591,8 +4591,8 @@ export const zPageMetadata = z.object({
     .optional(),
   hasNext: z.boolean().optional(),
   hasPrevious: z.boolean().optional(),
-  first: z.boolean().optional(),
   last: z.boolean().optional(),
+  first: z.boolean().optional(),
 });
 
 /**
@@ -4848,6 +4848,8 @@ export const zPage = z.object({
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
   pageable: zPageableObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   size: z
     .number()
     .int()
@@ -4862,8 +4864,6 @@ export const zPage = z.object({
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
   sort: zSortObject.optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   numberOfElements: z
     .number()
     .int()
@@ -10137,9 +10137,9 @@ export const zAssessmentRubric = z
       .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
       .readonly()
       .optional(),
-    usage_status: z
+    rubric_category: z
       .string()
-      .describe('**[READ-ONLY]** Comprehensive status indicating usage and accessibility.')
+      .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
       .readonly()
       .optional(),
     assessment_scope: z
@@ -10149,9 +10149,9 @@ export const zAssessmentRubric = z
       )
       .readonly()
       .optional(),
-    rubric_category: z
+    usage_status: z
       .string()
-      .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
+      .describe('**[READ-ONLY]** Comprehensive status indicating usage and accessibility.')
       .readonly()
       .optional(),
   })
@@ -13387,14 +13387,21 @@ export const zCourse = z
       )
       .readonly()
       .optional(),
+    has_multiple_categories: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
+      .readonly()
+      .optional(),
     total_duration_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of total course duration.')
       .readonly()
       .optional(),
-    has_multiple_categories: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
+      )
       .readonly()
       .optional(),
     category_count: z
@@ -13403,13 +13410,6 @@ export const zCourse = z
       .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
       .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
       .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
       .readonly()
       .optional(),
   })
@@ -15217,16 +15217,16 @@ export const zAssignment = z
       )
       .readonly()
       .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
+      .readonly()
+      .optional(),
     assignment_category: z
       .string()
       .describe(
         '**[READ-ONLY]** Formatted category of the assignment based on its characteristics.'
       )
-      .readonly()
-      .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the maximum points for this assignment.')
       .readonly()
       .optional(),
     assignment_scope: z
@@ -15314,6 +15314,10 @@ export const zPayoutRules = z
         message: 'Invalid value: Expected int64 to be <= 9223372036854775807',
       })
       .describe('Hours a newly added number is held before it can receive money')
+      .optional(),
+    withdrawals_enabled: z
+      .boolean()
+      .describe('False while withdrawals are switched off for everyone')
       .optional(),
   })
   .describe('What an earner needs to know before withdrawing');
@@ -15909,6 +15913,8 @@ export const zPageSessionReportSummary = z.object({
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
   pageable: zPageableObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   size: z
     .number()
     .int()
@@ -15923,8 +15929,6 @@ export const zPageSessionReportSummary = z.object({
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
   sort: zSortObject.optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   numberOfElements: z
     .number()
     .int()
@@ -17975,16 +17979,6 @@ export const zProgramEnrollment = z
       )
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
-      .readonly()
-      .optional(),
     enrollment_duration: z
       .string()
       .describe(
@@ -17997,6 +17991,16 @@ export const zProgramEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the program.")
       .readonly()
       .optional(),
     is_active: z
@@ -18102,16 +18106,6 @@ export const zCourseEnrollment = z
       )
       .readonly()
       .optional(),
-    enrollment_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
-      .readonly()
-      .optional(),
-    progress_display: z
-      .string()
-      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
-      .readonly()
-      .optional(),
     enrollment_duration: z
       .string()
       .describe(
@@ -18124,6 +18118,16 @@ export const zCourseEnrollment = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.'
       )
+      .readonly()
+      .optional(),
+    enrollment_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the enrollment based on current status.')
+      .readonly()
+      .optional(),
+    progress_display: z
+      .string()
+      .describe("**[READ-ONLY]** Formatted display of the student's progress in the course.")
       .readonly()
       .optional(),
     is_active: z
