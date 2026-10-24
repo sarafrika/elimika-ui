@@ -11,7 +11,7 @@ import type { ReactNode } from 'react';
 import { transactionTypeLabel } from './wallet-labels';
 import { WalletTransactionDetails } from './wallet-transaction-details';
 
-/** One ledger row as the wallet has always shown it: direction, what, when, balance before and after. */
+/** One ledger row as the wallet has always shown it: direction, what, when, balance before and after, modal to show transaction details when a row is clicked. */
 export function WalletTxnRow({ txn, action }: { txn: WalletTransaction; action?: ReactNode }) {
   const before = Number(txn.balance_before ?? 0);
   const after = Number(txn.balance_after ?? 0);
