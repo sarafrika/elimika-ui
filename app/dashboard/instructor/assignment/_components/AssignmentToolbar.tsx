@@ -2,12 +2,15 @@
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Search } from 'lucide-react';
 import { assignmentFilters } from './assignment-data';
 import type { AssignmentStatus } from './assignment-types';
 
 type AssignmentToolbarProps = {
   activeFilter: AssignmentStatus;
+  counts: Record<AssignmentStatus, number>;
+  isLoading: boolean;
   onFilterChange: (value: AssignmentStatus) => void;
   search: string;
   setSearch: (value: string) => void;
@@ -15,6 +18,8 @@ type AssignmentToolbarProps = {
 
 export function AssignmentToolbar({
   activeFilter,
+  counts,
+  isLoading,
   onFilterChange,
   search,
   setSearch,
@@ -22,17 +27,23 @@ export function AssignmentToolbar({
   return (
     <div className=''>
       <div className='flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center xl:justify-between'>
-        <div className='flex flex-wrap gap-2'>
+        <div aria-busy={isLoading} className='flex flex-wrap gap-2'>
           {assignmentFilters.map(filter => (
             <Button
               key={filter.value}
               type='button'
               variant={activeFilter === filter.value ? 'default' : 'outline'}
               aria-pressed={activeFilter === filter.value}
+              disabled={isLoading}
               onClick={() => onFilterChange(filter.value)}
               className='h-7 rounded-full px-4 text-xs'
             >
               {filter.label}
+              {isLoading ? (
+                <Skeleton className='h-3 w-5 rounded-full' />
+              ) : (
+                <span className='tabular-nums'>({counts[filter.value]})</span>
+              )}
             </Button>
           ))}
         </div>

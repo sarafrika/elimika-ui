@@ -1,7 +1,9 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
+import { KpiCard, KpiCardSkeleton } from '@/components/dashboard/kpi-card';
 import { Card, CardContent } from '@/components/ui/card';
+import { BookOpen, CalendarCheck, Clock, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { LiveClassCard } from './LiveClassCard';
 import { TrainingHubSectionHeader } from './TrainingHubSectionHeader';
@@ -117,6 +119,41 @@ export function TrainingHubClassesTab() {
 
   const normalizedSearch = searchTerm.trim().toLowerCase();
 
+  const classStats = useMemo(() => {
+    const studentUuids = new Set<string>();
+    let totalMinutes = 0;
+
+    for (const classItem of classes) {
+      for (const enrollment of classItem.enrollments ?? []) {
+        if (
+          enrollment.student_uuid &&
+          enrollment.is_active !== false &&
+          ['ENROLLED', 'ATTENDED', 'ABSENT'].includes(enrollment.status ?? '')
+        ) {
+          studentUuids.add(enrollment.student_uuid);
+        }
+      }
+
+      for (const session of classItem.schedule ?? []) {
+        if (['CANCELLED', 'BLOCKED'].includes(session.status?.toUpperCase() ?? '')) continue;
+
+        const minutes = Number(
+          session.duration_minutes ??
+          (new Date(session.end_time).getTime() - new Date(session.start_time).getTime()) /
+          60000
+        );
+        if (Number.isFinite(minutes) && minutes > 0) totalMinutes += minutes;
+      }
+    }
+
+    return {
+      allClasses: classes.length,
+      activeClasses: classes.filter(classItem => classItem.is_active === true).length,
+      totalHours: totalMinutes / 60,
+      totalStudents: studentUuids.size,
+    };
+  }, [classes]);
+
   const filteredLiveClasses = useMemo(
     () =>
       liveClasses
@@ -204,6 +241,44 @@ export function TrainingHubClassesTab() {
 
   return (
     <main className='bg-background mx-auto flex w-full flex-col gap-4 px-3 py-3 sm:px-4 sm:py-4 lg:px-5'>
+      <section
+        aria-label='Class statistics'
+        aria-busy={isLoading}
+        className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'
+      >
+        {isLoading ? (
+          Array.from({ length: 4 }, (_, index) => <KpiCardSkeleton key={index} />)
+        ) : (
+          <>
+            <KpiCard
+              title='All Classes'
+              value={classStats.allClasses.toLocaleString()}
+              icon={<BookOpen className='size-4' aria-hidden='true' />}
+              className='gap-2'
+            />
+            <KpiCard
+              title='Active Classes'
+              value={classStats.activeClasses.toLocaleString()}
+              icon={<CalendarCheck className='size-4' aria-hidden='true' />}
+              variant='green'
+            />
+            <KpiCard
+              title='Total Hours'
+              value={classStats.totalHours.toLocaleString(undefined, { maximumFractionDigits: 1 })}
+              icon={<Clock className='size-4' aria-hidden='true' />}
+              hint='Scheduled session hours'
+              variant='amber'
+            />
+            <KpiCard
+              title='Total Students'
+              value={classStats.totalStudents.toLocaleString()}
+              icon={<Users className='size-4' aria-hidden='true' />}
+              hint='Enrolled students'
+            />
+          </>
+        )}
+      </section>
+
       <TrainingHubToolbar
         onSearchTermChange={setSearchTerm}
         onTypeChange={setSelectedType}
