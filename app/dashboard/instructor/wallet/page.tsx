@@ -1,9 +1,12 @@
 'use client';
 
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowLeftRight, ArrowUpRight, FileText, Landmark, LayoutDashboard, ShieldCheck, Smartphone, Undo2 } from 'lucide-react';
+import { useState } from 'react';
 import { TrainingOrdersDashboard } from '@/app/dashboard/_components/wallet/TrainingOrdersDashboard';
 import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
 import { formatMoney } from '@/components/money/format';
-import { obligationEntries, type ObligationLike } from '@/components/money/ledger';
+import { type ObligationLike, obligationEntries } from '@/components/money/ledger';
 import { LedgerPanel } from '@/components/money/ledger-panel';
 import { WalletTransferSheet } from '@/components/money/wallet-transfer-sheet';
 import { Button } from '@/components/ui/button';
@@ -17,7 +20,7 @@ import {
 } from '@/components/wallet/wallet-panels';
 import { invalidateWallet, useWalletFigures, type WalletScope } from '@/components/wallet/wallet-scope';
 import { WalletShell } from '@/components/wallet/wallet-shell';
-import { WithdrawSheet } from '@/components/wallet/withdraw-sheet';
+import { WithdrawDialog } from '@/components/wallet/withdraw-dialog';
 import { WithdrawalsPanel } from '@/components/wallet/withdrawals-panel';
 import { useUserProfile } from '@/context/profile-context';
 import { useClassDefinitionsByIds, useOrganisationsByIds } from '@/hooks/use-batched-lookups';
@@ -25,9 +28,6 @@ import {
   getStatementOptions,
   listInstructorObligationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, ArrowUpRight, FileText, Landmark, LayoutDashboard, ShieldCheck, Smartphone, Undo2 } from 'lucide-react';
-import { useState } from 'react';
 
 const TABS = ['dashboard', 'accounts', 'transactions', 'withdrawals', 'payout', 'refunds', 'statements', 'audit'] as const;
 const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'WITHDRAWAL', 'WITHDRAWAL_REVERSAL', 'PAYOUT_FEE', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
@@ -175,7 +175,7 @@ export default function InstructorWalletPage() {
         currency={currency}
         onTransferred={() => void invalidateWallet(queryClient)}
       />
-      <WithdrawSheet
+      <WithdrawDialog
         open={withdrawOpen}
         onOpenChange={setWithdrawOpen}
         scope={scope}

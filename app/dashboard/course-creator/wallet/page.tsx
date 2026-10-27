@@ -20,7 +20,7 @@ import {
 } from '@/components/wallet/wallet-panels';
 import { invalidateWallet, useWalletFigures, type WalletScope } from '@/components/wallet/wallet-scope';
 import { WalletShell } from '@/components/wallet/wallet-shell';
-import { WithdrawSheet } from '@/components/wallet/withdraw-sheet';
+import { WithdrawDialog } from '@/components/wallet/withdraw-dialog';
 import { WithdrawalsPanel } from '@/components/wallet/withdrawals-panel';
 import { useUserProfile } from '@/context/profile-context';
 import { useCoursesByIds } from '@/hooks/use-batched-lookups';
@@ -160,7 +160,7 @@ export default function CourseCreatorWalletPage() {
         currency={currency}
         onTransferred={() => void invalidateWallet(queryClient)}
       />
-      <WithdrawSheet
+      <WithdrawDialog
         open={withdrawOpen}
         onOpenChange={setWithdrawOpen}
         scope={scope}

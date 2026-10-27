@@ -5,9 +5,9 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { formatMoney } from '@/components/money/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import Spinner from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import type { PayoutMethod, VerificationCode, Withdrawal } from '@/services/client/types.gen';
@@ -32,7 +32,7 @@ const unlockText = (method: PayoutMethod) =>
     : '';
 
 /** Withdraw to M-Pesa: amount and number, the SMS code, then the outcome as M-Pesa reports it. */
-export function WithdrawSheet({
+export function WithdrawDialog({
   open,
   onOpenChange,
   scope,
@@ -173,19 +173,19 @@ export function WithdrawSheet({
   ];
 
   return (
-    <Sheet open={open} onOpenChange={close}>
-      <SheetContent side='right' className='w-full gap-0 sm:max-w-md'>
-        <SheetHeader>
+    <Dialog open={open} onOpenChange={close}>
+      <DialogContent className='flex max-h-[90vh] flex-col gap-0 p-0 sm:max-w-lg'>
+        <DialogHeader className='px-6 pt-6 pb-4'>
           <p className='text-primary text-xs font-semibold tracking-wider uppercase'>
             {step === 'result' ? 'Submitted' : step === 'code' ? 'Step 2 of 2' : 'Step 1 of 2'}
           </p>
-          <SheetTitle>Withdraw to M-Pesa</SheetTitle>
-          <SheetDescription>Available {formatMoney(available, currency)}</SheetDescription>
-        </SheetHeader>
+          <DialogTitle>Withdraw to M-Pesa</DialogTitle>
+          <DialogDescription>Available {formatMoney(available, currency)}</DialogDescription>
+        </DialogHeader>
 
         {step === 'amount' ? (
           usable.length === 0 ? (
-            <div className='flex flex-1 flex-col items-center gap-3 px-6 pt-8 text-center'>
+            <div className='flex flex-col items-center gap-3 px-6 pt-2 pb-6 text-center'>
               <p className='font-semibold'>
                 {verified.length ? 'Your number is on hold' : 'Add where to send your money'}
               </p>
@@ -206,7 +206,7 @@ export function WithdrawSheet({
               )}
             </div>
           ) : (
-            <div className='flex-1 space-y-5 overflow-y-auto px-4'>
+            <div className='min-h-0 flex-1 space-y-5 overflow-y-auto px-6 pb-4'>
               <div className='space-y-2'>
                 <Label htmlFor={ids.amount}>Amount ({currency})</Label>
                 <Input
@@ -278,7 +278,7 @@ export function WithdrawSheet({
         ) : null}
 
         {step === 'code' ? (
-          <div className='flex-1 space-y-4 overflow-y-auto px-4'>
+          <div className='min-h-0 flex-1 space-y-4 overflow-y-auto px-6 pb-4'>
             <dl className='divide-border/60 divide-y rounded-md border text-sm'>
               {(
                 [
@@ -322,7 +322,7 @@ export function WithdrawSheet({
         ) : null}
 
         {step === 'result' && withdrawal ? (
-          <div className='flex flex-1 flex-col items-center gap-2 overflow-y-auto px-6 pt-6 text-center'>
+          <div className='flex min-h-0 flex-1 flex-col items-center gap-2 overflow-y-auto px-6 pt-2 pb-6 text-center'>
             {status === 'PAID' ? (
               <CheckCircle2 aria-hidden className='text-success size-14' />
             ) : status === 'FAILED' ? (
@@ -359,7 +359,7 @@ export function WithdrawSheet({
           </div>
         ) : null}
 
-        <SheetFooter className='flex-row justify-end gap-2 border-t'>
+        <DialogFooter className='flex-row justify-end gap-2 border-t px-6 py-4'>
           {step === 'amount' && usable.length > 0 ? (
             <>
               <Button variant='outline' onClick={() => onOpenChange(false)}>
@@ -391,8 +391,8 @@ export function WithdrawSheet({
             </>
           ) : null}
           {step === 'result' ? <Button onClick={() => onOpenChange(false)}>Done</Button> : null}
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
