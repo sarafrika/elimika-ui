@@ -46,6 +46,7 @@ import {
   addPayoutMethodResponseTransformer,
   addPortfolioItemResponseTransformer,
   addProgramCourseResponseTransformer,
+  addProgramRemarkResponseTransformer,
   addProgramRequirementResponseTransformer,
   addQuestionOptionResponseTransformer,
   addQuizQuestionResponseTransformer,
@@ -110,7 +111,6 @@ import {
   createOrganisationResponseTransformer,
   createOrganisationUserResponseTransformer,
   createPracticeActivityResponseTransformer,
-  createProgramAssessmentResponseTransformer,
   createQuizResponseTransformer,
   createQuizScheduleResponseTransformer,
   createResourceResponseTransformer,
@@ -302,13 +302,14 @@ import {
   getPracticeActivitiesResponseTransformer,
   getPracticeActivityResponseTransformer,
   getPrimaryRubricResponseTransformer,
-  getProgramAssessmentsResponseTransformer,
   getProgramCertificates1ResponseTransformer,
   getProgramCertificatesResponseTransformer,
   getProgramCoursesResponseTransformer,
   getProgramEnrollmentsResponseTransformer,
   getProgramModerationHistoryResponseTransformer,
   getProgramRatingSummaryResponseTransformer,
+  getProgramRemarksResponseTransformer,
+  getProgramReportResponseTransformer,
   getProgramRequirementsResponseTransformer,
   getProgramReviewsResponseTransformer,
   getProgramsByCategoryResponseTransformer,
@@ -607,8 +608,8 @@ import {
   updatePayoutSettingsResponseTransformer,
   updatePortfolioItemResponseTransformer,
   updatePracticeActivityResponseTransformer,
-  updateProgramAssessmentResponseTransformer,
   updateProgramCourseResponseTransformer,
+  updateProgramCourseWeightsResponseTransformer,
   updateProgramRequirementResponseTransformer,
   updateProgramTrainingApplicationResponseTransformer,
   updateQuestionOptionResponseTransformer,
@@ -780,6 +781,9 @@ import type {
   AddProgramCourseData,
   AddProgramCourseErrors,
   AddProgramCourseResponses,
+  AddProgramRemarkData,
+  AddProgramRemarkErrors,
+  AddProgramRemarkResponses,
   AddProgramRequirementData,
   AddProgramRequirementErrors,
   AddProgramRequirementResponses,
@@ -1026,9 +1030,6 @@ import type {
   CreatePracticeActivityData,
   CreatePracticeActivityErrors,
   CreatePracticeActivityResponses,
-  CreateProgramAssessmentData,
-  CreateProgramAssessmentErrors,
-  CreateProgramAssessmentResponses,
   CreateQuizData,
   CreateQuizErrors,
   CreateQuizResponses,
@@ -1251,9 +1252,6 @@ import type {
   DeletePracticeActivityData,
   DeletePracticeActivityErrors,
   DeletePracticeActivityResponses,
-  DeleteProgramAssessmentData,
-  DeleteProgramAssessmentErrors,
-  DeleteProgramAssessmentResponses,
   DeleteProgramRequirementData,
   DeleteProgramRequirementErrors,
   DeleteProgramRequirementResponses,
@@ -1512,6 +1510,9 @@ import type {
   GetClassMediaData,
   GetClassMediaErrors,
   GetClassMediaResponses,
+  GetClassProgrammeProgressData,
+  GetClassProgrammeProgressErrors,
+  GetClassProgrammeProgressResponses,
   GetClassRatingSummaryData,
   GetClassRatingSummaryErrors,
   GetClassRatingSummaryResponses,
@@ -1934,9 +1935,6 @@ import type {
   GetProgramApprovalStatusData,
   GetProgramApprovalStatusErrors,
   GetProgramApprovalStatusResponses,
-  GetProgramAssessmentsData,
-  GetProgramAssessmentsErrors,
-  GetProgramAssessmentsResponses,
   GetProgramCertificates1Data,
   GetProgramCertificates1Errors,
   GetProgramCertificates1Responses,
@@ -1958,6 +1956,12 @@ import type {
   GetProgramRatingSummaryData,
   GetProgramRatingSummaryErrors,
   GetProgramRatingSummaryResponses,
+  GetProgramRemarksData,
+  GetProgramRemarksErrors,
+  GetProgramRemarksResponses,
+  GetProgramReportData,
+  GetProgramReportErrors,
+  GetProgramReportResponses,
   GetProgramRequirementsData,
   GetProgramRequirementsErrors,
   GetProgramRequirementsResponses,
@@ -1970,6 +1974,9 @@ import type {
   GetProgramsByCourseCreatorData,
   GetProgramsByCourseCreatorErrors,
   GetProgramsByCourseCreatorResponses,
+  GetProgramSkillsData,
+  GetProgramSkillsErrors,
+  GetProgramSkillsResponses,
   GetProgramTrainingApplicationData,
   GetProgramTrainingApplicationErrors,
   GetProgramTrainingApplicationHistoryData,
@@ -2403,6 +2410,9 @@ import type {
   ListSentData,
   ListSentErrors,
   ListSentResponses,
+  ListSkillLevelsData,
+  ListSkillLevelsErrors,
+  ListSkillLevelsResponses,
   ListSkills1Data,
   ListSkills1Errors,
   ListSkills1Responses,
@@ -2586,6 +2596,15 @@ import type {
   ReplaceMarketplaceJobRequiredSkillsData,
   ReplaceMarketplaceJobRequiredSkillsErrors,
   ReplaceMarketplaceJobRequiredSkillsResponses,
+  ReplaceProgramSkillMappingsData,
+  ReplaceProgramSkillMappingsErrors,
+  ReplaceProgramSkillMappingsResponses,
+  ReplaceProgramSkillsData,
+  ReplaceProgramSkillsErrors,
+  ReplaceProgramSkillsResponses,
+  ReplaceSkillLevelsData,
+  ReplaceSkillLevelsErrors,
+  ReplaceSkillLevelsResponses,
   RequestOrganisationVerificationData,
   RequestOrganisationVerificationErrors,
   RequestOrganisationVerificationResponses,
@@ -3040,12 +3059,12 @@ import type {
   UpdatePracticeActivityData,
   UpdatePracticeActivityErrors,
   UpdatePracticeActivityResponses,
-  UpdateProgramAssessmentData,
-  UpdateProgramAssessmentErrors,
-  UpdateProgramAssessmentResponses,
   UpdateProgramCourseData,
   UpdateProgramCourseErrors,
   UpdateProgramCourseResponses,
+  UpdateProgramCourseWeightsData,
+  UpdateProgramCourseWeightsErrors,
+  UpdateProgramCourseWeightsResponses,
   UpdateProgramRequirementData,
   UpdateProgramRequirementErrors,
   UpdateProgramRequirementResponses,
@@ -4087,49 +4106,6 @@ export const updateTrainingProgram = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Delete a program assessment component
- */
-export const deleteProgramAssessment = <ThrowOnError extends boolean = false>(
-  options: Options<DeleteProgramAssessmentData, ThrowOnError>
-) =>
-  (options.client ?? client).delete<
-    DeleteProgramAssessmentResponses,
-    DeleteProgramAssessmentErrors,
-    ThrowOnError
-  >({
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/programs/{uuid}/assessments/{assessmentUuid}',
-    ...options,
-  });
-
-/**
- * Update a program assessment component
- */
-export const updateProgramAssessment = <ThrowOnError extends boolean = false>(
-  options: Options<UpdateProgramAssessmentData, ThrowOnError>
-) =>
-  (options.client ?? client).put<
-    UpdateProgramAssessmentResponses,
-    UpdateProgramAssessmentErrors,
-    ThrowOnError
-  >({
-    responseTransformer: updateProgramAssessmentResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/programs/{uuid}/assessments/{assessmentUuid}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
  * Withdraw program training application
  *
  * Allows the applicant (instructor or organisation) to withdraw their own program training
@@ -4236,6 +4212,71 @@ export const updateProgramTrainingApplication = <ThrowOnError extends boolean = 
   });
 
 /**
+ * List a programme's target skills and their linked evidence
+ */
+export const getProgramSkills = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramSkillsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetProgramSkillsResponses, GetProgramSkillsErrors, ThrowOnError>({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/programs/{programUuid}/skills',
+    ...options,
+  });
+
+/**
+ * Set a programme's target skills
+ *
+ * Replaces the target skills in display order. A removed skill loses its linked evidence.
+ */
+export const replaceProgramSkills = <ThrowOnError extends boolean = false>(
+  options: Options<ReplaceProgramSkillsData, ThrowOnError>
+) =>
+  (options.client ?? client).put<
+    ReplaceProgramSkillsResponses,
+    ReplaceProgramSkillsErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/programs/{programUuid}/skills',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Link graded evidence to a programme skill
+ *
+ * Replaces the skill's links. Each link is a programme course's assessment, optionally narrowed to one rubric criterion; shares for one assessment total 100%.
+ */
+export const replaceProgramSkillMappings = <ThrowOnError extends boolean = false>(
+  options: Options<ReplaceProgramSkillMappingsData, ThrowOnError>
+) =>
+  (options.client ?? client).put<
+    ReplaceProgramSkillMappingsResponses,
+    ReplaceProgramSkillMappingsErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/programs/{programUuid}/skills/{skillUuid}/mappings',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Delete program requirement
  *
  * Removes a requirement from a program. Restricted to the program's creator and platform admins.
@@ -4322,6 +4363,32 @@ export const updateProgramCourse = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/programs/{programUuid}/courses/{courseUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * Set programme course weights
+ *
+ * Replaces every course's mandatory flag and share of the programme mark in one go. Mandatory weights must total exactly 100%; optional courses carry no weight.
+ */
+export const updateProgramCourseWeights = <ThrowOnError extends boolean = false>(
+  options: Options<UpdateProgramCourseWeightsData, ThrowOnError>
+) =>
+  (options.client ?? client).put<
+    UpdateProgramCourseWeightsResponses,
+    UpdateProgramCourseWeightsErrors,
+    ThrowOnError
+  >({
+    responseTransformer: updateProgramCourseWeightsResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/programs/{programUuid}/course-weights',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7418,6 +7485,31 @@ export const adminUpdateSkill = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * Replace the skill level scale
+ *
+ * Saves the whole scale at once. One level must start at 0%, minimums and names must be unique, and achieved levels must be the top levels. Current learner levels are re-levelled.
+ */
+export const replaceSkillLevels = <ThrowOnError extends boolean = false>(
+  options: Options<ReplaceSkillLevelsData, ThrowOnError>
+) =>
+  (options.client ?? client).put<
+    ReplaceSkillLevelsResponses,
+    ReplaceSkillLevelsErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/admin/skill-levels',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
  * Get the payout rules
  */
 export const getPayoutSettings = <ThrowOnError extends boolean = false>(
@@ -8943,52 +9035,6 @@ export const uploadProgramBanner = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * List a program's assessment components
- */
-export const getProgramAssessments = <ThrowOnError extends boolean = false>(
-  options: Options<GetProgramAssessmentsData, ThrowOnError>
-) =>
-  (options.client ?? client).get<
-    GetProgramAssessmentsResponses,
-    GetProgramAssessmentsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getProgramAssessmentsResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/programs/{uuid}/assessments',
-    ...options,
-  });
-
-/**
- * Add a weighted assessment component to a program
- *
- * Active component weights may not exceed 100% and must total exactly 100% before publishing.
- */
-export const createProgramAssessment = <ThrowOnError extends boolean = false>(
-  options: Options<CreateProgramAssessmentData, ThrowOnError>
-) =>
-  (options.client ?? client).post<
-    CreateProgramAssessmentResponses,
-    CreateProgramAssessmentErrors,
-    ThrowOnError
-  >({
-    responseTransformer: createProgramAssessmentResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/programs/{uuid}/assessments',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
  * Archive training program
  *
  * Archives a program: it leaves the catalogue and becomes inactive but stays readable. Restricted to the program's creator and platform admins.
@@ -9163,6 +9209,48 @@ export const decideOnProgramTrainingRateUpdate = <ThrowOnError extends boolean =
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}/rate-updates/{updateUuid}',
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+/**
+ * List a learner's programme remarks
+ *
+ * Newest first.
+ */
+export const getProgramRemarks = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramRemarksData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetProgramRemarksResponses, GetProgramRemarksErrors, ThrowOnError>(
+    {
+      responseTransformer: getProgramRemarksResponseTransformer,
+      security: [
+        { scheme: 'bearer', type: 'http' },
+        { scheme: 'bearer', type: 'http' },
+      ],
+      url: '/api/v1/programs/{programUuid}/students/{studentUuid}/remarks',
+      ...options,
+    }
+  );
+
+/**
+ * Add a programme progress remark
+ *
+ * Rich-text strengths, areas to improve and recommendations, plus a next review date. Only the default instructor of one of the learner's programme classes may add one; earlier remarks are kept.
+ */
+export const addProgramRemark = <ThrowOnError extends boolean = false>(
+  options: Options<AddProgramRemarkData, ThrowOnError>
+) =>
+  (options.client ?? client).post<AddProgramRemarkResponses, AddProgramRemarkErrors, ThrowOnError>({
+    responseTransformer: addProgramRemarkResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/programs/{programUuid}/students/{studentUuid}/remarks',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -15940,6 +16028,23 @@ export const listSkills1 = <ThrowOnError extends boolean = false>(
   });
 
 /**
+ * List skill levels
+ *
+ * Lowest minimum first.
+ */
+export const listSkillLevels = <ThrowOnError extends boolean = false>(
+  options?: Options<ListSkillLevelsData, ThrowOnError>
+) =>
+  (options?.client ?? client).get<ListSkillLevelsResponses, ListSkillLevelsErrors, ThrowOnError>({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/skill-levels',
+    ...options,
+  });
+
+/**
  * Global search
  *
  * Searches every type the caller may see (or those named in types) and returns up to limit hits per type, grouped by type in the order requested, plus the total per type. Types: courses, programs, classes, marketplace_jobs, instructors, organisations, people, rubrics, course_content. A type the caller may not see, or whose index is not read-enabled, is skipped silently; an unknown type is a 400. Anonymous callers see public courses, programs, organisations and classes. course_content (lessons, content, quizzes, assignments) covers the courses the caller manages and the published material of the courses they are enrolled in. People are visible to platform admins, and to organisation managers by name within their organisations. Results come from the index without a database round trip, so a change can take a few seconds to show. 503 when search is disabled or unavailable.
@@ -16696,6 +16801,24 @@ export const getProgramTrainingApplicationHistory = <ThrowOnError extends boolea
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/programs/{programUuid}/training-applications/{applicationUuid}/history',
+    ...options,
+  });
+
+/**
+ * Get a learner's programme report
+ *
+ * Programme mark (provisional until every mandatory course is decided), pass checks, course rows with attendance in the period, skill levels with evidence history, and remarks. Readable by the learner, a guardian sharing academics and the learner's programme class instructors.
+ */
+export const getProgramReport = <ThrowOnError extends boolean = false>(
+  options: Options<GetProgramReportData, ThrowOnError>
+) =>
+  (options.client ?? client).get<GetProgramReportResponses, GetProgramReportErrors, ThrowOnError>({
+    responseTransformer: getProgramReportResponseTransformer,
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/programs/{programUuid}/students/{studentUuid}/report',
     ...options,
   });
 
@@ -20249,6 +20372,27 @@ export const getEnrollmentsForClass = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/classes/{uuid}/enrollments',
+    ...options,
+  });
+
+/**
+ * Get a class's programme progress
+ *
+ * Programme marks and skill levels for the class's learners, with per-skill attainment counts. Pass program_uuid when the class's course sits in more than one programme.
+ */
+export const getClassProgrammeProgress = <ThrowOnError extends boolean = false>(
+  options: Options<GetClassProgrammeProgressData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    GetClassProgrammeProgressResponses,
+    GetClassProgrammeProgressErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/classes/{classUuid}/programme-progress',
     ...options,
   });
 

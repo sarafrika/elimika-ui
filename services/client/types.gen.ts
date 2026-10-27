@@ -604,10 +604,6 @@ export type AssessmentRubric = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
-   */
-  readonly is_published?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the rubric based on its type.
    */
   readonly rubric_category?: string;
@@ -619,6 +615,10 @@ export type AssessmentRubric = {
    * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
   readonly usage_status?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
+   */
+  readonly is_published?: boolean;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -681,6 +681,10 @@ export type RubricScoringLevel = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
+   */
+  readonly display_name?: string;
+  /**
    * **[READ-ONLY]** Performance classification based on level order and passing status.
    */
   readonly performance_indicator?: string;
@@ -692,10 +696,6 @@ export type RubricScoringLevel = {
    * **[READ-ONLY]** Indicates if this is the highest performance level (level_order = 1).
    */
   readonly is_highest_level?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted display name combining level name and points for UI.
-   */
-  readonly display_name?: string;
 };
 
 export type ApiResponseRubricScoringLevel = {
@@ -853,13 +853,13 @@ export type RubricMatrix = {
    */
   readonly matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
    */
   readonly expected_cell_count?: number;
+  /**
+   * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1001,10 +1001,6 @@ export type Quiz = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the quiz is published and accessible to students.
-   */
-  readonly is_published?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable format of quiz time limit.
    */
   readonly time_limit_display?: string;
@@ -1016,6 +1012,10 @@ export type Quiz = {
    * **[READ-ONLY]** Indicates if students can take the quiz multiple times.
    */
   readonly has_multiple_attempts?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the quiz is published and accessible to students.
+   */
+  readonly is_published?: boolean;
 };
 
 export type ApiResponseQuiz = {
@@ -1067,6 +1067,14 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
+  /**
    * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
    */
   readonly requires_options?: boolean;
@@ -1074,14 +1082,6 @@ export type QuizQuestion = {
    * **[READ-ONLY]** Human-readable category of the question type.
    */
   readonly question_category?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1259,10 +1259,6 @@ export type QuizAttempt = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1278,6 +1274,10 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
    */
   readonly is_completed?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
 };
 
 /**
@@ -1378,41 +1378,18 @@ export type TrainingProgram = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Classification of program type based on duration and content.
-   */
-  readonly program_type?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of total program duration.
    */
   readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Classification of program type based on duration and content.
+   */
+  readonly program_type?: string;
 };
 
 export type ApiResponseTrainingProgram = {
   success?: boolean;
   data?: TrainingProgram;
-  message?: string;
-  error?: unknown;
-};
-
-/**
- * A weighted assessment component of a training program
- */
-export type ProgramAssessment = {
-  readonly uuid?: string;
-  title: string;
-  assessment_type: string;
-  description?: string;
-  weight_percentage: number;
-  rubric_uuid?: string;
-  is_required?: boolean;
-  active?: boolean;
-  readonly program_uuid?: string;
-  readonly created_date?: Date;
-};
-
-export type ApiResponseProgramAssessment = {
-  success?: boolean;
-  data?: ProgramAssessment;
   message?: string;
   error?: unknown;
 };
@@ -1714,6 +1691,69 @@ export type TrainingRequirementAnswer = {
 };
 
 /**
+ * The programme's target skills in display order; removed skills lose their links
+ */
+export type ProgramTargetSkillsRequest = {
+  skill_uuids: Array<string>;
+};
+
+export type ApiResponseListProgramTargetSkill = {
+  success?: boolean;
+  data?: Array<ProgramTargetSkill>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * One graded source of evidence for a programme skill
+ */
+export type ProgramSkillMapping = {
+  readonly uuid?: string;
+  /**
+   * **[REQUIRED]** Course assessment whose grades give the evidence; its course must be in the programme
+   */
+  course_assessment_uuid: string;
+  /**
+   * **[OPTIONAL]** Rubric criterion of that assessment; leave empty to use the whole score
+   */
+  rubric_criteria_uuid?: string;
+  /**
+   * **[REQUIRED]** Share of this assessment's evidence for the skill; shares per assessment total 100
+   */
+  share_percentage: number;
+  /**
+   * Course the assessment belongs to
+   */
+  readonly course_uuid?: string;
+  readonly course_assessment_title?: string;
+  /**
+   * Criterion name, or null for a whole score
+   */
+  readonly rubric_criteria_name?: string;
+};
+
+/**
+ * A skill the programme develops, with the graded evidence linked to it
+ */
+export type ProgramTargetSkill = {
+  skill_uuid?: string;
+  skill_name?: string;
+  display_order?: number;
+  /**
+   * False until at least one graded source is linked; the programme can't be published then
+   */
+  ready?: boolean;
+  mappings?: Array<ProgramSkillMapping>;
+};
+
+export type ApiResponseProgramTargetSkill = {
+  success?: boolean;
+  data?: ProgramTargetSkill;
+  message?: string;
+  error?: unknown;
+};
+
+/**
  * Program requirement with type classification and mandatory status
  */
 export type ProgramRequirement = {
@@ -1751,10 +1791,6 @@ export type ProgramRequirement = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the requirement is optional (not mandatory).
-   */
-  readonly is_optional?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.
    */
   readonly requirement_category?: string;
@@ -1770,6 +1806,10 @@ export type ProgramRequirement = {
    * **[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.
    */
   readonly requirement_summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the requirement is optional (not mandatory).
+   */
+  readonly is_optional?: boolean;
 };
 
 export type ApiResponseProgramRequirement = {
@@ -1824,6 +1864,10 @@ export type ProgramCourse = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Share of the programme mark this mandatory course carries. Set with the course weights endpoint; null for optional courses.
+   */
+  readonly weight_percentage?: number;
+  /**
    * **[READ-ONLY]** Formatted category of the course association based on requirement status.
    */
   readonly association_category?: string;
@@ -1848,6 +1892,31 @@ export type ProgramCourse = {
 export type ApiResponseProgramCourse = {
   success?: boolean;
   data?: ProgramCourse;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * Mandatory flag and programme-mark weight for one course in a programme
+ */
+export type ProgramCourseWeight = {
+  /**
+   * **[REQUIRED]** The programme-course association being weighted.
+   */
+  program_course_uuid: string;
+  /**
+   * **[REQUIRED]** Mandatory courses carry weight and must be passed; optional ones never count.
+   */
+  is_required: boolean;
+  /**
+   * **[OPTIONAL]** Share of the programme mark. Required for mandatory courses; must be empty for optional ones.
+   */
+  weight_percentage?: number;
+};
+
+export type ApiResponseListProgramCourse = {
+  success?: boolean;
+  data?: Array<ProgramCourse>;
   message?: string;
   error?: unknown;
 };
@@ -2474,6 +2543,10 @@ export type InstructorSkill = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Formatted skill name for display in UI components.
+   */
+  readonly display_name?: string;
+  /**
    * **[READ-ONLY]** Brief summary of the skill for display in skill lists.
    */
   readonly summary?: string;
@@ -2481,10 +2554,6 @@ export type InstructorSkill = {
    * **[READ-ONLY]** Human-readable description of the proficiency level.
    */
   readonly proficiency_description?: string;
-  /**
-   * **[READ-ONLY]** Formatted skill name for display in UI components.
-   */
-  readonly display_name?: string;
 };
 
 export type ApiResponseInstructorSkill = {
@@ -2543,21 +2612,9 @@ export type InstructorProfessionalMembership = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Brief summary of the membership for display in listings.
-   */
-  readonly summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
   membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
@@ -2581,9 +2638,21 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_recent_membership?: boolean;
   /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
+  /**
    * **[READ-ONLY]** Indicates if the membership is currently valid and active.
    */
   readonly is_valid?: boolean;
+  /**
+   * **[READ-ONLY]** Brief summary of the membership for display in listings.
+   */
+  readonly summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2650,14 +2719,6 @@ export type InstructorExperience = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Brief summary of the experience for display in listings.
-   */
-  readonly summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
    */
   readonly duration_in_months?: number | null;
@@ -2686,6 +2747,14 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number | null;
+  /**
+   * **[READ-ONLY]** Brief summary of the experience for display in listings.
+   */
+  readonly summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -2748,14 +2817,6 @@ export type InstructorEducation = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Complete description combining qualification, school, and year.
-   */
-  readonly full_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
    * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
    */
   readonly is_recent_qualification?: boolean;
@@ -2772,6 +2833,14 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
    */
   readonly has_certificate_number?: boolean;
+  /**
+   * **[READ-ONLY]** Complete description combining qualification, school, and year.
+   */
+  readonly full_description?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -2882,11 +2951,15 @@ export type InstructorDocument = {
    * **[READ-ONLY]** Email or username of the user who last modified this document record.
    */
   readonly updated_by?: string;
+  verification_status?: VerificationStatusEnum2;
+  /**
+   * **[READ-ONLY]** Indicates if the document is pending verification.
+   */
+  readonly is_pending_verification?: boolean;
   /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
-  verification_status?: VerificationStatusEnum2;
   /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
@@ -2899,10 +2972,6 @@ export type InstructorDocument = {
    * **[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.
    */
   readonly days_until_expiry?: number | null;
-  /**
-   * **[READ-ONLY]** Indicates if the document is pending verification.
-   */
-  readonly is_pending_verification?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the document has an expiry date configured.
    */
@@ -3027,9 +3096,10 @@ export type ApiResponseAvailabilitySlot = {
  */
 export type AttendanceRequest = {
   /**
-   * Whether the student attended (true) or was absent (false)
+   * Whether the student attended (true) or was absent (false); ignored when attendance_status is set
    */
-  attended: boolean;
+  attended?: boolean;
+  attendance_status?: AttendanceStatusEnum;
   /**
    * Condition of the learner's instrument: GOOD, NEEDS_REPAIR or NO_EQUIPMENT
    */
@@ -3189,6 +3259,22 @@ export type Course = {
    */
   readonly course_creator_name?: string | null;
   /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
+   */
+  readonly has_multiple_categories?: boolean;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
+  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
@@ -3208,22 +3294,6 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
   readonly accepts_new_enrollments?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
-   */
-  readonly has_multiple_categories?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
-  /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
-   */
-  readonly lifecycle_stage?: string;
-  /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
-   */
-  readonly category_count?: number;
 };
 
 /**
@@ -3820,13 +3890,13 @@ export type LessonContent = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category of content based on its type and format.
-   */
-  readonly content_category?: string;
-  /**
    * **[READ-ONLY]** Human-readable format of file size.
    */
   readonly file_size_display?: string;
+  /**
+   * **[READ-ONLY]** Category of content based on its type and format.
+   */
+  readonly content_category?: string;
 };
 
 export type ApiResponseLessonContent = {
@@ -3993,10 +4063,6 @@ export type CourseAssessment = {
    */
   per_lesson?: boolean;
   /**
-   * **[OPTIONAL]** Program component this course component feeds, for a course inside a program
-   */
-  program_assessment_uuid?: string;
-  /**
    * **[READ-ONLY]** Timestamp when the assessment was created. Automatically set by the system.
    */
   readonly created_date?: Date;
@@ -4089,7 +4155,7 @@ export type CourseAssessmentLineItemRubricEvaluation = {
   graded_at?: Date;
   criteria_selections?: Array<CourseAssessmentLineItemRubricEvaluationRow>;
   readonly rubric_uuid?: string;
-  attendance_status?: AttendanceStatusEnum;
+  attendance_status?: AttendanceStatusEnum2;
   readonly max_score?: number;
   readonly graded_by_uuid?: string;
   readonly evaluation_display?: string;
@@ -4202,8 +4268,8 @@ export type CourseCreatorSkill = {
   readonly created_by?: string;
   readonly updated_date?: Date;
   readonly updated_by?: string;
-  readonly proficiency_description?: string;
   readonly display_name?: string;
+  readonly proficiency_description?: string;
 };
 
 export type ApiResponseCourseCreatorSkill = {
@@ -4340,11 +4406,15 @@ export type CourseCreatorDocumentDto = {
   readonly created_by?: string;
   readonly updated_date?: Date;
   readonly updated_by?: string;
+  verification_status?: VerificationStatusEnum2;
+  /**
+   * **[READ-ONLY]** Indicates if the document is pending verification.
+   */
+  readonly is_pending_verification?: boolean;
   /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
-  verification_status?: VerificationStatusEnum2;
   /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
@@ -4357,10 +4427,6 @@ export type CourseCreatorDocumentDto = {
    * **[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.
    */
   readonly days_until_expiry?: number | null;
-  /**
-   * **[READ-ONLY]** Indicates if the document is pending verification.
-   */
-  readonly is_pending_verification?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the document has an expiry date configured.
    */
@@ -4565,13 +4631,13 @@ export type DifficultyLevel = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.
-   */
-  readonly is_entry_level?: boolean;
-  /**
    * **[READ-ONLY]** Formatted display name including level order for UI presentation.
    */
   readonly display_name?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this is the entry-level difficulty for beginners.
+   */
+  readonly is_entry_level?: boolean;
 };
 
 export type ApiResponseDifficultyLevel = {
@@ -4618,14 +4684,6 @@ export type ContentType = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Category for organizing uploads in the user interface.
-   */
-  readonly upload_category?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this content type is for media files.
-   */
-  readonly is_media_type?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable list of supported file formats.
    */
   readonly supported_formats?: string;
@@ -4633,6 +4691,14 @@ export type ContentType = {
    * **[READ-ONLY]** Human-readable format of maximum file size.
    */
   readonly size_limit_display?: string;
+  /**
+   * **[READ-ONLY]** Category for organizing uploads in the user interface.
+   */
+  readonly upload_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if this content type is for media files.
+   */
+  readonly is_media_type?: boolean;
 };
 
 export type ApiResponseContentType = {
@@ -5120,6 +5186,10 @@ export type ClassDefinition = {
    */
   readonly marketplace_job_uuid?: string | null;
   /**
+   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
+   */
+  readonly is_standalone?: boolean;
+  /**
    * **[READ-ONLY]** Computed duration of the class in minutes based on start and end times.
    */
   readonly duration_minutes?: bigint;
@@ -5131,10 +5201,6 @@ export type ClassDefinition = {
    * **[READ-ONLY]** Human-readable capacity information including waitlist availability.
    */
   readonly capacity_info?: string;
-  /**
-   * **[READ-ONLY]** Indicates if this is a standalone class not associated with any course.
-   */
-  readonly is_standalone?: boolean;
 };
 
 /**
@@ -5602,6 +5668,10 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Letter grade representation of the final grade.
+   */
+  readonly grade_letter?: string;
+  /**
    * **[READ-ONLY]** Type of certificate based on completion achievement.
    */
   readonly certificate_type?: string;
@@ -5609,10 +5679,6 @@ export type Certificate = {
    * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
    */
   readonly is_downloadable?: boolean;
-  /**
-   * **[READ-ONLY]** Letter grade representation of the final grade.
-   */
-  readonly grade_letter?: string;
   /**
    * **[READ-ONLY]** Current validity status of the certificate.
    */
@@ -5751,13 +5817,13 @@ export type Assignment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the assignment based on its characteristics.
    */
   readonly assignment_category?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the maximum points for this assignment.
+   */
+  readonly points_display?: string;
   /**
    * **[READ-ONLY]** Scope of the assignment - lesson-specific or standalone.
    */
@@ -5867,6 +5933,32 @@ export type Skill = {
   active?: boolean;
   created_date?: Date;
   updated_date?: Date;
+};
+
+/**
+ * One level of the platform-wide skill scale
+ */
+export type SkillLevel = {
+  readonly uuid?: string;
+  /**
+   * Name learners see, e.g. Developing
+   */
+  name: string;
+  /**
+   * Lowest evidence score that earns this level
+   */
+  min_percentage: number;
+  /**
+   * Achieved levels sync to the learner's skills wallet; they must be the top levels
+   */
+  counts_as_achieved: boolean;
+};
+
+export type ApiResponseListSkillLevel = {
+  success?: boolean;
+  data?: Array<SkillLevel>;
+  message?: string;
+  error?: unknown;
 };
 
 /**
@@ -6477,7 +6569,7 @@ export type RowDto = {
   class_enrollment_uuid?: string;
   course_enrollment_uuid?: string;
   /**
-   * ATTENDED, ABSENT or NOT_MARKED
+   * ATTENDED, ABSENT, EXCUSED or NOT_MARKED
    */
   attendance?: string;
   instrument_condition?: string;
@@ -6971,6 +7063,26 @@ export type TrainingRateUpdateDecisionRequest = {
    * Optional notes shown to the applicant.
    */
   review_notes?: string | null;
+};
+
+/**
+ * An instructor's progress remark on a learner's programme; rich text (HTML)
+ */
+export type ProgramRemark = {
+  readonly uuid?: string;
+  strengths?: string;
+  improvements?: string;
+  recommendations?: string;
+  next_review_date?: Date;
+  readonly author_user_uuid?: string;
+  readonly created_date?: Date;
+};
+
+export type ApiResponseProgramRemark = {
+  success?: boolean;
+  data?: ProgramRemark;
+  message?: string;
+  error?: unknown;
 };
 
 /**
@@ -8212,6 +8324,10 @@ export type Enrollment = {
    */
   readonly attendance_comment?: string;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
+   */
+  readonly is_active?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
    */
   readonly can_be_cancelled?: boolean;
@@ -8220,17 +8336,13 @@ export type Enrollment = {
    */
   readonly is_attendance_marked?: boolean;
   /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is still active (not cancelled).
+   * **[READ-ONLY]** Indicates if the student attended the class.
    */
-  readonly is_active?: boolean;
+  readonly did_attend?: boolean;
 };
 
 /**
@@ -9515,13 +9627,13 @@ export type AssignmentSubmission = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
-   */
-  readonly is_graded?: boolean;
-  /**
    * **[READ-ONLY]** Formatted category of the submission based on its content type.
    */
   readonly submission_category?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
+   */
+  readonly is_graded?: boolean;
   /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
@@ -9915,8 +10027,8 @@ export type PageMetadata = {
   totalPages?: number;
   hasNext?: boolean;
   hasPrevious?: boolean;
-  last?: boolean;
   first?: boolean;
+  last?: boolean;
 };
 
 export type PagedDtoWithdrawal = {
@@ -10413,24 +10525,24 @@ export type ApiResponsePageSessionReportSummary = {
 export type PageSessionReportSummary = {
   totalElements?: bigint;
   totalPages?: number;
-  pageable?: PageableObject;
-  first?: boolean;
-  last?: boolean;
   size?: number;
   content?: Array<SessionReportSummary>;
   number?: number;
   sort?: SortObject;
   numberOfElements?: number;
+  pageable?: PageableObject;
+  first?: boolean;
+  last?: boolean;
   empty?: boolean;
 };
 
 export type PageableObject = {
-  paged?: boolean;
-  pageNumber?: number;
-  pageSize?: number;
-  unpaged?: boolean;
   offset?: bigint;
   sort?: SortObject;
+  pageNumber?: number;
+  pageSize?: number;
+  paged?: boolean;
+  unpaged?: boolean;
 };
 
 /**
@@ -10456,9 +10568,9 @@ export type SessionReportSummary = {
 };
 
 export type SortObject = {
+  empty?: boolean;
   sorted?: boolean;
   unsorted?: boolean;
-  empty?: boolean;
 };
 
 export type ApiResponseListOrganisationTimetableEntry = {
@@ -10692,14 +10804,14 @@ export type PagedDtoBookingResponse = {
 export type Page = {
   totalElements?: bigint;
   totalPages?: number;
-  pageable?: PageableObject;
-  first?: boolean;
-  last?: boolean;
   size?: number;
   content?: Array<unknown>;
   number?: number;
   sort?: SortObject;
   numberOfElements?: number;
+  pageable?: PageableObject;
+  first?: boolean;
+  last?: boolean;
   empty?: boolean;
 };
 
@@ -11241,13 +11353,6 @@ export type PagedDtoTrainingProgram = {
   links?: PageLinks;
 };
 
-export type ApiResponseListProgramAssessment = {
-  success?: boolean;
-  data?: Array<ProgramAssessment>;
-  message?: string;
-  error?: unknown;
-};
-
 export type ApiResponsePagedDtoTrainingRateUpdate = {
   success?: boolean;
   data?: PagedDtoTrainingRateUpdate;
@@ -11318,6 +11423,105 @@ export type TrainingApplicationEvent = {
    * **[READ-ONLY]** When it happened (UTC).
    */
   readonly created_date?: Date;
+};
+
+export type ApiResponseProgramReport = {
+  success?: boolean;
+  data?: ProgramReport;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A learner's live programme report: mark, pass checks, courses, skills and remarks
+ */
+export type ProgramReport = {
+  program_uuid?: string;
+  program_title?: string;
+  program_code?: string;
+  program_enrollment_uuid?: string;
+  student_uuid?: string;
+  /**
+   * Weighted mark over decided mandatory courses
+   */
+  final_grade?: number;
+  /**
+   * True until every mandatory course is decided
+   */
+  final_grade_provisional?: boolean;
+  pass_mark?: number;
+  /**
+   * IN_PROGRESS, PASSED or FAILED
+   */
+  result_status?: string;
+  mandatory_total?: number;
+  mandatory_passed?: number;
+  /**
+   * Start of the reporting period; null for the whole programme
+   */
+  from?: Date;
+  to?: Date;
+  courses?: Array<ProgramReportCourse>;
+  skills?: Array<ProgramReportSkill>;
+  remarks?: Array<ProgramRemark>;
+};
+
+export type ProgramReportCourse = {
+  course_uuid?: string;
+  course_title?: string;
+  course_code?: string;
+  is_required?: boolean;
+  weight_percentage?: number;
+  course_enrollment_uuid?: string;
+  final_grade?: number;
+  grade_band?: string;
+  /**
+   * IN_PROGRESS, PASSED, FAILED or NOT_STARTED
+   */
+  result_status?: string;
+  /**
+   * Points this course adds: final × weight ÷ 100, once decided
+   */
+  contribution?: number;
+  sessions_attended?: number;
+  /**
+   * Attended plus absent in the period; excused sessions are left out
+   */
+  sessions_counted?: number;
+  sessions_excused?: number;
+};
+
+export type ProgramReportEvidence = {
+  course_uuid?: string;
+  course_assessment_uuid?: string;
+  source_title?: string;
+  score?: number;
+  level_name?: string;
+  graded_at?: Date;
+  /**
+   * True when a later regrade of the same work replaced it
+   */
+  superseded?: boolean;
+};
+
+export type ProgramReportSkill = {
+  skill_uuid?: string;
+  skill_name?: string;
+  /**
+   * Null until there is evidence
+   */
+  level_name?: string;
+  counts_as_achieved?: boolean;
+  score?: number;
+  graded_at?: Date;
+  history?: Array<ProgramReportEvidence>;
+};
+
+export type ApiResponseListProgramRemark = {
+  success?: boolean;
+  data?: Array<ProgramRemark>;
+  message?: string;
+  error?: unknown;
 };
 
 export type PagedDto = {
@@ -11420,13 +11624,9 @@ export type ProgramEnrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
    */
-  readonly enrollment_duration?: string;
-  /**
-   * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
-   */
-  readonly status_summary?: string;
+  readonly is_active?: boolean;
   /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
@@ -11436,9 +11636,13 @@ export type ProgramEnrollment = {
    */
   readonly progress_display?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
-  readonly is_active?: boolean;
+  readonly enrollment_duration?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
+   */
+  readonly status_summary?: string;
 };
 
 export type ApiResponseListCourse = {
@@ -13961,14 +14165,6 @@ export type CourseAssessmentScore = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).
-   */
-  readonly is_passing?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
    * **[READ-ONLY]** Formatted category of the score based on performance level.
    */
   readonly score_category?: string;
@@ -13980,6 +14176,14 @@ export type CourseAssessmentScore = {
    * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
    */
   readonly feedback_summary?: string;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).
+   */
+  readonly is_passing?: boolean;
 };
 
 /**
@@ -14156,13 +14360,9 @@ export type CourseEnrollment = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
+   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
    */
-  readonly enrollment_duration?: string;
-  /**
-   * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
-   */
-  readonly status_summary?: string;
+  readonly is_active?: boolean;
   /**
    * **[READ-ONLY]** Formatted category of the enrollment based on current status.
    */
@@ -14172,9 +14372,13 @@ export type CourseEnrollment = {
    */
   readonly progress_display?: string;
   /**
-   * **[READ-ONLY]** Indicates if the enrollment is currently active and ongoing.
+   * **[READ-ONLY]** Duration of the enrollment from start to completion or current date.
    */
-  readonly is_active?: boolean;
+  readonly enrollment_duration?: string;
+  /**
+   * **[READ-ONLY]** Comprehensive summary of the enrollment status with relevant details.
+   */
+  readonly status_summary?: string;
 };
 
 export type PagedDtoCourseEnrollment = {
@@ -14257,13 +14461,13 @@ export type CourseCategoryMapping = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if both course and category names are populated.
-   */
-  readonly has_names?: boolean;
-  /**
    * **[READ-ONLY]** Human-readable text representing this course-category relationship.
    */
   readonly display_text?: string;
+  /**
+   * **[READ-ONLY]** Indicates if both course and category names are populated.
+   */
+  readonly has_names?: boolean;
 };
 
 export type ApiResponsePagedDtoCourseAssessment = {
@@ -14623,6 +14827,59 @@ export type ApiResponseListClassQuizSchedule = {
   data?: Array<ClassQuizSchedule>;
   message?: string;
   error?: unknown;
+};
+
+export type ApiResponseClassProgrammeProgress = {
+  success?: boolean;
+  data?: ClassProgrammeProgress;
+  message?: string;
+  error?: unknown;
+};
+
+export type ClassProgrammeLearner = {
+  student_uuid?: string;
+  program_enrollment_uuid?: string;
+  final_grade?: number;
+  final_grade_provisional?: boolean;
+  result_status?: string;
+  mandatory_total?: number;
+  mandatory_passed?: number;
+  skill_levels?: Array<ClassProgrammeLearnerSkill>;
+};
+
+export type ClassProgrammeLearnerSkill = {
+  skill_uuid?: string;
+  level_name?: string;
+  counts_as_achieved?: boolean;
+};
+
+/**
+ * Programme marks and skill levels for the learners of one programme class
+ */
+export type ClassProgrammeProgress = {
+  class_definition_uuid?: string;
+  program_uuid?: string;
+  program_title?: string;
+  skills?: Array<ClassProgrammeSkill>;
+  learners?: Array<ClassProgrammeLearner>;
+};
+
+export type ClassProgrammeSkill = {
+  skill_uuid?: string;
+  skill_name?: string;
+  /**
+   * Learners on a level that counts as achieved
+   */
+  achieved?: number;
+  /**
+   * Learners above the lowest level but not yet achieved
+   */
+  developing?: number;
+  /**
+   * Learners on the lowest level
+   */
+  not_achieved?: number;
+  no_evidence?: number;
 };
 
 export type ApiResponseListClassAssignmentSchedule = {
@@ -16863,6 +17120,20 @@ export const AvailabilityTypeEnum = {
 export type AvailabilityTypeEnum = (typeof AvailabilityTypeEnum)[keyof typeof AvailabilityTypeEnum];
 
 /**
+ * ATTENDED, ABSENT or EXCUSED; excused sessions are left out of the learner's attendance
+ */
+export const AttendanceStatusEnum = {
+  ATTENDED: 'ATTENDED',
+  ABSENT: 'ABSENT',
+  EXCUSED: 'EXCUSED',
+} as const;
+
+/**
+ * ATTENDED, ABSENT or EXCUSED; excused sessions are left out of the learner's attendance
+ */
+export type AttendanceStatusEnum = (typeof AttendanceStatusEnum)[keyof typeof AttendanceStatusEnum];
+
+/**
  * **[REQUIRED]** Resource category.
  */
 export const RequirementTypeEnum2 = {
@@ -16977,9 +17248,14 @@ export const StatusEnum8 = { PENDING: 'pending', COMPLETED: 'completed' } as con
  */
 export type StatusEnum8 = (typeof StatusEnum8)[keyof typeof StatusEnum8];
 
-export const AttendanceStatusEnum = { ATTENDED: 'attended', ABSENT: 'absent' } as const;
+export const AttendanceStatusEnum2 = {
+  ATTENDED: 'attended',
+  ABSENT: 'absent',
+  EXCUSED: 'excused',
+} as const;
 
-export type AttendanceStatusEnum = (typeof AttendanceStatusEnum)[keyof typeof AttendanceStatusEnum];
+export type AttendanceStatusEnum2 =
+  (typeof AttendanceStatusEnum2)[keyof typeof AttendanceStatusEnum2];
 
 export const VerificationStatusEnum3 = {
   DRAFT: 'DRAFT',
@@ -17864,6 +18140,7 @@ export const EnrollmentStatusEnum2 = {
   WAITLISTED: 'WAITLISTED',
   ATTENDED: 'ATTENDED',
   ABSENT: 'ABSENT',
+  EXCUSED: 'EXCUSED',
   CANCELLED: 'CANCELLED',
 } as const;
 
@@ -18674,26 +18951,6 @@ export type ApiResponseTrainingProgramWritable = {
   error?: unknown;
 };
 
-/**
- * A weighted assessment component of a training program
- */
-export type ProgramAssessmentWritable = {
-  title: string;
-  assessment_type: string;
-  description?: string;
-  weight_percentage: number;
-  rubric_uuid?: string;
-  is_required?: boolean;
-  active?: boolean;
-};
-
-export type ApiResponseProgramAssessmentWritable = {
-  success?: boolean;
-  data?: ProgramAssessmentWritable;
-  message?: string;
-  error?: unknown;
-};
-
 export type ApiResponseProgramTrainingApplicationWritable = {
   success?: boolean;
   data?: ProgramTrainingApplicationWritable;
@@ -18728,6 +18985,52 @@ export type ProgramTrainingApplicationWritable = {
  */
 export type TrainingRequirementAnswerWritable = {
   acquisition?: AcquisitionEnum;
+};
+
+export type ApiResponseListProgramTargetSkillWritable = {
+  success?: boolean;
+  data?: Array<ProgramTargetSkillWritable>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * One graded source of evidence for a programme skill
+ */
+export type ProgramSkillMappingWritable = {
+  /**
+   * **[REQUIRED]** Course assessment whose grades give the evidence; its course must be in the programme
+   */
+  course_assessment_uuid: string;
+  /**
+   * **[OPTIONAL]** Rubric criterion of that assessment; leave empty to use the whole score
+   */
+  rubric_criteria_uuid?: string;
+  /**
+   * **[REQUIRED]** Share of this assessment's evidence for the skill; shares per assessment total 100
+   */
+  share_percentage: number;
+};
+
+/**
+ * A skill the programme develops, with the graded evidence linked to it
+ */
+export type ProgramTargetSkillWritable = {
+  skill_uuid?: string;
+  skill_name?: string;
+  display_order?: number;
+  /**
+   * False until at least one graded source is linked; the programme can't be published then
+   */
+  ready?: boolean;
+  mappings?: Array<ProgramSkillMappingWritable>;
+};
+
+export type ApiResponseProgramTargetSkillWritable = {
+  success?: boolean;
+  data?: ProgramTargetSkillWritable;
+  message?: string;
+  error?: unknown;
 };
 
 /**
@@ -18785,6 +19088,13 @@ export type ProgramCourseWritable = {
 export type ApiResponseProgramCourseWritable = {
   success?: boolean;
   data?: ProgramCourseWritable;
+  message?: string;
+  error?: unknown;
+};
+
+export type ApiResponseListProgramCourseWritable = {
+  success?: boolean;
+  data?: Array<ProgramCourseWritable>;
   message?: string;
   error?: unknown;
 };
@@ -19918,10 +20228,6 @@ export type CourseAssessmentWritable = {
    * **[OPTIONAL]** Graded lesson by lesson: each lesson gets its own cell in the evaluation plan.
    */
   per_lesson?: boolean;
-  /**
-   * **[OPTIONAL]** Program component this course component feeds, for a course inside a program
-   */
-  program_assessment_uuid?: string;
 };
 
 export type ApiResponseCourseAssessmentWritable = {
@@ -20789,6 +21095,31 @@ export type SavedAgeGroupWritable = {
 };
 
 /**
+ * One level of the platform-wide skill scale
+ */
+export type SkillLevelWritable = {
+  /**
+   * Name learners see, e.g. Developing
+   */
+  name: string;
+  /**
+   * Lowest evidence score that earns this level
+   */
+  min_percentage: number;
+  /**
+   * Achieved levels sync to the learner's skills wallet; they must be the top levels
+   */
+  counts_as_achieved: boolean;
+};
+
+export type ApiResponseListSkillLevelWritable = {
+  success?: boolean;
+  data?: Array<SkillLevelWritable>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
  * Rules every withdrawal follows
  */
 export type PayoutSettingsWritable = {
@@ -21008,6 +21339,23 @@ export type ApiResponseTrainingRateUpdateWritable = {
  */
 export type TrainingRateUpdateWritable = {
   [key: string]: unknown;
+};
+
+/**
+ * An instructor's progress remark on a learner's programme; rich text (HTML)
+ */
+export type ProgramRemarkWritable = {
+  strengths?: string;
+  improvements?: string;
+  recommendations?: string;
+  next_review_date?: Date;
+};
+
+export type ApiResponseProgramRemarkWritable = {
+  success?: boolean;
+  data?: ProgramRemarkWritable;
+  message?: string;
+  error?: unknown;
 };
 
 /**
@@ -22262,13 +22610,6 @@ export type PagedDtoTrainingProgramWritable = {
   links?: PageLinks;
 };
 
-export type ApiResponseListProgramAssessmentWritable = {
-  success?: boolean;
-  data?: Array<ProgramAssessmentWritable>;
-  message?: string;
-  error?: unknown;
-};
-
 export type ApiResponsePagedDtoTrainingRateUpdateWritable = {
   success?: boolean;
   data?: PagedDtoTrainingRateUpdateWritable;
@@ -22314,6 +22655,54 @@ export type ApiResponseListTrainingApplicationEventWritable = {
  */
 export type TrainingApplicationEventWritable = {
   [key: string]: unknown;
+};
+
+export type ApiResponseProgramReportWritable = {
+  success?: boolean;
+  data?: ProgramReportWritable;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * A learner's live programme report: mark, pass checks, courses, skills and remarks
+ */
+export type ProgramReportWritable = {
+  program_uuid?: string;
+  program_title?: string;
+  program_code?: string;
+  program_enrollment_uuid?: string;
+  student_uuid?: string;
+  /**
+   * Weighted mark over decided mandatory courses
+   */
+  final_grade?: number;
+  /**
+   * True until every mandatory course is decided
+   */
+  final_grade_provisional?: boolean;
+  pass_mark?: number;
+  /**
+   * IN_PROGRESS, PASSED or FAILED
+   */
+  result_status?: string;
+  mandatory_total?: number;
+  mandatory_passed?: number;
+  /**
+   * Start of the reporting period; null for the whole programme
+   */
+  from?: Date;
+  to?: Date;
+  courses?: Array<ProgramReportCourse>;
+  skills?: Array<ProgramReportSkill>;
+  remarks?: Array<ProgramRemarkWritable>;
+};
+
+export type ApiResponseListProgramRemarkWritable = {
+  success?: boolean;
+  data?: Array<ProgramRemarkWritable>;
+  message?: string;
+  error?: unknown;
 };
 
 export type ApiResponsePagedDtoProgramRequirementWritable = {
@@ -25345,71 +25734,6 @@ export type UpdateTrainingProgramResponses = {
 export type UpdateTrainingProgramResponse =
   UpdateTrainingProgramResponses[keyof UpdateTrainingProgramResponses];
 
-export type DeleteProgramAssessmentData = {
-  body?: never;
-  path: {
-    uuid: string;
-    assessmentUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/programs/{uuid}/assessments/{assessmentUuid}';
-};
-
-export type DeleteProgramAssessmentErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type DeleteProgramAssessmentError =
-  DeleteProgramAssessmentErrors[keyof DeleteProgramAssessmentErrors];
-
-export type DeleteProgramAssessmentResponses = {
-  /**
-   * OK
-   */
-  200: unknown;
-};
-
-export type UpdateProgramAssessmentData = {
-  body: ProgramAssessmentWritable;
-  path: {
-    uuid: string;
-    assessmentUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/programs/{uuid}/assessments/{assessmentUuid}';
-};
-
-export type UpdateProgramAssessmentErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type UpdateProgramAssessmentError =
-  UpdateProgramAssessmentErrors[keyof UpdateProgramAssessmentErrors];
-
-export type UpdateProgramAssessmentResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseProgramAssessment;
-};
-
-export type UpdateProgramAssessmentResponse =
-  UpdateProgramAssessmentResponses[keyof UpdateProgramAssessmentResponses];
-
 export type WithdrawProgramTrainingApplicationData = {
   body?: never;
   path: {
@@ -25544,6 +25868,104 @@ export type UpdateProgramTrainingApplicationResponses = {
 
 export type UpdateProgramTrainingApplicationResponse =
   UpdateProgramTrainingApplicationResponses[keyof UpdateProgramTrainingApplicationResponses];
+
+export type GetProgramSkillsData = {
+  body?: never;
+  path: {
+    programUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{programUuid}/skills';
+};
+
+export type GetProgramSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetProgramSkillsError = GetProgramSkillsErrors[keyof GetProgramSkillsErrors];
+
+export type GetProgramSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListProgramTargetSkill;
+};
+
+export type GetProgramSkillsResponse = GetProgramSkillsResponses[keyof GetProgramSkillsResponses];
+
+export type ReplaceProgramSkillsData = {
+  body: ProgramTargetSkillsRequest;
+  path: {
+    programUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{programUuid}/skills';
+};
+
+export type ReplaceProgramSkillsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ReplaceProgramSkillsError =
+  ReplaceProgramSkillsErrors[keyof ReplaceProgramSkillsErrors];
+
+export type ReplaceProgramSkillsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListProgramTargetSkill;
+};
+
+export type ReplaceProgramSkillsResponse =
+  ReplaceProgramSkillsResponses[keyof ReplaceProgramSkillsResponses];
+
+export type ReplaceProgramSkillMappingsData = {
+  body: Array<ProgramSkillMappingWritable>;
+  path: {
+    programUuid: string;
+    skillUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{programUuid}/skills/{skillUuid}/mappings';
+};
+
+export type ReplaceProgramSkillMappingsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ReplaceProgramSkillMappingsError =
+  ReplaceProgramSkillMappingsErrors[keyof ReplaceProgramSkillMappingsErrors];
+
+export type ReplaceProgramSkillMappingsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProgramTargetSkill;
+};
+
+export type ReplaceProgramSkillMappingsResponse =
+  ReplaceProgramSkillMappingsResponses[keyof ReplaceProgramSkillMappingsResponses];
 
 export type DeleteProgramRequirementData = {
   body?: never;
@@ -25694,6 +26116,47 @@ export type UpdateProgramCourseResponses = {
 
 export type UpdateProgramCourseResponse =
   UpdateProgramCourseResponses[keyof UpdateProgramCourseResponses];
+
+export type UpdateProgramCourseWeightsData = {
+  body: Array<ProgramCourseWeight>;
+  path: {
+    programUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{programUuid}/course-weights';
+};
+
+export type UpdateProgramCourseWeightsErrors = {
+  /**
+   * Rows missing, or mandatory weights don't total 100%
+   */
+  400: ApiResponseListProgramCourse;
+  /**
+   * Caller does not own the program
+   */
+  403: ApiResponseListProgramCourse;
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type UpdateProgramCourseWeightsError =
+  UpdateProgramCourseWeightsErrors[keyof UpdateProgramCourseWeightsErrors];
+
+export type UpdateProgramCourseWeightsResponses = {
+  /**
+   * Weights saved and programme marks recomputed
+   */
+  200: ApiResponseListProgramCourse;
+};
+
+export type UpdateProgramCourseWeightsResponse =
+  UpdateProgramCourseWeightsResponses[keyof UpdateProgramCourseWeightsResponses];
 
 export type DeleteOrganisationData = {
   body?: never;
@@ -27381,11 +27844,15 @@ export type MarkAttendanceData = {
      */
     enrollmentUuid: string;
   };
-  query: {
+  query?: {
     /**
-     * Whether the student attended (true) or was absent (false)
+     * Whether the student attended (true) or was absent (false); ignored when attendance_status is set
      */
-    attended: boolean;
+    attended?: boolean;
+    /**
+     * ATTENDED, ABSENT or EXCUSED; excused sessions are left out of attendance
+     */
+    attendance_status?: string;
     /**
      * Condition of the learner's instrument: GOOD, NEEDS_REPAIR or NO_EQUIPMENT
      */
@@ -30383,6 +30850,36 @@ export type AdminUpdateSkillResponses = {
 
 export type AdminUpdateSkillResponse = AdminUpdateSkillResponses[keyof AdminUpdateSkillResponses];
 
+export type ReplaceSkillLevelsData = {
+  body: Array<SkillLevelWritable>;
+  path?: never;
+  query?: never;
+  url: '/api/v1/admin/skill-levels';
+};
+
+export type ReplaceSkillLevelsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ReplaceSkillLevelsError = ReplaceSkillLevelsErrors[keyof ReplaceSkillLevelsErrors];
+
+export type ReplaceSkillLevelsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListSkillLevel;
+};
+
+export type ReplaceSkillLevelsResponse =
+  ReplaceSkillLevelsResponses[keyof ReplaceSkillLevelsResponses];
+
 export type GetPayoutSettingsData = {
   body?: never;
   path?: never;
@@ -32730,72 +33227,6 @@ export type UploadProgramBannerResponses = {
 export type UploadProgramBannerResponse =
   UploadProgramBannerResponses[keyof UploadProgramBannerResponses];
 
-export type GetProgramAssessmentsData = {
-  body?: never;
-  path: {
-    uuid: string;
-  };
-  query?: never;
-  url: '/api/v1/programs/{uuid}/assessments';
-};
-
-export type GetProgramAssessmentsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetProgramAssessmentsError =
-  GetProgramAssessmentsErrors[keyof GetProgramAssessmentsErrors];
-
-export type GetProgramAssessmentsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseListProgramAssessment;
-};
-
-export type GetProgramAssessmentsResponse =
-  GetProgramAssessmentsResponses[keyof GetProgramAssessmentsResponses];
-
-export type CreateProgramAssessmentData = {
-  body: ProgramAssessmentWritable;
-  path: {
-    uuid: string;
-  };
-  query?: never;
-  url: '/api/v1/programs/{uuid}/assessments';
-};
-
-export type CreateProgramAssessmentErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type CreateProgramAssessmentError =
-  CreateProgramAssessmentErrors[keyof CreateProgramAssessmentErrors];
-
-export type CreateProgramAssessmentResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseProgramAssessment;
-};
-
-export type CreateProgramAssessmentResponse =
-  CreateProgramAssessmentResponses[keyof CreateProgramAssessmentResponses];
-
 export type ArchiveProgramData = {
   body?: never;
   path: {
@@ -33052,6 +33483,71 @@ export type DecideOnProgramTrainingRateUpdateResponses = {
 
 export type DecideOnProgramTrainingRateUpdateResponse =
   DecideOnProgramTrainingRateUpdateResponses[keyof DecideOnProgramTrainingRateUpdateResponses];
+
+export type GetProgramRemarksData = {
+  body?: never;
+  path: {
+    programUuid: string;
+    studentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{programUuid}/students/{studentUuid}/remarks';
+};
+
+export type GetProgramRemarksErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetProgramRemarksError = GetProgramRemarksErrors[keyof GetProgramRemarksErrors];
+
+export type GetProgramRemarksResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListProgramRemark;
+};
+
+export type GetProgramRemarksResponse =
+  GetProgramRemarksResponses[keyof GetProgramRemarksResponses];
+
+export type AddProgramRemarkData = {
+  body: ProgramRemarkWritable;
+  path: {
+    programUuid: string;
+    studentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/{programUuid}/students/{studentUuid}/remarks';
+};
+
+export type AddProgramRemarkErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type AddProgramRemarkError = AddProgramRemarkErrors[keyof AddProgramRemarkErrors];
+
+export type AddProgramRemarkResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProgramRemark;
+};
+
+export type AddProgramRemarkResponse = AddProgramRemarkResponses[keyof AddProgramRemarkResponses];
 
 export type GetProgramReviewsData = {
   body?: never;
@@ -43894,6 +44390,35 @@ export type ListSkills1Responses = {
 
 export type ListSkills1Response = ListSkills1Responses[keyof ListSkills1Responses];
 
+export type ListSkillLevelsData = {
+  body?: never;
+  path?: never;
+  query?: never;
+  url: '/api/v1/skill-levels';
+};
+
+export type ListSkillLevelsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListSkillLevelsError = ListSkillLevelsErrors[keyof ListSkillLevelsErrors];
+
+export type ListSkillLevelsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListSkillLevel;
+};
+
+export type ListSkillLevelsResponse = ListSkillLevelsResponses[keyof ListSkillLevelsResponses];
+
 export type GlobalSearchData = {
   body?: never;
   path?: never;
@@ -45180,6 +45705,47 @@ export type GetProgramTrainingApplicationHistoryResponses = {
 
 export type GetProgramTrainingApplicationHistoryResponse =
   GetProgramTrainingApplicationHistoryResponses[keyof GetProgramTrainingApplicationHistoryResponses];
+
+export type GetProgramReportData = {
+  body?: never;
+  path: {
+    programUuid: string;
+    studentUuid: string;
+  };
+  query?: {
+    /**
+     * First day of the period (UTC)
+     */
+    from?: Date;
+    /**
+     * Last day of the period (UTC)
+     */
+    to?: Date;
+  };
+  url: '/api/v1/programs/{programUuid}/students/{studentUuid}/report';
+};
+
+export type GetProgramReportErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetProgramReportError = GetProgramReportErrors[keyof GetProgramReportErrors];
+
+export type GetProgramReportResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseProgramReport;
+};
+
+export type GetProgramReportResponse = GetProgramReportResponses[keyof GetProgramReportResponses];
 
 export type GetProgramRatingSummaryData = {
   body?: never;
@@ -50634,6 +51200,41 @@ export type GetEnrollmentsForClassResponses = {
 
 export type GetEnrollmentsForClassResponse =
   GetEnrollmentsForClassResponses[keyof GetEnrollmentsForClassResponses];
+
+export type GetClassProgrammeProgressData = {
+  body?: never;
+  path: {
+    classUuid: string;
+  };
+  query?: {
+    program_uuid?: string;
+  };
+  url: '/api/v1/classes/{classUuid}/programme-progress';
+};
+
+export type GetClassProgrammeProgressErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type GetClassProgrammeProgressError =
+  GetClassProgrammeProgressErrors[keyof GetClassProgrammeProgressErrors];
+
+export type GetClassProgrammeProgressResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseClassProgrammeProgress;
+};
+
+export type GetClassProgrammeProgressResponse =
+  GetClassProgrammeProgressResponses[keyof GetClassProgrammeProgressResponses];
 
 export type GetClassSchedulesData = {
   body?: never;

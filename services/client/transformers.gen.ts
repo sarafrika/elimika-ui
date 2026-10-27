@@ -39,6 +39,7 @@ import type {
   AddPayoutMethodResponse,
   AddPortfolioItemResponse,
   AddProgramCourseResponse,
+  AddProgramRemarkResponse,
   AddProgramRequirementResponse,
   AddQuestionOptionResponse,
   AddQuizQuestionResponse,
@@ -103,7 +104,6 @@ import type {
   CreateOrganisationResponse,
   CreateOrganisationUserResponse,
   CreatePracticeActivityResponse,
-  CreateProgramAssessmentResponse,
   CreateQuizResponse,
   CreateQuizScheduleResponse,
   CreateResourceResponse,
@@ -295,13 +295,14 @@ import type {
   GetPracticeActivitiesResponse,
   GetPracticeActivityResponse,
   GetPrimaryRubricResponse,
-  GetProgramAssessmentsResponse,
   GetProgramCertificates1Response,
   GetProgramCertificatesResponse,
   GetProgramCoursesResponse,
   GetProgramEnrollmentsResponse,
   GetProgramModerationHistoryResponse,
   GetProgramRatingSummaryResponse,
+  GetProgramRemarksResponse,
+  GetProgramReportResponse,
   GetProgramRequirementsResponse,
   GetProgramReviewsResponse,
   GetProgramsByCategoryResponse,
@@ -600,8 +601,8 @@ import type {
   UpdatePayoutSettingsResponse,
   UpdatePortfolioItemResponse,
   UpdatePracticeActivityResponse,
-  UpdateProgramAssessmentResponse,
   UpdateProgramCourseResponse,
+  UpdateProgramCourseWeightsResponse,
   UpdateProgramRequirementResponse,
   UpdateProgramTrainingApplicationResponse,
   UpdateQuestionOptionResponse,
@@ -1161,27 +1162,6 @@ export const updateTrainingProgramResponseTransformer = async (
   return data;
 };
 
-const programAssessmentSchemaResponseTransformer = (data: any) => {
-  if (data.created_date) {
-    data.created_date = new Date(data.created_date);
-  }
-  return data;
-};
-
-const apiResponseProgramAssessmentSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = programAssessmentSchemaResponseTransformer(data.data);
-  }
-  return data;
-};
-
-export const updateProgramAssessmentResponseTransformer = async (
-  data: any
-): Promise<UpdateProgramAssessmentResponse> => {
-  data = apiResponseProgramAssessmentSchemaResponseTransformer(data);
-  return data;
-};
-
 const programTrainingApplicationSchemaResponseTransformer = (data: any) => {
   if (data.reviewed_at) {
     data.reviewed_at = new Date(data.reviewed_at);
@@ -1271,6 +1251,20 @@ export const updateProgramCourseResponseTransformer = async (
   data: any
 ): Promise<UpdateProgramCourseResponse> => {
   data = apiResponseProgramCourseSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseListProgramCourseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => programCourseSchemaResponseTransformer(item));
+  }
+  return data;
+};
+
+export const updateProgramCourseWeightsResponseTransformer = async (
+  data: any
+): Promise<UpdateProgramCourseWeightsResponse> => {
+  data = apiResponseListProgramCourseSchemaResponseTransformer(data);
   return data;
 };
 
@@ -3926,27 +3920,6 @@ export const uploadProgramBannerResponseTransformer = async (
   return data;
 };
 
-const apiResponseListProgramAssessmentSchemaResponseTransformer = (data: any) => {
-  if (data.data) {
-    data.data = data.data.map((item: any) => programAssessmentSchemaResponseTransformer(item));
-  }
-  return data;
-};
-
-export const getProgramAssessmentsResponseTransformer = async (
-  data: any
-): Promise<GetProgramAssessmentsResponse> => {
-  data = apiResponseListProgramAssessmentSchemaResponseTransformer(data);
-  return data;
-};
-
-export const createProgramAssessmentResponseTransformer = async (
-  data: any
-): Promise<CreateProgramAssessmentResponse> => {
-  data = apiResponseProgramAssessmentSchemaResponseTransformer(data);
-  return data;
-};
-
 export const archiveProgramResponseTransformer = async (
   data: any
 ): Promise<ArchiveProgramResponse> => {
@@ -4029,6 +4002,44 @@ export const decideOnProgramTrainingRateUpdateResponseTransformer = async (
   data: any
 ): Promise<DecideOnProgramTrainingRateUpdateResponse> => {
   data = apiResponseTrainingRateUpdateSchemaResponseTransformer(data);
+  return data;
+};
+
+const programRemarkSchemaResponseTransformer = (data: any) => {
+  if (data.next_review_date) {
+    data.next_review_date = new Date(data.next_review_date);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  return data;
+};
+
+const apiResponseListProgramRemarkSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => programRemarkSchemaResponseTransformer(item));
+  }
+  return data;
+};
+
+export const getProgramRemarksResponseTransformer = async (
+  data: any
+): Promise<GetProgramRemarksResponse> => {
+  data = apiResponseListProgramRemarkSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseProgramRemarkSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = programRemarkSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const addProgramRemarkResponseTransformer = async (
+  data: any
+): Promise<AddProgramRemarkResponse> => {
+  data = apiResponseProgramRemarkSchemaResponseTransformer(data);
   return data;
 };
 
@@ -7307,13 +7318,6 @@ export const getStudentScheduleResponseTransformer = async (
   return data;
 };
 
-const pageableObjectSchemaResponseTransformer = (data: any) => {
-  if (data.offset) {
-    data.offset = BigInt(data.offset.toString());
-  }
-  return data;
-};
-
 const sessionReportSummarySchemaResponseTransformer = (data: any) => {
   if (data.session_start) {
     data.session_start = new Date(data.session_start);
@@ -7333,17 +7337,24 @@ const sessionReportSummarySchemaResponseTransformer = (data: any) => {
   return data;
 };
 
+const pageableObjectSchemaResponseTransformer = (data: any) => {
+  if (data.offset) {
+    data.offset = BigInt(data.offset.toString());
+  }
+  return data;
+};
+
 const pageSessionReportSummarySchemaResponseTransformer = (data: any) => {
   if (data.totalElements) {
     data.totalElements = BigInt(data.totalElements.toString());
-  }
-  if (data.pageable) {
-    data.pageable = pageableObjectSchemaResponseTransformer(data.pageable);
   }
   if (data.content) {
     data.content = data.content.map((item: any) =>
       sessionReportSummarySchemaResponseTransformer(item)
     );
+  }
+  if (data.pageable) {
+    data.pageable = pageableObjectSchemaResponseTransformer(data.pageable);
   }
   return data;
 };
@@ -8003,6 +8014,55 @@ export const getProgramTrainingApplicationHistoryResponseTransformer = async (
   data: any
 ): Promise<GetProgramTrainingApplicationHistoryResponse> => {
   data = apiResponseListTrainingApplicationEventSchemaResponseTransformer(data);
+  return data;
+};
+
+const programReportEvidenceSchemaResponseTransformer = (data: any) => {
+  if (data.graded_at) {
+    data.graded_at = new Date(data.graded_at);
+  }
+  return data;
+};
+
+const programReportSkillSchemaResponseTransformer = (data: any) => {
+  if (data.graded_at) {
+    data.graded_at = new Date(data.graded_at);
+  }
+  if (data.history) {
+    data.history = data.history.map((item: any) =>
+      programReportEvidenceSchemaResponseTransformer(item)
+    );
+  }
+  return data;
+};
+
+const programReportSchemaResponseTransformer = (data: any) => {
+  if (data.from) {
+    data.from = new Date(data.from);
+  }
+  if (data.to) {
+    data.to = new Date(data.to);
+  }
+  if (data.skills) {
+    data.skills = data.skills.map((item: any) => programReportSkillSchemaResponseTransformer(item));
+  }
+  if (data.remarks) {
+    data.remarks = data.remarks.map((item: any) => programRemarkSchemaResponseTransformer(item));
+  }
+  return data;
+};
+
+const apiResponseProgramReportSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = programReportSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getProgramReportResponseTransformer = async (
+  data: any
+): Promise<GetProgramReportResponse> => {
+  data = apiResponseProgramReportSchemaResponseTransformer(data);
   return data;
 };
 

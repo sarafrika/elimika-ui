@@ -51,6 +51,7 @@ import {
   addPayoutMethod,
   addPortfolioItem,
   addProgramCourse,
+  addProgramRemark,
   addProgramRequirement,
   addQuestionOption,
   addQuizQuestion,
@@ -133,7 +134,6 @@ import {
   createOrganisationAgeGroup,
   createOrganisationUser,
   createPracticeActivity,
-  createProgramAssessment,
   createQuiz,
   createQuizSchedule,
   createResource,
@@ -208,7 +208,6 @@ import {
   deleteOrganisationDocument,
   deletePortfolioItem,
   deletePracticeActivity,
-  deleteProgramAssessment,
   deleteProgramRequirement,
   deleteQuestionOption,
   deleteQuiz,
@@ -296,6 +295,7 @@ import {
   getClassEnrolmentEligibility,
   getClassesBatch,
   getClassMedia,
+  getClassProgrammeProgress,
   getClassRatingSummary,
   getClassReport,
   getClassReportCsv,
@@ -436,7 +436,6 @@ import {
   getPrimaryRubric,
   getProfileImage,
   getProgramApprovalStatus,
-  getProgramAssessments,
   getProgramCertificates,
   getProgramCertificates1,
   getProgramCompletionRate,
@@ -444,10 +443,13 @@ import {
   getProgramEnrollments,
   getProgramModerationHistory,
   getProgramRatingSummary,
+  getProgramRemarks,
+  getProgramReport,
   getProgramRequirements,
   getProgramReviews,
   getProgramsByCategory,
   getProgramsByCourseCreator,
+  getProgramSkills,
   getProgramTrainingApplication,
   getProgramTrainingApplicationHistory,
   getProgressReport,
@@ -592,6 +594,7 @@ import {
   listRules,
   listSales,
   listSent,
+  listSkillLevels,
   listSkills,
   listSkills1,
   listSources,
@@ -654,6 +657,9 @@ import {
   replaceGradeBands,
   replaceLearnerSkillGoals,
   replaceMarketplaceJobRequiredSkills,
+  replaceProgramSkillMappings,
+  replaceProgramSkills,
+  replaceSkillLevels,
   requestOrganisationVerification,
   requestOrganisationWithdrawal,
   requestPayment,
@@ -806,8 +812,8 @@ import {
   updatePayoutSettings,
   updatePortfolioItem,
   updatePracticeActivity,
-  updateProgramAssessment,
   updateProgramCourse,
+  updateProgramCourseWeights,
   updateProgramRequirement,
   updateProgramTrainingApplication,
   updateQuestionOption,
@@ -989,6 +995,9 @@ import type {
   AddProgramCourseData,
   AddProgramCourseError,
   AddProgramCourseResponse,
+  AddProgramRemarkData,
+  AddProgramRemarkError,
+  AddProgramRemarkResponse,
   AddProgramRequirementData,
   AddProgramRequirementError,
   AddProgramRequirementResponse,
@@ -1234,9 +1243,6 @@ import type {
   CreatePracticeActivityData,
   CreatePracticeActivityError,
   CreatePracticeActivityResponse,
-  CreateProgramAssessmentData,
-  CreateProgramAssessmentError,
-  CreateProgramAssessmentResponse,
   CreateQuizData,
   CreateQuizError,
   CreateQuizResponse,
@@ -1424,8 +1430,6 @@ import type {
   DeletePortfolioItemError,
   DeletePracticeActivityData,
   DeletePracticeActivityError,
-  DeleteProgramAssessmentData,
-  DeleteProgramAssessmentError,
   DeleteProgramRequirementData,
   DeleteProgramRequirementError,
   DeleteProgramRequirementResponse,
@@ -1677,6 +1681,9 @@ import type {
   GetClassMediaData,
   GetClassMediaError,
   GetClassMediaResponse,
+  GetClassProgrammeProgressData,
+  GetClassProgrammeProgressError,
+  GetClassProgrammeProgressResponse,
   GetClassRatingSummaryData,
   GetClassRatingSummaryError,
   GetClassRatingSummaryResponse,
@@ -2099,9 +2106,6 @@ import type {
   GetProgramApprovalStatusData,
   GetProgramApprovalStatusError,
   GetProgramApprovalStatusResponse,
-  GetProgramAssessmentsData,
-  GetProgramAssessmentsError,
-  GetProgramAssessmentsResponse,
   GetProgramCertificates1Data,
   GetProgramCertificates1Error,
   GetProgramCertificates1Response,
@@ -2123,6 +2127,12 @@ import type {
   GetProgramRatingSummaryData,
   GetProgramRatingSummaryError,
   GetProgramRatingSummaryResponse,
+  GetProgramRemarksData,
+  GetProgramRemarksError,
+  GetProgramRemarksResponse,
+  GetProgramReportData,
+  GetProgramReportError,
+  GetProgramReportResponse,
   GetProgramRequirementsData,
   GetProgramRequirementsError,
   GetProgramRequirementsResponse,
@@ -2135,6 +2145,9 @@ import type {
   GetProgramsByCourseCreatorData,
   GetProgramsByCourseCreatorError,
   GetProgramsByCourseCreatorResponse,
+  GetProgramSkillsData,
+  GetProgramSkillsError,
+  GetProgramSkillsResponse,
   GetProgramTrainingApplicationData,
   GetProgramTrainingApplicationError,
   GetProgramTrainingApplicationHistoryData,
@@ -2568,6 +2581,9 @@ import type {
   ListSentData,
   ListSentError,
   ListSentResponse,
+  ListSkillLevelsData,
+  ListSkillLevelsError,
+  ListSkillLevelsResponse,
   ListSkills1Data,
   ListSkills1Error,
   ListSkills1Response,
@@ -2750,6 +2766,15 @@ import type {
   ReplaceMarketplaceJobRequiredSkillsData,
   ReplaceMarketplaceJobRequiredSkillsError,
   ReplaceMarketplaceJobRequiredSkillsResponse,
+  ReplaceProgramSkillMappingsData,
+  ReplaceProgramSkillMappingsError,
+  ReplaceProgramSkillMappingsResponse,
+  ReplaceProgramSkillsData,
+  ReplaceProgramSkillsError,
+  ReplaceProgramSkillsResponse,
+  ReplaceSkillLevelsData,
+  ReplaceSkillLevelsError,
+  ReplaceSkillLevelsResponse,
   RequestOrganisationVerificationData,
   RequestOrganisationVerificationError,
   RequestOrganisationVerificationResponse,
@@ -3204,12 +3229,12 @@ import type {
   UpdatePracticeActivityData,
   UpdatePracticeActivityError,
   UpdatePracticeActivityResponse,
-  UpdateProgramAssessmentData,
-  UpdateProgramAssessmentError,
-  UpdateProgramAssessmentResponse,
   UpdateProgramCourseData,
   UpdateProgramCourseError,
   UpdateProgramCourseResponse,
+  UpdateProgramCourseWeightsData,
+  UpdateProgramCourseWeightsError,
+  UpdateProgramCourseWeightsResponse,
   UpdateProgramRequirementData,
   UpdateProgramRequirementError,
   UpdateProgramRequirementResponse,
@@ -4483,60 +4508,6 @@ export const updateTrainingProgramMutation = (
 };
 
 /**
- * Delete a program assessment component
- */
-export const deleteProgramAssessmentMutation = (
-  options?: Partial<Options<DeleteProgramAssessmentData>>
-): UseMutationOptions<
-  unknown,
-  DeleteProgramAssessmentError,
-  Options<DeleteProgramAssessmentData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    unknown,
-    DeleteProgramAssessmentError,
-    Options<DeleteProgramAssessmentData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await deleteProgramAssessment({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Update a program assessment component
- */
-export const updateProgramAssessmentMutation = (
-  options?: Partial<Options<UpdateProgramAssessmentData>>
-): UseMutationOptions<
-  UpdateProgramAssessmentResponse,
-  UpdateProgramAssessmentError,
-  Options<UpdateProgramAssessmentData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    UpdateProgramAssessmentResponse,
-    UpdateProgramAssessmentError,
-    Options<UpdateProgramAssessmentData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await updateProgramAssessment({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
  * Withdraw program training application
  *
  * Allows the applicant (instructor or organisation) to withdraw their own program training
@@ -4664,6 +4635,89 @@ export const updateProgramTrainingApplicationMutation = (
   return mutationOptions;
 };
 
+export const getProgramSkillsQueryKey = (options: Options<GetProgramSkillsData>) =>
+  createQueryKey('getProgramSkills', options);
+
+/**
+ * List a programme's target skills and their linked evidence
+ */
+export const getProgramSkillsOptions = (options: Options<GetProgramSkillsData>) =>
+  queryOptions<
+    GetProgramSkillsResponse,
+    GetProgramSkillsError,
+    GetProgramSkillsResponse,
+    ReturnType<typeof getProgramSkillsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgramSkills({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgramSkillsQueryKey(options),
+  });
+
+/**
+ * Set a programme's target skills
+ *
+ * Replaces the target skills in display order. A removed skill loses its linked evidence.
+ */
+export const replaceProgramSkillsMutation = (
+  options?: Partial<Options<ReplaceProgramSkillsData>>
+): UseMutationOptions<
+  ReplaceProgramSkillsResponse,
+  ReplaceProgramSkillsError,
+  Options<ReplaceProgramSkillsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReplaceProgramSkillsResponse,
+    ReplaceProgramSkillsError,
+    Options<ReplaceProgramSkillsData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await replaceProgramSkills({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Link graded evidence to a programme skill
+ *
+ * Replaces the skill's links. Each link is a programme course's assessment, optionally narrowed to one rubric criterion; shares for one assessment total 100%.
+ */
+export const replaceProgramSkillMappingsMutation = (
+  options?: Partial<Options<ReplaceProgramSkillMappingsData>>
+): UseMutationOptions<
+  ReplaceProgramSkillMappingsResponse,
+  ReplaceProgramSkillMappingsError,
+  Options<ReplaceProgramSkillMappingsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReplaceProgramSkillMappingsResponse,
+    ReplaceProgramSkillMappingsError,
+    Options<ReplaceProgramSkillMappingsData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await replaceProgramSkillMappings({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 /**
  * Delete program requirement
  *
@@ -4770,6 +4824,35 @@ export const updateProgramCourseMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await updateProgramCourse({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+/**
+ * Set programme course weights
+ *
+ * Replaces every course's mandatory flag and share of the programme mark in one go. Mandatory weights must total exactly 100%; optional courses carry no weight.
+ */
+export const updateProgramCourseWeightsMutation = (
+  options?: Partial<Options<UpdateProgramCourseWeightsData>>
+): UseMutationOptions<
+  UpdateProgramCourseWeightsResponse,
+  UpdateProgramCourseWeightsError,
+  Options<UpdateProgramCourseWeightsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    UpdateProgramCourseWeightsResponse,
+    UpdateProgramCourseWeightsError,
+    Options<UpdateProgramCourseWeightsData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await updateProgramCourseWeights({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -8639,6 +8722,35 @@ export const adminUpdateSkillMutation = (
   return mutationOptions;
 };
 
+/**
+ * Replace the skill level scale
+ *
+ * Saves the whole scale at once. One level must start at 0%, minimums and names must be unique, and achieved levels must be the top levels. Current learner levels are re-levelled.
+ */
+export const replaceSkillLevelsMutation = (
+  options?: Partial<Options<ReplaceSkillLevelsData>>
+): UseMutationOptions<
+  ReplaceSkillLevelsResponse,
+  ReplaceSkillLevelsError,
+  Options<ReplaceSkillLevelsData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    ReplaceSkillLevelsResponse,
+    ReplaceSkillLevelsError,
+    Options<ReplaceSkillLevelsData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await replaceSkillLevels({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
 export const getPayoutSettingsQueryKey = (options?: Options<GetPayoutSettingsData>) =>
   createQueryKey('getPayoutSettings', options);
 
@@ -11131,60 +11243,6 @@ export const uploadProgramBannerMutation = (
   return mutationOptions;
 };
 
-export const getProgramAssessmentsQueryKey = (options: Options<GetProgramAssessmentsData>) =>
-  createQueryKey('getProgramAssessments', options);
-
-/**
- * List a program's assessment components
- */
-export const getProgramAssessmentsOptions = (options: Options<GetProgramAssessmentsData>) =>
-  queryOptions<
-    GetProgramAssessmentsResponse,
-    GetProgramAssessmentsError,
-    GetProgramAssessmentsResponse,
-    ReturnType<typeof getProgramAssessmentsQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getProgramAssessments({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getProgramAssessmentsQueryKey(options),
-  });
-
-/**
- * Add a weighted assessment component to a program
- *
- * Active component weights may not exceed 100% and must total exactly 100% before publishing.
- */
-export const createProgramAssessmentMutation = (
-  options?: Partial<Options<CreateProgramAssessmentData>>
-): UseMutationOptions<
-  CreateProgramAssessmentResponse,
-  CreateProgramAssessmentError,
-  Options<CreateProgramAssessmentData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreateProgramAssessmentResponse,
-    CreateProgramAssessmentError,
-    Options<CreateProgramAssessmentData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await createProgramAssessment({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 /**
  * Archive training program
  *
@@ -11451,6 +11509,62 @@ export const decideOnProgramTrainingRateUpdateMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await decideOnProgramTrainingRateUpdate({
+        ...options,
+        ...fnOptions,
+        throwOnError: true,
+      });
+      return data;
+    },
+  };
+  return mutationOptions;
+};
+
+export const getProgramRemarksQueryKey = (options: Options<GetProgramRemarksData>) =>
+  createQueryKey('getProgramRemarks', options);
+
+/**
+ * List a learner's programme remarks
+ *
+ * Newest first.
+ */
+export const getProgramRemarksOptions = (options: Options<GetProgramRemarksData>) =>
+  queryOptions<
+    GetProgramRemarksResponse,
+    GetProgramRemarksError,
+    GetProgramRemarksResponse,
+    ReturnType<typeof getProgramRemarksQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgramRemarks({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgramRemarksQueryKey(options),
+  });
+
+/**
+ * Add a programme progress remark
+ *
+ * Rich-text strengths, areas to improve and recommendations, plus a next review date. Only the default instructor of one of the learner's programme classes may add one; earlier remarks are kept.
+ */
+export const addProgramRemarkMutation = (
+  options?: Partial<Options<AddProgramRemarkData>>
+): UseMutationOptions<
+  AddProgramRemarkResponse,
+  AddProgramRemarkError,
+  Options<AddProgramRemarkData>
+> => {
+  const mutationOptions: UseMutationOptions<
+    AddProgramRemarkResponse,
+    AddProgramRemarkError,
+    Options<AddProgramRemarkData>
+  > = {
+    mutationFn: async fnOptions => {
+      const { data } = await addProgramRemark({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -22236,6 +22350,33 @@ export const listSkills1Options = (options?: Options<ListSkills1Data>) =>
     queryKey: listSkills1QueryKey(options),
   });
 
+export const listSkillLevelsQueryKey = (options?: Options<ListSkillLevelsData>) =>
+  createQueryKey('listSkillLevels', options);
+
+/**
+ * List skill levels
+ *
+ * Lowest minimum first.
+ */
+export const listSkillLevelsOptions = (options?: Options<ListSkillLevelsData>) =>
+  queryOptions<
+    ListSkillLevelsResponse,
+    ListSkillLevelsError,
+    ListSkillLevelsResponse,
+    ReturnType<typeof listSkillLevelsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listSkillLevels({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listSkillLevelsQueryKey(options),
+  });
+
 export const globalSearchQueryKey = (options: Options<GlobalSearchData>) =>
   createQueryKey('globalSearch', options);
 
@@ -23999,6 +24140,33 @@ export const getProgramTrainingApplicationHistoryOptions = (
       return data;
     },
     queryKey: getProgramTrainingApplicationHistoryQueryKey(options),
+  });
+
+export const getProgramReportQueryKey = (options: Options<GetProgramReportData>) =>
+  createQueryKey('getProgramReport', options);
+
+/**
+ * Get a learner's programme report
+ *
+ * Programme mark (provisional until every mandatory course is decided), pass checks, course rows with attendance in the period, skill levels with evidence history, and remarks. Readable by the learner, a guardian sharing academics and the learner's programme class instructors.
+ */
+export const getProgramReportOptions = (options: Options<GetProgramReportData>) =>
+  queryOptions<
+    GetProgramReportResponse,
+    GetProgramReportError,
+    GetProgramReportResponse,
+    ReturnType<typeof getProgramReportQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getProgramReport({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getProgramReportQueryKey(options),
   });
 
 export const getProgramRatingSummaryQueryKey = (options: Options<GetProgramRatingSummaryData>) =>
@@ -31931,6 +32099,34 @@ export const getEnrollmentsForClassOptions = (options: Options<GetEnrollmentsFor
       return data;
     },
     queryKey: getEnrollmentsForClassQueryKey(options),
+  });
+
+export const getClassProgrammeProgressQueryKey = (
+  options: Options<GetClassProgrammeProgressData>
+) => createQueryKey('getClassProgrammeProgress', options);
+
+/**
+ * Get a class's programme progress
+ *
+ * Programme marks and skill levels for the class's learners, with per-skill attainment counts. Pass program_uuid when the class's course sits in more than one programme.
+ */
+export const getClassProgrammeProgressOptions = (options: Options<GetClassProgrammeProgressData>) =>
+  queryOptions<
+    GetClassProgrammeProgressResponse,
+    GetClassProgrammeProgressError,
+    GetClassProgrammeProgressResponse,
+    ReturnType<typeof getClassProgrammeProgressQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await getClassProgrammeProgress({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: getClassProgrammeProgressQueryKey(options),
   });
 
 export const getClassSchedulesQueryKey = (options: Options<GetClassSchedulesData>) =>
