@@ -86,7 +86,7 @@ export function DraftField({
   type = 'text',
   multiline = false,
 }: {
-  name: Exclude<keyof ProgramFormValues['draft'], 'assessments' | 'evaluationCriteria'>;
+  name: Exclude<keyof ProgramFormValues['draft'], 'evaluationCriteria'>;
   label: string;
   placeholder?: string;
   type?: 'text' | 'number' | 'url';

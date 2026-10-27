@@ -6,7 +6,7 @@ import {
   programRequirementTypeSchema,
 } from './program-schema';
 
-export type ProgramSaveStep = number | 'requirements' | 'assessments' | 'all';
+export type ProgramSaveStep = number | 'requirements' | 'all';
 
 export type ProgramSaveProgress = {
   steps: { key: string; label: string }[];
@@ -36,7 +36,7 @@ export function programStepBody(
           }
         : {}),
       ...(step === 2 || step === 'all' ? { passMark: values.passMark } : {}),
-      ...(step === 5 || step === 'all' ? { price: values.price } : {}),
+      ...(step === 6 || step === 'all' ? { price: values.price } : {}),
     },
     creatorUuid,
     existing
@@ -60,16 +60,14 @@ export function courseBody(row: ProgramFormValues['courses'][number], index: num
   };
 }
 
-export function assessmentBody(row: ProgramFormValues['draft']['assessments'][number]) {
-  return {
-    title: row.name.trim(),
-    assessment_type: row.assessmentType,
-    description: row.criteria.trim(),
-    weight_percentage: Number(row.weight),
-    rubric_uuid: row.rubricUuid || undefined,
-    is_required: row.isRequired,
-    active: row.active,
-  };
+/** The weights endpoint body; empty when nothing is weighted yet, so drafts can skip it. */
+export function courseWeightsBody(courses: ProgramFormValues['courses']) {
+  if (!courses.some(course => course.isRequired && course.weightPercentage.trim() !== '')) return [];
+  return courses.map(course => ({
+    program_course_uuid: course.associationUuid ?? '',
+    is_required: course.isRequired,
+    weight_percentage: course.isRequired ? Number(course.weightPercentage) : undefined,
+  }));
 }
 
 /** Compare the API payload, so UI metadata and harmless numeric/whitespace edits do not save. */

@@ -106,7 +106,7 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
     if (!course.uuid) return;
     const index = fields.findIndex(row => row.courseUuid === course.uuid);
     if (index >= 0) removeCourse(index);
-    else append({ courseUuid: course.uuid, isRequired: true, prerequisiteCourseUuid: '' });
+    else append({ courseUuid: course.uuid, isRequired: true, prerequisiteCourseUuid: '', weightPercentage: '' });
   };
 
   return (

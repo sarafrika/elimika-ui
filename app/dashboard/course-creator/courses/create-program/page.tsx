@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
-  getProgramAssessmentsOptions,
   getProgramRequirementsOptions,
   getTrainingProgramByUuidOptions,
   searchProgramCoursesOptions,
@@ -85,20 +84,15 @@ function ExistingProgram({ programId }: { programId: string }) {
           }
           return rows;
         };
-        const [response, requirements, courses, assessments] = await Promise.all([
+        const [response, requirements, courses] = await Promise.all([
           queryClient.fetchQuery({
             ...getTrainingProgramByUuidOptions({ path: { uuid: programId } }),
             staleTime: STALE_TIMES.entity,
           }),
           loadRequirements(),
           loadCourses(),
-          queryClient.fetchQuery({
-            ...getProgramAssessmentsOptions({ path: { uuid: programId } }),
-            staleTime: STALE_TIMES.entity,
-          }),
         ]);
         assertProgramResponse(response, 'Unable to load program');
-        assertProgramResponse(assessments, 'Unable to load program assessments');
         if (!response.data) throw new Error('Program not found');
         const program = response.data;
         if (!cancelled)
@@ -106,19 +100,6 @@ function ExistingProgram({ programId }: { programId: string }) {
             program,
             values: {
               ...defaultProgramValues(program),
-              draft: {
-                ...defaultProgramValues().draft,
-                assessments: (assessments.data ?? []).map(row => ({
-                  uuid: row.uuid,
-                  name: row.title,
-                  weight: String(row.weight_percentage),
-                  criteria: row.description ?? '',
-                  assessmentType: row.assessment_type,
-                  rubricUuid: row.rubric_uuid ?? undefined,
-                  isRequired: row.is_required ?? true,
-                  active: row.active ?? true,
-                })),
-              },
               requirements: requirements.map(row => ({
                 uuid: row.uuid,
                 requirementText: row.requirement_text,
@@ -136,6 +117,8 @@ function ExistingProgram({ programId }: { programId: string }) {
                   courseUuid: row.course_uuid,
                   isRequired: row.is_required ?? true,
                   prerequisiteCourseUuid: row.prerequisite_course_uuid ?? '',
+                  weightPercentage:
+                    row.weight_percentage == null ? '' : String(row.weight_percentage),
                 })),
             },
           });

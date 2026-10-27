@@ -5,7 +5,6 @@ const localDraftSchema = z.object({
   programCode: z.string().optional(),
   categoryUuids: z.array(z.string().min(1)),
   draft: programDraftSchema.omit({
-    assessments: true,
     evaluationCriteria: true,
     rubric: true,
     evaluationNotes: true,

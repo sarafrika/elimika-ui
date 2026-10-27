@@ -297,7 +297,6 @@ function AssessmentBatchEditor({
           rubric_uuid: draft.original?.rubric_uuid,
           sync_class_attendance: draft.original?.sync_class_attendance,
           per_lesson: draft.original?.per_lesson,
-          program_assessment_uuid: draft.original?.program_assessment_uuid,
         };
         if (
           draft.original &&

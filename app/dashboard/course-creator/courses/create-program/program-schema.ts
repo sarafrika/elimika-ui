@@ -22,30 +22,6 @@ export const programDraftSchema = z.object({
   rubric: z.string().default(''),
   evaluationNotes: z.string().default(''),
   evaluationCriteria: z.record(z.string()).default({}),
-  assessments: z
-    .array(
-      z.object({
-        uuid: z.string().optional(),
-        assessmentType: z.string().default('exam'),
-        rubricUuid: z.string().nullish().transform(value => value ?? undefined),
-        isRequired: z.boolean().default(true),
-        active: z.boolean().default(true),
-        name: z.string().trim().min(1, 'Enter a component name'),
-        weight: z
-          .string()
-          .trim()
-          .refine(
-            value =>
-              value !== '' &&
-              Number.isFinite(Number(value)) &&
-              Number(value) > 0 &&
-              Number(value) <= 100,
-            'Enter a weight above 0 and at most 100%'
-          ),
-        criteria: z.string(),
-      })
-    )
-    .default([]),
   brandName: z.string().default(''),
   tagline: z.string().default(''),
   logoUrl: z.string().default(''),
@@ -109,18 +85,32 @@ const programFieldsSchema = z.object({
       courseUuid: z.string().min(1),
       isRequired: z.boolean(),
       prerequisiteCourseUuid: z.string(),
+      weightPercentage: z.string().default(''),
     })
   ),
 });
-function refineAssessmentWeights(
-  rows: z.infer<typeof programDraftSchema>['assessments'],
+/** Weights are optional while drafting; once any is entered, mandatory weights must total 100%. */
+function refineCourseWeights(
+  courses: z.infer<typeof programFieldsSchema>['courses'],
   ctx: z.RefinementCtx
 ) {
-  if (rows.reduce((total, row) => total + Number(row.weight), 0) > 100)
+  const mandatory = courses.filter(course => course.isRequired);
+  if (!mandatory.some(course => course.weightPercentage.trim() !== '')) return;
+  mandatory.forEach(course => {
+    const value = Number(course.weightPercentage);
+    if (course.weightPercentage.trim() === '' || !Number.isFinite(value) || value <= 0 || value > 100)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['courses', courses.indexOf(course), 'weightPercentage'],
+        message: 'Give every mandatory course a weight above 0 and at most 100%',
+      });
+  });
+  const total = mandatory.reduce((sum, course) => sum + (Number(course.weightPercentage) || 0), 0);
+  if (Math.round(total * 100) !== 10000)
     ctx.addIssue({
       code: 'custom',
-      path: ['draft', 'assessments'],
-      message: 'Assessment weights cannot total more than 100%',
+      path: ['courses'],
+      message: `Mandatory course weights must total exactly 100% (currently ${Math.round(total * 100) / 100}%)`,
     });
 }
 
@@ -147,8 +137,8 @@ function refineCurriculum(
 }
 
 export const programFormSchema = programFieldsSchema.superRefine((values, ctx) => {
-  refineAssessmentWeights(values.draft.assessments, ctx);
   refineCurriculum(values.courses, ctx);
+  refineCourseWeights(values.courses, ctx);
 });
 
 // Validate the fields on the active step without requiring unfinished later steps.
@@ -164,19 +154,16 @@ export const PROGRAM_STEP_FIELDS = [
     'requirements',
   ],
   ['courses'],
-  ['passMark', 'draft.assessments'],
+  ['passMark', 'courses'],
+  [],
   [],
   [],
   ['price'],
 ] as const;
 
-export function programStepSchema(step: number | 'requirements' | 'assessments') {
+export function programStepSchema(step: number | 'requirements') {
   const fields = programFieldsSchema.shape;
   if (step === 'requirements') return programFieldsSchema.pick({ requirements: true });
-  if (step === 'assessments')
-    return z
-      .object({ draft: programDraftSchema.pick({ assessments: true }) })
-      .superRefine((values, ctx) => refineAssessmentWeights(values.draft.assessments, ctx));
   if (step === 0)
     return programFieldsSchema.pick({
       title: true,
@@ -194,9 +181,9 @@ export function programStepSchema(step: number | 'requirements' | 'assessments')
       .superRefine((values, ctx) => refineCurriculum(values.courses, ctx));
   if (step === 2)
     return z
-      .object({ passMark: fields.passMark, draft: programDraftSchema.pick({ assessments: true }) })
-      .superRefine((values, ctx) => refineAssessmentWeights(values.draft.assessments, ctx));
-  if (step === 5) return programFieldsSchema.pick({ price: true });
+      .object({ passMark: fields.passMark, courses: fields.courses })
+      .superRefine((values, ctx) => refineCourseWeights(values.courses, ctx));
+  if (step === 6) return programFieldsSchema.pick({ price: true });
   return z.object({});
 }
 

@@ -53,6 +53,7 @@ const STATUS_BADGES: Record<EnrollmentStatusEnum2, { label: string; tone: Status
   WAITLISTED: { label: 'Waitlisted', tone: 'warning' },
   ATTENDED: { label: 'Completed', tone: 'neutral' },
   ABSENT: { label: 'Absent', tone: 'warning' },
+  EXCUSED: { label: 'Excused', tone: 'neutral' },
   CANCELLED: { label: 'Cancelled', tone: 'neutral' },
 };
 

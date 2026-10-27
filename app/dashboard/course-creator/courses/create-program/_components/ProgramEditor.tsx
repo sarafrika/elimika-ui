@@ -31,6 +31,7 @@ import {
   Palette,
   Scale,
   Send,
+  Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -47,18 +48,16 @@ import type { PendingProgramMedia, ProgramMediaKey } from '../save-program-media
 import { useSaveProgram } from '../use-save-program';
 import ProgramCourses from './ProgramCourses';
 import { ProgramSetup } from './ProgramFields';
-import {
-  ProgramAssessment,
-  ProgramBranding,
-  ProgramEvaluation,
-  ProgramPricing,
-} from './ProgramFutureSteps';
+import { ProgramBranding, ProgramEvaluation, ProgramPricing } from './ProgramFutureSteps';
+import { ProgramSkills } from './ProgramSkills';
+import { ProgramWeights } from './ProgramWeights';
 import { ProgramSavingOverlay } from './ProgramSavingOverlay';
 
 const STEPS = [
   { key: 'setup', label: 'Program set-up', icon: ClipboardList },
   { key: 'courses', label: 'Courses in this program', icon: Layers },
-  { key: 'assessment', label: 'Program assessment', icon: ListChecks },
+  { key: 'weights', label: 'Pass rule & weights', icon: ListChecks },
+  { key: 'skills', label: 'Skills', icon: Sparkles },
   { key: 'evaluation', label: 'Evaluation', icon: Scale },
   { key: 'branding', label: 'Branding', icon: Palette },
   { key: 'pricing', label: 'Pricing', icon: BadgeDollarSign },
@@ -179,13 +178,9 @@ export default function ProgramEditor({
     else clearNewProgramDraft(creatorUuid);
     return uuid;
   };
-  const validateStep = (target: number | 'requirements' | 'assessments') => {
+  const validateStep = (target: number | 'requirements') => {
     const fields: FieldPath<ProgramFormValues>[] =
-      target === 'requirements'
-        ? ['requirements']
-        : target === 'assessments'
-          ? ['draft.assessments']
-          : [...(PROGRAM_STEP_FIELDS[target] ?? [])];
+      target === 'requirements' ? ['requirements'] : [...(PROGRAM_STEP_FIELDS[target] ?? [])];
     form.clearErrors(fields);
     const result = programStepSchema(target).safeParse(form.getValues());
     if (result.success) {
@@ -343,7 +338,7 @@ export default function ProgramEditor({
                   </span>
 
                   <nav aria-label='Program setup steps'>
-                    <ol className='mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6'>
+                    <ol className='mt-4 grid gap-2 sm:grid-cols-4 lg:grid-cols-7'>
                       {STEPS.map((entry, index) => {
                         const Icon = entry.icon;
                         const state = index === step ? 'current' : index < step ? 'done' : 'todo';
@@ -445,25 +440,14 @@ export default function ProgramEditor({
                     </>
                   )}
                   {step === 1 && <ProgramCourses creatorUuid={creatorUuid} />}
-                  {step === 2 && (
-                    <ProgramAssessment
+                  {step === 2 && <ProgramWeights />}
+                  {step === 3 && save.programUuid && (
+                    <ProgramSkills
                       programUuid={save.programUuid}
-                      onSave={async assessments => {
-                        if (navigationLock.current || save.isPending || evaluationPending)
-                          return false;
-                        navigationLock.current = true;
-                        try {
-                          form.setValue('draft.assessments', assessments, { shouldDirty: true });
-                          if (!validateStep('assessments')) return false;
-                          await persistStep('assessments');
-                          return true;
-                        } finally {
-                          navigationLock.current = false;
-                        }
-                      }}
+                      onPendingChange={setEvaluationPending}
                     />
                   )}
-                  {step === 3 && save.programUuid && (
+                  {step === 4 && save.programUuid && (
                     <ProgramEvaluation
                       programUuid={save.programUuid}
                       creatorUuid={creatorUuid}
@@ -471,8 +455,8 @@ export default function ProgramEditor({
                       onPendingChange={setEvaluationPending}
                     />
                   )}
-                  {step === 4 && <ProgramBranding files={pendingMedia} onSelect={selectMedia} />}
-                  {step === 5 && (
+                  {step === 5 && <ProgramBranding files={pendingMedia} onSelect={selectMedia} />}
+                  {step === 6 && (
                     <>
                       <ProgramPricing
                         revenueShares={revenueShares}

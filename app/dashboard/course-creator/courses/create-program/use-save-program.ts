@@ -7,20 +7,18 @@ import { withoutProgramLifecycle } from '@/components/programs/program-lifecycle
 import {
   addProgramCourseMutation,
   addProgramRequirementMutation,
-  createProgramAssessmentMutation,
   createTrainingProgramMutation,
-  deleteProgramAssessmentMutation,
   deleteProgramRequirementMutation,
   getAllTrainingProgramsQueryKey,
-  getProgramAssessmentsQueryKey,
   getProgramCoursesQueryKey,
   getProgramRequirementsQueryKey,
   getTrainingProgramByUuidQueryKey,
   removeProgramCourseMutation,
   searchProgramCoursesQueryKey,
   searchTrainingProgramsQueryKey,
-  updateProgramAssessmentMutation,
   updateProgramCourseMutation,
+  updateProgramCourseWeightsMutation,
+  getProgramSkillsQueryKey,
   updateProgramRequirementMutation,
   updateTrainingProgramMutation,
   uploadProgramBannerMutation,
@@ -35,9 +33,9 @@ import {
   programBody,
 } from './program-schema';
 import {
-  assessmentBody,
   changedProgramRows,
   courseBody,
+  courseWeightsBody,
   programStepBody,
   requirementBody,
   sameProgramPayload,
@@ -83,16 +81,10 @@ export function useSaveProgram(
   const savedContent = useRef(
     program ? programBody(defaultProgramValues(program), creatorUuid, program) : undefined
   );
-  const savedAssessments = useRef(
-    new Map(
-      form
-        .getValues('draft.assessments')
-        .flatMap(row => (row.uuid ? [[row.uuid, assessmentBody(row)] as const] : []))
-    )
+  const savedWeights = useRef(
+    program ? JSON.stringify(courseWeightsBody(form.getValues('courses'))) : undefined
   );
-  const createAssessment = useMutation(createProgramAssessmentMutation());
-  const updateAssessment = useMutation(updateProgramAssessmentMutation());
-  const deleteAssessment = useMutation(deleteProgramAssessmentMutation());
+  const saveWeights = useMutation(updateProgramCourseWeightsMutation());
   const savedRequirements = useRef(
     new Map(
       form
@@ -171,16 +163,11 @@ export function useSaveProgram(
       )
         steps.push({ key: 'courses', label: 'Saving program courses' });
       if (
-        (step === 2 || step === 'assessments' || step === 'all') &&
-        changedProgramRows(
-          savedAssessments.current,
-          values.draft.assessments,
-          row => row.uuid,
-          assessmentBody
-        )
+        (step === 2 || step === 'all') &&
+        savedWeights.current !== JSON.stringify(courseWeightsBody(values.courses))
       )
-        steps.push({ key: 'assessments', label: 'Saving assessment components' });
-      if (step === 4 || step === 'all') {
+        steps.push({ key: 'weights', label: 'Saving course weights' });
+      if (step === 5 || step === 'all') {
         const labels = {
           thumbnail: 'Uploading thumbnail',
           banner: 'Uploading banner',
@@ -301,49 +288,21 @@ export function useSaveProgram(
           savedCourses.current.delete(courseUuid);
         }
       }
-      if (step === 2 || step === 'assessments' || step === 'all') {
-        advanceProgress('assessments');
-        const rows = values.draft.assessments;
-        const current = new Set(rows.flatMap(row => (row.uuid ? [row.uuid] : [])));
-        for (const uuidToRemove of savedAssessments.current.keys()) {
-          if (current.has(uuidToRemove)) continue;
+      if (step === 2 || step === 'all') {
+        // Read the course rows after the curriculum save so new associations have their IDs.
+        const body = courseWeightsBody(form.getValues('courses'));
+        const serialized = JSON.stringify(body);
+        if (body.length && savedWeights.current !== serialized) {
+          if (body.some(row => !row.program_course_uuid))
+            throw new Error('Save the courses step before setting course weights.');
+          advanceProgress('weights');
           didWrite.current = true;
-          const response = await deleteAssessment.mutateAsync({
-            path: { uuid, assessmentUuid: uuidToRemove },
-          });
-          assertProgramResponse(response, 'Unable to remove assessment component');
-          savedAssessments.current.delete(uuidToRemove);
-        }
-        // Reduce existing weights first so redistributing a 100% total does not temporarily exceed it.
-        for (const row of rows) {
-          const previous = row.uuid ? savedAssessments.current.get(row.uuid) : undefined;
-          if (!row.uuid || !previous || Number(row.weight) >= previous.weight_percentage) continue;
-          const body = assessmentBody(row);
-          didWrite.current = true;
-          const response = await updateAssessment.mutateAsync({
-            path: { uuid, assessmentUuid: row.uuid },
-            body,
-          });
-          assertProgramResponse(response, 'Unable to save assessment component');
-          savedAssessments.current.set(row.uuid, body);
-        }
-        for (const [index, row] of rows.entries()) {
-          const body = assessmentBody(row);
-          if (row.uuid && sameProgramPayload(savedAssessments.current.get(row.uuid), body))
-            continue;
-          didWrite.current = true;
-          const response = row.uuid
-            ? await updateAssessment.mutateAsync({ path: { uuid, assessmentUuid: row.uuid }, body })
-            : await createAssessment.mutateAsync({ path: { uuid }, body });
-          assertProgramResponse(response, 'Unable to save assessment component');
-          const assessmentUuid = response.data?.uuid ?? row.uuid;
-          if (!assessmentUuid)
-            throw new Error('The assessment component returned no ID. Reload before trying again.');
-          savedAssessments.current.set(assessmentUuid, body);
-          form.setValue(`draft.assessments.${index}.uuid`, assessmentUuid);
+          const response = await saveWeights.mutateAsync({ path: { programUuid: uuid }, body });
+          assertProgramResponse(response, 'Unable to save course weights');
+          savedWeights.current = serialized;
         }
       }
-      if (step === 4 || step === 'all')
+      if (step === 5 || step === 'all')
         await saveProgramMedia(
           uuid,
           media,
@@ -372,7 +331,7 @@ export function useSaveProgram(
         // Invalidate all parameter variants using prefixes from the canonical generated keys.
         const keys = [
           getTrainingProgramByUuidQueryKey({ path: { uuid } }),
-          getProgramAssessmentsQueryKey({ path: { uuid } }),
+          getProgramSkillsQueryKey({ path: { programUuid: uuid } }),
           getProgramCoursesQueryKey({ path: { programUuid: uuid } }),
           getProgramRequirementsQueryKey({ path: { programUuid: uuid }, query: { pageable: {} } }),
           searchProgramCoursesQueryKey({ query: { searchParams: {}, pageable: {} } }),
@@ -423,16 +382,11 @@ export function useSaveProgram(
     )
       return true;
     if (
-      (step === 2 || step === 'assessments' || step === 'all') &&
-      changedProgramRows(
-        savedAssessments.current,
-        values.draft.assessments,
-        row => row.uuid,
-        assessmentBody
-      )
+      (step === 2 || step === 'all') &&
+      savedWeights.current !== JSON.stringify(courseWeightsBody(values.courses))
     )
       return true;
-    return (step === 4 || step === 'all') && Object.values(media).some(Boolean);
+    return (step === 5 || step === 'all') && Object.values(media).some(Boolean);
   };
   return { ...mutation, programUuid, hasChanges, progress };
 }
