@@ -2425,6 +2425,9 @@ import type {
   ListStatementsData,
   ListStatementsErrors,
   ListStatementsResponses,
+  ListStudentProgramReportsData,
+  ListStudentProgramReportsErrors,
+  ListStudentProgramReportsResponses,
   ListTeamsData,
   ListTeamsErrors,
   ListTeamsResponses,
@@ -16982,6 +16985,27 @@ export const searchProgramTrainingApplications = <ThrowOnError extends boolean =
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/programs/training-applications/search',
+    ...options,
+  });
+
+/**
+ * List the programmes whose reports the caller may open for a learner
+ *
+ * One row per programme the learner is enrolled in, limited to programmes whose report the caller can read.
+ */
+export const listStudentProgramReports = <ThrowOnError extends boolean = false>(
+  options: Options<ListStudentProgramReportsData, ThrowOnError>
+) =>
+  (options.client ?? client).get<
+    ListStudentProgramReportsResponses,
+    ListStudentProgramReportsErrors,
+    ThrowOnError
+  >({
+    security: [
+      { scheme: 'bearer', type: 'http' },
+      { scheme: 'bearer', type: 'http' },
+    ],
+    url: '/api/v1/programs/students/{studentUuid}/reports',
     ...options,
   });
 

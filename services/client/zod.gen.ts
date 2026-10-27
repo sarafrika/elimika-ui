@@ -2617,6 +2617,11 @@ export const zCertificate = z
       .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
       .readonly()
       .optional(),
+    validity_status: z
+      .string()
+      .describe('**[READ-ONLY]** Current validity status of the certificate.')
+      .readonly()
+      .optional(),
     certificate_type: z
       .string()
       .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
@@ -2625,11 +2630,6 @@ export const zCertificate = z
     is_downloadable: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
-      .readonly()
-      .optional(),
-    validity_status: z
-      .string()
-      .describe('**[READ-ONLY]** Current validity status of the certificate.')
       .readonly()
       .optional(),
   })
@@ -5548,6 +5548,10 @@ export const zProgramReport = z
     courses: z.array(zProgramReportCourse).optional(),
     skills: z.array(zProgramReportSkill).optional(),
     remarks: z.array(zProgramRemark).optional(),
+    can_add_remarks: z
+      .boolean()
+      .describe('True when the caller may add a progress remark')
+      .optional(),
   })
   .describe("A learner's live programme report: mark, pass checks, courses, skills and remarks");
 
@@ -5607,6 +5611,27 @@ export const zPagedDtoCertificate = z.object({
 export const zApiResponsePagedDtoCertificate = z.object({
   success: z.boolean().optional(),
   data: zPagedDtoCertificate.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * One programme a learner is enrolled in, with their current mark and result
+ */
+export const zProgramReportSummary = z
+  .object({
+    program_uuid: z.string().uuid().optional(),
+    program_title: z.string().optional(),
+    program_enrollment_uuid: z.string().uuid().optional(),
+    final_grade: z.number().optional(),
+    final_grade_provisional: z.boolean().optional(),
+    result_status: z.string().describe('IN_PROGRESS, PASSED or FAILED').optional(),
+  })
+  .describe('One programme a learner is enrolled in, with their current mark and result');
+
+export const zApiResponseListProgramReportSummary = z.object({
+  success: z.boolean().optional(),
+  data: z.array(zProgramReportSummary).optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -10447,6 +10472,11 @@ export const zAssessmentRubric = z
       )
       .readonly()
       .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
+      .readonly()
+      .optional(),
     rubric_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the rubric based on its type.')
@@ -10462,11 +10492,6 @@ export const zAssessmentRubric = z
     usage_status: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive status indicating usage and accessibility.')
-      .readonly()
-      .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the rubric is published and available for use.')
       .readonly()
       .optional(),
   })
@@ -24338,6 +24363,10 @@ export const zProgramReportWritable = z
     courses: z.array(zProgramReportCourse).optional(),
     skills: z.array(zProgramReportSkill).optional(),
     remarks: z.array(zProgramRemarkWritable).optional(),
+    can_add_remarks: z
+      .boolean()
+      .describe('True when the caller may add a progress remark')
+      .optional(),
   })
   .describe("A learner's live programme report: mark, pass checks, courses, skills and remarks");
 
@@ -32694,6 +32723,15 @@ export const zSearchProgramTrainingApplicationsQuery = z.object({
  */
 export const zSearchProgramTrainingApplicationsResponse =
   zApiResponsePagedDtoProgramTrainingApplication;
+
+export const zListStudentProgramReportsPath = z.object({
+  studentUuid: z.string().uuid(),
+});
+
+/**
+ * OK
+ */
+export const zListStudentProgramReportsResponse = zApiResponseListProgramReportSummary;
 
 export const zSearchTrainingProgramsQuery = z.object({
   searchParams: z.record(z.unknown()).describe('Optional search parameters for filtering'),

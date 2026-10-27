@@ -1200,6 +1200,12 @@ export const AssessmentRubricSchema = {
       example: 'creator@sarafrika.com',
       readOnly: true,
     },
+    is_published: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the rubric is published and available for use.',
+      example: true,
+      readOnly: true,
+    },
     rubric_category: {
       type: 'string',
       description: '**[READ-ONLY]** Formatted category of the rubric based on its type.',
@@ -1217,12 +1223,6 @@ export const AssessmentRubricSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Comprehensive status indicating usage and accessibility.',
       example: 'Active Public Rubric',
-      readOnly: true,
-    },
-    is_published: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the rubric is published and available for use.',
-      example: true,
       readOnly: true,
     },
   },
@@ -11989,6 +11989,12 @@ export const CertificateSchema = {
       example: 'B+',
       readOnly: true,
     },
+    validity_status: {
+      type: 'string',
+      description: '**[READ-ONLY]** Current validity status of the certificate.',
+      example: 'Valid Certificate',
+      readOnly: true,
+    },
     certificate_type: {
       type: 'string',
       description: '**[READ-ONLY]** Type of certificate based on completion achievement.',
@@ -11999,12 +12005,6 @@ export const CertificateSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.',
       example: true,
-      readOnly: true,
-    },
-    validity_status: {
-      type: 'string',
-      description: '**[READ-ONLY]** Current validity status of the certificate.',
-      example: 'Valid Certificate',
       readOnly: true,
     },
   },
@@ -23027,6 +23027,10 @@ export const ProgramReportSchema = {
         $ref: '#/components/schemas/ProgramRemark',
       },
     },
+    can_add_remarks: {
+      type: 'boolean',
+      description: 'True when the caller may add a progress remark',
+    },
   },
 } as const;
 
@@ -23487,6 +23491,53 @@ export const PagedDTOCertificateSchema = {
     },
     links: {
       $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponseListProgramReportSummarySchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/ProgramReportSummary',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const ProgramReportSummarySchema = {
+  type: 'object',
+  description: 'One programme a learner is enrolled in, with their current mark and result',
+  properties: {
+    program_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    program_title: {
+      type: 'string',
+    },
+    program_enrollment_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    final_grade: {
+      type: 'number',
+    },
+    final_grade_provisional: {
+      type: 'boolean',
+    },
+    result_status: {
+      type: 'string',
+      description: 'IN_PROGRESS, PASSED or FAILED',
     },
   },
 } as const;
@@ -43460,6 +43511,10 @@ export const ProgramReportWritableSchema = {
       items: {
         $ref: '#/components/schemas/ProgramRemarkWritable',
       },
+    },
+    can_add_remarks: {
+      type: 'boolean',
+      description: 'True when the caller may add a progress remark',
     },
   },
 } as const;

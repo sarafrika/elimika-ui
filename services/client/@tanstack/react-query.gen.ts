@@ -599,6 +599,7 @@ import {
   listSkills1,
   listSources,
   listStatements,
+  listStudentProgramReports,
   listTeams,
   listTestableEmails,
   listTiers,
@@ -2596,6 +2597,9 @@ import type {
   ListStatementsData,
   ListStatementsError,
   ListStatementsResponse,
+  ListStudentProgramReportsData,
+  ListStudentProgramReportsError,
+  ListStudentProgramReportsResponse,
   ListTeamsData,
   ListTeamsError,
   ListTeamsResponse,
@@ -24522,6 +24526,34 @@ export const searchProgramTrainingApplicationsInfiniteOptions = (
       queryKey: searchProgramTrainingApplicationsInfiniteQueryKey(options),
     }
   );
+
+export const listStudentProgramReportsQueryKey = (
+  options: Options<ListStudentProgramReportsData>
+) => createQueryKey('listStudentProgramReports', options);
+
+/**
+ * List the programmes whose reports the caller may open for a learner
+ *
+ * One row per programme the learner is enrolled in, limited to programmes whose report the caller can read.
+ */
+export const listStudentProgramReportsOptions = (options: Options<ListStudentProgramReportsData>) =>
+  queryOptions<
+    ListStudentProgramReportsResponse,
+    ListStudentProgramReportsError,
+    ListStudentProgramReportsResponse,
+    ReturnType<typeof listStudentProgramReportsQueryKey>
+  >({
+    queryFn: async ({ queryKey, signal }) => {
+      const { data } = await listStudentProgramReports({
+        ...options,
+        ...queryKey[0],
+        signal,
+        throwOnError: true,
+      });
+      return data;
+    },
+    queryKey: listStudentProgramReportsQueryKey(options),
+  });
 
 export const searchTrainingProgramsQueryKey = (options: Options<SearchTrainingProgramsData>) =>
   createQueryKey('searchTrainingPrograms', options);

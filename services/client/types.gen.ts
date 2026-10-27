@@ -604,6 +604,10 @@ export type AssessmentRubric = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
+   */
+  readonly is_published?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the rubric based on its type.
    */
   readonly rubric_category?: string;
@@ -615,10 +619,6 @@ export type AssessmentRubric = {
    * **[READ-ONLY]** Comprehensive status indicating usage and accessibility.
    */
   readonly usage_status?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the rubric is published and available for use.
-   */
-  readonly is_published?: boolean;
 };
 
 export type ApiResponseAssessmentRubric = {
@@ -5672,6 +5672,10 @@ export type Certificate = {
    */
   readonly grade_letter?: string;
   /**
+   * **[READ-ONLY]** Current validity status of the certificate.
+   */
+  readonly validity_status?: string;
+  /**
    * **[READ-ONLY]** Type of certificate based on completion achievement.
    */
   readonly certificate_type?: string;
@@ -5679,10 +5683,6 @@ export type Certificate = {
    * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
    */
   readonly is_downloadable?: boolean;
-  /**
-   * **[READ-ONLY]** Current validity status of the certificate.
-   */
-  readonly validity_status?: string;
 };
 
 export type ApiResponseCertificate = {
@@ -11464,6 +11464,10 @@ export type ProgramReport = {
   courses?: Array<ProgramReportCourse>;
   skills?: Array<ProgramReportSkill>;
   remarks?: Array<ProgramRemark>;
+  /**
+   * True when the caller may add a progress remark
+   */
+  can_add_remarks?: boolean;
 };
 
 export type ProgramReportCourse = {
@@ -11670,6 +11674,28 @@ export type PagedDtoCertificate = {
   content?: Array<Certificate>;
   metadata?: PageMetadata;
   links?: PageLinks;
+};
+
+export type ApiResponseListProgramReportSummary = {
+  success?: boolean;
+  data?: Array<ProgramReportSummary>;
+  message?: string;
+  error?: unknown;
+};
+
+/**
+ * One programme a learner is enrolled in, with their current mark and result
+ */
+export type ProgramReportSummary = {
+  program_uuid?: string;
+  program_title?: string;
+  program_enrollment_uuid?: string;
+  final_grade?: number;
+  final_grade_provisional?: boolean;
+  /**
+   * IN_PROGRESS, PASSED or FAILED
+   */
+  result_status?: string;
 };
 
 export type ApiResponsePagedDtoProgramCourse = {
@@ -22696,6 +22722,10 @@ export type ProgramReportWritable = {
   courses?: Array<ProgramReportCourse>;
   skills?: Array<ProgramReportSkill>;
   remarks?: Array<ProgramRemarkWritable>;
+  /**
+   * True when the caller may add a progress remark
+   */
+  can_add_remarks?: boolean;
 };
 
 export type ApiResponseListProgramRemarkWritable = {
@@ -45982,6 +46012,39 @@ export type SearchProgramTrainingApplicationsResponses = {
 
 export type SearchProgramTrainingApplicationsResponse =
   SearchProgramTrainingApplicationsResponses[keyof SearchProgramTrainingApplicationsResponses];
+
+export type ListStudentProgramReportsData = {
+  body?: never;
+  path: {
+    studentUuid: string;
+  };
+  query?: never;
+  url: '/api/v1/programs/students/{studentUuid}/reports';
+};
+
+export type ListStudentProgramReportsErrors = {
+  /**
+   * Not Found
+   */
+  404: ResponseDtoVoid;
+  /**
+   * Internal Server Error
+   */
+  500: ResponseDtoVoid;
+};
+
+export type ListStudentProgramReportsError =
+  ListStudentProgramReportsErrors[keyof ListStudentProgramReportsErrors];
+
+export type ListStudentProgramReportsResponses = {
+  /**
+   * OK
+   */
+  200: ApiResponseListProgramReportSummary;
+};
+
+export type ListStudentProgramReportsResponse =
+  ListStudentProgramReportsResponses[keyof ListStudentProgramReportsResponses];
 
 export type SearchTrainingProgramsData = {
   body?: never;
