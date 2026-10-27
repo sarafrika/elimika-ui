@@ -4,6 +4,7 @@
 import {
   Activity,
   ArrowLeft,
+  Award,
   BookOpen,
   CalendarCheck,
   CalendarDays,
@@ -18,6 +19,8 @@ import {
   Wallet,
   XCircle,
 } from 'lucide-react';
+import { LearnerProgrammesPanel } from '@/src/features/program-report/LearnerProgrammesPanel';
+import { programmeReportPrintHref } from '@/src/features/program-report/print-href';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 
@@ -130,13 +133,14 @@ type StudentDetail = {
   latestActivityAt: string;
 };
 
-const STUDENT_TABS = ['overview', 'courses', 'grades', 'attendance', 'guardians', 'activity'] as const;
+const STUDENT_TABS = ['overview', 'courses', 'grades', 'programme', 'attendance', 'guardians', 'activity'] as const;
 type StudentTab = (typeof STUDENT_TABS)[number];
 
 const STUDENT_TAB_LABELS: Record<StudentTab, string> = {
   overview: 'Overview',
   courses: 'Courses',
   grades: 'Grades',
+  programme: 'Programme',
   attendance: 'Attendance',
   guardians: 'Guardians',
   activity: 'Activity',
@@ -146,6 +150,7 @@ const STUDENT_TAB_ICONS = {
   overview: LayoutGrid,
   courses: BookOpen,
   grades: GraduationCap,
+  programme: Award,
   attendance: CalendarCheck,
   guardians: ShieldCheck,
   activity: Activity,
@@ -559,6 +564,16 @@ const InstructorStudentsDetailPage = () => {
               />
             ))
           )}
+        </SectionTabPanel>
+
+        <SectionTabPanel value='programme' className='flex flex-col gap-4'>
+          <LearnerProgrammesPanel
+            studentUuid={student.student.uuid ?? ''}
+            audience='instructor'
+            printHref={programUuid =>
+              programmeReportPrintHref(programUuid, student.student.uuid ?? '')
+            }
+          />
         </SectionTabPanel>
 
         <SectionTabPanel value='attendance'>

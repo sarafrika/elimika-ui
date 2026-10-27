@@ -7,6 +7,7 @@ export const CLASS_OVERVIEW_TABS = [
   'curriculum',
   'students',
   'skills',
+  'programme',
 ] as const;
 export type ClassOverviewTab = (typeof CLASS_OVERVIEW_TABS)[number];
 
@@ -16,6 +17,7 @@ export const CLASS_OVERVIEW_TAB_LABELS: Record<ClassOverviewTab, string> = {
   curriculum: 'Curriculum',
   students: 'Students',
   skills: 'Skills',
+  programme: 'Programme',
 };
 
 /**

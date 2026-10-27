@@ -53,6 +53,7 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import { format } from 'date-fns';
 import {
   AlertCircle,
+  Award,
   BookOpen,
   CalendarDays,
   CheckCircle,
@@ -73,6 +74,7 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
+import { ClassProgrammeProgress } from '@/src/features/program-report/ClassProgrammeProgress';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import {
@@ -124,6 +126,7 @@ const TAB_ICONS = {
   curriculum: BookOpen,
   students: Users,
   skills: Sparkles,
+  programme: Award,
 } as const;
 
 /** Hidden panels still print. */
@@ -755,6 +758,13 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
               ))}
             </ul>
           )}
+        </SectionTabPanel>
+
+        <SectionTabPanel value='programme'>
+          <ClassProgrammeProgress
+            classUuid={classId}
+            studentHref={studentUuid => `/dashboard/instructor/students/${studentUuid}?tab=programme`}
+          />
         </SectionTabPanel>
       </SectionTabs>
 

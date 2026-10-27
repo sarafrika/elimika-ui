@@ -42,6 +42,9 @@ import { useQuery } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
+import { useStudent } from '@/context/student-context';
+import { LearnerProgrammeReport } from '@/src/features/program-report/LearnerProgrammesPanel';
+import { programmeReportPrintHref } from '@/src/features/program-report/print-href';
 import { ProgramCurriculumPanel } from './ProgramCurriculumPanel';
 import { ProgramEnrollmentsPanel } from './ProgramEnrollmentsPanel';
 
@@ -177,6 +180,8 @@ export function ProgramRecordPage({
     return m;
   }, [studentMap]);
 
+  const currentStudent = useStudent();
+
   // Derive viewer access from the current dashboard path segment so the
   // ProgramRecordPage mirrors CourseRecordPage behaviour and shows creator/
   // instructor/admin views when opened on those dashboards.
@@ -295,7 +300,14 @@ export function ProgramRecordPage({
     />
   );
 
-  const assessmentPanel = (
+  const assessmentPanel = access === 'student' && currentStudent?.uuid ? (
+    <LearnerProgrammeReport
+      programUuid={programUuid}
+      studentUuid={currentStudent.uuid}
+      audience='learner'
+      printHref={programmeReportPrintHref(programUuid, currentStudent.uuid)}
+    />
+  ) : (
     <div className='flex flex-col gap-5'>
       <div className='text-muted-foreground rounded-[12px] border border-dashed px-4 py-6 text-sm'>
         No assessment have been added to this program yet.

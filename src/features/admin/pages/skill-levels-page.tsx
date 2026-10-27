@@ -34,7 +34,11 @@ function scaleProblem(rows: LevelRow[]): string | null {
   const mins = rows.map(row => Number(row.min));
   if (
     rows.some(
-      (row, i) => row.min.trim() === '' || !Number.isFinite(mins[i]) || mins[i] < 0 || mins[i] > 100
+      row =>
+        row.min.trim() === '' ||
+        !Number.isFinite(Number(row.min)) ||
+        Number(row.min) < 0 ||
+        Number(row.min) > 100
     )
   )
     return 'Minimums must be between 0 and 100.';

@@ -29,6 +29,8 @@ import {
   GuardianCourseProgressGrid,
   type CourseProgressFilter,
 } from './GuardianCourseProgressGrid';
+import { LearnerProgrammesPanel } from '@/src/features/program-report/LearnerProgrammesPanel';
+import { programmeReportPrintHref } from '@/src/features/program-report/print-href';
 import { GuardianProgramTimeline } from './GuardianProgramTimeline';
 import { GuardianAttendancePanel } from './GuardianAttendancePanel';
 import { GuardianEnrollmentNotice } from './GuardianEnrollmentNotice';
@@ -164,6 +166,16 @@ export function ParentOverviewContent() {
                 studentName={snapshot.student_name ?? activeStudent?.student_name}
               />
               <GuardianProgramTimeline programs={programProgress} />
+              {activeStudent?.student_uuid ? (
+                <LearnerProgrammesPanel
+                  key={activeStudent.student_uuid}
+                  studentUuid={activeStudent.student_uuid}
+                  audience='guardian'
+                  printHref={programUuid =>
+                    programmeReportPrintHref(programUuid, activeStudent.student_uuid ?? '')
+                  }
+                />
+              ) : null}
             </div>
           )}
           <div className={cn('space-y-4', showAcademicWidgets ? '' : 'lg:col-span-1')}>
