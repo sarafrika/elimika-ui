@@ -90,6 +90,7 @@ export const adminRoutes = {
 
   categories: () => admin('platform/categories'),
   skills: () => admin('platform/skills'),
+  skillLevels: () => admin('platform/skill-levels'),
   rules: (filters?: { rule?: string; category?: string; status?: string }) =>
     withQuery(admin('platform/rules'), filters ?? {}),
   config: (tab?: string) => withQuery(admin('platform/config'), { tab }),
