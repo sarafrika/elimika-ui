@@ -7,6 +7,7 @@ import { useWalletTab } from '@/app/dashboard/_components/skills-wallet/use-wall
 import { SectionTabPanel, SectionTabs, surfaceTheme } from '@/components/data-display';
 import { useUserProfile } from '@/context/profile-context';
 import { useStudent } from '@/context/student-context';
+import { WalletProgramSkills } from '@/src/features/program-report/WalletProgramSkills';
 import { LearnerSkillGoalsCard } from '@/src/features/skills/learner-skill-goals-card';
 import {
   BadgeCheck,
@@ -25,7 +26,6 @@ import { SkillsWalletAchievementsTab } from './_components/SkillsWalletAchieveme
 import { SkillsWalletCompetenciesTab } from './_components/SkillsWalletCompetenciesTab';
 import { SkillsWalletCredentialsVaultTab } from './_components/SkillsWalletCredentialsVaultTab';
 import { SkillsWalletExperienceTab } from './_components/SkillsWalletExperienceTab';
-import { SkillsWalletMySkillsTab } from './_components/SkillsWalletMySkillsTab';
 import { SkillsWalletOverviewTab } from './_components/SkillsWalletOverviewTab';
 import { SkillsWalletPortfolioTab } from './_components/SkillsWalletPortfolioTab';
 import { WalletIdCard, type AchievementRecord } from './_components/SkillsWalletShared';
@@ -96,8 +96,8 @@ export default function SkillsWallet() {
             <SectionTabPanel value='skills'>
               {tab === 'skills' ? (
                 <div className='space-y-6'>
+                  <WalletProgramSkills />
                   <LearnerSkillGoalsCard studentUuid={student?.uuid} />
-                  <SkillsWalletMySkillsTab data={data} />
                 </div>
               ) : null}
             </SectionTabPanel>
