@@ -4,7 +4,6 @@ import {
   BriefcaseBusiness,
   Building2,
   CalendarDays,
-  CircleAlert,
   CircleCheck,
   Clock,
   FileText,
@@ -12,8 +11,7 @@ import {
   Layers,
   MapPin,
   SlidersHorizontal,
-  UserCheck,
-  Users,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -24,7 +22,6 @@ import { MarketplaceSidebar } from '@/components/profile-job-marketplace/_compon
 import { MarketplaceTabs } from '@/components/profile-job-marketplace/_components/MarketplaceTabs';
 import { statusLabel } from '@/components/profile-job-marketplace/application-status';
 import type { FilterGroup } from '@/components/profile-job-marketplace/data';
-import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
 import { SearchUnavailable } from '@/components/search/search-unavailable';
 import { Button } from '@/components/ui/button';
@@ -54,11 +51,11 @@ import { skillsMatchesHref } from '@/src/features/dashboard/lib/skills-matches-u
 import { useNearMe } from '@/src/features/near-me/near-me';
 import { NearMeControl } from '@/src/features/near-me/near-me-control';
 
-import { StatCard, StatCardSkeleton, surfaceTheme } from '@/components/data-display';
+import { StatCard, surfaceTheme } from '@/components/data-display';
 import { ApplyDialog } from '../apply/apply-dialog';
 import { JobsSectionTabs } from '../components/jobs-section-tabs';
 import { useNow } from '../hooks/use-now';
-import { hiredJobsHref, myApplicationsHref } from '../job-routes';
+import { myApplicationsHref } from '../job-routes';
 import { BestMatches } from './best-matches';
 import {
   BASIS_OPTIONS,
@@ -311,17 +308,10 @@ export function FindWorkPage({ embedded = false }: { embedded?: boolean }) {
           }
         /> */}
 
-        <div className='flex flex-wrap justify-end gap-2 self-end'>
-          {embedded && (
-            <Button asChild variant='outline'>
-              <Link href={hiredJobsHref()}>Hired jobs</Link>
-            </Button>
-          )}
-        </div>
 
         {!embedded && <JobsSectionTabs />}
 
-        <section aria-label='Job summary' className={surfaceTheme.statGrid}>
+        {/* <section aria-label='Job summary' className={surfaceTheme.statGrid}>
           {data.loading ? (
             <StatCardSkeleton />
           ) : (
@@ -371,25 +361,44 @@ export function FindWorkPage({ embedded = false }: { embedded?: boolean }) {
               <StatCardSkeleton />
             </>
           )}
-        </section>
+        </section> */}
 
-        <div className='grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]'>
-          <div className='hidden xl:sticky xl:top-4 xl:block xl:self-start'>{sidebar}</div>
+        <div className=''>
+          {/* <div className='hidden xl:sticky xl:top-4 xl:block xl:self-start'>{sidebar}</div> */}
 
           <div className='flex min-w-0 flex-col gap-4'>
             <section
               aria-label='Search and sort jobs'
               className={cn(surfaceTheme.cardPadded, 'flex flex-col gap-3 p-4')}
             >
-              <div className='flex gap-2'>
-                <SearchQueryInput
-                  search={search}
-                  aria-label='Search jobs'
-                  placeholder='Search course, organisation, branch or town'
-                  className='h-10'
-                  wrapperClassName='min-w-0'
-                />
-                <NearMeControl nearMe={nearMe} className='shrink-0 [&>button:first-child]:h-10' />
+              <div className='flex flex-wrap gap-2'>
+                {[
+                  { value: 'all', label: 'All jobs' },
+                  { value: 'ONLINE', label: 'Online' },
+                  { value: 'IN_PERSON', label: 'In person' },
+                  { value: 'HYBRID', label: 'Hybrid' },
+                ].map(option => (
+                  <Button
+                    key={option.value}
+                    type='button'
+                    variant={
+                      filters.delivery === option.value || (option.value === 'all' && filters.delivery === 'all')
+                        ? 'default'
+                        : 'outline'
+                    }
+                    size='sm'
+                    className='rounded-full'
+                    onClick={() =>
+                      setFilters({
+                        delivery: option.value === 'all' ? 'all' : (option.value as typeof filters.delivery),
+                      })
+                    }
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+                <NearMeControl nearMe={nearMe} className='shrink-0' />
+
                 <Sheet>
                   <SheetTrigger asChild>
                     <Button variant='outline' className='h-10 xl:hidden'>

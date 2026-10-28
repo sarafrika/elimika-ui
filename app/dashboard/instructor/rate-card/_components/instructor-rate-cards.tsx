@@ -40,7 +40,7 @@ function applyHref(kind: TrainingApplicationKind, parentUuid: string, applicatio
 }
 
 /** The instructor's rate cards: one per course or program they applied to train. */
-export function InstructorRateCards() {
+export function InstructorRateCards({ embedded = false }: { embedded?: boolean }) {
   const instructor = useInstructor();
   const instructorUuid = instructor?.uuid ?? '';
   const searchParams = useSearchParams();
@@ -96,10 +96,12 @@ export function InstructorRateCards() {
 
   return (
     <div className='w-full max-w-7xl space-y-6 px-4 py-4 pb-10 sm:px-6'>
-      <PageHeader
-        title='My Rate Cards'
-        description='The rates each course creator approved for you, per training method and billing basis. Jobs can only hire you on a basis you have an approved rate for.'
-      />
+      {!embedded ? (
+        <PageHeader
+          title='My Rate Cards'
+          description='The rates each course creator approved for you, per training method and billing basis. Jobs can only hire you on a basis you have an approved rate for.'
+        />
+      ) : null}
 
       {linkParent && !loading && !error && !linked ? (
         <EmptyState

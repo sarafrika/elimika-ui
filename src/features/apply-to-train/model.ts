@@ -79,9 +79,11 @@ export function applyToTrainReducer(
     case 'go':
       return { ...state, step: action.step, visited: { ...state.visited, [state.step]: true } };
     case 'choose':
-      if (state.item?.uuid === action.item.uuid) return { ...state, item: action.item };
+      if (state.item?.uuid === action.item.uuid)
+        return { ...state, item: action.item, step: 'groups' };
       return {
         ...state,
+        step: 'groups',
         item: action.item,
         groups: defaultGroups({ min: action.item.ageMin, max: action.item.ageMax }),
         answers: [],
