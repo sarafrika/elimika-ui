@@ -22,11 +22,14 @@ export function CourseGradesCard({
   enrollmentUuid,
   studentName,
   courseName,
+  partOf,
 }: {
   courseUuid: string;
   enrollmentUuid: string;
   studentName: string;
   courseName?: string;
+  /** The programmes this course counts towards, e.g. "Foundation Music · mandatory · 15%". */
+  partOf?: readonly string[];
 }) {
   const query = useQuery({
     ...getProgressReportOptions({ path: { courseUuid, enrollmentUuid } }),
@@ -41,20 +44,34 @@ export function CourseGradesCard({
     return (
       <section className='bg-card border-border rounded-2xl border p-5'>
         <h2 className='text-base font-semibold'>{courseName ?? 'Course'}</h2>
-        <p className='text-muted-foreground mt-1 text-sm'>Grades for this course are not available yet.</p>
+        <PartOf partOf={partOf} />
+        <p className='text-muted-foreground mt-1 text-sm'>
+          Grades for this course are not available yet.
+        </p>
       </section>
     );
   }
-  return <ReportView report={report} studentName={studentName} />;
+  return <ReportView report={report} studentName={studentName} partOf={partOf} />;
+}
+
+function PartOf({ partOf }: { partOf?: readonly string[] }) {
+  if (!partOf?.length) return null;
+  return (
+    <p data-testid='course-part-of' className='text-muted-foreground text-xs'>
+      Counts towards {partOf.join('; ')}
+    </p>
+  );
 }
 
 export function ReportView({
   report,
   studentName,
   audience = 'learner',
+  partOf,
 }: {
   report: CourseProgressReport;
   studentName: string;
+  partOf?: readonly string[];
   /** Who is reading: the learner is addressed as "your", a guardian is not. */
   audience?: 'learner' | 'guardian';
 }) {
@@ -74,14 +91,21 @@ export function ReportView({
       <div className='from-primary to-primary/40 h-2 bg-gradient-to-r' />
       <div className='flex flex-col gap-4 p-5'>
         <div className='flex flex-wrap items-start justify-between gap-3'>
-          <h2 className='text-lg font-semibold'>{report.course_name ?? 'Course'}</h2>
+          <div className='flex flex-col gap-1'>
+            <h2 className='text-lg font-semibold'>{report.course_name ?? 'Course'}</h2>
+            <PartOf partOf={partOf} />
+          </div>
           <div className='flex flex-wrap items-center gap-2'>
-            {report.final_grade_label && <Badge variant='success'>{report.final_grade_label}</Badge>}
+            {report.final_grade_label && (
+              <Badge variant='success'>{report.final_grade_label}</Badge>
+            )}
             <Button
               size='sm'
               variant='outline'
               onClick={async () => {
-                const { exportProgressReportPdf } = await import('@/components/lesson/progress-report-pdf');
+                const { exportProgressReportPdf } = await import(
+                  '@/components/lesson/progress-report-pdf'
+                );
                 exportProgressReportPdf(report, studentName);
               }}
             >
@@ -106,7 +130,9 @@ export function ReportView({
               key={lesson.lesson_uuid ?? String(lesson.lesson_number)}
               lesson={lesson}
               open={open === lesson.lesson_uuid}
-              onToggle={() => setOpen(open === lesson.lesson_uuid ? null : (lesson.lesson_uuid ?? null))}
+              onToggle={() =>
+                setOpen(open === lesson.lesson_uuid ? null : (lesson.lesson_uuid ?? null))
+              }
             />
           ))}
         </ul>
@@ -137,7 +163,15 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LessonItem({ lesson, open, onToggle }: { lesson: LessonRow; open: boolean; onToggle: () => void }) {
+function LessonItem({
+  lesson,
+  open,
+  onToggle,
+}: {
+  lesson: LessonRow;
+  open: boolean;
+  onToggle: () => void;
+}) {
   const mark = lesson.marks?.[0];
   const isGraded = mark?.status === 'graded';
   return (
@@ -153,7 +187,11 @@ function LessonItem({ lesson, open, onToggle }: { lesson: LessonRow; open: boole
         <span className='font-mono text-sm'>
           {isGraded ? `${num(mark?.score)} / ${num(mark?.max_score)}` : 'Not graded yet'}
         </span>
-        {open ? <ChevronUp className='size-4' aria-hidden /> : <ChevronDown className='size-4' aria-hidden />}
+        {open ? (
+          <ChevronUp className='size-4' aria-hidden />
+        ) : (
+          <ChevronDown className='size-4' aria-hidden />
+        )}
       </button>
       {open && (
         <div className='text-muted-foreground flex flex-col gap-1 px-4 pb-3 pl-14 text-sm'>
