@@ -29,9 +29,8 @@ import {
   GuardianCourseProgressGrid,
   type CourseProgressFilter,
 } from './GuardianCourseProgressGrid';
-import { LearnerProgrammesPanel } from '@/src/features/program-report/LearnerProgrammesPanel';
-import { programmeReportPrintHref } from '@/src/features/program-report/print-href';
-import { GuardianProgramTimeline } from './GuardianProgramTimeline';
+import { GuardianProgramCard } from '@/src/features/program-report/GuardianProgramCards';
+import { useStudentProgramReports } from '@/src/features/program-report/StudentProgramCards';
 import { GuardianAttendancePanel } from './GuardianAttendancePanel';
 import { GuardianEnrollmentNotice } from './GuardianEnrollmentNotice';
 import { GuardianEmptyState } from './GuardianEmptyState';
@@ -114,6 +113,10 @@ export function ParentOverviewContent() {
   const shareScope: GuardianShareScope =
     dashboard?.share_scope ?? activeStudent?.share_scope ?? 'FULL';
   const showAcademicWidgets = shareScope !== 'ATTENDANCE';
+  // Program reports stay unread when only attendance is shared.
+  const programmes = useStudentProgramReports(
+    showAcademicWidgets && dashboard ? activeStudent?.student_uuid : undefined
+  );
   const canLinkLearners = profile?.user_domain?.some(domain =>
     ['admin', 'instructor'].includes(domain)
   );
@@ -139,7 +142,18 @@ export function ParentOverviewContent() {
     }
 
     const courseProgress = snapshot.course_progress?.slice(0, 10) ?? [];
-    const programProgress = snapshot.program_progress ?? [];
+    const learnerName = snapshot.student_name ?? activeStudent?.student_name;
+    const programCards =
+      activeStudent?.student_uuid && programmes.reports.length > 0
+        ? programmes.reports.map(report => (
+            <GuardianProgramCard
+              key={report.program_uuid}
+              report={report}
+              studentUuid={activeStudent.student_uuid}
+              learnerName={learnerName}
+            />
+          ))
+        : null;
 
     return (
       <>
@@ -150,6 +164,16 @@ export function ParentOverviewContent() {
           shareScope={shareScope}
           lastSyncedAt={snapshot.last_synced_at ?? activeStudent?.last_synced_at}
         />
+
+        {!showAcademicWidgets && (
+          <Alert data-testid='parent-attendance-only'>
+            <AlertDescription>
+              You can see {(learnerName ?? 'this learner').split(' ')[0]}&apos;s attendance. Marks,
+              program reports and remarks appear here once academics are included in what is shared
+              with you.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div
           className={cn(
@@ -163,19 +187,10 @@ export function ParentOverviewContent() {
                 courses={courseProgress}
                 filter={courseFilter}
                 onFilterChange={setCourseFilter}
-                studentName={snapshot.student_name ?? activeStudent?.student_name}
+                studentName={learnerName}
+                leading={programCards}
+                partOf={programmes.partOf}
               />
-              <GuardianProgramTimeline programs={programProgress} />
-              {activeStudent?.student_uuid ? (
-                <LearnerProgrammesPanel
-                  key={activeStudent.student_uuid}
-                  studentUuid={activeStudent.student_uuid}
-                  audience='guardian'
-                  printHref={programUuid =>
-                    programmeReportPrintHref(programUuid, activeStudent.student_uuid ?? '')
-                  }
-                />
-              ) : null}
             </div>
           )}
           <div className={cn('space-y-4', showAcademicWidgets ? '' : 'lg:col-span-1')}>
@@ -219,7 +234,7 @@ export function ParentOverviewContent() {
                 Welcome back, {profile?.first_name ?? 'Guardian'}
               </h1>
               <p className='text-muted-foreground text-sm'>
-                Monitor coursework, attendance, and program milestones for each linked learner.
+                Monitor coursework, attendance and program reports for each linked learner.
               </p>
             </div>
             <div className='flex flex-wrap gap-2'>

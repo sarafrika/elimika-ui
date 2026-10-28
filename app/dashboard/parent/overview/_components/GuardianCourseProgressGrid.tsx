@@ -3,14 +3,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { BookOpenCheck } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { type ReactNode, useMemo, useState } from 'react';
 import RichTextRenderer from '@/components/editors/richTextRenders';
 import { ReportView } from '@/components/grades/CourseGradesCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getProgressReportOptions } from '@/services/client/@tanstack/react-query.gen';
 import type { CourseProgressReport } from '@/services/client/types.gen';
@@ -23,6 +29,10 @@ interface GuardianCourseProgressGridProps {
   filter: CourseProgressFilter;
   onFilterChange: (filter: CourseProgressFilter) => void;
   studentName?: string;
+  /** Program cards that lead the grid, so programs and courses read as one set. */
+  leading?: ReactNode;
+  /** The programs each course counts towards, by course uuid. */
+  partOf?: Readonly<Record<string, readonly string[]>>;
 }
 
 const filterOptions: { label: string; value: CourseProgressFilter }[] = [
@@ -36,6 +46,8 @@ export function GuardianCourseProgressGrid({
   filter,
   onFilterChange,
   studentName = 'Learner',
+  leading,
+  partOf,
 }: GuardianCourseProgressGridProps) {
   const [openReport, setOpenReport] = useState<CourseProgressReport | null>(null);
   const filteredCourses = useMemo(() => {
@@ -45,13 +57,13 @@ export function GuardianCourseProgressGrid({
     return courses.filter(course => course.status === filter);
   }, [courses, filter]);
 
-  if (!courses.length) {
+  if (!courses.length && !leading) {
     return (
       <Card className='border-border/70'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2 text-base font-semibold'>
             <BookOpenCheck className='size-4' />
-            Course progress
+            Programs and courses
           </CardTitle>
         </CardHeader>
         <CardContent className='border-border/70 rounded-2xl border border-dashed p-6 text-sm'>
@@ -69,7 +81,7 @@ export function GuardianCourseProgressGrid({
       <CardHeader className='flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between'>
         <CardTitle className='flex items-center gap-2 text-base font-semibold'>
           <BookOpenCheck className='size-4' />
-          Course progress
+          Programs and courses
         </CardTitle>
         <div className='flex gap-2'>
           {filterOptions.map(option => (
@@ -84,7 +96,8 @@ export function GuardianCourseProgressGrid({
           ))}
         </div>
       </CardHeader>
-      <CardContent className='grid gap-4 md:grid-cols-2'>
+      <CardContent className='grid gap-4 md:grid-cols-2' data-testid='guardian-card-grid'>
+        {leading}
         {filteredCourses.map(course => {
           const updatedLabel =
             course.updated_date && !Number.isNaN(Date.parse(course.updated_date))
@@ -103,6 +116,11 @@ export function GuardianCourseProgressGrid({
             >
               <div className='flex items-start justify-between gap-4'>
                 <div>
+                  {course.course_uuid && partOf?.[course.course_uuid]?.length ? (
+                    <p className='text-muted-foreground text-xs'>
+                      Course · counts towards {partOf[course.course_uuid]?.join('; ')}
+                    </p>
+                  ) : null}
                   <p className='text-sm font-semibold'>{course.course_name ?? 'Untitled course'}</p>
                   <p className='text-muted-foreground text-xs'>Updated {updatedLabel}</p>
                 </div>
@@ -140,9 +158,15 @@ export function GuardianCourseProgressGrid({
         <SheetContent className='w-full overflow-y-auto sm:max-w-3xl'>
           <SheetHeader className='border-b pr-12'>
             <SheetTitle>{openReport?.course_name ?? 'Course'} report</SheetTitle>
-            <SheetDescription>The lesson-by-lesson report {studentName} sees. Drafts are never shown.</SheetDescription>
+            <SheetDescription>
+              The lesson-by-lesson report {studentName} sees. Drafts are never shown.
+            </SheetDescription>
           </SheetHeader>
-          <div className='p-4'>{openReport && <ReportView report={openReport} studentName={studentName} audience='guardian' />}</div>
+          <div className='p-4'>
+            {openReport && (
+              <ReportView report={openReport} studentName={studentName} audience='guardian' />
+            )}
+          </div>
         </SheetContent>
       </Sheet>
     </Card>
@@ -176,7 +200,10 @@ function CourseGradeSummary({
       : '—';
 
   return (
-    <div className='border-border mt-4 flex flex-col gap-3 border-t pt-4' data-testid='guardian-grade-summary'>
+    <div
+      className='border-border mt-4 flex flex-col gap-3 border-t pt-4'
+      data-testid='guardian-grade-summary'
+    >
       <div className='flex items-center justify-between gap-2'>
         <span className='text-sm font-semibold'>Grades</span>
         {report.final_grade_label && <Badge variant='success'>{report.final_grade_label}</Badge>}
@@ -188,7 +215,9 @@ function CourseGradeSummary({
         </div>
         <div className='border-border rounded-xl border p-2'>
           <p className='text-muted-foreground text-xs'>Attendance</p>
-          <p className='text-lg font-bold'>{marked.length ? `${attended} of ${marked.length}` : '—'}</p>
+          <p className='text-lg font-bold'>
+            {marked.length ? `${attended} of ${marked.length}` : '—'}
+          </p>
         </div>
       </div>
       {report.instructor_comments && (
