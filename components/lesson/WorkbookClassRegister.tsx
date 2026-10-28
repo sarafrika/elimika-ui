@@ -40,7 +40,9 @@ import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { enrollmentAttendanceStatus } from './attendance';
+import { StatCard } from '@/components/data-display';
+import { CircleCheck, CircleMinus, CircleX, Clock3 } from 'lucide-react';
+import { enrollmentAttendanceStatus, type RegisterMark, registerMarkOf } from './attendance';
 import { invalidateSessionReportData } from './session-report-cache';
 import { hasStudentNoteChanges, type StudentNotes } from './student-notes';
 import { useWorkbookNavigation } from './useWorkbookNavigation';
@@ -51,6 +53,33 @@ import {
 import { hasApiError } from './workbook-data';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
+
+const ROSTER_STATUS = { ATTENDED: 'PRESENT', ABSENT: 'ABSENT', EXCUSED: 'EXCUSED' } as const;
+const MARKS = [
+  { mark: 'ATTENDED', label: 'Mark present' },
+  { mark: 'ABSENT', label: 'Mark absent' },
+  { mark: 'EXCUSED', label: 'Mark excused' },
+] as const satisfies readonly { mark: RegisterMark; label: string }[];
+const STATUS_LABEL: Record<string, string> = {
+  PRESENT: 'Present',
+  LATE: 'Late',
+  ABSENT: 'Absent',
+  EXCUSED: 'Excused',
+  UNMARKED: 'Not marked',
+};
+const STATUS_PILL: Record<string, string> = {
+  PRESENT: 'bg-primary/10 text-primary',
+  LATE: 'bg-warning/10 text-warning',
+  ABSENT: 'bg-destructive/10 text-destructive',
+  EXCUSED: 'bg-muted text-foreground/80',
+  UNMARKED: 'bg-warning/10 text-warning',
+};
+const REGISTER_STATS = [
+  { status: 'PRESENT', label: 'Present', icon: CircleCheck, tone: 'info' },
+  { status: 'EXCUSED', label: 'Excused · not counted', icon: CircleMinus, tone: 'neutral' },
+  { status: 'ABSENT', label: 'Absent', icon: CircleX, tone: 'destructive' },
+  { status: 'UNMARKED', label: 'Not marked', icon: Clock3, tone: 'warning' },
+] as const;
 
 export function WorkbookClassRegister({
   classId,
@@ -83,7 +112,9 @@ export function WorkbookClassRegister({
     const entries = (query.data?.data ?? []).filter(
       entry =>
         entry.scheduled_instance_uuid === sessionId &&
-        ['ENROLLED', 'ATTENDED', 'ABSENT'].includes(entry.status ?? '')
+        ['ENROLLED', 'ATTENDED', 'ABSENT', 'EXCUSED'].includes(
+          String(entry.status ?? '').toUpperCase()
+        )
     );
     return [...new Map(entries.map(entry => [entry.student_uuid, entry])).values()];
   }, [query.data, sessionId]);
@@ -127,7 +158,7 @@ export function WorkbookClassRegister({
     [enrollments, studentMap, userMap]
   );
   const [notes, setNotes] = useState<Record<string, StudentNotes>>({});
-  const [pendingAction, setPendingAction] = useState<'present' | 'absent' | 'notes'>('present');
+  const [pendingAction, setPendingAction] = useState<RegisterMark | 'notes'>('ATTENDED');
   const mutation = useMutation({
     ...recordAttendanceMutation(),
     onError: error => toast.error(getErrorMessage(error, 'Unable to mark attendance.')),
@@ -146,24 +177,27 @@ export function WorkbookClassRegister({
         (current: typeof query.data) =>
           current && !hasApiError(current)
             ? {
-              ...current,
-              data: current.data?.map(
-                (entry): Enrollment =>
-                  entry.uuid === variables.path.enrollmentUuid
-                    ? {
-                      ...entry,
-                      status: variables.body.attended ? 'ATTENDED' : 'ABSENT',
-                      instrument_condition:
-                        variables.body.instrument_condition === 'GOOD' ||
-                          variables.body.instrument_condition === 'NEEDS_REPAIR' ||
-                          variables.body.instrument_condition === 'NO_EQUIPMENT'
-                          ? variables.body.instrument_condition
-                          : entry.instrument_condition,
-                      attendance_comment: variables.body.comment,
-                    }
-                    : entry
-              ),
-            }
+                ...current,
+                data: current.data?.map(
+                  (entry): Enrollment =>
+                    entry.uuid === variables.path.enrollmentUuid
+                      ? {
+                          ...entry,
+                          status: (variables.body.attendance_status ??
+                            (variables.body.attended
+                              ? 'ATTENDED'
+                              : 'ABSENT')) as Enrollment['status'],
+                          instrument_condition:
+                            variables.body.instrument_condition === 'GOOD' ||
+                            variables.body.instrument_condition === 'NEEDS_REPAIR' ||
+                            variables.body.instrument_condition === 'NO_EQUIPMENT'
+                              ? variables.body.instrument_condition
+                              : entry.instrument_condition,
+                          attendance_comment: variables.body.comment,
+                        }
+                      : entry
+                ),
+              }
             : current
       );
       if (savedSessionId && savedEnrollment) {
@@ -210,6 +244,7 @@ export function WorkbookClassRegister({
             path: { enrollmentUuid: enrollment.uuid },
             body: {
               attended: enrollmentAttendanceStatus(enrollment) === 'PRESENT',
+              attendance_status: registerMarkOf(enrollment),
               instrument_condition: note.condition || undefined,
               comment: richTextOrUndefined(note.comment) ?? '',
             },
@@ -224,19 +259,20 @@ export function WorkbookClassRegister({
     },
   });
   const busy = mutation.isPending || saveNotes.isPending;
-  const mark = async (studentId: string, attended: boolean) => {
+  const mark = async (studentId: string, next: RegisterMark) => {
     const enrollment = enrollments.find(entry => entry.student_uuid === studentId);
     if (!enrollment?.uuid || busy) return;
     const status = roster.find(student => student.uuid === studentId)?.status;
-    if (status === (attended ? 'PRESENT' : 'ABSENT')) return;
+    if (status === ROSTER_STATUS[next]) return;
     const note = noteFor(studentId);
-    setPendingAction(attended ? 'present' : 'absent');
+    setPendingAction(next);
     const response = await mutation
       .mutateAsync({
         path: { enrollmentUuid: enrollment.uuid },
         // The comment is rich-text HTML, so it travels in the body rather than the URL.
         body: {
-          attended,
+          attended: next === 'ATTENDED',
+          attendance_status: next,
           instrument_condition: note.condition || undefined,
           comment: richTextOrUndefined(note.comment) ?? '',
         },
@@ -270,7 +306,7 @@ export function WorkbookClassRegister({
         }
         isPending={busy}
         onAdmit={id => {
-          if (getWorkbookSessionAvailability(session).canAdmit) mark(id, true);
+          if (getWorkbookSessionAvailability(session).canAdmit) mark(id, 'ATTENDED');
         }}
         onEvaluate={id => {
           const enrollmentId = enrollments.find(entry => entry.student_uuid === id)?.uuid;
@@ -282,17 +318,39 @@ export function WorkbookClassRegister({
         <SheetContent className='w-full overflow-hidden sm:max-w-2xl'>
           <SheetHeader className='shrink-0'>
             <SheetTitle>Class register</SheetTitle>
-            <SheetDescription>{roster.length} students enrolled in this session.</SheetDescription>
+            <SheetDescription>
+              {roster.length} {roster.length === 1 ? 'student' : 'students'} in this session. Use
+              Excused for an agreed absence, such as illness with a note. A mark can be corrected.
+            </SheetDescription>
           </SheetHeader>
           <div className='min-h-0 flex-1 space-y-4 overflow-y-auto p-4'>
+            <div aria-label='Register totals' role='group' className='grid grid-cols-2 gap-2.5'>
+              {REGISTER_STATS.map(stat => (
+                <StatCard
+                  key={stat.status}
+                  label={stat.label}
+                  value={roster.filter(student => student.status === stat.status).length}
+                  icon={stat.icon}
+                  tone={stat.tone}
+                  className='p-3'
+                />
+              ))}
+            </div>
             {sessionId && (
               <SessionRecordForm key={sessionId} sessionId={sessionId} classId={classId} />
             )}
             {!roster.length && <EmptyState title='No students enrolled in this session' />}
             {roster.map(student => (
               <div key={student.uuid} className='space-y-2 rounded-lg border p-3'>
-                <p className='font-medium'>{student.name}</p>
-                <p className='text-muted-foreground text-xs'>{student.status}</p>
+                <div className='flex items-center justify-between gap-2'>
+                  <p className='font-medium'>{student.name}</p>
+                  <span
+                    data-testid='register-status'
+                    className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${STATUS_PILL[student.status] ?? STATUS_PILL.UNMARKED}`}
+                  >
+                    {STATUS_LABEL[student.status] ?? 'Not marked'}
+                  </span>
+                </div>
                 <p className='text-muted-foreground text-xs'>
                   Attendance saves the instrument condition and comment. Use Save notes below to
                   save changes for all students with marked attendance.
@@ -336,35 +394,30 @@ export function WorkbookClassRegister({
                     />
                   </div>
                 </div>
-                <div className='flex flex-wrap gap-2'>
-                  <Button
-                    size='sm'
-                    variant='outline'
-                    disabled={busy || student.status === 'PRESENT'}
-                    onClick={() => mark(student.uuid, true)}
-                  >
-                    {mutation.isPending &&
-                      pendingAction === 'present' &&
-                      mutation.variables?.path.enrollmentUuid ===
-                      enrollments.find(entry => entry.student_uuid === student.uuid)?.uuid && (
-                        <Spinner />
-                      )}
-                    Mark present
-                  </Button>
-                  <Button
-                    size='sm'
-                    variant='outline'
-                    disabled={busy || student.status === 'ABSENT'}
-                    onClick={() => mark(student.uuid, false)}
-                  >
-                    {mutation.isPending &&
-                      pendingAction === 'absent' &&
-                      mutation.variables?.path.enrollmentUuid ===
-                      enrollments.find(entry => entry.student_uuid === student.uuid)?.uuid && (
-                        <Spinner />
-                      )}
-                    Mark absent
-                  </Button>
+                <div
+                  role='group'
+                  aria-label={`Attendance for ${student.name}`}
+                  className='flex flex-wrap gap-2'
+                >
+                  {MARKS.map(entry => {
+                    const on = student.status === ROSTER_STATUS[entry.mark];
+                    const seat = enrollments.find(row => row.student_uuid === student.uuid)?.uuid;
+                    return (
+                      <Button
+                        key={entry.mark}
+                        size='sm'
+                        variant={on ? 'default' : 'outline'}
+                        aria-pressed={on}
+                        disabled={busy || on}
+                        onClick={() => mark(student.uuid, entry.mark)}
+                      >
+                        {mutation.isPending &&
+                          pendingAction === entry.mark &&
+                          mutation.variables?.path.enrollmentUuid === seat && <Spinner />}
+                        {entry.label}
+                      </Button>
+                    );
+                  })}
                   <Button
                     size='sm'
                     variant='ghost'

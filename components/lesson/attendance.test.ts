@@ -33,3 +33,14 @@ test('honors explicitly recorded attendance without treating missing flags as ab
   );
   assert.equal(enrollmentAttendanceStatus({ ...enrollment, status: 'ENROLLED' }), 'UNMARKED');
 });
+
+test('reads an excused seat as excused, whatever its case', () => {
+  assert.equal(
+    enrollmentAttendanceStatus({ ...enrollment, status: 'EXCUSED' as Enrollment['status'] }),
+    'EXCUSED'
+  );
+  assert.equal(
+    enrollmentAttendanceStatus({ ...enrollment, status: 'excused' as Enrollment['status'] }),
+    'EXCUSED'
+  );
+});

@@ -58,3 +58,45 @@ test.describe('Instructor · Class register', () => {
     expect((api.callsTo('PUT', RECORD)[0]?.body as { topic_covered: string }).topic_covered).toContain('<p>Paradiddles</p>');
   });
 });
+
+test.describe('Instructor · Class register · Excused', () => {
+  test('marks a learner excused, sends EXCUSED and keeps the live totals current', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    await signIn(context, INSTRUCTOR, baseURL as string);
+    let status = 'ENROLLED';
+    const api = mockInstructorWorkbook(new MockApi())
+      .get(new RegExp(`^/api/v1/classes/${CLASS_ID}/enrollments$`), () => [
+        { uuid: SEAT, student_uuid: LEARNERS.amani.uuid, scheduled_instance_uuid: SESSION_ID, status },
+      ])
+      .get(RECORD, { instance_uuid: SESSION_ID, topic_covered: '', instructor_remarks: '' })
+      .on('PUT', ATTENDANCE, request => {
+        status = (request.postDataJSON() as { attendance_status: string }).attendance_status;
+        return null;
+      });
+    await api.install(page);
+    await page.goto(`/dashboard/instructor/classes/training/${CLASS_ID}?lesson=${LESSON_ID}&schedule=${SESSION_ID}`);
+    await page.getByRole('button', { name: 'Full register' }).click();
+
+    const register = page.getByRole('dialog', { name: 'Class register' });
+    const totals = register.getByRole('group', { name: 'Register totals' });
+    const total = (label: string) => totals.getByText(label, { exact: true }).locator('xpath=..');
+    await expect(total('Not marked')).toContainText('1');
+    await expect(total('Excused · not counted')).toContainText('0');
+
+    const marks = register.getByRole('group', { name: 'Attendance for Amani Wekesa' });
+    await expect(marks.getByRole('button', { name: /^Mark / })).toHaveText(['Mark present', 'Mark absent', 'Mark excused']);
+    await marks.getByRole('button', { name: 'Mark excused' }).click();
+
+    await expect.poll(() => api.callsTo('PUT', ATTENDANCE).length).toBe(1);
+    const body = api.callsTo('PUT', ATTENDANCE)[0]?.body as { attended: boolean; attendance_status: string };
+    expect(body.attendance_status).toBe('EXCUSED');
+    expect(body.attended).toBe(false);
+    await expect(marks.getByRole('button', { name: 'Mark excused' })).toHaveAttribute('aria-pressed', 'true');
+    await expect(register.getByTestId('register-status')).toHaveText('Excused');
+    await expect(total('Excused · not counted')).toContainText('1');
+    await expect(total('Not marked')).toContainText('0');
+  });
+});
