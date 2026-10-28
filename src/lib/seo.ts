@@ -15,8 +15,17 @@ const getValidSiteUrl = (value?: string) => {
 
 const metadataBase =
   getValidSiteUrl(process.env.NEXT_PUBLIC_SITE_URL) ??
-  getValidSiteUrl(process.env.AUTH_URL) ??
   new URL(`http://127.0.0.1:${process.env.PORT ?? '3000'}`);
+
+export const absoluteSiteUrl = (path: string) => new URL(path, metadataBase).toString();
+
+const fallbackImage = {
+  url: absoluteSiteUrl('/opengraph-image'),
+  width: 1200,
+  height: 630,
+  alt: 'Elimika — Empowering growth through structural online learning.',
+  type: 'image/png',
+};
 
 const defaultSeoDescription =
   'Elimika helps learners, instructors, course creators, and organisations discover courses, build skills wallets, and manage modern learning journeys.';
@@ -37,12 +46,14 @@ export const siteMetadata: Metadata = {
     siteName: 'Elimika',
     title: 'Elimika',
     description: defaultSeoDescription,
-    url: '/',
+    url: absoluteSiteUrl('/'),
+    images: [fallbackImage],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Elimika',
     description: defaultSeoDescription,
+    images: [fallbackImage],
   },
 };
 
@@ -63,15 +74,16 @@ export function createPageMetadata({
   image,
   noIndex = false,
 }: CreatePageMetadataOptions): Metadata {
-  const openGraphImages = image ? [{ url: image }] : undefined;
-  const twitterCard = image ? 'summary_large_image' : 'summary';
+  const previewImage = image
+    ? { ...fallbackImage, url: absoluteSiteUrl(image), alt: title }
+    : fallbackImage;
 
   return {
     title,
     description,
     keywords,
     alternates: {
-      canonical: path,
+      canonical: absoluteSiteUrl(path),
     },
     robots: noIndex
       ? {
@@ -87,14 +99,14 @@ export function createPageMetadata({
       siteName: 'Elimika',
       title,
       description,
-      url: path,
-      images: openGraphImages,
+      url: absoluteSiteUrl(path),
+      images: [previewImage],
     },
     twitter: {
-      card: twitterCard,
+      card: 'summary_large_image',
       title,
       description,
-      images: image ? [image] : undefined,
+      images: [previewImage],
     },
   };
 }

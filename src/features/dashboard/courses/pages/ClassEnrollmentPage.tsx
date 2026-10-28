@@ -2,7 +2,7 @@
 'use client';
 
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
-import { ClassScheduleCalendar } from '@/app/class-invite/page';
+import { ClassScheduleCalendar } from '@/app/class-invite/ClassInviteClient';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

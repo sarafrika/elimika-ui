@@ -1,6 +1,6 @@
 'use client';
 
-import { ClassScheduleCalendar } from '@/app/class-invite/page';
+import { ClassScheduleCalendar } from '@/app/class-invite/ClassInviteClient';
 import {
   basisStatus,
   billableUnits,
