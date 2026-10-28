@@ -1,6 +1,8 @@
 'use client';
 
+import { InstructorRateCards } from '@/app/dashboard/instructor/rate-card/_components/instructor-rate-cards';
 import { PageHeader } from '@/components/page-header';
+import { MyJobApplicationsPage } from '@/components/profile-job-marketplace/_components/MyJobApplicationsPage';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -47,21 +49,44 @@ const ApplyToTrainTab = dynamic(
     ),
   { loading: TabLoading }
 );
-const MyApplicationsTab = dynamic(
-  () =>
-    import('@/components/profile-job-marketplace/_components/MyJobApplicationsPage').then(
-      module => module.MyJobApplicationsPage
-    ),
-  { loading: TabLoading }
-);
+function MyApplicationsTab() {
+  const [section, setSection] = useState<'jobs' | 'course-training'>('jobs');
+
+  return (
+    <Tabs value={section} onValueChange={value => setSection(value as 'jobs' | 'course-training')}>
+      <TabsList className='mb-4 h-auto justify-start rounded-full bg-transparent p-0'>
+        <TabsTrigger
+          value='jobs'
+          className='border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full border px-4 py-1.5 font-normal data-[state=active]:shadow-sm'
+        >
+          Jobs
+        </TabsTrigger>
+        <TabsTrigger
+          value='course-training'
+          className='border-border bg-card text-muted-foreground hover:border-primary hover:text-foreground data-[state=active]:border-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground rounded-full border px-4 py-1.5 font-normal data-[state=active]:shadow-sm'
+        >
+          Course Training
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value='jobs' className='min-w-0'>
+        <MyJobApplicationsPage embedded />
+      </TabsContent>
+
+      <TabsContent value='course-training' className='min-w-0'>
+        <InstructorRateCards embedded />
+      </TabsContent>
+    </Tabs>
+  );
+}
 
 const TABS = [
   { id: 'all-matches', label: 'All Matches', icon: Sparkles },
   { id: 'jobs', label: 'Jobs', icon: BriefcaseBusiness },
   { id: 'apply-to-train', label: 'Apply to Train', icon: GraduationCap },
-  { id: 'my-applications', label: 'My Applications', icon: FileText },
   { id: 'projects', label: 'Projects', icon: FolderKanban },
   { id: 'workshop', label: 'Workshop', icon: CalendarDays },
+  { id: 'my-applications', label: 'My Applications', icon: FileText },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -192,7 +217,7 @@ export function InstructorSkillsMatchesPage() {
           <ApplyToTrainTab embedded />
         </TabsContent>
         <TabsContent value='my-applications' className='min-w-0 py-4'>
-          <MyApplicationsTab embedded />
+          <MyApplicationsTab />
         </TabsContent>
         <TabsContent value='projects' className='min-w-0 py-4'>
           <EmptyState
