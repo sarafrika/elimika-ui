@@ -43,6 +43,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useStudent } from '@/context/student-context';
+import { useUserProfile } from '@/context/profile-context';
 import { LearnerProgrammeReport } from '@/src/features/program-report/LearnerProgrammesPanel';
 import { programmeReportPrintHref } from '@/src/features/program-report/print-href';
 import { ProgramAssessmentPlanPanel, useProgramAssessmentPlan } from './ProgramAssessmentPlan';
@@ -179,6 +180,9 @@ export function ProgramRecordPage({
   }, [studentMap]);
 
   const currentStudent = useStudent();
+  const profile = useUserProfile();
+  const learnerName =
+    [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || undefined;
   const openTab = useSearchParams()?.get('tab');
 
   // Derive viewer access from the current dashboard path segment so the
@@ -317,7 +321,10 @@ export function ProgramRecordPage({
       programUuid={programUuid}
       studentUuid={currentStudent.uuid}
       audience='learner'
+      learnerName={learnerName}
       printHref={programmeReportPrintHref(programUuid, currentStudent.uuid)}
+      walletHref='/dashboard/student/skills-wallet?tab=skills'
+      enrolHref={enrolHref ?? compareHref ?? '/dashboard/student/find-classes'}
     />
   ) : (
     <div className='flex flex-col gap-5'>

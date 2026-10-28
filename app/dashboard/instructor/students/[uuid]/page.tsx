@@ -133,14 +133,22 @@ type StudentDetail = {
   latestActivityAt: string;
 };
 
-const STUDENT_TABS = ['overview', 'courses', 'grades', 'programme', 'attendance', 'guardians', 'activity'] as const;
+const STUDENT_TABS = [
+  'overview',
+  'courses',
+  'grades',
+  'programme',
+  'attendance',
+  'guardians',
+  'activity',
+] as const;
 type StudentTab = (typeof STUDENT_TABS)[number];
 
 const STUDENT_TAB_LABELS: Record<StudentTab, string> = {
   overview: 'Overview',
   courses: 'Courses',
   grades: 'Grades',
-  programme: 'Programme',
+  programme: 'Program',
   attendance: 'Attendance',
   guardians: 'Guardians',
   activity: 'Activity',
@@ -570,6 +578,7 @@ const InstructorStudentsDetailPage = () => {
           <LearnerProgrammesPanel
             studentUuid={student.student.uuid ?? ''}
             audience='instructor'
+            learnerName={student.student.full_name}
             printHref={programUuid =>
               programmeReportPrintHref(programUuid, student.student.uuid ?? '')
             }

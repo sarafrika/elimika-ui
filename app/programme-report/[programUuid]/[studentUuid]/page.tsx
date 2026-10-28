@@ -1,6 +1,7 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useStudentsByIds } from '@/hooks/use-batched-lookups';
@@ -9,10 +10,19 @@ import { useProgramReport } from '@/src/features/program-report/use-program-repo
 
 /** The printable learner academic report, outside the dashboard shell so it prints clean. */
 export default function ProgrammeReportPrintPage() {
+  return (
+    <Suspense fallback={<Skeleton className='mx-auto mt-8 h-96 max-w-[820px]' />}>
+      <ProgrammeReportPrintContent />
+    </Suspense>
+  );
+}
+
+function ProgrammeReportPrintContent() {
   const params = useParams<{ programUuid: string; studentUuid: string }>();
+  const autoPrint = useSearchParams().get('print') === '1';
   const query = useProgramReport(params.programUuid, params.studentUuid);
   const { studentMap } = useStudentsByIds(params.studentUuid ? [params.studentUuid] : []);
-  const report = query.data?.data;
+  const report = query.data?.success === false ? undefined : query.data?.data;
   if (query.isLoading) return <Skeleton className='mx-auto mt-8 h-96 max-w-[820px]' />;
   if (!report)
     return (
@@ -25,6 +35,7 @@ export default function ProgrammeReportPrintPage() {
     <ProgramReportPrint
       report={report}
       learnerName={studentMap[params.studentUuid]?.full_name ?? 'Learner'}
+      autoPrint={autoPrint}
     />
   );
 }

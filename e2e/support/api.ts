@@ -44,6 +44,10 @@ export class MockApi {
         return route.fulfill({ status: 200, json: { success: true, data: null } });
       }
       const result = await found.handler(request, path.match(found.pattern) as RegExpMatchArray);
+      if (result && typeof result === 'object' && STATUS in (result as Record<symbol, unknown>)) {
+        const failure = (result as Record<symbol, { status: number; body: unknown }>)[STATUS];
+        return route.fulfill({ status: failure.status, json: failure.body });
+      }
       return route.fulfill({ status: 200, json: ok(result) });
     });
   }
@@ -54,6 +58,12 @@ export class MockApi {
 }
 
 const RAW = Symbol('raw');
+const STATUS = Symbol('status');
+
+/** Answers with this HTTP status and an error envelope, for denied or failing calls. */
+export function httpError(status: number, message = 'Request failed') {
+  return { [STATUS]: { status, body: { success: false, message, error: message } } };
+}
 
 /** Sends the body exactly as given, for the few endpoints that do not use the ApiResponse envelope. */
 export function raw(data: unknown) {
@@ -65,10 +75,23 @@ export function ok(data: unknown) {
   if (data && typeof data === 'object' && RAW in (data as Record<symbol, unknown>)) {
     return (data as Record<symbol, unknown>)[RAW];
   }
-  if (data && typeof data === 'object' && 'success' in (data as Record<string, unknown>)) return data;
+  if (data && typeof data === 'object' && 'success' in (data as Record<string, unknown>))
+    return data;
   return { success: true, data, message: 'ok' };
 }
 
 export function paged<T>(content: T[]) {
-  return { content, metadata: { pageNumber: 0, pageSize: content.length, totalElements: content.length, totalPages: 1, hasNext: false, hasPrevious: false, first: true, last: true } };
+  return {
+    content,
+    metadata: {
+      pageNumber: 0,
+      pageSize: content.length,
+      totalElements: content.length,
+      totalPages: 1,
+      hasNext: false,
+      hasPrevious: false,
+      first: true,
+      last: true,
+    },
+  };
 }

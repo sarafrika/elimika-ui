@@ -23,11 +23,14 @@ export function CourseGradesCard({
   studentName,
   courseName,
   partOf,
+  audience = 'learner',
 }: {
   courseUuid: string;
   enrollmentUuid: string;
   studentName: string;
   courseName?: string;
+  /** Who is reading: the learner is addressed as "your", a guardian is not. */
+  audience?: 'learner' | 'guardian';
   /** The programmes this course counts towards, e.g. "Foundation Music · mandatory · 15%". */
   partOf?: readonly string[];
 }) {
@@ -51,7 +54,9 @@ export function CourseGradesCard({
       </section>
     );
   }
-  return <ReportView report={report} studentName={studentName} partOf={partOf} />;
+  return (
+    <ReportView report={report} studentName={studentName} partOf={partOf} audience={audience} />
+  );
 }
 
 function PartOf({ partOf }: { partOf?: readonly string[] }) {

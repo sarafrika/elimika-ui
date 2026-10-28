@@ -46,3 +46,24 @@ export function shortDate(value?: Date | string | null) {
     ? ''
     : date.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
 }
+
+/** "3 of 4 · 1 excused"; excused sessions sit outside the count. */
+export function attendanceLine(row?: {
+  sessions_attended?: number;
+  sessions_counted?: number;
+  sessions_excused?: number;
+}) {
+  if (!row) return '—';
+  const excused = row.sessions_excused ?? 0;
+  return `${row.sessions_attended ?? 0} of ${row.sessions_counted ?? 0}${excused > 0 ? ` · ${excused} excused` : ''}`;
+}
+
+/** Whole-number attendance share, or a dash before any session counts. */
+export function attendancePercent(value?: number | null) {
+  return value == null ? '—' : `${Math.round(Number(value))}%`;
+}
+
+/** Two-decimal points, as the report adds them up. */
+export function points(value?: number | null) {
+  return value == null ? '—' : Number(value).toFixed(2);
+}
