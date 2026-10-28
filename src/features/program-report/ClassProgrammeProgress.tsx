@@ -1,169 +1,329 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { AlertTriangle, CircleCheck, CircleX, Clock, Layers3, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
-import { EmptyState } from '@/components/ui/empty-state';
+import { StatCard, StatusBadge, surfaceTheme } from '@/components/data-display';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useStudentsByIds } from '@/hooks/use-batched-lookups';
 import { resultLabel } from '@/lib/grades';
 import { STALE_TIMES } from '@/lib/query-client';
+import { cn } from '@/lib/utils';
 import { getClassProgrammeProgressOptions } from '@/services/client/@tanstack/react-query.gen';
+import type { ClassProgrammeLearner, ClassProgrammeSkill } from '@/services/client/types.gen';
+import { ProgramPills } from './LearnerProgrammesPanel';
+import { levelTone, resultTone } from './report-model';
 import { percent } from './use-program-report';
 
-/** A programme class's learners with their programme marks and skill levels, or per-skill attainment. */
+/** "3 achieved · 2 developing · 1 no evidence", zero counts left out. */
+function attainmentCaption(skill: ClassProgrammeSkill) {
+  const parts = [
+    [skill.achieved, 'achieved'],
+    [skill.developing, 'developing'],
+    [skill.not_achieved, 'not achieved'],
+    [skill.no_evidence, 'no evidence'],
+  ]
+    .filter(([count]) => Number(count ?? 0) > 0)
+    .map(([count, label]) => `${count} ${label}`);
+  return parts.length ? parts.join(' · ') : 'No learners yet';
+}
+
+/**
+ * The class's Program tab: learners' program marks and skill levels, and how many have achieved
+ * each skill. Handles a course that sits in several programs and a class with no program.
+ */
 export function ClassProgrammeProgress({
   classUuid,
   studentHref,
+  classReportHref,
 }: {
   classUuid: string;
-  studentHref?: (studentUuid: string) => string;
+  studentHref?: (learner: { userUuid: string; studentUuid: string }) => string;
+  /** The class report grid, where the lesson marks behind each course final are. */
+  classReportHref?: string;
 }) {
-  const [view, setView] = useState<'learners' | 'skills'>('learners');
+  const [programUuid, setProgramUuid] = useState<string>();
   const query = useQuery({
-    ...getClassProgrammeProgressOptions({ path: { classUuid } }),
+    ...getClassProgrammeProgressOptions({
+      path: { classUuid },
+      query: programUuid ? { program_uuid: programUuid } : undefined,
+    }),
     enabled: Boolean(classUuid),
     staleTime: STALE_TIMES.entity,
     retry: false,
   });
-  const progress = query.data?.data;
-  const learners = progress?.learners ?? [];
+  const progress = query.data?.success === false ? undefined : query.data?.data;
+  const learners = progress?.status === 'READY' ? (progress.learners ?? []) : [];
   const { studentMap } = useStudentsByIds(learners.map(learner => learner.student_uuid ?? ''));
 
   if (query.isLoading) return <Skeleton className='h-48 w-full' />;
   if (query.isError || !progress)
     return (
-      <EmptyState
-        variant='compact'
-        title='No programme for this class'
-        description="This class's course isn't part of a programme."
-      />
+      <Alert variant='destructive' data-testid='class-programme-error'>
+        <AlertTriangle className='size-4' />
+        <AlertTitle>Program progress didn&apos;t load</AlertTitle>
+        <AlertDescription className='flex flex-wrap items-center justify-between gap-3'>
+          <span>
+            Something went wrong on our side. Your marks are safe. Try again; if it keeps failing,
+            use the class report for course marks.
+          </span>
+          <Button type='button' variant='outline' size='sm' onClick={() => void query.refetch()}>
+            Try again
+          </Button>
+        </AlertDescription>
+      </Alert>
+    );
+
+  const options = (progress.programmes ?? []).map(option => ({
+    id: option.program_uuid ?? '',
+    label: option.title ?? 'Program',
+  }));
+
+  if (progress.status === 'NO_PROGRAMME')
+    return (
+      <section
+        data-testid='class-programme-empty'
+        className={cn(
+          surfaceTheme.cardPadded,
+          'flex flex-col items-center gap-3 py-10 text-center'
+        )}
+      >
+        <span className='bg-primary/10 text-primary flex size-12 items-center justify-center rounded-full'>
+          <Layers3 className='size-6' />
+        </span>
+        <h2 className='text-lg font-semibold'>No learners here are in a program</h2>
+        <p className='text-muted-foreground max-w-lg text-sm'>
+          This class&apos;s course is not part of a program, or none of its learners enrolled
+          through one. Course marks are on the class report.
+        </p>
+        {classReportHref && (
+          <Button asChild variant='outline'>
+            <Link href={classReportHref}>Open class report</Link>
+          </Button>
+        )}
+      </section>
+    );
+
+  if (progress.status === 'PROGRAMME_CHOICE_REQUIRED')
+    return (
+      <section
+        data-testid='class-programme-picker'
+        className={cn(surfaceTheme.cardPadded, 'flex flex-col gap-3')}
+      >
+        <p className='text-sm'>
+          This class&apos;s course is part of {options.length} programs. Pick one to see its
+          progress for this class.
+        </p>
+        <ProgramPills
+          label='Program'
+          options={options}
+          value={programUuid}
+          onChange={setProgramUuid}
+        />
+      </section>
     );
 
   const skills = progress.skills ?? [];
+  const count = (status: string) =>
+    learners.filter(learner => (learner.result_status ?? 'IN_PROGRESS').toUpperCase() === status)
+      .length;
   return (
-    <section className='space-y-4' aria-label='Programme progress' data-testid='class-programme'>
-      <div className='flex flex-wrap items-center justify-between gap-2'>
-        <h3 className='text-base font-semibold'>{progress.program_title}</h3>
-        <div role='group' aria-label='View' className='flex gap-2'>
-          <Button
-            type='button'
-            size='sm'
-            variant={view === 'learners' ? 'default' : 'outline'}
-            aria-pressed={view === 'learners'}
-            onClick={() => setView('learners')}
-          >
-            Learners
-          </Button>
-          <Button
-            type='button'
-            size='sm'
-            variant={view === 'skills' ? 'default' : 'outline'}
-            aria-pressed={view === 'skills'}
-            onClick={() => setView('skills')}
-          >
-            Skill attainment
-          </Button>
-        </div>
+    <div className='flex flex-col gap-4' data-testid='class-programme'>
+      {options.length > 1 && (
+        <section className={cn(surfaceTheme.cardPadded, 'flex flex-col gap-3')}>
+          <p className='text-sm'>
+            This class&apos;s course is part of {options.length} programs. Pick one to see its
+            progress for this class.
+          </p>
+          <ProgramPills
+            label='Program'
+            options={options}
+            value={progress.program_uuid}
+            onChange={setProgramUuid}
+          />
+        </section>
+      )}
+
+      <div className={surfaceTheme.statGrid}>
+        <StatCard label='Learners in the program' value={learners.length} icon={Users} />
+        <StatCard label='Passed' value={count('PASSED')} icon={CircleCheck} tone='success' />
+        <StatCard label='In progress' value={count('IN_PROGRESS')} icon={Clock} tone='neutral' />
+        <StatCard label='Failed' value={count('FAILED')} icon={CircleX} tone='destructive' />
       </div>
-      {view === 'learners' ? (
+
+      <section className={cn(surfaceTheme.cardPadded, 'flex flex-col gap-3')} aria-label='Learners'>
+        <div className='flex flex-wrap items-start justify-between gap-3'>
+          <div className='flex flex-col gap-1'>
+            <h2 className='text-base font-semibold'>{progress.program_title} · Learners</h2>
+            <span className='text-muted-foreground text-sm'>
+              Program marks and skill levels for this class&apos;s learners. Open a learner to read
+              the full report and write remarks.
+            </span>
+          </div>
+          {classReportHref && (
+            <Button asChild variant='outline' size='sm'>
+              <Link href={classReportHref}>Class report (lesson marks)</Link>
+            </Button>
+          )}
+        </div>
         <div className='overflow-x-auto rounded-md border'>
           <table className='w-full min-w-[760px] text-sm'>
-            <thead className='bg-muted/50 text-left'>
+            <thead className='bg-muted/50 text-muted-foreground text-left text-xs'>
               <tr>
-                <th className='px-3 py-2'>Learner</th>
-                <th className='px-3 py-2'>Programme mark</th>
-                <th className='px-3 py-2'>Mandatory passed</th>
+                <th className='px-3 py-2 font-medium'>Learner</th>
+                <th className='px-3 py-2 font-medium'>Program mark</th>
+                <th className='px-3 py-2 font-medium'>Mandatory passed</th>
                 {skills.map(skill => (
-                  <th key={skill.skill_uuid} className='px-3 py-2'>
+                  <th key={skill.skill_uuid} className='px-3 py-2 font-medium'>
                     {skill.skill_name}
                   </th>
                 ))}
-                <th className='px-3 py-2'>Result</th>
+                <th className='px-3 py-2 font-medium'>Result</th>
               </tr>
             </thead>
             <tbody>
-              {learners.map(learner => {
-                const student = studentMap[learner.student_uuid ?? ''];
-                const name = student?.full_name ?? 'Learner';
-                return (
-                  <tr key={learner.student_uuid} className='border-t'>
-                    <td className='px-3 py-2 font-medium'>
-                      {studentHref && learner.student_uuid ? (
-                        <Link href={studentHref(learner.student_uuid)}>{name}</Link>
-                      ) : (
-                        name
-                      )}
-                    </td>
-                    <td className='px-3 py-2 font-mono'>
-                      {percent(learner.final_grade)}
-                      {learner.final_grade_provisional ? ' prov.' : ''}
-                    </td>
-                    <td className='px-3 py-2'>
-                      {learner.mandatory_passed} of {learner.mandatory_total}
-                    </td>
-                    {(learner.skill_levels ?? []).map(level => (
-                      <td key={level.skill_uuid} className='px-3 py-2'>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs ${level.counts_as_achieved ? 'bg-primary/10 text-primary font-semibold' : 'bg-muted text-muted-foreground'}`}
-                        >
-                          {level.level_name ?? '—'}
-                        </span>
-                      </td>
-                    ))}
-                    <td className='px-3 py-2'>{resultLabel(learner.result_status)}</td>
-                  </tr>
-                );
-              })}
+              {learners.map(learner => (
+                <LearnerRow
+                  key={learner.student_uuid}
+                  learner={learner}
+                  name={studentMap[learner.student_uuid ?? '']?.full_name ?? 'Learner'}
+                  skills={skills}
+                  href={
+                    studentHref && learner.user_uuid && learner.student_uuid
+                      ? studentHref({
+                          userUuid: learner.user_uuid,
+                          studentUuid: learner.student_uuid,
+                        })
+                      : undefined
+                  }
+                />
+              ))}
             </tbody>
           </table>
           {learners.length === 0 && (
             <p className='text-muted-foreground p-4 text-sm'>
-              No learners in this class are enrolled in the programme.
+              No learners in this class are enrolled in the program.
             </p>
           )}
         </div>
-      ) : (
-        <div className='space-y-4'>
-          {skills.map(skill => {
-            const total =
-              (skill.achieved ?? 0) +
-                (skill.developing ?? 0) +
-                (skill.not_achieved ?? 0) +
-                (skill.no_evidence ?? 0) || 1;
-            const width = (count?: number) => `${((count ?? 0) / total) * 100}%`;
-            return (
-              <div key={skill.skill_uuid} className='space-y-1.5'>
-                <div className='flex justify-between text-sm'>
-                  <span className='font-medium'>{skill.skill_name}</span>
-                  <span className='text-muted-foreground'>
-                    {skill.achieved} achieved · {Math.round(((skill.achieved ?? 0) / total) * 100)}%
-                  </span>
-                </div>
+        <p className='text-muted-foreground text-xs'>
+          A dash means no evidence yet. A skill with no linked assessment can&apos;t be assessed
+          until the program is updated.
+        </p>
+      </section>
+
+      <section
+        className={cn(surfaceTheme.cardPadded, 'flex flex-col gap-4')}
+        aria-label='Skill attainment'
+      >
+        <div className='flex flex-col gap-1'>
+          <h2 className='text-base font-semibold'>Skill attainment</h2>
+          <span className='text-muted-foreground text-sm'>
+            Share of this class&apos;s {learners.length} learners who have achieved each skill.
+          </span>
+        </div>
+        {skills.length === 0 && (
+          <p className='text-muted-foreground text-sm'>This program has no target skills yet.</p>
+        )}
+        {skills.map(skill => {
+          const total =
+            Number(skill.achieved ?? 0) +
+            Number(skill.developing ?? 0) +
+            Number(skill.not_achieved ?? 0) +
+            Number(skill.no_evidence ?? 0);
+          const share = total ? Math.round((Number(skill.achieved ?? 0) / total) * 100) : 0;
+          const unassessed = total > 0 && Number(skill.no_evidence ?? 0) === total;
+          const caption = unassessed
+            ? 'Not assessed yet. No graded evidence for this skill so far.'
+            : attainmentCaption(skill);
+          return (
+            <div
+              key={skill.skill_uuid}
+              className='grid items-center gap-2 sm:grid-cols-[220px_1fr_56px]'
+              data-testid='skill-attainment'
+            >
+              <span className='text-sm font-medium'>{skill.skill_name}</span>
+              <div className='flex flex-col gap-1'>
                 <div
                   role='img'
-                  aria-label={`${skill.skill_name}: ${skill.achieved} achieved, ${skill.developing} developing, ${skill.not_achieved} not achieved, ${skill.no_evidence} no evidence`}
-                  className='bg-muted flex h-4 overflow-hidden rounded'
+                  aria-label={`${skill.skill_name}: ${caption}`}
+                  className='bg-muted h-2 overflow-hidden rounded-full'
                 >
-                  <div className='bg-primary h-full' style={{ width: width(skill.achieved) }} />
-                  <div
-                    className='bg-primary/40 h-full'
-                    style={{ width: width(skill.developing) }}
-                  />
-                  <div
-                    className='bg-warning/60 h-full'
-                    style={{ width: width(skill.not_achieved) }}
-                  />
+                  <div className='bg-primary h-2' style={{ width: `${share}%` }} />
                 </div>
+                <span className='text-muted-foreground text-xs'>{caption}</span>
               </div>
-            );
-          })}
-          <p className='text-muted-foreground text-xs'>
-            Counts cover this class&apos;s learners only.
-          </p>
+              <span className='text-right text-sm font-semibold tabular-nums'>{share}%</span>
+            </div>
+          );
+        })}
+      </section>
+    </div>
+  );
+}
+
+function LearnerRow({
+  learner,
+  name,
+  skills,
+  href,
+}: {
+  learner: ClassProgrammeLearner;
+  name: string;
+  skills: ClassProgrammeSkill[];
+  href?: string;
+}) {
+  const levels = new Map(
+    (learner.skill_levels ?? []).map(level => [level.skill_uuid ?? '', level])
+  );
+  return (
+    <tr className='border-t'>
+      <td className='px-3 py-2 font-medium'>
+        {href ? (
+          <Link href={href} className='text-primary hover:underline'>
+            {name}
+          </Link>
+        ) : (
+          name
+        )}
+      </td>
+      <td className='px-3 py-2'>
+        <div className='font-semibold tabular-nums'>{percent(learner.final_grade)}</div>
+        <div className='text-muted-foreground text-xs'>
+          {learner.final_grade == null
+            ? 'No course result yet'
+            : learner.final_grade_provisional
+              ? 'Provisional'
+              : 'Final'}
         </div>
-      )}
-    </section>
+      </td>
+      <td className='px-3 py-2 tabular-nums'>
+        {learner.mandatory_passed ?? 0} of {learner.mandatory_total ?? 0}
+      </td>
+      {skills.map(skill => {
+        const level = levels.get(skill.skill_uuid ?? '');
+        return (
+          <td key={skill.skill_uuid} className='px-3 py-2'>
+            {level?.level_name ? (
+              <StatusBadge
+                tone={levelTone(level.level_name, level.counts_as_achieved)}
+                label={level.level_name}
+              />
+            ) : (
+              <span className='text-muted-foreground'>—</span>
+            )}
+          </td>
+        );
+      })}
+      <td className='px-3 py-2'>
+        <StatusBadge
+          tone={resultTone(learner.result_status)}
+          label={resultLabel(learner.result_status)}
+        />
+      </td>
+    </tr>
   );
 }

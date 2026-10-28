@@ -6,10 +6,10 @@ import {
   mergeCourseSkills,
 } from './class-overview';
 
-test('class overview tabs run Overview, Schedule, Curriculum, Students, Skills', () => {
+test('class overview tabs run Overview, Schedule, Curriculum, Students, Program', () => {
   assert.deepEqual(
     CLASS_OVERVIEW_TABS.map(tab => CLASS_OVERVIEW_TAB_LABELS[tab]),
-    ['Overview', 'Schedule', 'Curriculum', 'Students', 'Skills']
+    ['Overview', 'Schedule', 'Curriculum', 'Students', 'Program']
   );
 });
 

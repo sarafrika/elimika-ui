@@ -1,5 +1,10 @@
-import { expect, test } from '@playwright/test';
-import { mockProgrammeReport, programmeReport, PROGRAM_UUID } from '../fixtures/programme';
+import { expect, type Page, test } from '@playwright/test';
+import {
+  mockProgrammeReport,
+  OTHER_PROGRAM_UUID,
+  PROGRAM_UUID,
+  programmeReport,
+} from '../fixtures/programme';
 import {
   CLASS_ID,
   COURSE_ID,
@@ -7,7 +12,7 @@ import {
   INSTRUCTOR_PROFILE,
   mockInstructorWorkbook,
 } from '../fixtures/session-report';
-import { MockApi, paged } from '../support/api';
+import { httpError, MockApi, paged } from '../support/api';
 import { signIn } from '../support/session';
 
 const LEARNER = {
@@ -68,13 +73,11 @@ test.beforeEach(async ({ context, baseURL }) => {
   await signIn(context, INSTRUCTOR, baseURL as string);
 });
 
-test('the class instructor writes a programme remark with rich text and a review date', async ({
-  page,
-}) => {
+async function openStudentProgram(page: Page, canAddRemarks: boolean) {
   const api = mockLearner(mockInstructorWorkbook(new MockApi()));
   mockProgrammeReport(
     api,
-    programmeReport({ student_uuid: LEARNER.uuid, can_add_remarks: true }),
+    programmeReport({ student_uuid: LEARNER.uuid, can_add_remarks: canAddRemarks }),
     LEARNER.uuid
   );
   api.on(
@@ -86,17 +89,27 @@ test('the class instructor writes a programme remark with rich text and a review
   await page.goto(
     `/dashboard/instructor/students/${LEARNER.user_uuid}?sId=${LEARNER.uuid}&tab=programme`
   );
+  return api;
+}
 
-  const remarks = page.getByRole('region', { name: 'Progress remarks' });
-  await expect(remarks.getByTestId('programme-remark')).toHaveCount(1);
-  await expect(remarks.getByRole('button', { name: 'Save remarks' })).toBeDisabled();
-  const editors = remarks.locator('[contenteditable="true"]');
+test('the class instructor writes program remarks in a Sheet with three editors and a review date', async ({
+  page,
+}) => {
+  const api = await openStudentProgram(page, true);
+
+  await page.getByRole('button', { name: 'Write remarks' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Amani Wekesa · Program remarks' });
+  await expect(sheet).toBeVisible();
+  await expect(sheet.getByRole('note')).toContainText('Your last remark was on');
+  await expect(sheet.getByRole('button', { name: 'Save remarks' })).toBeDisabled();
+  const editors = sheet.locator('[contenteditable="true"]');
+  await expect(editors).toHaveCount(3);
   await editors.nth(0).click();
   await page.keyboard.type('Confident tone');
   await editors.nth(2).click();
   await page.keyboard.type('Metronome daily');
-  await remarks.getByLabel('Next review date').fill('2026-11-30');
-  await remarks.getByRole('button', { name: 'Save remarks' }).click();
+  await sheet.getByLabel('Next review date').fill('2026-11-30');
+  await sheet.getByRole('button', { name: 'Save remarks' }).click();
 
   await expect.poll(() => api.callsTo('POST', /remarks$/).length).toBe(1);
   const body = api.callsTo('POST', /remarks$/)[0]?.body as Record<string, string | undefined>;
@@ -104,48 +117,183 @@ test('the class instructor writes a programme remark with rich text and a review
   expect(body.recommendations).toContain('Metronome daily');
   expect(body.improvements).toBeUndefined();
   expect(body.next_review_date).toBe('2026-11-30');
+  await expect(page.getByRole('status').filter({ hasText: 'Remarks saved.' })).toBeVisible();
 });
 
-test('the class Programme tab lists learners and switches to skill attainment', async ({
+test('the student Program tab shows evidence with graders, regrades and remark authors', async ({
   page,
 }) => {
+  await openStudentProgram(page, false);
+  await expect(page.getByRole('button', { name: 'Write remarks' })).toHaveCount(0);
+
+  const report = page.getByTestId('programme-report');
+  const evidence = report.getByTestId('evidence-table');
+  // The first skill with evidence opens for instructors.
+  await expect(evidence).toBeVisible();
+  await expect(evidence.getByText('Grace Njeri').first()).toBeVisible();
+  await expect(
+    evidence.getByText('Introduction to Piano · Solo performance').first()
+  ).toBeVisible();
+  await expect(evidence.locator('tr[data-superseded="true"]')).toHaveCount(1);
+  await expect(evidence.getByText('Replaced by the regrade on', { exact: false })).toBeVisible();
+  await expect(evidence.getByText('Regrade', { exact: true })).toBeVisible();
+
+  const remarks = report.getByRole('region', { name: 'Progress remarks' });
+  await expect(remarks.getByText('Grace Njeri')).toBeVisible();
+  await remarks.getByRole('button', { name: 'Show 1 earlier remark' }).click();
+  await expect(remarks.getByTestId('programme-remark')).toHaveCount(2);
+});
+
+const LEARNERS = [
+  {
+    student_uuid: LEARNER.uuid,
+    user_uuid: LEARNER.user_uuid,
+    final_grade: 75.76,
+    final_grade_provisional: true,
+    result_status: 'IN_PROGRESS',
+    mandatory_total: 5,
+    mandatory_passed: 3,
+    skill_levels: [
+      { skill_uuid: 's1', level_name: 'Achieved', counts_as_achieved: true },
+      { skill_uuid: 's2', counts_as_achieved: false },
+    ],
+  },
+];
+
+const SKILLS = [
+  {
+    skill_uuid: 's1',
+    skill_name: 'Performance technique',
+    achieved: 1,
+    developing: 0,
+    not_achieved: 0,
+    no_evidence: 0,
+  },
+  {
+    skill_uuid: 's2',
+    skill_name: 'Ensemble communication',
+    achieved: 0,
+    developing: 0,
+    not_achieved: 0,
+    no_evidence: 1,
+  },
+];
+
+function ready(programUuid = PROGRAM_UUID, title = 'Foundation Music Certificate') {
+  return {
+    status: 'READY',
+    class_definition_uuid: CLASS_ID,
+    program_uuid: programUuid,
+    program_title: title,
+    programmes: [{ program_uuid: programUuid, title }],
+    skills: SKILLS,
+    learners: LEARNERS,
+  };
+}
+
+const PROGRESS = new RegExp(`^/api/v1/classes/${CLASS_ID}/programme-progress$`);
+
+async function openClassProgram(page: Page, progress: Parameters<MockApi['get']>[1]) {
   const api = mockInstructorWorkbook(new MockApi());
   api.get(/^\/api\/v1\/students\/search$/, paged([LEARNER]));
-  api.get(new RegExp(`^/api/v1/classes/${CLASS_ID}/programme-progress$`), {
-    class_definition_uuid: CLASS_ID,
-    program_uuid: PROGRAM_UUID,
-    program_title: 'Foundation Music Certificate',
-    skills: [
-      {
-        skill_uuid: 's1',
-        skill_name: 'Performance technique',
-        achieved: 1,
-        developing: 0,
-        not_achieved: 0,
-        no_evidence: 0,
-      },
-    ],
-    learners: [
-      {
-        student_uuid: LEARNER.uuid,
-        final_grade: 75.76,
-        final_grade_provisional: true,
-        result_status: 'IN_PROGRESS',
-        mandatory_total: 5,
-        mandatory_passed: 3,
-        skill_levels: [{ skill_uuid: 's1', level_name: 'Achieved', counts_as_achieved: true }],
-      },
-    ],
-  });
+  api.get(PROGRESS, progress);
   await api.install(page);
   await page.goto(`/dashboard/instructor/classes/overview/${CLASS_ID}?tab=programme`);
+  return api;
+}
 
+test('the class Program tab shows stats, learners with level pills and skill attainment', async ({
+  page,
+}) => {
+  await openClassProgram(page, ready());
+
+  await expect(page.getByRole('tab', { name: /Skills/ })).toHaveCount(0);
   const section = page.getByTestId('class-programme');
-  await expect(section.getByRole('link', { name: 'Amani Wekesa' })).toBeVisible();
-  await expect(section.getByText('75.76% prov.')).toBeVisible();
-  await expect(section.getByText('3 of 5')).toBeVisible();
-  await section.getByRole('button', { name: 'Skill attainment' }).click();
+  await expect(section.getByText('Learners in the program')).toBeVisible();
+  const link = section.getByRole('link', { name: 'Amani Wekesa' });
+  await expect(link).toHaveAttribute(
+    'href',
+    `/dashboard/instructor/students/${LEARNER.user_uuid}?sId=${LEARNER.uuid}&tab=programme`
+  );
+  const row = section.getByRole('row').filter({ hasText: 'Amani Wekesa' });
+  await expect(row).toContainText('75.76%');
+  await expect(row).toContainText('Provisional');
+  await expect(row).toContainText('3 of 5');
+  await expect(row).toContainText('Achieved');
+  await expect(section.getByRole('link', { name: 'Class report (lesson marks)' })).toHaveAttribute(
+    'href',
+    `/dashboard/instructor/training-hub/classes/${CLASS_ID}/report`
+  );
   await expect(
     section.getByRole('img', { name: /Performance technique: 1 achieved/ })
   ).toBeVisible();
+  await expect(
+    section.getByRole('img', { name: /Ensemble communication: Not assessed yet/ })
+  ).toBeVisible();
+  await expect(section.getByRole('group', { name: 'Program' })).toHaveCount(0);
+});
+
+test('a course in two programs asks for a pick, then loads the chosen program', async ({
+  page,
+}) => {
+  const api = await openClassProgram(page, request =>
+    new URL(request.url()).searchParams.get('program_uuid') === OTHER_PROGRAM_UUID
+      ? {
+          ...ready(OTHER_PROGRAM_UUID, 'Junior Keyboard Pathway'),
+          programmes: [
+            { program_uuid: PROGRAM_UUID, title: 'Foundation Music Certificate' },
+            { program_uuid: OTHER_PROGRAM_UUID, title: 'Junior Keyboard Pathway' },
+          ],
+        }
+      : {
+          status: 'PROGRAMME_CHOICE_REQUIRED',
+          class_definition_uuid: CLASS_ID,
+          programmes: [
+            { program_uuid: PROGRAM_UUID, title: 'Foundation Music Certificate' },
+            { program_uuid: OTHER_PROGRAM_UUID, title: 'Junior Keyboard Pathway' },
+          ],
+        }
+  );
+
+  const picker = page.getByTestId('class-programme-picker');
+  await expect(picker).toContainText('part of 2 programs');
+  await picker.getByRole('button', { name: 'Junior Keyboard Pathway' }).click();
+
+  const section = page.getByTestId('class-programme');
+  await expect(
+    section.getByRole('heading', { name: 'Junior Keyboard Pathway · Learners' })
+  ).toBeVisible();
+  await expect(
+    section
+      .getByRole('group', { name: 'Program' })
+      .getByRole('button', { name: 'Junior Keyboard Pathway' })
+  ).toHaveAttribute('aria-pressed', 'true');
+  expect(api.callsTo('GET', PROGRESS).some(call => call.search.includes(OTHER_PROGRAM_UUID))).toBe(
+    true
+  );
+});
+
+test('a class with no program shows an empty state with the class report', async ({ page }) => {
+  await openClassProgram(page, {
+    status: 'NO_PROGRAMME',
+    class_definition_uuid: CLASS_ID,
+    programmes: [],
+  });
+  const empty = page.getByTestId('class-programme-empty');
+  await expect(empty.getByText('No learners here are in a program')).toBeVisible();
+  await expect(empty.getByRole('link', { name: 'Open class report' })).toBeVisible();
+});
+
+test('a failing load shows an error with a retry, not an empty state', async ({ page }) => {
+  await openClassProgram(page, () => httpError(403, 'Access denied'));
+  const error = page.getByTestId('class-programme-error');
+  await expect(error.getByText("Program progress didn't load")).toBeVisible();
+  await expect(error.getByRole('button', { name: 'Try again' })).toBeVisible();
+  await expect(page.getByTestId('class-programme-empty')).toHaveCount(0);
+});
+
+test('Skills moved onto the class Overview', async ({ page }) => {
+  await openClassProgram(page, ready());
+  await page.getByRole('tab', { name: /Overview/ }).click();
+  await expect(page.getByRole('heading', { name: 'Skills this class teaches' })).toBeVisible();
 });

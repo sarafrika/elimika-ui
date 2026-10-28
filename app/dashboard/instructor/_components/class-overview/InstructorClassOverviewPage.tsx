@@ -125,7 +125,6 @@ const TAB_ICONS = {
   schedule: CalendarDays,
   curriculum: BookOpen,
   students: Users,
-  skills: Sparkles,
   programme: Award,
 } as const;
 
@@ -355,7 +354,6 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
     schedule: schedules.length,
     curriculum: lessonCount,
     students: roster?.length ?? 0,
-    skills: skillsLoading ? undefined : skills.length,
   };
   const tabs: SectionTab<ClassOverviewTab>[] = CLASS_OVERVIEW_TABS.map(id => ({
     id,
@@ -406,7 +404,11 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
           <Button
             onClick={() => router.push(route.editHref(classData?.uuid))}
             disabled={!classData?.uuid || !editEligibility.canEdit}
-            title={editEligibility.hasEnrollments ? 'Classes with enrollments cannot be edited' : undefined}
+            title={
+              editEligibility.hasEnrollments
+                ? 'Classes with enrollments cannot be edited'
+                : undefined
+            }
             variant='outline'
             size='sm'
             className='gap-2'
@@ -584,6 +586,50 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
               />
             </div>
           ) : null}
+          <section className='flex flex-col gap-3' aria-label='Skills this class teaches'>
+            <div className='flex flex-col gap-1'>
+              <h2 className='text-foreground text-base font-semibold'>Skills this class teaches</h2>
+              <p className='text-muted-foreground text-sm'>
+                Skills tagged on the {isClassForProgram ? "program's courses" : 'course'}. Program
+                skill levels are on the Program tab.
+              </p>
+            </div>
+            {skillsLoading ? (
+              <div className={surfaceTheme.cardGrid}>
+                <Skeleton className='h-[72px]' />
+                <Skeleton className='h-[72px]' />
+                <Skeleton className='h-[72px]' />
+              </div>
+            ) : skills.length === 0 ? (
+              <EmptyState
+                icon={Sparkles}
+                title='No skills tagged yet'
+                description={`The ${isClassForProgram ? "program's courses have" : 'course has'} no skills tagged. The course creator adds them on the course.`}
+              />
+            ) : (
+              <ul className={surfaceTheme.cardGrid}>
+                {skills.map(skill => (
+                  <li
+                    key={skill.skill_uuid ?? skill.skill_slug ?? skill.skill_name}
+                    className='border-border bg-card flex items-center gap-3 rounded-lg border p-4'
+                  >
+                    <span className='bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-md'>
+                      <Sparkles aria-hidden className='size-4' />
+                    </span>
+                    <div className='min-w-0'>
+                      <p className='text-foreground truncate font-medium'>{skill.skill_name}</p>
+                      <p className='text-muted-foreground text-xs capitalize'>
+                        {[skill.level, skill.weight ? `weight ${skill.weight}/5` : null]
+                          .filter(Boolean)
+                          .join(' · ')}
+                        {skill.skill_active === false ? ' · retired' : ''}
+                      </p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
         </SectionTabPanel>
 
         <SectionTabPanel value='schedule'>
@@ -722,48 +768,13 @@ export function InstructorClassOverviewPage({ route }: { route: InstructorClassO
           </Card>
         </SectionTabPanel>
 
-        <SectionTabPanel value='skills'>
-          {skillsLoading ? (
-            <div className={surfaceTheme.cardGrid}>
-              <Skeleton className='h-[72px]' />
-              <Skeleton className='h-[72px]' />
-              <Skeleton className='h-[72px]' />
-            </div>
-          ) : skills.length === 0 ? (
-            <EmptyState
-              icon={Sparkles}
-              title='No skills tagged yet'
-              description={`The ${isClassForProgram ? "program's courses have" : 'course has'} no skills tagged. The course creator adds them on the course.`}
-            />
-          ) : (
-            <ul className={surfaceTheme.cardGrid}>
-              {skills.map(skill => (
-                <li
-                  key={skill.skill_uuid ?? skill.skill_slug ?? skill.skill_name}
-                  className='border-border bg-card flex items-center gap-3 rounded-lg border p-4'
-                >
-                  <span className='bg-primary/10 text-primary flex size-9 shrink-0 items-center justify-center rounded-md'>
-                    <Sparkles aria-hidden className='size-4' />
-                  </span>
-                  <div className='min-w-0'>
-                    <p className='text-foreground truncate font-medium'>{skill.skill_name}</p>
-                    <p className='text-muted-foreground text-xs capitalize'>
-                      {[skill.level, skill.weight ? `weight ${skill.weight}/5` : null]
-                        .filter(Boolean)
-                        .join(' · ')}
-                      {skill.skill_active === false ? ' · retired' : ''}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </SectionTabPanel>
-
         <SectionTabPanel value='programme'>
           <ClassProgrammeProgress
             classUuid={classId}
-            studentHref={studentUuid => `/dashboard/instructor/students/${studentUuid}?tab=programme`}
+            studentHref={({ userUuid, studentUuid }) =>
+              `/dashboard/instructor/students/${userUuid}?sId=${studentUuid}&tab=programme`
+            }
+            classReportHref={`/dashboard/instructor/training-hub/classes/${classId}/report`}
           />
         </SectionTabPanel>
       </SectionTabs>
