@@ -853,13 +853,13 @@ export type RubricMatrix = {
    */
   readonly matrix_statistics?: MatrixStatistics;
   /**
-   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
-   */
-  readonly expected_cell_count?: number;
-  /**
    * **[READ-ONLY]** Whether all matrix cells have been completed with descriptions.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).
+   */
+  readonly expected_cell_count?: number;
 };
 
 export type ApiResponseRubricCriteria = {
@@ -1001,6 +1001,10 @@ export type Quiz = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the quiz is published and accessible to students.
+   */
+  readonly is_published?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable format of quiz time limit.
    */
   readonly time_limit_display?: string;
@@ -1012,10 +1016,6 @@ export type Quiz = {
    * **[READ-ONLY]** Indicates if students can take the quiz multiple times.
    */
   readonly has_multiple_attempts?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the quiz is published and accessible to students.
-   */
-  readonly is_published?: boolean;
 };
 
 export type ApiResponseQuiz = {
@@ -1067,14 +1067,6 @@ export type QuizQuestion = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted question number for display in quiz interface.
-   */
-  readonly question_number?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of the points value.
-   */
-  readonly points_display?: string;
-  /**
    * **[READ-ONLY]** Indicates if this question type requires predefined answer options.
    */
   readonly requires_options?: boolean;
@@ -1082,6 +1074,14 @@ export type QuizQuestion = {
    * **[READ-ONLY]** Human-readable category of the question type.
    */
   readonly question_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of the points value.
+   */
+  readonly points_display?: string;
+  /**
+   * **[READ-ONLY]** Formatted question number for display in quiz interface.
+   */
+  readonly question_number?: string;
 };
 
 export type ApiResponseQuizQuestion = {
@@ -1259,6 +1259,14 @@ export type QuizAttempt = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
+   */
+  readonly is_completed?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted display of the time taken to complete the quiz.
    */
   readonly time_display?: string;
@@ -1270,14 +1278,6 @@ export type QuizAttempt = {
    * **[READ-ONLY]** Comprehensive summary of the quiz attempt performance.
    */
   readonly performance_summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).
-   */
-  readonly is_completed?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
 };
 
 /**
@@ -1378,13 +1378,13 @@ export type TrainingProgram = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of total program duration.
-   */
-  readonly total_duration_display?: string;
-  /**
    * **[READ-ONLY]** Classification of program type based on duration and content.
    */
   readonly program_type?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of total program duration.
+   */
+  readonly total_duration_display?: string;
 };
 
 export type ApiResponseTrainingProgram = {
@@ -1791,6 +1791,10 @@ export type ProgramRequirement = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the requirement is optional (not mandatory).
+   */
+  readonly is_optional?: boolean;
+  /**
    * **[READ-ONLY]** Formatted category of the requirement based on type and mandatory status.
    */
   readonly requirement_category?: string;
@@ -1806,10 +1810,6 @@ export type ProgramRequirement = {
    * **[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.
    */
   readonly requirement_summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the requirement is optional (not mandatory).
-   */
-  readonly is_optional?: boolean;
 };
 
 export type ApiResponseProgramRequirement = {
@@ -2169,6 +2169,14 @@ export type UserSkill = {
   verification_status?: VerificationStatusEnum;
   readonly verified_at?: Date;
   readonly verification_notes?: string;
+  /**
+   * Programme whose grading verified this skill; null when the user added it
+   */
+  readonly source_program_uuid?: string;
+  /**
+   * Title of the source programme, for "Verified · from <programme>"
+   */
+  readonly source_program_title?: string;
   readonly created_date?: Date;
   readonly created_by?: string;
   readonly updated_date?: Date;
@@ -2612,10 +2620,26 @@ export type InstructorProfessionalMembership = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
+   */
+  readonly is_valid?: boolean;
+  /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
+  membership_status?: MembershipStatusEnum;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration of membership.
    */
   readonly formatted_duration?: string | null;
-  membership_status?: MembershipStatusEnum;
+  /**
+   * **[READ-ONLY]** Brief summary of the membership for display in listings.
+   */
+  readonly summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the membership record has all essential information.
+   */
+  readonly is_complete?: boolean;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -2637,22 +2661,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
-  /**
-   * **[READ-ONLY]** Indicates if the membership is currently valid and active.
-   */
-  readonly is_valid?: boolean;
-  /**
-   * **[READ-ONLY]** Brief summary of the membership for display in listings.
-   */
-  readonly summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the membership record has all essential information.
-   */
-  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2719,14 +2727,6 @@ export type InstructorExperience = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number | null;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string | null;
-  /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
   readonly employment_period?: string | null;
@@ -2747,6 +2747,14 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number | null;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number | null;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string | null;
   /**
    * **[READ-ONLY]** Brief summary of the experience for display in listings.
    */
@@ -2817,13 +2825,9 @@ export type InstructorEducation = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
+   * **[READ-ONLY]** Complete description combining qualification, school, and year.
    */
-  readonly is_recent_qualification?: boolean;
-  /**
-   * **[READ-ONLY]** Formatted string showing year of completion and school name.
-   */
-  readonly formatted_completion?: string;
+  readonly full_description?: string;
   /**
    * **[READ-ONLY]** Number of years since the qualification was completed.
    */
@@ -2834,13 +2838,17 @@ export type InstructorEducation = {
    */
   readonly has_certificate_number?: boolean;
   /**
-   * **[READ-ONLY]** Complete description combining qualification, school, and year.
-   */
-  readonly full_description?: string;
-  /**
    * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
   readonly is_complete?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.
+   */
+  readonly is_recent_qualification?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted string showing year of completion and school name.
+   */
+  readonly formatted_completion?: string;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -2951,15 +2959,11 @@ export type InstructorDocument = {
    * **[READ-ONLY]** Email or username of the user who last modified this document record.
    */
   readonly updated_by?: string;
-  verification_status?: VerificationStatusEnum2;
-  /**
-   * **[READ-ONLY]** Indicates if the document is pending verification.
-   */
-  readonly is_pending_verification?: boolean;
   /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  verification_status?: VerificationStatusEnum2;
   /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
@@ -2972,6 +2976,10 @@ export type InstructorDocument = {
    * **[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.
    */
   readonly days_until_expiry?: number | null;
+  /**
+   * **[READ-ONLY]** Indicates if the document is pending verification.
+   */
+  readonly is_pending_verification?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the document has an expiry date configured.
    */
@@ -3259,22 +3267,6 @@ export type Course = {
    */
   readonly course_creator_name?: string | null;
   /**
-   * **[READ-ONLY]** Human-readable format of total course duration.
-   */
-  readonly total_duration_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
-   */
-  readonly has_multiple_categories?: boolean;
-  /**
-   * **[READ-ONLY]** Number of categories this course belongs to.
-   */
-  readonly category_count?: number;
-  /**
-   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
-   */
-  readonly lifecycle_stage?: string;
-  /**
    * **[READ-ONLY]** Indicates if the course is published and discoverable.
    */
   readonly is_published?: boolean;
@@ -3294,6 +3286,22 @@ export type Course = {
    * **[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.
    */
   readonly accepts_new_enrollments?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable format of total course duration.
+   */
+  readonly total_duration_display?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the course belongs to multiple categories.
+   */
+  readonly has_multiple_categories?: boolean;
+  /**
+   * **[READ-ONLY]** Number of categories this course belongs to.
+   */
+  readonly category_count?: number;
+  /**
+   * **[READ-ONLY]** Human-readable description of the course's current lifecycle stage.
+   */
+  readonly lifecycle_stage?: string;
 };
 
 /**
@@ -3890,13 +3898,13 @@ export type LessonContent = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable format of file size.
-   */
-  readonly file_size_display?: string;
-  /**
    * **[READ-ONLY]** Category of content based on its type and format.
    */
   readonly content_category?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of file size.
+   */
+  readonly file_size_display?: string;
 };
 
 export type ApiResponseLessonContent = {
@@ -4406,15 +4414,11 @@ export type CourseCreatorDocumentDto = {
   readonly created_by?: string;
   readonly updated_date?: Date;
   readonly updated_by?: string;
-  verification_status?: VerificationStatusEnum2;
-  /**
-   * **[READ-ONLY]** Indicates if the document is pending verification.
-   */
-  readonly is_pending_verification?: boolean;
   /**
    * **[READ-ONLY]** API-relative URL for previewing or downloading the uploaded document.
    */
   readonly file_url?: string;
+  verification_status?: VerificationStatusEnum2;
   /**
    * **[READ-ONLY]** Indicates if the document has expired based on the expiry date.
    */
@@ -4427,6 +4431,10 @@ export type CourseCreatorDocumentDto = {
    * **[READ-ONLY]** Number of days until document expiry. Returns null if no expiry date or already expired.
    */
   readonly days_until_expiry?: number | null;
+  /**
+   * **[READ-ONLY]** Indicates if the document is pending verification.
+   */
+  readonly is_pending_verification?: boolean;
   /**
    * **[READ-ONLY]** Indicates if the document has an expiry date configured.
    */
@@ -4684,14 +4692,6 @@ export type ContentType = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable list of supported file formats.
-   */
-  readonly supported_formats?: string;
-  /**
-   * **[READ-ONLY]** Human-readable format of maximum file size.
-   */
-  readonly size_limit_display?: string;
-  /**
    * **[READ-ONLY]** Category for organizing uploads in the user interface.
    */
   readonly upload_category?: string;
@@ -4699,6 +4699,14 @@ export type ContentType = {
    * **[READ-ONLY]** Indicates if this content type is for media files.
    */
   readonly is_media_type?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable list of supported file formats.
+   */
+  readonly supported_formats?: string;
+  /**
+   * **[READ-ONLY]** Human-readable format of maximum file size.
+   */
+  readonly size_limit_display?: string;
 };
 
 export type ApiResponseContentType = {
@@ -5668,14 +5676,6 @@ export type Certificate = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Letter grade representation of the final grade.
-   */
-  readonly grade_letter?: string;
-  /**
-   * **[READ-ONLY]** Current validity status of the certificate.
-   */
-  readonly validity_status?: string;
-  /**
    * **[READ-ONLY]** Type of certificate based on completion achievement.
    */
   readonly certificate_type?: string;
@@ -5683,6 +5683,14 @@ export type Certificate = {
    * **[READ-ONLY]** Indicates if the certificate can be downloaded by the student.
    */
   readonly is_downloadable?: boolean;
+  /**
+   * **[READ-ONLY]** Letter grade representation of the final grade.
+   */
+  readonly grade_letter?: string;
+  /**
+   * **[READ-ONLY]** Current validity status of the certificate.
+   */
+  readonly validity_status?: string;
 };
 
 export type ApiResponseCertificate = {
@@ -6492,6 +6500,18 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -6503,18 +6523,6 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
-   */
-  readonly can_be_started?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
-   */
-  readonly can_be_ended?: boolean;
 };
 
 export type AggregatesDto = {
@@ -7075,6 +7083,10 @@ export type ProgramRemark = {
   recommendations?: string;
   next_review_date?: Date;
   readonly author_user_uuid?: string;
+  /**
+   * Display name of the remark's author
+   */
+  readonly author_name?: string;
   readonly created_date?: Date;
 };
 
@@ -8332,6 +8344,10 @@ export type Enrollment = {
    */
   readonly can_be_cancelled?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the student attended the class.
+   */
+  readonly did_attend?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if attendance has been marked for this enrollment.
    */
   readonly is_attendance_marked?: boolean;
@@ -8339,10 +8355,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the student attended the class.
-   */
-  readonly did_attend?: boolean;
 };
 
 /**
@@ -9627,13 +9639,13 @@ export type AssignmentSubmission = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Formatted category of the submission based on its content type.
-   */
-  readonly submission_category?: string;
-  /**
    * **[READ-ONLY]** Indicates if the submission has been graded by an instructor.
    */
   readonly is_graded?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted category of the submission based on its content type.
+   */
+  readonly submission_category?: string;
   /**
    * **[READ-ONLY]** Formatted display of the grade information.
    */
@@ -10528,20 +10540,20 @@ export type PageSessionReportSummary = {
   size?: number;
   content?: Array<SessionReportSummary>;
   number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  pageable?: PageableObject;
   first?: boolean;
   last?: boolean;
+  numberOfElements?: number;
+  sort?: SortObject;
+  pageable?: PageableObject;
   empty?: boolean;
 };
 
 export type PageableObject = {
   offset?: bigint;
   sort?: SortObject;
+  paged?: boolean;
   pageNumber?: number;
   pageSize?: number;
-  paged?: boolean;
   unpaged?: boolean;
 };
 
@@ -10807,11 +10819,11 @@ export type Page = {
   size?: number;
   content?: Array<unknown>;
   number?: number;
-  sort?: SortObject;
-  numberOfElements?: number;
-  pageable?: PageableObject;
   first?: boolean;
   last?: boolean;
+  numberOfElements?: number;
+  sort?: SortObject;
+  pageable?: PageableObject;
   empty?: boolean;
 };
 
@@ -11462,12 +11474,30 @@ export type ProgramReport = {
   from?: Date;
   to?: Date;
   courses?: Array<ProgramReportCourse>;
+  /**
+   * Attendance over every programme course in the period
+   */
+  attendance?: ProgramReportAttendance;
   skills?: Array<ProgramReportSkill>;
   remarks?: Array<ProgramRemark>;
   /**
    * True when the caller may add a progress remark
    */
   can_add_remarks?: boolean;
+};
+
+export type ProgramReportAttendance = {
+  sessions_attended?: number;
+  /**
+   * Attended plus absent; excused sessions are left out
+   */
+  sessions_counted?: number;
+  sessions_excused?: number;
+  sessions_total?: number;
+  /**
+   * Attended ÷ counted × 100; null when nothing is counted
+   */
+  attendance_percentage?: number;
 };
 
 export type ProgramReportCourse = {
@@ -11493,11 +11523,24 @@ export type ProgramReportCourse = {
    */
   sessions_counted?: number;
   sessions_excused?: number;
+  /**
+   * Attended, absent and excused sessions in the period
+   */
+  sessions_total?: number;
+  /**
+   * Attended ÷ counted × 100; excused left out; null when nothing is counted
+   */
+  attendance_percentage?: number;
 };
 
 export type ProgramReportEvidence = {
   course_uuid?: string;
+  course_title?: string;
   course_assessment_uuid?: string;
+  assessment_title?: string;
+  /**
+   * Assessment and line item, e.g. "Lesson 3 · Solo performance"
+   */
   source_title?: string;
   score?: number;
   level_name?: string;
@@ -11506,6 +11549,11 @@ export type ProgramReportEvidence = {
    * True when a later regrade of the same work replaced it
    */
   superseded?: boolean;
+  /**
+   * User who graded the work; null for older or system grades
+   */
+  graded_by_uuid?: string;
+  graded_by_name?: string;
 };
 
 export type ProgramReportSkill = {
@@ -14191,6 +14239,14 @@ export type CourseAssessmentScore = {
    */
   readonly updated_by?: string;
   /**
+   * **[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).
+   */
+  readonly is_passing?: boolean;
+  /**
+   * **[READ-ONLY]** Formatted display of the grade information.
+   */
+  readonly grade_display?: string;
+  /**
    * **[READ-ONLY]** Formatted category of the score based on performance level.
    */
   readonly score_category?: string;
@@ -14202,14 +14258,6 @@ export type CourseAssessmentScore = {
    * **[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.
    */
   readonly feedback_summary?: string;
-  /**
-   * **[READ-ONLY]** Formatted display of the grade information.
-   */
-  readonly grade_display?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).
-   */
-  readonly is_passing?: boolean;
 };
 
 /**
@@ -14487,13 +14535,13 @@ export type CourseCategoryMapping = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Human-readable text representing this course-category relationship.
-   */
-  readonly display_text?: string;
-  /**
    * **[READ-ONLY]** Indicates if both course and category names are populated.
    */
   readonly has_names?: boolean;
+  /**
+   * **[READ-ONLY]** Human-readable text representing this course-category relationship.
+   */
+  readonly display_text?: string;
 };
 
 export type ApiResponsePagedDtoCourseAssessment = {
@@ -14864,6 +14912,10 @@ export type ApiResponseClassProgrammeProgress = {
 
 export type ClassProgrammeLearner = {
   student_uuid?: string;
+  /**
+   * The learner's account; the instructor student page is /students/{user_uuid}?sId={student_uuid}
+   */
+  user_uuid?: string;
   program_enrollment_uuid?: string;
   final_grade?: number;
   final_grade_provisional?: boolean;
@@ -14879,13 +14931,26 @@ export type ClassProgrammeLearnerSkill = {
   counts_as_achieved?: boolean;
 };
 
+export type ClassProgrammeOption = {
+  program_uuid?: string;
+  title?: string;
+};
+
 /**
  * Programme marks and skill levels for the learners of one programme class
  */
 export type ClassProgrammeProgress = {
+  status?: StatusEnum27;
   class_definition_uuid?: string;
+  /**
+   * Null unless status is READY
+   */
   program_uuid?: string;
   program_title?: string;
+  /**
+   * Every programme the class's course belongs to; pick one and resend as program_uuid
+   */
+  programmes?: Array<ClassProgrammeOption>;
   skills?: Array<ClassProgrammeSkill>;
   learners?: Array<ClassProgrammeLearner>;
 };
@@ -18238,6 +18303,20 @@ export const ResultStatusEnum = {
  * IN_PROGRESS until every required item is graded, then PASSED or FAILED
  */
 export type ResultStatusEnum = (typeof ResultStatusEnum)[keyof typeof ResultStatusEnum];
+
+/**
+ * READY with data; NO_PROGRAMME or PROGRAMME_CHOICE_REQUIRED with empty skills and learners
+ */
+export const StatusEnum27 = {
+  READY: 'READY',
+  NO_PROGRAMME: 'NO_PROGRAMME',
+  PROGRAMME_CHOICE_REQUIRED: 'PROGRAMME_CHOICE_REQUIRED',
+} as const;
+
+/**
+ * READY with data; NO_PROGRAMME or PROGRAMME_CHOICE_REQUIRED with empty skills and learners
+ */
+export type StatusEnum27 = (typeof StatusEnum27)[keyof typeof StatusEnum27];
 
 /**
  * Status of the instructor's existing application, when they have one
@@ -22720,6 +22799,10 @@ export type ProgramReportWritable = {
   from?: Date;
   to?: Date;
   courses?: Array<ProgramReportCourse>;
+  /**
+   * Attendance over every programme course in the period
+   */
+  attendance?: ProgramReportAttendance;
   skills?: Array<ProgramReportSkill>;
   remarks?: Array<ProgramRemarkWritable>;
   /**
@@ -51270,6 +51353,9 @@ export type GetClassProgrammeProgressData = {
     classUuid: string;
   };
   query?: {
+    /**
+     * Programme to report on; needed when the class's course is in several
+     */
     program_uuid?: string;
   };
   url: '/api/v1/classes/{classUuid}/programme-progress';

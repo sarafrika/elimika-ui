@@ -20402,7 +20402,7 @@ export const getEnrollmentsForClass = <ThrowOnError extends boolean = false>(
 /**
  * Get a class's programme progress
  *
- * Programme marks and skill levels for the class's learners, with per-skill attainment counts. Pass program_uuid when the class's course sits in more than one programme.
+ * Programme marks and skill levels for the class's learners, with per-skill attainment counts. status is NO_PROGRAMME or PROGRAMME_CHOICE_REQUIRED (with programmes to pick from) instead of an error; resend with program_uuid. A program_uuid the class's course isn't in is a 400.
  */
 export const getClassProgrammeProgress = <ThrowOnError extends boolean = false>(
   options: Options<GetClassProgrammeProgressData, ThrowOnError>

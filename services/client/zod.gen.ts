@@ -122,6 +122,7 @@ import {
   StatusEnum24,
   StatusEnum25,
   StatusEnum26,
+  StatusEnum27,
   StatusEnum3,
   StatusEnum4,
   StatusEnum5,
@@ -1798,14 +1799,14 @@ export const zLessonContent = z
       )
       .readonly()
       .optional(),
-    file_size_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of file size.')
-      .readonly()
-      .optional(),
     content_category: z
       .string()
       .describe('**[READ-ONLY]** Category of content based on its type and format.')
+      .readonly()
+      .optional(),
+    file_size_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of file size.')
       .readonly()
       .optional(),
   })
@@ -2298,16 +2299,6 @@ export const zContentType = z
       )
       .readonly()
       .optional(),
-    supported_formats: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable list of supported file formats.')
-      .readonly()
-      .optional(),
-    size_limit_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of maximum file size.')
-      .readonly()
-      .optional(),
     upload_category: z
       .string()
       .describe('**[READ-ONLY]** Category for organizing uploads in the user interface.')
@@ -2316,6 +2307,16 @@ export const zContentType = z
     is_media_type: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this content type is for media files.')
+      .readonly()
+      .optional(),
+    supported_formats: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable list of supported file formats.')
+      .readonly()
+      .optional(),
+    size_limit_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of maximum file size.')
       .readonly()
       .optional(),
   })
@@ -2612,16 +2613,6 @@ export const zCertificate = z
       )
       .readonly()
       .optional(),
-    grade_letter: z
-      .string()
-      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
-      .readonly()
-      .optional(),
-    validity_status: z
-      .string()
-      .describe('**[READ-ONLY]** Current validity status of the certificate.')
-      .readonly()
-      .optional(),
     certificate_type: z
       .string()
       .describe('**[READ-ONLY]** Type of certificate based on completion achievement.')
@@ -2630,6 +2621,16 @@ export const zCertificate = z
     is_downloadable: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the certificate can be downloaded by the student.')
+      .readonly()
+      .optional(),
+    grade_letter: z
+      .string()
+      .describe('**[READ-ONLY]** Letter grade representation of the final grade.')
+      .readonly()
+      .optional(),
+    validity_status: z
+      .string()
+      .describe('**[READ-ONLY]** Current validity status of the certificate.')
       .readonly()
       .optional(),
   })
@@ -3243,6 +3244,7 @@ export const zProgramRemark = z
     recommendations: z.string().min(0).max(20000).optional(),
     next_review_date: z.string().date().optional(),
     author_user_uuid: z.string().uuid().readonly().optional(),
+    author_name: z.string().describe("Display name of the remark's author").readonly().optional(),
     created_date: z.string().datetime().readonly().optional(),
   })
   .describe("An instructor's progress remark on a learner's programme; rich text (HTML)");
@@ -4899,6 +4901,7 @@ export const zPageableObject = z.object({
     })
     .optional(),
   sort: zSortObject.optional(),
+  paged: z.boolean().optional(),
   pageNumber: z
     .number()
     .int()
@@ -4911,7 +4914,6 @@ export const zPageableObject = z.object({
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
-  paged: z.boolean().optional(),
   unpaged: z.boolean().optional(),
 });
 
@@ -4990,16 +4992,16 @@ export const zPage = z.object({
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
-  sort: zSortObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   numberOfElements: z
     .number()
     .int()
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
+  sort: zSortObject.optional(),
   pageable: zPageableObject.optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   empty: z.boolean().optional(),
 });
 
@@ -5452,6 +5454,38 @@ export const zResponseReviewDto = z.object({
   is_correct: z.boolean().optional(),
 });
 
+export const zProgramReportAttendance = z.object({
+  sessions_attended: z
+    .number()
+    .int()
+    .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+    .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+    .optional(),
+  sessions_counted: z
+    .number()
+    .int()
+    .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+    .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+    .describe('Attended plus absent; excused sessions are left out')
+    .optional(),
+  sessions_excused: z
+    .number()
+    .int()
+    .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+    .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+    .optional(),
+  sessions_total: z
+    .number()
+    .int()
+    .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+    .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+    .optional(),
+  attendance_percentage: z
+    .number()
+    .describe('Attended ÷ counted × 100; null when nothing is counted')
+    .optional(),
+});
+
 export const zProgramReportCourse = z.object({
   course_uuid: z.string().uuid().optional(),
   course_title: z.string().optional(),
@@ -5485,12 +5519,28 @@ export const zProgramReportCourse = z.object({
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
+  sessions_total: z
+    .number()
+    .int()
+    .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+    .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+    .describe('Attended, absent and excused sessions in the period')
+    .optional(),
+  attendance_percentage: z
+    .number()
+    .describe('Attended ÷ counted × 100; excused left out; null when nothing is counted')
+    .optional(),
 });
 
 export const zProgramReportEvidence = z.object({
   course_uuid: z.string().uuid().optional(),
+  course_title: z.string().optional(),
   course_assessment_uuid: z.string().uuid().optional(),
-  source_title: z.string().optional(),
+  assessment_title: z.string().optional(),
+  source_title: z
+    .string()
+    .describe('Assessment and line item, e.g. "Lesson 3 · Solo performance"')
+    .optional(),
   score: z.number().optional(),
   level_name: z.string().optional(),
   graded_at: z.string().datetime().optional(),
@@ -5498,6 +5548,12 @@ export const zProgramReportEvidence = z.object({
     .boolean()
     .describe('True when a later regrade of the same work replaced it')
     .optional(),
+  graded_by_uuid: z
+    .string()
+    .uuid()
+    .describe('User who graded the work; null for older or system grades')
+    .optional(),
+  graded_by_name: z.string().optional(),
 });
 
 export const zProgramReportSkill = z.object({
@@ -5546,6 +5602,7 @@ export const zProgramReport = z
       .optional(),
     to: z.string().date().optional(),
     courses: z.array(zProgramReportCourse).optional(),
+    attendance: zProgramReportAttendance.optional(),
     skills: z.array(zProgramReportSkill).optional(),
     remarks: z.array(zProgramRemark).optional(),
     can_add_remarks: z
@@ -7080,6 +7137,16 @@ export const zCourseAssessmentScore = z
       )
       .readonly()
       .optional(),
+    is_passing: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     score_category: z
       .string()
       .describe('**[READ-ONLY]** Formatted category of the score based on performance level.')
@@ -7097,16 +7164,6 @@ export const zCourseAssessmentScore = z
       .describe(
         '**[READ-ONLY]** Summary indicating the availability and nature of instructor feedback.'
       )
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
-      .readonly()
-      .optional(),
-    is_passing: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the score meets the passing criteria (60% or above).')
       .readonly()
       .optional(),
   })
@@ -7273,16 +7330,16 @@ export const zCourseCategoryMapping = z
       )
       .readonly()
       .optional(),
+    has_names: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
+      .readonly()
+      .optional(),
     display_text: z
       .string()
       .describe(
         '**[READ-ONLY]** Human-readable text representing this course-category relationship.'
       )
-      .readonly()
-      .optional(),
-    has_names: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if both course and category names are populated.')
       .readonly()
       .optional(),
   })
@@ -7503,6 +7560,13 @@ export const zClassProgrammeLearnerSkill = z.object({
 
 export const zClassProgrammeLearner = z.object({
   student_uuid: z.string().uuid().optional(),
+  user_uuid: z
+    .string()
+    .uuid()
+    .describe(
+      "The learner's account; the instructor student page is /students/{user_uuid}?sId={student_uuid}"
+    )
+    .optional(),
   program_enrollment_uuid: z.string().uuid().optional(),
   final_grade: z.number().optional(),
   final_grade_provisional: z.boolean().optional(),
@@ -7520,6 +7584,11 @@ export const zClassProgrammeLearner = z.object({
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
   skill_levels: z.array(zClassProgrammeLearnerSkill).optional(),
+});
+
+export const zClassProgrammeOption = z.object({
+  program_uuid: z.string().uuid().optional(),
+  title: z.string().optional(),
 });
 
 export const zClassProgrammeSkill = z.object({
@@ -7552,26 +7621,6 @@ export const zClassProgrammeSkill = z.object({
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
-});
-
-/**
- * Programme marks and skill levels for the learners of one programme class
- */
-export const zClassProgrammeProgress = z
-  .object({
-    class_definition_uuid: z.string().uuid().optional(),
-    program_uuid: z.string().uuid().optional(),
-    program_title: z.string().optional(),
-    skills: z.array(zClassProgrammeSkill).optional(),
-    learners: z.array(zClassProgrammeLearner).optional(),
-  })
-  .describe('Programme marks and skill levels for the learners of one programme class');
-
-export const zApiResponseClassProgrammeProgress = z.object({
-  success: z.boolean().optional(),
-  data: zClassProgrammeProgress.optional(),
-  message: z.string().optional(),
-  error: z.unknown().optional(),
 });
 
 /**
@@ -9591,14 +9640,14 @@ export const zTrainingProgram = z
       )
       .readonly()
       .optional(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total program duration.')
-      .readonly()
-      .optional(),
     program_type: z
       .string()
       .describe('**[READ-ONLY]** Classification of program type based on duration and content.')
+      .readonly()
+      .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total program duration.')
       .readonly()
       .optional(),
   })
@@ -10522,6 +10571,11 @@ export const zRubricMatrix = z
         "**[REQUIRED]** Matrix cells mapping criteria to scoring levels with descriptions. Key format: 'criteriaUuid_scoringLevelUuid'."
       ),
     matrix_statistics: zMatrixStatistics.readonly().optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
+      .readonly()
+      .optional(),
     expected_cell_count: z
       .number()
       .int()
@@ -10530,11 +10584,6 @@ export const zRubricMatrix = z
       .describe(
         '**[READ-ONLY]** Expected number of matrix cells (criteria count × scoring levels count).'
       )
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Whether all matrix cells have been completed with descriptions.')
       .readonly()
       .optional(),
   })
@@ -10663,6 +10712,11 @@ export const zQuiz = z
       )
       .readonly()
       .optional(),
+    is_published: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
+      .readonly()
+      .optional(),
     time_limit_display: z
       .string()
       .describe('**[READ-ONLY]** Human-readable format of quiz time limit.')
@@ -10676,11 +10730,6 @@ export const zQuiz = z
     has_multiple_attempts: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if students can take the quiz multiple times.')
-      .readonly()
-      .optional(),
-    is_published: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the quiz is published and accessible to students.')
       .readonly()
       .optional(),
   })
@@ -10778,16 +10827,6 @@ export const zQuizQuestion = z
       )
       .readonly()
       .optional(),
-    question_number: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
-      .readonly()
-      .optional(),
-    points_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of the points value.')
-      .readonly()
-      .optional(),
     requires_options: z
       .boolean()
       .describe(
@@ -10798,6 +10837,16 @@ export const zQuizQuestion = z
     question_category: z
       .string()
       .describe('**[READ-ONLY]** Human-readable category of the question type.')
+      .readonly()
+      .optional(),
+    points_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of the points value.')
+      .readonly()
+      .optional(),
+    question_number: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted question number for display in quiz interface.')
       .readonly()
       .optional(),
   })
@@ -10947,6 +10996,18 @@ export const zQuizAttempt = z
       )
       .readonly()
       .optional(),
+    is_completed: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).'
+      )
+      .readonly()
+      .optional(),
+    grade_display: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted display of the grade information.')
+      .readonly()
+      .optional(),
     time_display: z
       .string()
       .describe('**[READ-ONLY]** Formatted display of the time taken to complete the quiz.')
@@ -10960,18 +11021,6 @@ export const zQuizAttempt = z
     performance_summary: z
       .string()
       .describe('**[READ-ONLY]** Comprehensive summary of the quiz attempt performance.')
-      .readonly()
-      .optional(),
-    is_completed: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if the quiz attempt has been completed (submitted or graded).'
-      )
-      .readonly()
-      .optional(),
-    grade_display: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted display of the grade information.')
       .readonly()
       .optional(),
   })
@@ -11368,6 +11417,11 @@ export const zProgramRequirement = z
       )
       .readonly()
       .optional(),
+    is_optional: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the requirement is optional (not mandatory).')
+      .readonly()
+      .optional(),
     requirement_category: z
       .string()
       .describe(
@@ -11394,11 +11448,6 @@ export const zProgramRequirement = z
       .describe(
         '**[READ-ONLY]** Comprehensive summary of the requirement including type and compliance level.'
       )
-      .readonly()
-      .optional(),
-    is_optional: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the requirement is optional (not mandatory).')
       .readonly()
       .optional(),
   })
@@ -11807,6 +11856,17 @@ export const zUserSkill = z
     verification_status: zVerificationStatusEnum.optional(),
     verified_at: z.string().datetime().readonly().optional(),
     verification_notes: z.string().readonly().optional(),
+    source_program_uuid: z
+      .string()
+      .uuid()
+      .describe('Programme whose grading verified this skill; null when the user added it')
+      .readonly()
+      .optional(),
+    source_program_title: z
+      .string()
+      .describe('Title of the source programme, for "Verified · from <programme>"')
+      .readonly()
+      .optional(),
     created_date: z.string().datetime().readonly().optional(),
     created_by: z.string().readonly().optional(),
     updated_date: z.string().datetime().readonly().optional(),
@@ -12680,8 +12740,30 @@ export const zInstructorProfessionalMembership = z
       )
       .readonly()
       .optional(),
-    formatted_duration: z.string().readonly().nullish(),
+    is_valid: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership is currently valid and active.')
+      .readonly()
+      .optional(),
+    membership_duration_months: z
+      .number()
+      .int()
+      .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+      .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+      .readonly()
+      .nullish(),
     membership_status: zMembershipStatusEnum.optional(),
+    formatted_duration: z.string().readonly().nullish(),
+    summary: z
+      .string()
+      .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
+      .readonly()
+      .optional(),
+    is_complete: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
+      .readonly()
+      .optional(),
     membership_period: z.string().readonly().nullish(),
     is_long_standing_member: z
       .boolean()
@@ -12698,28 +12780,6 @@ export const zInstructorProfessionalMembership = z
     is_recent_membership: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if this membership was started within the last 3 years.')
-      .readonly()
-      .optional(),
-    membership_duration_months: z
-      .number()
-      .int()
-      .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
-      .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
-      .readonly()
-      .nullish(),
-    is_valid: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership is currently valid and active.')
-      .readonly()
-      .optional(),
-    summary: z
-      .string()
-      .describe('**[READ-ONLY]** Brief summary of the membership for display in listings.')
-      .readonly()
-      .optional(),
-    is_complete: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the membership record has all essential information.')
       .readonly()
       .optional(),
   })
@@ -12821,14 +12881,6 @@ export const zInstructorExperience = z
       )
       .readonly()
       .optional(),
-    duration_in_months: z
-      .number()
-      .int()
-      .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
-      .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
-      .readonly()
-      .nullish(),
-    formatted_duration: z.string().readonly().nullish(),
     employment_period: z.string().readonly().nullish(),
     is_long_term_position: z
       .boolean()
@@ -12847,6 +12899,14 @@ export const zInstructorExperience = z
       .readonly()
       .optional(),
     calculated_years: z.number().readonly().nullish(),
+    duration_in_months: z
+      .number()
+      .int()
+      .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+      .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+      .readonly()
+      .nullish(),
+    formatted_duration: z.string().readonly().nullish(),
     summary: z
       .string()
       .describe('**[READ-ONLY]** Brief summary of the experience for display in listings.')
@@ -12955,16 +13015,9 @@ export const zInstructorEducation = z
       )
       .readonly()
       .optional(),
-    is_recent_qualification: z
-      .boolean()
-      .describe(
-        '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.'
-      )
-      .readonly()
-      .optional(),
-    formatted_completion: z
+    full_description: z
       .string()
-      .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
+      .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
       .readonly()
       .optional(),
     years_since_completion: z
@@ -12982,14 +13035,21 @@ export const zInstructorEducation = z
       )
       .readonly()
       .optional(),
-    full_description: z
-      .string()
-      .describe('**[READ-ONLY]** Complete description combining qualification, school, and year.')
-      .readonly()
-      .optional(),
     is_complete: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the education record has all essential information.')
+      .readonly()
+      .optional(),
+    is_recent_qualification: z
+      .boolean()
+      .describe(
+        '**[READ-ONLY]** Indicates if this qualification was completed within the last 10 years.'
+      )
+      .readonly()
+      .optional(),
+    formatted_completion: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted string showing year of completion and school name.')
       .readonly()
       .optional(),
   })
@@ -13175,12 +13235,6 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
-    verification_status: zVerificationStatusEnum2.optional(),
-    is_pending_verification: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the document is pending verification.')
-      .readonly()
-      .optional(),
     file_url: z
       .string()
       .describe(
@@ -13188,6 +13242,7 @@ export const zInstructorDocument = z
       )
       .readonly()
       .optional(),
+    verification_status: zVerificationStatusEnum2.optional(),
     is_expired: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
@@ -13205,6 +13260,11 @@ export const zInstructorDocument = z
       .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
       .readonly()
       .nullish(),
+    is_pending_verification: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the document is pending verification.')
+      .readonly()
+      .optional(),
     has_expiry_date: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the document has an expiry date configured.')
@@ -13257,12 +13317,6 @@ export const zCourseCreatorDocumentDto = z.object({
   created_by: z.string().readonly().optional(),
   updated_date: z.string().datetime().readonly().optional(),
   updated_by: z.string().readonly().optional(),
-  verification_status: zVerificationStatusEnum2.optional(),
-  is_pending_verification: z
-    .boolean()
-    .describe('**[READ-ONLY]** Indicates if the document is pending verification.')
-    .readonly()
-    .optional(),
   file_url: z
     .string()
     .describe(
@@ -13270,6 +13324,7 @@ export const zCourseCreatorDocumentDto = z.object({
     )
     .readonly()
     .optional(),
+  verification_status: zVerificationStatusEnum2.optional(),
   is_expired: z
     .boolean()
     .describe('**[READ-ONLY]** Indicates if the document has expired based on the expiry date.')
@@ -13287,6 +13342,11 @@ export const zCourseCreatorDocumentDto = z.object({
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .readonly()
     .nullish(),
+  is_pending_verification: z
+    .boolean()
+    .describe('**[READ-ONLY]** Indicates if the document is pending verification.')
+    .readonly()
+    .optional(),
   has_expiry_date: z
     .boolean()
     .describe('**[READ-ONLY]** Indicates if the document has an expiry date configured.')
@@ -13734,31 +13794,6 @@ export const zCourse = z
       .nullish(),
     rating_summary: zCourseRatingSummary.readonly().optional(),
     course_creator_name: z.string().readonly().nullish(),
-    total_duration_display: z
-      .string()
-      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
-      .readonly()
-      .optional(),
-    has_multiple_categories: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
-      .readonly()
-      .optional(),
-    category_count: z
-      .number()
-      .int()
-      .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
-      .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
-      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
-      .readonly()
-      .optional(),
-    lifecycle_stage: z
-      .string()
-      .describe(
-        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
-      )
-      .readonly()
-      .optional(),
     is_published: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the course is published and discoverable.')
@@ -13783,6 +13818,31 @@ export const zCourse = z
       .boolean()
       .describe(
         '**[READ-ONLY]** Indicates if the course is currently accepting new student enrollments.'
+      )
+      .readonly()
+      .optional(),
+    total_duration_display: z
+      .string()
+      .describe('**[READ-ONLY]** Human-readable format of total course duration.')
+      .readonly()
+      .optional(),
+    has_multiple_categories: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the course belongs to multiple categories.')
+      .readonly()
+      .optional(),
+    category_count: z
+      .number()
+      .int()
+      .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
+      .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
+      .describe('**[READ-ONLY]** Number of categories this course belongs to.')
+      .readonly()
+      .optional(),
+    lifecycle_stage: z
+      .string()
+      .describe(
+        "**[READ-ONLY]** Human-readable description of the course's current lifecycle stage."
       )
       .readonly()
       .optional(),
@@ -16015,6 +16075,21 @@ export const zScheduledInstance = z
       .describe('**[READ-ONLY]** Duration of the scheduled instance in minutes.')
       .readonly()
       .optional(),
+    can_be_ended: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
+      .readonly()
+      .optional(),
+    can_be_cancelled: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
+      .readonly()
+      .optional(),
+    can_be_started: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
+      .readonly()
+      .optional(),
     duration_formatted: z
       .string()
       .describe('**[READ-ONLY]** Human-readable formatted duration.')
@@ -16030,21 +16105,6 @@ export const zScheduledInstance = z
       .describe(
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).'
       )
-      .readonly()
-      .optional(),
-    can_be_cancelled: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.')
-      .readonly()
-      .optional(),
-    can_be_started: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.')
-      .readonly()
-      .optional(),
-    can_be_ended: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.')
       .readonly()
       .optional(),
   })
@@ -16292,16 +16352,16 @@ export const zPageSessionReportSummary = z.object({
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
-  sort: zSortObject.optional(),
+  first: z.boolean().optional(),
+  last: z.boolean().optional(),
   numberOfElements: z
     .number()
     .int()
     .min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' })
     .max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' })
     .optional(),
+  sort: zSortObject.optional(),
   pageable: zPageableObject.optional(),
-  first: z.boolean().optional(),
-  last: z.boolean().optional(),
   empty: z.boolean().optional(),
 });
 
@@ -17087,6 +17147,11 @@ export const zEnrollment = z
       .describe('**[READ-ONLY]** Indicates if the enrollment can be cancelled.')
       .readonly()
       .optional(),
+    did_attend: z
+      .boolean()
+      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
+      .readonly()
+      .optional(),
     is_attendance_marked: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if attendance has been marked for this enrollment.')
@@ -17095,11 +17160,6 @@ export const zEnrollment = z
     status_description: z
       .string()
       .describe('**[READ-ONLY]** Human-readable description of the enrollment status.')
-      .readonly()
-      .optional(),
-    did_attend: z
-      .boolean()
-      .describe('**[READ-ONLY]** Indicates if the student attended the class.')
       .readonly()
       .optional(),
   })
@@ -17710,14 +17770,14 @@ export const zAssignmentSubmission = z
       )
       .readonly()
       .optional(),
-    submission_category: z
-      .string()
-      .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
-      .readonly()
-      .optional(),
     is_graded: z
       .boolean()
       .describe('**[READ-ONLY]** Indicates if the submission has been graded by an instructor.')
+      .readonly()
+      .optional(),
+    submission_category: z
+      .string()
+      .describe('**[READ-ONLY]** Formatted category of the submission based on its content type.')
       .readonly()
       .optional(),
     grade_display: z
@@ -19176,6 +19236,42 @@ export const zCourseProgressReport = z
 export const zApiResponseCourseProgressReport = z.object({
   success: z.boolean().optional(),
   data: zCourseProgressReport.optional(),
+  message: z.string().optional(),
+  error: z.unknown().optional(),
+});
+
+/**
+ * READY with data; NO_PROGRAMME or PROGRAMME_CHOICE_REQUIRED with empty skills and learners
+ */
+export const zStatusEnum27 = z
+  .nativeEnum(StatusEnum27)
+  .describe(
+    'READY with data; NO_PROGRAMME or PROGRAMME_CHOICE_REQUIRED with empty skills and learners'
+  );
+
+/**
+ * Programme marks and skill levels for the learners of one programme class
+ */
+export const zClassProgrammeProgress = z
+  .object({
+    status: zStatusEnum27.optional(),
+    class_definition_uuid: z.string().uuid().optional(),
+    program_uuid: z.string().uuid().describe('Null unless status is READY').optional(),
+    program_title: z.string().optional(),
+    programmes: z
+      .array(zClassProgrammeOption)
+      .describe(
+        "Every programme the class's course belongs to; pick one and resend as program_uuid"
+      )
+      .optional(),
+    skills: z.array(zClassProgrammeSkill).optional(),
+    learners: z.array(zClassProgrammeLearner).optional(),
+  })
+  .describe('Programme marks and skill levels for the learners of one programme class');
+
+export const zApiResponseClassProgrammeProgress = z.object({
+  success: z.boolean().optional(),
+  data: zClassProgrammeProgress.optional(),
   message: z.string().optional(),
   error: z.unknown().optional(),
 });
@@ -24361,6 +24457,7 @@ export const zProgramReportWritable = z
       .optional(),
     to: z.string().date().optional(),
     courses: z.array(zProgramReportCourse).optional(),
+    attendance: zProgramReportAttendance.optional(),
     skills: z.array(zProgramReportSkill).optional(),
     remarks: z.array(zProgramRemarkWritable).optional(),
     can_add_remarks: z
@@ -34396,7 +34493,11 @@ export const zGetClassProgrammeProgressPath = z.object({
 });
 
 export const zGetClassProgrammeProgressQuery = z.object({
-  program_uuid: z.string().uuid().optional(),
+  program_uuid: z
+    .string()
+    .uuid()
+    .describe("Programme to report on; needed when the class's course is in several")
+    .optional(),
 });
 
 /**
