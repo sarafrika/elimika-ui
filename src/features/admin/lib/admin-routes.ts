@@ -22,7 +22,7 @@ export type OrganisationTab =
   | 'classes'
   | 'finance';
 
-export type ProgramTab = 'overview' | 'courses' | 'applications' | 'history';
+export type ProgramTab = 'overview' | 'courses' | 'assessment' | 'applications' | 'history';
 
 export type InboxType =
   | 'documents'

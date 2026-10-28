@@ -18,6 +18,7 @@ import { type EntityFact, EntityHeaderCard } from '@/components/data-display/ent
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import {
   type SectionTab,
+  type SectionTabFlag,
   SectionTabPanel,
   SectionTabs,
   useSectionTab,
@@ -95,6 +96,8 @@ interface CourseRecordViewProps {
   tabPanels?: Partial<Record<CourseRecordTabId, ReactNode>>;
   /** Count chips on the tabs. */
   tabCounts?: Partial<Record<CourseRecordTabId, number>>;
+  /** Status chips on the tabs, e.g. "2 to fix" on Assessment. */
+  tabFlags?: Partial<Record<CourseRecordTabId, SectionTabFlag | null>>;
 
   /* — tab state — */
   /** Controls the open tab. Omitted, the open tab lives in the URL's `?tab=`. */
@@ -138,6 +141,7 @@ export function CourseRecordView({
   rail,
   tabPanels,
   tabCounts,
+  tabFlags,
   activeTab,
   defaultTab,
   onTabChange,
@@ -178,6 +182,7 @@ export function CourseRecordView({
     id,
     label: COURSE_RECORD_TAB_LABELS[id],
     count: tabCounts?.[id],
+    flag: tabFlags?.[id],
   }));
 
   const facts: EntityFact[] = courseHeaderFacts(hero).map(fact => ({

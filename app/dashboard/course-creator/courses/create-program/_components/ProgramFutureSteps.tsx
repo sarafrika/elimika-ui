@@ -10,8 +10,6 @@ import type { PendingProgramMedia, ProgramMediaKey } from '../save-program-media
 import { ProgramTextField } from './ProgramFields';
 import { ProgramMediaUpload } from './ProgramMediaUpload';
 
-export { ProgramEvaluation } from './ProgramEvaluation';
-
 export function ProgramBranding({
   files,
   onSelect,

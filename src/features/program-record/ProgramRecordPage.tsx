@@ -39,12 +39,13 @@ import {
   routeSegmentFromPath,
 } from '@/src/features/dashboard/lib/dashboard-url';
 import { useQuery } from '@tanstack/react-query';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useStudent } from '@/context/student-context';
 import { LearnerProgrammeReport } from '@/src/features/program-report/LearnerProgrammesPanel';
 import { programmeReportPrintHref } from '@/src/features/program-report/print-href';
+import { ProgramAssessmentPlanPanel, useProgramAssessmentPlan } from './ProgramAssessmentPlan';
 import { ProgramCurriculumPanel } from './ProgramCurriculumPanel';
 import { ProgramEnrollmentsPanel } from './ProgramEnrollmentsPanel';
 
@@ -120,10 +121,7 @@ export function ProgramRecordPage({
     ...getProgramEnrollmentsOptions({ path: { programUuid }, query: { pageable: {} } }),
     enabled: !!programUuid,
   });
-  const enrollments = useMemo(
-    () => enrollmentsQ.data?.data?.content ?? [],
-    [enrollmentsQ.data]
-  );
+  const enrollments = useMemo(() => enrollmentsQ.data?.data?.content ?? [], [enrollmentsQ.data]);
 
   const reviewsQ = useQuery({
     ...getProgramReviewsOptions({ path: { programUuid }, query: { pageable: {} } }),
@@ -181,6 +179,7 @@ export function ProgramRecordPage({
   }, [studentMap]);
 
   const currentStudent = useStudent();
+  const openTab = useSearchParams()?.get('tab');
 
   // Derive viewer access from the current dashboard path segment so the
   // ProgramRecordPage mirrors CourseRecordPage behaviour and shows creator/
@@ -203,6 +202,13 @@ export function ProgramRecordPage({
         return 'prospect' as const;
     }
   })();
+
+  // Builders and admins see the assessment plan; course components load once its tab is open.
+  const showsPlan = access === 'creator' || access === 'admin';
+  const plan = useProgramAssessmentPlan(programUuid, {
+    enabled: showsPlan,
+    withComponents: openTab === 'assessment',
+  });
 
   // Vars for capability copy interpolation — best-effort mapping
   const vars: Record<string, string | number | null | undefined> = {
@@ -300,7 +306,13 @@ export function ProgramRecordPage({
     />
   );
 
-  const assessmentPanel = access === 'student' && currentStudent?.uuid ? (
+  const assessmentPanel = showsPlan ? (
+    <ProgramAssessmentPlanPanel
+      programUuid={programUuid}
+      plan={plan}
+      canEdit={access === 'creator'}
+    />
+  ) : access === 'student' && currentStudent?.uuid ? (
     <LearnerProgrammeReport
       programUuid={programUuid}
       studentUuid={currentStudent.uuid}
@@ -310,7 +322,7 @@ export function ProgramRecordPage({
   ) : (
     <div className='flex flex-col gap-5'>
       <div className='text-muted-foreground rounded-[12px] border border-dashed px-4 py-6 text-sm'>
-        No assessment have been added to this program yet.
+        No assessment has been added to this program yet.
       </div>
     </div>
   );
@@ -342,15 +354,15 @@ export function ProgramRecordPage({
     () =>
       program
         ? {
-          ...program,
-          name: program.title,
-          duration_hours: program.total_duration_hours,
-          duration_minutes: program.total_duration_minutes,
-          price: program.price ?? 0,
-          minimum_training_fee: program.price ?? 0,
-          creator_share_percentage: 60,
-          instructor_share_percentage: 40,
-        }
+            ...program,
+            name: program.title,
+            duration_hours: program.total_duration_hours,
+            duration_minutes: program.total_duration_minutes,
+            price: program.price ?? 0,
+            minimum_training_fee: program.price ?? 0,
+            creator_share_percentage: 60,
+            instructor_share_percentage: 40,
+          }
         : undefined,
     [program]
   );
@@ -473,6 +485,11 @@ export function ProgramRecordPage({
         rail={rail}
         tabPanels={tabPanels}
         tabCounts={tabCounts}
+        tabFlags={
+          showsPlan && !plan.loading && plan.fixCount > 0
+            ? { assessment: { label: `${plan.fixCount} to fix`, tone: 'warning' } }
+            : undefined
+        }
       />
     </>
   );

@@ -36,7 +36,7 @@ export function programStepBody(
           }
         : {}),
       ...(step === 2 || step === 'all' ? { passMark: values.passMark } : {}),
-      ...(step === 6 || step === 'all' ? { price: values.price } : {}),
+      ...(step === 5 || step === 'all' ? { price: values.price } : {}),
     },
     creatorUuid,
     existing

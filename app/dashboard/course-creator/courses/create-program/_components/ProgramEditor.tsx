@@ -20,19 +20,7 @@ import {
 import type { TrainingProgram } from '@/services/client/types.gen';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import {
-  ArrowLeft,
-  ArrowRight,
-  BadgeDollarSign,
-  Check,
-  ClipboardList,
-  Layers,
-  ListChecks,
-  Palette,
-  Scale,
-  Send,
-  Sparkles,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -48,19 +36,44 @@ import type { PendingProgramMedia, ProgramMediaKey } from '../save-program-media
 import { useSaveProgram } from '../use-save-program';
 import ProgramCourses from './ProgramCourses';
 import { ProgramSetup } from './ProgramFields';
-import { ProgramBranding, ProgramEvaluation, ProgramPricing } from './ProgramFutureSteps';
+import { ProgramBranding, ProgramPricing } from './ProgramFutureSteps';
 import { ProgramSkills } from './ProgramSkills';
 import { ProgramWeights } from './ProgramWeights';
 import { ProgramSavingOverlay } from './ProgramSavingOverlay';
 
 const STEPS = [
-  { key: 'setup', label: 'Program set-up', icon: ClipboardList },
-  { key: 'courses', label: 'Courses in this program', icon: Layers },
-  { key: 'weights', label: 'Pass rule & weights', icon: ListChecks },
-  { key: 'skills', label: 'Skills', icon: Sparkles },
-  { key: 'evaluation', label: 'Evaluation', icon: Scale },
-  { key: 'branding', label: 'Branding', icon: Palette },
-  { key: 'pricing', label: 'Pricing', icon: BadgeDollarSign },
+  {
+    key: 'setup',
+    label: 'Program set-up',
+    description: 'Name the program, describe it and say who it is for.',
+  },
+  {
+    key: 'courses',
+    label: 'Courses in this program',
+    description: 'Choose the courses learners take, in the order they take them.',
+  },
+  {
+    key: 'weights',
+    label: 'Pass rule & weights',
+    description:
+      "Set the mark a learner needs and how much each mandatory course counts. Course finals come from each course's own grading.",
+  },
+  {
+    key: 'skills',
+    label: 'Skills',
+    description:
+      'Pick the skills this program proves, then link each one to the rubric criteria or assessments that show it. Grading that work creates the evidence.',
+  },
+  {
+    key: 'branding',
+    label: 'Branding',
+    description: 'Add the images and video learners see on the program page.',
+  },
+  {
+    key: 'pricing',
+    label: 'Pricing',
+    description: 'Set what the whole program costs.',
+  },
 ] as const;
 
 export default function ProgramEditor({
@@ -85,7 +98,7 @@ export default function ProgramEditor({
   });
   const navigationLock = useRef(false);
   const [validationMessage, setValidationMessage] = useState('');
-  const [evaluationPending, setEvaluationPending] = useState(false);
+  const [stepPending, setStepPending] = useState(false);
   const [pendingMedia, setPendingMedia] = useState<PendingProgramMedia>({});
   const selectMedia = (key: ProgramMediaKey, file?: File) => {
     setPendingMedia(current => ({ ...current, [key]: file }));
@@ -165,15 +178,15 @@ export default function ProgramEditor({
       save.programUuid && !save.hasChanges(values, saveStep, pendingMedia)
         ? save.programUuid
         : await save.mutateAsync({
-          values,
-          step: saveStep,
-          media: pendingMedia,
-          onCreated: uuid => updateUrl(uuid, step),
-          onMediaUploaded: (key, file) =>
-            setPendingMedia(current =>
-              current[key] === file ? { ...current, [key]: undefined } : current
-            ),
-        });
+            values,
+            step: saveStep,
+            media: pendingMedia,
+            onCreated: uuid => updateUrl(uuid, step),
+            onMediaUploaded: (key, file) =>
+              setPendingMedia(current =>
+                current[key] === file ? { ...current, [key]: undefined } : current
+              ),
+          });
     if (!writeProgramDraft(creatorUuid, uuid, form.getValues())) setDraftStorageFailed(true);
     else clearNewProgramDraft(creatorUuid);
     return uuid;
@@ -203,7 +216,7 @@ export default function ProgramEditor({
     return false;
   };
   const goToStep = async (target: number) => {
-    if (navigationLock.current || save.isPending || evaluationPending || target === step) return;
+    if (navigationLock.current || save.isPending || stepPending || target === step) return;
     // Only setup can create the UUID. Once created, every step is reachable.
     if (!save.programUuid && target !== step + 1) return;
     navigationLock.current = true;
@@ -237,7 +250,7 @@ export default function ProgramEditor({
     toast.error(issue.message);
   };
   const onSave = async () => {
-    if (navigationLock.current || save.isPending || evaluationPending || lifecycle.pending) return;
+    if (navigationLock.current || save.isPending || stepPending || lifecycle.pending) return;
     if (selectedCourseIds.length && !revenueShares) {
       toast.error('Reload the selected course data before saving pricing.');
       return;
@@ -256,16 +269,16 @@ export default function ProgramEditor({
       navigationLock.current = false;
     }
   };
-  const openProgram = (uuid: string) =>
-    router.push(`/dashboard/course-creator/programs/${uuid}`);
+  const openProgram = (uuid: string) => router.push(`/dashboard/course-creator/programs/${uuid}`);
   const onPublish = async () => {
     if (
       !savedForPublication ||
       navigationLock.current ||
       save.isPending ||
-      evaluationPending ||
+      stepPending ||
       lifecycle.pending
-    ) return;
+    )
+      return;
     if (selectedCourseIds.length && !revenueShares) {
       toast.error('Reload the selected course data before publishing.');
       return;
@@ -285,7 +298,7 @@ export default function ProgramEditor({
 
   return (
     <main className='bg-muted/20 min-h-screen px-4 py-6 sm:px-6 lg:px-8'>
-      <div className='mx-auto max-w-[1500px] space-y-5'>
+      <div className='mx-auto max-w-[2400px] space-y-5'>
         <Link
           href='/dashboard/course-creator/course-management'
           className='text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm'
@@ -293,13 +306,26 @@ export default function ProgramEditor({
           <ArrowLeft className='h-4 w-4' /> Back to my courses
         </Link>
 
-        <PageHeader
-          title='Programs'
-          description='Build a program step by step, then publish it.'
-        />
-
         <ProgramSavingOverlay progress={save.progress} />
         <Form {...form}>
+          <div className='space-y-1'>
+            <ProgramEyebrow />
+            <PageHeader
+              title={STEPS[step]?.label ?? 'Program'}
+              description={STEPS[step]?.description}
+              actions={
+                save.programUuid ? (
+                  <SavedProgramActions
+                    uuid={save.programUuid}
+                    fallback={program}
+                    onPublished={step === STEPS.length - 1 ? openProgram : undefined}
+                  />
+                ) : (
+                  <ProgramLifecycleBadge program={undefined} />
+                )
+              }
+            />
+          </div>
           <form
             noValidate
             onSubmit={event => {
@@ -310,71 +336,44 @@ export default function ProgramEditor({
             }}
           >
             <fieldset
-              disabled={save.isPending || evaluationPending || lifecycle.pending !== null}
+              disabled={save.isPending || stepPending || lifecycle.pending !== null}
               className='min-w-0'
             >
-              <Card className='border-border bg-background gap-0 rounded-md py-0 shadow-sm'>
-                <div className='border-border border-b p-5'>
-                  <div className='flex flex-wrap items-baseline justify-between gap-2'>
-                    <ProgramTitle />
-                    {save.programUuid ? (
-                      <SavedProgramActions
-                        uuid={save.programUuid}
-                        fallback={program}
-                        onPublished={step === STEPS.length - 1 ? openProgram : undefined}
-                      />
-                    ) : (
-                      <ProgramLifecycleBadge program={undefined} />
-                    )}
-
-                  </div>
-
-
-                  <span
-                    className='text-muted-foreground text-xs font-semibold uppercase'
-                    aria-live='polite'
-                  >
-                    Step {step + 1} of {STEPS.length}
-                  </span>
-
-                  <nav aria-label='Program setup steps'>
-                    <ol className='mt-4 grid gap-2 sm:grid-cols-4 lg:grid-cols-7'>
-                      {STEPS.map((entry, index) => {
-                        const Icon = entry.icon;
-                        const state = index === step ? 'current' : index < step ? 'done' : 'todo';
-                        return (
-                          <li key={entry.key}>
-                            <Button
-                              type='button'
-                              variant='ghost'
-                              onClick={() => void goToStep(index)}
-                              disabled={
-                                (!save.programUuid && index !== 0) ||
-                                save.isPending ||
-                                evaluationPending
-                              }
-                              aria-current={index === step ? 'step' : undefined}
-                              className={`h-auto w-full justify-start gap-2 rounded-md border p-2.5 text-left text-xs font-medium ${state === 'current' ? 'border-primary bg-primary/5 text-foreground' : state === 'done' ? 'border-border bg-muted/40 text-foreground' : 'border-border text-muted-foreground hover:bg-muted/40'}`}
-                            >
-                              <span
-                                className={`flex h-6 w-6 shrink-0 items-center justify-center ${state === 'todo' ? 'bg-muted text-muted-foreground' : 'bg-primary text-primary-foreground'}`}
-                              >
-                                {state === 'done' ? (
-                                  <Check className='size-3.5' />
-                                ) : (
-                                  <Icon className='size-3.5' />
-                                )}
-                              </span>
-                              <span className='min-w-0 truncate' title={entry.label}>
-                                {entry.label}
-                              </span>
-                            </Button>
-                          </li>
-                        );
-                      })}
-                    </ol>
-                  </nav>
-                </div>
+              <nav aria-label='Program editor steps' className='mb-5'>
+                <ol className='bg-card flex flex-wrap gap-1 rounded-[14px] border p-1.5'>
+                  {STEPS.map((entry, index) => {
+                    const state = index === step ? 'current' : index < step ? 'done' : 'todo';
+                    return (
+                      <li key={entry.key}>
+                        <button
+                          type='button'
+                          onClick={() => void goToStep(index)}
+                          disabled={
+                            (!save.programUuid && index !== 0) || save.isPending || stepPending
+                          }
+                          aria-current={index === step ? 'step' : undefined}
+                          className={`inline-flex h-11 items-center gap-2 rounded-[10px] px-3.5 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${state === 'current' ? 'bg-primary/10 text-primary font-semibold' : 'text-muted-foreground hover:bg-muted/60'}`}
+                        >
+                          <span
+                            className={`inline-flex size-[22px] shrink-0 items-center justify-center rounded-full font-mono text-[11px] font-semibold ${state === 'current' ? 'bg-primary text-primary-foreground' : state === 'done' ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}
+                          >
+                            {state === 'done' ? (
+                              <Check className='size-3' aria-label='Done' />
+                            ) : (
+                              index + 1
+                            )}
+                          </span>
+                          {entry.label}
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ol>
+                <span className='sr-only' aria-live='polite'>
+                  Step {step + 1} of {STEPS.length}
+                </span>
+              </nav>
+              <Card className='border-border bg-background gap-0 rounded-2xl py-0 shadow-none'>
                 <div className='space-y-6 p-5'>
                   <p className='text-muted-foreground text-xs' role='status'>
                     {draftStorageFailed
@@ -444,19 +443,11 @@ export default function ProgramEditor({
                   {step === 3 && save.programUuid && (
                     <ProgramSkills
                       programUuid={save.programUuid}
-                      onPendingChange={setEvaluationPending}
+                      onPendingChange={setStepPending}
                     />
                   )}
-                  {step === 4 && save.programUuid && (
-                    <ProgramEvaluation
-                      programUuid={save.programUuid}
-                      creatorUuid={creatorUuid}
-                      associatedBy={profile?.uuid}
-                      onPendingChange={setEvaluationPending}
-                    />
-                  )}
-                  {step === 5 && <ProgramBranding files={pendingMedia} onSelect={selectMedia} />}
-                  {step === 6 && (
+                  {step === 4 && <ProgramBranding files={pendingMedia} onSelect={selectMedia} />}
+                  {step === 5 && (
                     <>
                       <ProgramPricing
                         revenueShares={revenueShares}
@@ -490,7 +481,7 @@ export default function ProgramEditor({
                           <Button
                             type='submit'
                             variant={savedForPublication ? 'outline' : 'default'}
-                            disabled={!creatorUuid || save.isPending || evaluationPending}
+                            disabled={!creatorUuid || save.isPending || stepPending}
                           >
                             {save.isPending ? <Spinner /> : <Check />}
                             {save.isPending ? 'Saving program…' : 'Save program'}
@@ -499,7 +490,9 @@ export default function ProgramEditor({
                             <Button
                               type='button'
                               disabled={
-                                !creatorUuid || save.isPending || evaluationPending ||
+                                !creatorUuid ||
+                                save.isPending ||
+                                stepPending ||
                                 lifecycle.pending !== null
                               }
                               onClick={() => void form.handleSubmit(onPublish, onInvalid)()}
@@ -518,7 +511,7 @@ export default function ProgramEditor({
                       ) : (
                         <Button
                           type='button'
-                          disabled={!creatorUuid || save.isPending || evaluationPending}
+                          disabled={!creatorUuid || save.isPending || stepPending}
                           onClick={() => void goToStep(step + 1)}
                         >
                           {save.isPending ? <Spinner /> : <ArrowRight />}
@@ -537,10 +530,14 @@ export default function ProgramEditor({
   );
 }
 
-function ProgramTitle() {
+function ProgramEyebrow() {
   const { control } = useFormContext<ProgramFormValues>();
   const title = useWatch({ control, name: 'title' });
-  return <h2 className='text-foreground text-xl font-bold'>{title.trim() || 'New program'}</h2>;
+  return (
+    <p className='text-muted-foreground text-xs font-semibold tracking-[.08em] uppercase'>
+      {title.trim() ? `${title.trim()} · Edit program` : 'New program'}
+    </p>
+  );
 }
 
 function SavedProgramActions({

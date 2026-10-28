@@ -48,11 +48,16 @@ import {
 import type { ProgramTab } from '../lib/admin-routes';
 import { stringParam } from '@/lib/search-state';
 import { cn } from '@/lib/utils';
+import {
+  ProgramAssessmentPlanPanel,
+  useProgramAssessmentPlan,
+} from '@/src/features/program-record/ProgramAssessmentPlan';
 import { useSearchState } from '@/hooks/use-search-state';
 
 const TAB_IDS = [
   'overview',
   'courses',
+  'assessment',
   'applications',
   'history',
 ] as const satisfies readonly ProgramTab[];
@@ -60,6 +65,7 @@ const TAB_IDS = [
 const TAB_LABELS: Record<ProgramTab, string> = {
   overview: 'Overview',
   courses: 'Courses',
+  assessment: 'Assessment',
   applications: 'Applications',
   history: 'Moderation history',
 };
@@ -119,6 +125,8 @@ export function AdminProgramPage({ uuid }: { uuid: string }) {
     tab === 'applications'
   );
   const { history, query: historyQuery } = useProgramModerationHistory(uuid, tab === 'history');
+
+  const plan = useProgramAssessmentPlan(uuid, { withComponents: tab === 'assessment' });
 
   const moderate = useModerateProgram();
   const decide = useDecideProgramApplication();
@@ -185,7 +193,14 @@ export function AdminProgramPage({ uuid }: { uuid: string }) {
     return instructorMap[id]?.full_name ?? 'This instructor';
   };
 
-  const tabs = TAB_IDS.map(id => ({ id, label: TAB_LABELS[id] }));
+  const tabs = TAB_IDS.map(id => ({
+    id,
+    label: TAB_LABELS[id],
+    flag:
+      id === 'assessment' && !plan.loading && plan.fixCount > 0
+        ? { label: `${plan.fixCount} to fix`, tone: 'warning' as const }
+        : null,
+  }));
 
   const askForDecision = async (action: ProgramDecision) => {
     const valid = await decisionForm.trigger('reason');
@@ -413,6 +428,12 @@ export function AdminProgramPage({ uuid }: { uuid: string }) {
                   </div>
                 </SectionCard>
               </div>
+            ) : null}
+          </SectionTabPanel>
+
+          <SectionTabPanel value='assessment'>
+            {tab === 'assessment' ? (
+              <ProgramAssessmentPlanPanel programUuid={uuid} plan={plan} canEdit={false} />
             ) : null}
           </SectionTabPanel>
 

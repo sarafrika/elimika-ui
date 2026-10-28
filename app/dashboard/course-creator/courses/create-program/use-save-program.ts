@@ -167,7 +167,7 @@ export function useSaveProgram(
         savedWeights.current !== JSON.stringify(courseWeightsBody(values.courses))
       )
         steps.push({ key: 'weights', label: 'Saving course weights' });
-      if (step === 5 || step === 'all') {
+      if (step === 4 || step === 'all') {
         const labels = {
           thumbnail: 'Uploading thumbnail',
           banner: 'Uploading banner',
@@ -302,7 +302,7 @@ export function useSaveProgram(
           savedWeights.current = serialized;
         }
       }
-      if (step === 5 || step === 'all')
+      if (step === 4 || step === 'all')
         await saveProgramMedia(
           uuid,
           media,
@@ -386,7 +386,7 @@ export function useSaveProgram(
       savedWeights.current !== JSON.stringify(courseWeightsBody(values.courses))
     )
       return true;
-    return (step === 5 || step === 'all') && Object.values(media).some(Boolean);
+    return (step === 4 || step === 'all') && Object.values(media).some(Boolean);
   };
   return { ...mutation, programUuid, hasChanges, progress };
 }

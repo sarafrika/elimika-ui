@@ -157,7 +157,6 @@ export const PROGRAM_STEP_FIELDS = [
   ['passMark', 'courses'],
   [],
   [],
-  [],
   ['price'],
 ] as const;
 
@@ -183,7 +182,7 @@ export function programStepSchema(step: number | 'requirements') {
     return z
       .object({ passMark: fields.passMark, courses: fields.courses })
       .superRefine((values, ctx) => refineCourseWeights(values.courses, ctx));
-  if (step === 6) return programFieldsSchema.pick({ price: true });
+  if (step === 5) return programFieldsSchema.pick({ price: true });
   return z.object({});
 }
 
