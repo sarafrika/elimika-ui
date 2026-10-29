@@ -76,32 +76,32 @@ function mockProgramme(api: MockApi, skills: unknown[] = []) {
   api.get(/^\/api\/v1\/courses\/[^/]+\/assessments/, request =>
     request.url().includes(courses[0]!.uuid)
       ? paged([
-          {
-            uuid: 'a-lessons',
-            course_uuid: courses[0]!.uuid,
-            title: 'Lesson scores',
-            assessment_type: 'performance',
-            weight_percentage: 70,
-            rubric_uuid: RUBRIC_UUID,
-          },
-          {
-            uuid: 'a-exam',
-            course_uuid: courses[0]!.uuid,
-            title: 'Final exam',
-            assessment_type: 'exam',
-            weight_percentage: 30,
-          },
-        ])
+        {
+          uuid: 'a-lessons',
+          course_uuid: courses[0]!.uuid,
+          title: 'Lesson scores',
+          assessment_type: 'performance',
+          weight_percentage: 70,
+          rubric_uuid: RUBRIC_UUID,
+        },
+        {
+          uuid: 'a-exam',
+          course_uuid: courses[0]!.uuid,
+          title: 'Final exam',
+          assessment_type: 'exam',
+          weight_percentage: 30,
+        },
+      ])
       : request.url().includes(courses[1]!.uuid)
         ? paged([
-            {
-              uuid: 'a-other',
-              course_uuid: courses[1]!.uuid,
-              title: 'Practical',
-              assessment_type: 'practical',
-              weight_percentage: 90,
-            },
-          ])
+          {
+            uuid: 'a-other',
+            course_uuid: courses[1]!.uuid,
+            title: 'Practical',
+            assessment_type: 'practical',
+            weight_percentage: 90,
+          },
+        ])
         : paged([])
   );
   api.get(new RegExp(`^/api/v1/programs/${PROGRAM_UUID}/skills$`), () => skills);
@@ -126,7 +126,7 @@ function mockProgramme(api: MockApi, skills: unknown[] = []) {
 
 async function openStep(page: Page, step: number) {
   await page.goto(
-    `/dashboard/course-creator/courses/create-program?id=${PROGRAM_UUID}&step=${step}`
+    `/dashboard/course-creator/course-management/create-program?id=${PROGRAM_UUID}&step=${step}`
   );
 }
 
@@ -436,7 +436,7 @@ test.describe('Course creator and admin · Program Assessment tab', () => {
     await expect(ready.getByTestId('check-components')).toContainText('a warning only');
     await expect(ready.getByRole('link', { name: 'Fix: Every skill has a link' })).toHaveAttribute(
       'href',
-      `/dashboard/course-creator/courses/create-program?id=${PROGRAM_UUID}&step=3`
+      `/dashboard/course-creator/course-management/create-program?id=${PROGRAM_UUID}&step=3`
     );
     await expect(plan.getByRole('link', { name: 'Edit pass rule & weights' })).toBeVisible();
   });

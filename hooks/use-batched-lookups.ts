@@ -401,6 +401,18 @@ export function useCategoriesByIds(ids: string[]) {
   return { categoryMap: map, isLoading, isError, refetch };
 }
 
+/** Resolve courses for event handlers through the same cache and batches as the hook. */
+export async function getCoursesByIds(queryClient: QueryClient, ids: string[]): Promise<Course[]> {
+  const wanted = new Set(ids);
+  const responses = await Promise.all(
+    courseLookupQueries(uniqueSortedIds(ids)).map(options => queryClient.fetchQuery(options))
+  );
+  return responses.flatMap(response => {
+    if (response?.error || response?.success === false) return [];
+    return (response?.data?.content ?? []).filter(course => course.uuid && wanted.has(course.uuid));
+  });
+}
+
 export function useCoursesByIds(ids: string[]) {
   const uniqueIds = useMemo(() => uniqueSortedIds(ids), [ids]);
 

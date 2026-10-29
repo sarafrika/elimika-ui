@@ -148,13 +148,21 @@ export const getNotificationUrlPath = (
 
     case 'COURSE_CONTENT_APPROVED':
     case 'COURSE_CONTENT_REJECTED':
+      if (activeDomain === 'course_creator') {
+        return metadata?.course_uuid
+          ? `${COURSE_CREATOR_PATH}/course-management/create-course?id=${metadata?.course_uuid}`
+          : '';
+      }
+      return action_url;
+
     case 'PROGRAM_CONTENT_APPROVED':
     case 'PROGRAM_CONTENT_REJECTED':
       if (activeDomain === 'course_creator') {
-        return metadata?.course_uuid
-          ? `${COURSE_CREATOR_PATH}/courses/create-course?id=${metadata?.course_uuid}`
-          : '';
+        return metadata?.program_uuid
+          ? `${COURSE_CREATOR_PATH}/course-management/create-program?id=${metadata.program_uuid}`
+          : action_url;
       }
+      return action_url;
 
     // Not yet implemented
     case 'COURSE_ENROLLMENT_WELCOME':

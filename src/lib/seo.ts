@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 const getValidSiteUrl = (value?: string) => {
   const normalizedValue = value?.trim().replace(/\/$/, '');
@@ -7,15 +8,31 @@ const getValidSiteUrl = (value?: string) => {
   }
 
   try {
-    return new URL(normalizedValue);
+    const url = new URL(normalizedValue);
+    return /^https?:$/.test(url.protocol) ? url : undefined;
   } catch {
     return undefined;
   }
 };
 
+const configuredSiteUrl = getValidSiteUrl(process.env.NEXT_PUBLIC_SITE_URL);
+const apiUrl = getValidSiteUrl(process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_URL);
+// Canonical pages and the media proxy are served by the frontend, not the API host.
 const metadataBase =
-  getValidSiteUrl(process.env.NEXT_PUBLIC_SITE_URL) ??
+  (configuredSiteUrl?.origin !== apiUrl?.origin ? configuredSiteUrl : undefined) ??
+  getValidSiteUrl(process.env.AUTH_URL) ??
   new URL(`http://127.0.0.1:${process.env.PORT ?? '3000'}`);
+
+function previewImageUrl(image?: string | null) {
+  const mediaUrl = toAuthenticatedMediaUrl(image);
+  if (!mediaUrl) return undefined;
+  try {
+    const url = new URL(mediaUrl, metadataBase);
+    return /^https?:$/.test(url.protocol) ? url.toString() : undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export const absoluteSiteUrl = (path: string) => new URL(path, metadataBase).toString();
 
@@ -62,7 +79,7 @@ type CreatePageMetadataOptions = {
   description: string;
   path: string;
   keywords?: string[];
-  image?: string | null;
+  image?: string | { url: string; width: number; height: number; type?: string } | null;
   noIndex?: boolean;
 };
 
@@ -74,8 +91,11 @@ export function createPageMetadata({
   image,
   noIndex = false,
 }: CreatePageMetadataOptions): Metadata {
-  const previewImage = image
-    ? { ...fallbackImage, url: absoluteSiteUrl(image), alt: title }
+  const imageUrl = typeof image === 'string' ? image.trim() : image?.url;
+  const previewUrl = previewImageUrl(imageUrl);
+  // Uploaded thumbnails have their own dimensions and format; do not label them as our PNG card.
+  const previewImage = previewUrl
+    ? { ...(typeof image === 'object' ? image : {}), url: previewUrl, alt: title }
     : fallbackImage;
 
   return {
