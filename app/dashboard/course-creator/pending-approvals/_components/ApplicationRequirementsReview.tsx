@@ -1,7 +1,5 @@
 'use client';
 
-import { Check, CircleAlert, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,7 +14,8 @@ import {
 } from '@/src/features/rate-card/components/application-sections';
 import { useDecideApplication } from '@/src/features/rate-card/components/creator-application-review';
 import type { TrainingApplicationEntry } from '@/src/features/rate-card/hooks/use-training-application-list';
-import { RequirementReviewCard } from './RequirementReviewCard';
+import { Check, CircleAlert, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import {
   emptyReviewDraft,
   parseReviewDraft,
@@ -24,6 +23,7 @@ import {
   reviewDecisionNotes,
   reviewSummary,
 } from './requirement-review';
+import { RequirementReviewCard } from './RequirementReviewCard';
 import { SkillsWalletReview } from './SkillsWalletReview';
 
 export function ApplicationRequirementsReview({
@@ -263,8 +263,7 @@ export function ApplicationRequirementsReview({
               application
             </Button>
             <Button disabled={disabled || !allApproved} onClick={() => submit('approve')}>
-              {pending && action === 'approve' ? <Spinner /> : <Check className='size-4' />}Approve
-              application
+              {pending && action === 'approve' ? <Spinner /> : <Check className='size-4' />}Approve application
             </Button>
           </div>
         </CardContent>

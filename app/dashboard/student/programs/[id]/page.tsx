@@ -17,7 +17,7 @@ import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
 import { surfaceTheme } from '../../../../../components/data-display';
 import { cn } from '../../../../../lib/utils';
 
-const EDIT_PROGRAM_HREF = '/dashboard/course-creator/courses/create-program';
+const EDIT_PROGRAM_HREF = '/dashboard/course-creator/course-management/create-program';
 
 /**
  * The course creator's record for one of their training programmes: the shared

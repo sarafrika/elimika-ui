@@ -34,7 +34,12 @@ export async function generateMetadata({ params }: CourseDetailPageProps): Promi
     title,
     description,
     path: `/courses/${courseId}`,
-    image: `/courses/${encodeURIComponent(courseId)}/opengraph-image`,
+    image: detail.course.thumbnail_url?.trim() || detail.course.banner_url?.trim() || {
+      url: `/courses/${encodeURIComponent(courseId)}/opengraph-image`,
+      width: 1200,
+      height: 630,
+      type: 'image/png',
+    },
     keywords: [title, 'course', 'training', 'Elimika'],
   });
 }

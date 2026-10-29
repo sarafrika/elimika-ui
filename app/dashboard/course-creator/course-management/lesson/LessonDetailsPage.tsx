@@ -90,7 +90,7 @@ const LessonDetailsPage = () => {
   //     {
   //       id: 'course-management',
   //       title: 'Course Management',
-  //       url: `/dashboard/course-creator/courses/create-course?id=${courseId}`,
+  //       url: `/dashboard/course-creator/course-management/create-course?id=${courseId}`,
   //     },
   //     {
   //       id: 'lesson-management',

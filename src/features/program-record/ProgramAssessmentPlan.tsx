@@ -20,7 +20,7 @@ import type { ProgramSkillMapping } from '@/services/client/types.gen';
 
 const MAX_COURSES_WITH_COMPONENTS = 40;
 const PILL = 'whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold';
-const EDITOR_HREF = '/dashboard/course-creator/courses/create-program';
+const EDITOR_HREF = '/dashboard/course-creator/course-management/create-program';
 const COURSE_GRADING_HREF = '/dashboard/course-creator/course-management/create-new-course?id=';
 
 type PlanCheck = {

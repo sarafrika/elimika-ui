@@ -23,6 +23,7 @@ export async function generateMetadata({ searchParams }: ClassInvitePageProps): 
       'Explore your class invitation on Elimika. Review the schedule and register to start learning.'
     ).slice(0, 160),
     path,
+    image: invite?.thumbnail_url,
     noIndex: true,
   });
 }

@@ -11,17 +11,20 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
+import { getCoursesByIds } from '@/hooks/use-batched-lookups';
 import { getErrorMessage } from '@/lib/error-utils';
 import { DEFAULT_CURRENCY, formatRateAmount } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 import {
   decideOnProgramTrainingApplicationMutation,
   decideOnTrainingApplicationMutation,
+  getProgramCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useTrainingApplication } from '../hooks/use-training-application';
 import type { TrainingApplicationEntry } from '../hooks/use-training-application-list';
 import type { TrainingApplicationKind } from '../types';
+import { approvalErrorMessage } from '../approval-error';
 import {
   ApplicationAgeGroups,
   OfferedVenuesList,
@@ -45,21 +48,57 @@ export function useDecideApplication(
   const queryClient = useQueryClient();
   const course = useMutation(decideOnTrainingApplicationMutation());
   const program = useMutation(decideOnProgramTrainingApplicationMutation());
+  const [resolvingError, setResolvingError] = useState(false);
+
+  const showError = async (error: unknown, action: Decision) => {
+    const fallback = `Could not ${action} this application.`;
+    if (kind !== 'program' || action !== 'approve') {
+      toast.error(getErrorMessage(error, fallback));
+      return;
+    }
+    setResolvingError(true);
+    try {
+      const message = await approvalErrorMessage(error, fallback, async ids => {
+        const names: Record<string, string> = {};
+        const cached = queryClient.getQueryData(
+          getProgramCoursesOptions({ path: { programUuid: parentUuid } }).queryKey
+        );
+        if (!cached?.error && cached?.success !== false) {
+          for (const course of cached?.data ?? []) {
+            if (course.uuid && course.name?.trim()) names[course.uuid.toLowerCase()] = course.name;
+          }
+        }
+        const missing = ids.filter(id => !names[id.toLowerCase()]);
+        if (missing.length) {
+          try {
+            for (const course of await getCoursesByIds(queryClient, missing)) {
+              if (course.uuid && course.name?.trim()) names[course.uuid.toLowerCase()] = course.name;
+            }
+          } catch {
+            // Keep names already loaded with the program if the extra lookup fails.
+          }
+        }
+        return names;
+      });
+      toast.error(message);
+    } finally {
+      setResolvingError(false);
+    }
+  };
 
   const decide = (action: Decision, reviewNotes: string, onDone: () => void) => {
     const body = { review_notes: reviewNotes.trim() || null };
     const callbacks = {
-      onSuccess: async (response: { error?: unknown; success?: boolean }) => {
+      onSuccess: async (response: { error?: unknown; success?: boolean; message?: string }) => {
         if (response.error || response.success === false) {
-          toast.error(getErrorMessage(response.error, `Could not ${action} this application.`));
+          await showError(response, action);
           return;
         }
         await invalidateTrainingApplicationWorkflowQueries(queryClient);
         toast.success(DECISION_DONE[action]);
         onDone();
       },
-      onError: (error: unknown) =>
-        toast.error(getErrorMessage(error, `Could not ${action} this application.`)),
+      onError: (error: unknown) => showError(error, action),
     };
     if (kind === 'course')
       course.mutate(
@@ -73,7 +112,7 @@ export function useDecideApplication(
       );
   };
 
-  const pending = course.isPending || program.isPending;
+  const pending = course.isPending || program.isPending || resolvingError;
   const variables = kind === 'course' ? course.variables : program.variables;
   return { decide, pending, action: variables?.query.action as Decision | undefined };
 }

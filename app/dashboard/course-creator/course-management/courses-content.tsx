@@ -137,7 +137,7 @@ function previewHref(offering: Offering) {
 
 function editHref(offering: Offering) {
   const segment = offering.type === 'courses' ? 'create-course' : 'create-program';
-  return `/dashboard/course-creator/courses/${segment}?id=${offering.item.uuid}`;
+  return `/dashboard/course-creator/course-management/${segment}?id=${offering.item.uuid}`;
 }
 
 function totalOf(metadata: PageMetadata | undefined, fallback: number) {
@@ -554,13 +554,13 @@ export default function CourseCreatorCoursesContent() {
 
         {/* <div className='grid grid-cols-2 gap-2 sm:flex sm:flex-wrap'>
           <Button variant='outline' className='rounded-sm text-sm' asChild>
-            <Link href='/dashboard/course-creator/courses/create-course'>
+            <Link href='/dashboard/course-creator/course-management/create-course'>
               <Plus className='size-4' />
               Create course
             </Link>
           </Button>
           <Button className='rounded-sm text-sm' asChild>
-            <Link href='/dashboard/course-creator/courses/create-program'>
+            <Link href='/dashboard/course-creator/course-management/create-program'>
               <Plus className='size-4' />
               Create program
             </Link>
@@ -676,7 +676,7 @@ export default function CourseCreatorCoursesContent() {
                   </Button>
                 ) : (
                   <Button asChild>
-                    <Link href='/dashboard/course-creator/courses/create-course'>
+                    <Link href='/dashboard/course-creator/course-management/create-course'>
                       Create course
                     </Link>
                   </Button>

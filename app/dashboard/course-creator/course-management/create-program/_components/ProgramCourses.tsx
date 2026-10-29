@@ -160,7 +160,7 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
             !search.input &&
             !coursesQuery.hasNextPage && (
               <Button asChild type='button' variant='outline'>
-                <Link href='/dashboard/course-creator/courses/create-course'>
+                <Link href='/dashboard/course-creator/course-management/create-course'>
                   Open course builder
                 </Link>
               </Button>
@@ -171,11 +171,10 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
         <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
           {availableCourses
             .filter(course => course.uuid)
-            .map((course, index) => (
+            .map(course => (
               <CourseTile
                 key={course.uuid}
                 course={course}
-                index={index}
                 selected={selectedIds.has(course.uuid!)}
                 onToggle={() => toggleCourse(course)}
               />
@@ -355,38 +354,25 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
 
 function CourseTile({
   course,
-  index,
   selected,
   onToggle,
 }: {
   course: Course;
-  index: number;
   selected: boolean;
   onToggle: () => void;
 }) {
-  const accent = `var(--chart-${(index % 5) + 1})`;
   return (
     <Button
       type='button'
       variant='outline'
       aria-pressed={selected}
       onClick={onToggle}
-      className={`bg-background relative h-auto flex-col items-stretch justify-start gap-2 overflow-hidden rounded-sm p-0 text-left whitespace-normal ${selected ? 'border-transparent' : 'border-border hover:bg-muted/40'}`}
-      style={selected ? { boxShadow: `0 0 0 2px ${accent}` } : undefined}
+      className={`relative h-auto flex-col items-stretch justify-start gap-2 overflow-hidden rounded-sm p-0 text-left whitespace-normal hover:bg-primary/10 ${selected ? 'bg-primary/5 border-primary ring-primary ring-1' : 'bg-background border-primary/20 hover:border-primary/50'}`}
     >
-      <span
-        aria-hidden
-        className='absolute inset-x-0 top-0 h-1.5'
-        style={{ backgroundColor: accent }}
-      />
-      <span className='flex items-start gap-3 p-4 pt-5'>
+      <span className='flex items-start gap-3 p-4'>
         <span
           aria-hidden
-          className='flex h-9 w-9 shrink-0 items-center justify-center'
-          style={{
-            backgroundColor: `color-mix(in oklch, ${accent} 15%, transparent)`,
-            color: accent,
-          }}
+          className='bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center'
         >
           <BookOpen />
         </span>
@@ -402,20 +388,13 @@ function CourseTile({
         </span>
         <span
           aria-hidden
-          className={`flex h-5 w-5 shrink-0 items-center justify-center border ${selected ? 'text-primary-foreground border-transparent' : 'border-border text-transparent'}`}
-          style={selected ? { backgroundColor: accent } : undefined}
+          className={`flex h-5 w-5 shrink-0 items-center justify-center border ${selected ? 'bg-primary text-primary-foreground border-transparent' : 'border-primary/30 text-transparent'}`}
         >
           <Check className='size-3.5' />
         </span>
       </span>
-      <span className='border-border bg-muted/30 text-muted-foreground mt-auto flex items-center gap-2 border-t px-4 py-2 text-xs'>
-        <span
-          className='truncate px-1.5 py-0.5 font-semibold'
-          style={{
-            backgroundColor: `color-mix(in oklch, ${accent} 12%, transparent)`,
-            color: accent,
-          }}
-        >
+      <span className='border-primary/15 bg-primary/5 text-muted-foreground mt-auto flex items-center gap-2 border-t px-4 py-2 text-xs'>
+        <span className='bg-primary/10 text-primary truncate px-1.5 py-0.5 font-semibold'>
           {course.category_names?.join(', ') || 'Uncategorised'}
         </span>
         <span className='ml-auto shrink-0'>

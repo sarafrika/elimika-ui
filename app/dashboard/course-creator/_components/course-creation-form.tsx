@@ -73,7 +73,7 @@ import {
 } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
-import { useOptionalStepper } from '../courses/create-course/stepper';
+import { useOptionalStepper } from '../course-management/create-course/stepper';
 import {
   type CourseCreationFormValues,
   courseCreationSchema,
@@ -221,7 +221,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       activeRequirementProvider,
       setActiveRequirementProvider,
       successResponse,
-      postCreateRedirectHref = '/dashboard/course-creator/courses/create-course',
+      postCreateRedirectHref = '/dashboard/course-creator/course-management/create-course',
       onSaveSuccess,
     },
     ref
@@ -634,7 +634,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               toast.success('Course created successfully.');
               setSaveStage('redirecting');
               if (postCreateRedirectHref === null) {
-                router.replace(`/dashboard/course-creator/courses/create-course?id=${newCourseUuid}`, { scroll: false });
+                router.replace(`/dashboard/course-creator/course-management/create-course?id=${newCourseUuid}`, { scroll: false });
                 setActiveStep(1);
               } else {
                 const separator = postCreateRedirectHref.includes('?') ? '&' : '?';

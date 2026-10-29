@@ -96,11 +96,11 @@ export function useCreateMenuActions(activeDomain: UserDomain | null): CreateAct
 
   const createCourseHref = roleScopedDashboardPath(
     activeDomain,
-    '/dashboard/courses/create-course'
+    '/dashboard/course-management/create-course'
   );
   const createProgramHref = roleScopedDashboardPath(
     activeDomain,
-    '/dashboard/courses/create-program'
+    '/dashboard/course-management/create-program'
   );
   const createClassHref = roleScopedDashboardPath(activeDomain, '/dashboard/classes/new');
 

@@ -37,9 +37,9 @@ import { useSaveProgram } from '../use-save-program';
 import ProgramCourses from './ProgramCourses';
 import { ProgramSetup } from './ProgramFields';
 import { ProgramBranding, ProgramPricing } from './ProgramFutureSteps';
+import { ProgramSavingOverlay } from './ProgramSavingOverlay';
 import { ProgramSkills } from './ProgramSkills';
 import { ProgramWeights } from './ProgramWeights';
-import { ProgramSavingOverlay } from './ProgramSavingOverlay';
 
 const STEPS = [
   {
@@ -54,7 +54,7 @@ const STEPS = [
   },
   {
     key: 'weights',
-    label: 'Pass rule & weights',
+    label: 'Program assessment',
     description:
       "Set the mark a learner needs and how much each mandatory course counts. Course finals come from each course's own grading.",
   },
@@ -178,15 +178,15 @@ export default function ProgramEditor({
       save.programUuid && !save.hasChanges(values, saveStep, pendingMedia)
         ? save.programUuid
         : await save.mutateAsync({
-            values,
-            step: saveStep,
-            media: pendingMedia,
-            onCreated: uuid => updateUrl(uuid, step),
-            onMediaUploaded: (key, file) =>
-              setPendingMedia(current =>
-                current[key] === file ? { ...current, [key]: undefined } : current
-              ),
-          });
+          values,
+          step: saveStep,
+          media: pendingMedia,
+          onCreated: uuid => updateUrl(uuid, step),
+          onMediaUploaded: (key, file) =>
+            setPendingMedia(current =>
+              current[key] === file ? { ...current, [key]: undefined } : current
+            ),
+        });
     if (!writeProgramDraft(creatorUuid, uuid, form.getValues())) setDraftStorageFailed(true);
     else clearNewProgramDraft(creatorUuid);
     return uuid;

@@ -6,6 +6,21 @@ import { getNotificationUrlPath } from './dashboard-notifications';
 const note = (type: string, action_url: string, metadata: Record<string, string> = {}) =>
   ({ type, action_url, metadata }) as unknown as UserNotification;
 
+test('creator moderation notifications open the matching editor under My Courses', () => {
+  for (const type of ['COURSE_CONTENT_APPROVED', 'COURSE_CONTENT_REJECTED']) {
+    assert.equal(
+      getNotificationUrlPath(note(type, '', { course_uuid: 'course-1' }), 'course_creator'),
+      '/dashboard/course-creator/course-management/create-course?id=course-1'
+    );
+  }
+  for (const type of ['PROGRAM_CONTENT_APPROVED', 'PROGRAM_CONTENT_REJECTED']) {
+    assert.equal(
+      getNotificationUrlPath(note(type, '', { program_uuid: 'program-1' }), 'course_creator'),
+      '/dashboard/course-creator/course-management/create-program?id=program-1'
+    );
+  }
+});
+
 test('payment receipts fall through to the role’s normalised transactions page', () => {
   const receipt = note('ORDER_PAYMENT_RECEIPT', '/dashboard/transactions');
   assert.equal(getNotificationUrlPath(receipt, 'student'), '/dashboard/student/wallet');
