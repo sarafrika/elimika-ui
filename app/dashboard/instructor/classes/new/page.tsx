@@ -19,10 +19,15 @@ import {
 } from '@/components/class-form/class-form-shared';
 import { AsyncSection } from '@/components/data/async-section';
 import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
-import { Skeleton } from '@/components/ui/skeleton';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { useClassEditEligibility } from '@/hooks/use-class-edit-eligibility';
+import { useInstructorApprovedOfferings } from '@/hooks/use-instructor-approved-offerings';
+import {
+  type InstructorClassWithSchedule,
+  useInstructorClassesWithSchedules,
+} from '@/hooks/use-instructor-classes-with-schedules';
 import {
   type DeliveryMode,
   formatRateBasis,
@@ -30,42 +35,38 @@ import {
   rateFor,
   type SelectableRateBasis,
 } from '@/lib/rate-card';
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
-import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
-import {
-  type InstructorClassWithSchedule,
-  useInstructorClassesWithSchedules,
-} from '@/hooks/use-instructor-classes-with-schedules';
 import { type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
-import { AlertTriangle, CalendarClock, Loader2, Plus } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import {
   AcademicPeriodsPanel,
-  BillingBasisCards,
   basisStatus,
+  BillingBasisCards,
   ClassMediaUpload,
   DeliveryCards,
   LocationVenue,
   type MediaFile,
   type Offering,
   OfferingPicker,
+  offeringTarget,
   PickDatesPanel,
   PricingCapacity,
   RegistrationWindow,
   ReminderOptions,
   ScheduleModeCards,
   ServiceCards,
+  serviceForDelivery,
+  serviceFormat,
   type ServiceKey,
   StandardSchedule,
-  serviceFormat,
-  serviceForDelivery,
   UpcomingSessions,
-  offeringTarget,
   useProposedRateCard,
 } from '../../../../../components/class-form';
 import { PageHeader } from '../../../../../components/page-header';
@@ -73,7 +74,6 @@ import { Button } from '../../../../../components/ui/button';
 import { useUserProfile } from '../../../../../context/profile-context';
 import { useTimeZone } from '../../../../../context/timezone-context';
 import { useUserDomain } from '../../../../../context/user-domain-context';
-import { useCoursesByIds, useProgramsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useClassDetails } from '../../../../../hooks/use-class-details';
 import {
   DEFAULT_CLASS_TIME_ZONE,
@@ -94,8 +94,6 @@ import {
   getAllClassDefinitionsQueryKey,
   getClassDefinitionQueryKey,
   getClassDefinitionsForInstructorQueryKey,
-  searchProgramTrainingApplicationsOptions,
-  searchTrainingApplicationsOptions,
   updateClassDefinitionMutation,
   uploadClassPromotionalVideoMutation,
   uploadClassThumbnailMutation,
@@ -683,15 +681,24 @@ const InstructorClassCreationPage = () => {
   );
 
   const [classId, setClassId] = useState<string | null>(null);
-  const [requestedCourseUuid, setRequestedCourseUuid] = useState<string | null>(null);
-  const [coursePrefillApplied, setCoursePrefillApplied] = useState(false);
+  const [requestedOffering, setRequestedOffering] = useState<{
+    source: CatalogSource;
+    uuid: string;
+  } | null>(null);
+  const [offeringPrefillApplied, setOfferingPrefillApplied] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const id = searchParams.get('id');
     setClassId(id);
-    setRequestedCourseUuid(searchParams.get('courseUuid')?.trim() || null);
+    const courseUuid = searchParams.get('courseUuid')?.trim();
+    const programUuid = searchParams.get('programUuid')?.trim();
+    setRequestedOffering(
+      programUuid
+        ? { source: 'program', uuid: programUuid }
+        : courseUuid ? { source: 'course', uuid: courseUuid } : null
+    );
     setIsClientReady(true);
   }, []);
 
@@ -826,80 +833,13 @@ const InstructorClassCreationPage = () => {
     ]);
   };
 
-  const appliedCoursesQuery = useQuery({
-    ...searchTrainingApplicationsOptions({
-      query: {
-        pageable: {},
-        searchParams: { applicant_uuid_eq: instructor?.uuid as string },
-      },
-    }),
-    enabled: !!instructor?.uuid,
-  });
-  const appliedCourses = appliedCoursesQuery.data;
-
-  const courseIds = appliedCourses?.data?.content?.map(app => app.course_uuid) ?? [];
-  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseIds as string[]);
-
-  const approvedCourses = useMemo(() => {
-    if (!appliedCourses?.data?.content || !courseMap) return [];
-
-    return appliedCourses.data.content
-      .filter(app => app.status === 'approved')
-      .map(app => {
-        const course = courseMap[app?.course_uuid as string];
-
-        if (!course || !course.admin_approved) return null;
-
-        return {
-          ...course,
-          application: app,
-        };
-      })
-      .filter(Boolean);
-  }, [appliedCourses, courseMap]);
-
-  const appliedProgramsQuery = useQuery({
-    ...searchProgramTrainingApplicationsOptions({
-      query: {
-        pageable: {},
-        searchParams: { applicant_uuid_eq: instructor?.uuid as string },
-      },
-    }),
-    enabled: !!instructor?.uuid,
-  });
-  const appliedPrograms = appliedProgramsQuery.data;
-
-  const programIds = appliedPrograms?.data?.content?.map(app => app.program_uuid) ?? [];
-  const { programMap, isLoading: programsLoading } = useProgramsByIds(programIds as string[]);
-  const offeringsLoading =
-    !instructor ||
-    appliedCoursesQuery.isLoading ||
-    appliedProgramsQuery.isLoading ||
-    coursesLoading ||
-    programsLoading;
-  const offeringsError = appliedCoursesQuery.error ?? appliedProgramsQuery.error;
-  const retryOfferings = () => {
-    if (appliedCoursesQuery.isError) void appliedCoursesQuery.refetch();
-    if (appliedProgramsQuery.isError) void appliedProgramsQuery.refetch();
-  };
-
-  const approvedPrograms = useMemo(() => {
-    if (!appliedPrograms?.data?.content || !programMap) return [];
-
-    return appliedPrograms.data.content
-      .filter(app => app.status === 'approved')
-      .map(app => {
-        const program = programMap[app.program_uuid as string]; // or programMap.get(app.program_uuid)
-
-        if (!program || !program.admin_approved) return null;
-
-        return {
-          ...program,
-          application: app,
-        };
-      })
-      .filter(Boolean);
-  }, [appliedPrograms, programMap]);
+  const {
+    approvedCourses,
+    approvedPrograms,
+    isLoading: offeringsLoading,
+    error: offeringsError,
+    refetch: retryOfferings,
+  } = useInstructorApprovedOfferings(instructor?.uuid);
 
   const catalogItems = useMemo<CatalogItem[]>(() => {
     const courseItems: CatalogItem[] = approvedCourses.map(course => ({
@@ -926,20 +866,25 @@ const InstructorClassCreationPage = () => {
   }, [approvedCourses, approvedPrograms]);
 
   useEffect(() => {
-    if (!isDataInitialized || classId || !requestedCourseUuid || coursePrefillApplied) return;
+    if (!isDataInitialized || classId || !requestedOffering || offeringPrefillApplied) return;
     const item = catalogItems.find(
-      candidate => candidate.source === 'course' && candidate.uuid === requestedCourseUuid
+      candidate =>
+        candidate.source === requestedOffering.source && candidate.uuid === requestedOffering.uuid
     );
     if (!item) return;
+    setRateBasis(null);
+    setService(null);
+    setSalePrice('');
+    setInstructorPay('');
     setClassDetails(prev => ({
       ...prev,
-      course_uuid: item.uuid,
-      program_uuid: null,
+      course_uuid: item.source === 'course' ? item.uuid : '',
+      program_uuid: item.source === 'program' ? item.uuid : null,
       class_limit: item.classLimit,
       title: item.label || prev.title || '',
     }));
-    setCoursePrefillApplied(true);
-  }, [catalogItems, classId, isDataInitialized, requestedCourseUuid, coursePrefillApplied]);
+    setOfferingPrefillApplied(true);
+  }, [catalogItems, classId, isDataInitialized, requestedOffering, offeringPrefillApplied]);
 
   const selectedCatalogItem = useMemo(
     () =>
@@ -2034,12 +1979,14 @@ const InstructorClassCreationPage = () => {
       // update endpoint does not accept session templates or generated counts.
       const { session_templates: _templates, scheduled_session_count: _count, rate_basis: _basis, ...updatePayload } = payload;
       updateClassDefinition.mutate(
-        { path: { uuid: resolvedId }, body: {
-          ...updatePayload,
-          default_start_time: classData.default_start_time,
-          default_end_time: classData.default_end_time,
-          is_active: classData.is_active,
-        } },
+        {
+          path: { uuid: resolvedId }, body: {
+            ...updatePayload,
+            default_start_time: classData.default_start_time,
+            default_end_time: classData.default_end_time,
+            is_active: classData.is_active,
+          }
+        },
         {
           onSuccess: async response => {
             if (response.error || response.success === false) {
@@ -2580,78 +2527,78 @@ const InstructorClassCreationPage = () => {
               disabled={checkingEnrollments || updateClassDefinition.isPending || uploadThumbnail.isPending || uploadPromotionalVideo.isPending}
             />
           ) : (
-          <>
-          <ScheduleModeCards
-            value={scheduleMode}
-            onChange={value =>
-              setSchedulePreset(
-                value === 'pick' ? 'pick-dates' : value === 'academic' ? 'academic-period' : 'standard'
-              )
-            }
-          />
+            <>
+              <ScheduleModeCards
+                value={scheduleMode}
+                onChange={value =>
+                  setSchedulePreset(
+                    value === 'pick' ? 'pick-dates' : value === 'academic' ? 'academic-period' : 'standard'
+                  )
+                }
+              />
 
-          {scheduleMode === 'pick' ? (
-            <PickDatesPanel
-              pickedDates={sharedPickedDates}
-              onPickedDatesChange={updatePickedDates}
-              sortedPickedDates={sortedSharedPickedDates}
-              pickMonth={pickMonth}
-              onPickMonthChange={setPickMonth}
-              sessionStart={sharedSessionStart}
-              onSessionStartChange={value => updatePickedSessionTime('startTime', value)}
-              sessionEnd={sharedSessionEnd}
-              onSessionEndChange={value => updatePickedSessionTime('endTime', value)}
-              timezone={scheduleSettings.timezone}
-              onTimezoneChange={handleScheduleTimeZoneChange}
-            />
-          ) : scheduleMode === 'academic' ? (
-            <AcademicPeriodsPanel periods={academicPeriods} onChange={handleAcademicPeriodsChange} />
-          ) : (
-            <StandardSchedule
-              days={sharedDays}
-              onDayChange={updateSharedDay}
-              repeatEvery={String(scheduleSettings.repeat.interval || 1)}
-              onRepeatEveryChange={value =>
-                setScheduleSettings(prev => ({
-                  ...prev,
-                  repeat: { ...prev.repeat, interval: Number(value) || 1 },
-                }))
-              }
-              repeatUnit={
-                scheduleSettings.repeat.unit === 'day'
-                  ? 'Day'
-                  : scheduleSettings.repeat.unit === 'month'
-                    ? 'Month'
-                    : 'Week'
-              }
-              onRepeatUnitChange={value =>
-                setScheduleSettings(prev => ({
-                  ...prev,
-                  repeat: {
-                    ...prev.repeat,
-                    unit: value.toLowerCase() as 'day' | 'week' | 'month',
-                    days: value === 'Week' ? prev.repeat.days : [],
-                  },
-                }))
-              }
-              startDate={scheduleSettings.startClass.date}
-              onStartDateChange={value =>
-                setScheduleSettings(prev => ({
-                  ...prev,
-                  startClass: { ...prev.startClass, date: value },
-                  endRepeat: prev.endRepeat || value,
-                }))
-              }
-              endDate={scheduleSettings.endRepeat}
-              onEndDateChange={value => setScheduleSettings(prev => ({ ...prev, endRepeat: value }))}
-              timezone={scheduleSettings.timezone}
-              onTimezoneChange={handleScheduleTimeZoneChange}
-              totalSessions={sessionsForConflictCheck.length}
-            />
-          )}
+              {scheduleMode === 'pick' ? (
+                <PickDatesPanel
+                  pickedDates={sharedPickedDates}
+                  onPickedDatesChange={updatePickedDates}
+                  sortedPickedDates={sortedSharedPickedDates}
+                  pickMonth={pickMonth}
+                  onPickMonthChange={setPickMonth}
+                  sessionStart={sharedSessionStart}
+                  onSessionStartChange={value => updatePickedSessionTime('startTime', value)}
+                  sessionEnd={sharedSessionEnd}
+                  onSessionEndChange={value => updatePickedSessionTime('endTime', value)}
+                  timezone={scheduleSettings.timezone}
+                  onTimezoneChange={handleScheduleTimeZoneChange}
+                />
+              ) : scheduleMode === 'academic' ? (
+                <AcademicPeriodsPanel periods={academicPeriods} onChange={handleAcademicPeriodsChange} />
+              ) : (
+                <StandardSchedule
+                  days={sharedDays}
+                  onDayChange={updateSharedDay}
+                  repeatEvery={String(scheduleSettings.repeat.interval || 1)}
+                  onRepeatEveryChange={value =>
+                    setScheduleSettings(prev => ({
+                      ...prev,
+                      repeat: { ...prev.repeat, interval: Number(value) || 1 },
+                    }))
+                  }
+                  repeatUnit={
+                    scheduleSettings.repeat.unit === 'day'
+                      ? 'Day'
+                      : scheduleSettings.repeat.unit === 'month'
+                        ? 'Month'
+                        : 'Week'
+                  }
+                  onRepeatUnitChange={value =>
+                    setScheduleSettings(prev => ({
+                      ...prev,
+                      repeat: {
+                        ...prev.repeat,
+                        unit: value.toLowerCase() as 'day' | 'week' | 'month',
+                        days: value === 'Week' ? prev.repeat.days : [],
+                      },
+                    }))
+                  }
+                  startDate={scheduleSettings.startClass.date}
+                  onStartDateChange={value =>
+                    setScheduleSettings(prev => ({
+                      ...prev,
+                      startClass: { ...prev.startClass, date: value },
+                      endRepeat: prev.endRepeat || value,
+                    }))
+                  }
+                  endDate={scheduleSettings.endRepeat}
+                  onEndDateChange={value => setScheduleSettings(prev => ({ ...prev, endRepeat: value }))}
+                  timezone={scheduleSettings.timezone}
+                  onTimezoneChange={handleScheduleTimeZoneChange}
+                  totalSessions={sessionsForConflictCheck.length}
+                />
+              )}
 
-          <ScheduleResolution summary={scheduleSummary} />
-          </>
+              <ScheduleResolution summary={scheduleSummary} />
+            </>
           )}
 
           {/* Outside the preset switch: the window is required however the sessions are laid out. */}
