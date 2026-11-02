@@ -8,6 +8,7 @@ import { useEffect } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useBreadcrumb } from '@/context/breadcrumb-provider';
+import { useUserProfile } from '@/context/profile-context';
 import { STALE_TIMES } from '@/lib/query-client';
 import { getTrainingProgramByUuidOptions } from '@/services/client/@tanstack/react-query.gen';
 import { ProgramRecordRouteActions } from '@/src/features/dashboard/programs/components/ProgramRecordRouteActions';
@@ -29,6 +30,7 @@ export default function CourseCreatorProgramRoute() {
   const catalogueHref = roleScopedDashboardPath(domain, '/dashboard/courses');
   const programUuid = (Array.isArray(params?.id) ? params.id[0] : params?.id) ?? '';
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const profile = useUserProfile();
 
   // Shares its cache entry with the record's own program query.
   const { data } = useQuery({
@@ -37,6 +39,12 @@ export default function CourseCreatorProgramRoute() {
     staleTime: STALE_TIMES.entity,
   });
   const title = data?.data?.title;
+  const canEdit = Boolean(
+    !profile?.isLoading &&
+      profile?.courseCreator?.uuid &&
+      !data?.error &&
+      data?.data?.course_creator_uuid === profile.courseCreator.uuid
+  );
 
   useEffect(() => {
     replaceBreadcrumbs([
@@ -69,12 +77,14 @@ export default function CourseCreatorProgramRoute() {
         programUuid={programUuid}
         backHref={catalogueHref}
         primaryAction={
-          <Button asChild className='h-10 w-full rounded-[10px]'>
-            <Link href={`${EDIT_PROGRAM_HREF}?id=${encodeURIComponent(programUuid)}`}>
-              <Pen className='size-4' />
-              Edit programme
-            </Link>
-          </Button>
+          canEdit ? (
+            <Button asChild className='h-10 w-full rounded-[10px]'>
+              <Link href={`${EDIT_PROGRAM_HREF}?id=${encodeURIComponent(programUuid)}`}>
+                <Pen className='size-4' />
+                Edit programme
+              </Link>
+            </Button>
+          ) : undefined
         }
       />
     </div>

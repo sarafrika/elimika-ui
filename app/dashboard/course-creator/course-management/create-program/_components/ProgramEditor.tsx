@@ -38,7 +38,6 @@ import ProgramCourses from './ProgramCourses';
 import { ProgramSetup } from './ProgramFields';
 import { ProgramBranding, ProgramPricing } from './ProgramFutureSteps';
 import { ProgramSavingOverlay } from './ProgramSavingOverlay';
-import { ProgramSkills } from './ProgramSkills';
 import { ProgramWeights } from './ProgramWeights';
 
 const STEPS = [
@@ -58,12 +57,12 @@ const STEPS = [
     description:
       "Set the mark a learner needs and how much each mandatory course counts. Course finals come from each course's own grading.",
   },
-  {
-    key: 'skills',
-    label: 'Skills',
-    description:
-      'Pick the skills this program proves, then link each one to the rubric criteria or assessments that show it. Grading that work creates the evidence.',
-  },
+  // {
+  //   key: 'skills',
+  //   label: 'Skills',
+  //   description:
+  //     'Pick the skills this program proves, then link each one to the rubric criteria or assessments that show it. Grading that work creates the evidence.',
+  // },
   {
     key: 'branding',
     label: 'Branding',
@@ -440,14 +439,14 @@ export default function ProgramEditor({
                   )}
                   {step === 1 && <ProgramCourses creatorUuid={creatorUuid} />}
                   {step === 2 && <ProgramWeights />}
-                  {step === 3 && save.programUuid && (
+                  {/* {step === 3 && save.programUuid && (
                     <ProgramSkills
                       programUuid={save.programUuid}
                       onPendingChange={setStepPending}
                     />
-                  )}
-                  {step === 4 && <ProgramBranding files={pendingMedia} onSelect={selectMedia} />}
-                  {step === 5 && (
+                  )} */}
+                  {step === 3 && <ProgramBranding files={pendingMedia} onSelect={selectMedia} />}
+                  {step === 4 && (
                     <>
                       <ProgramPricing
                         revenueShares={revenueShares}

@@ -54,7 +54,6 @@ import {
 import type { Course, CourseTrainingRequirement } from '@/services/client/types.gen';
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { CoursePrerequisitesEditor } from '@/src/features/course-prerequisites/course-prerequisites-editor';
-import { CourseSkillsEditor } from '@/src/features/course-skills/course-skills-editor';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Plus, XIcon } from 'lucide-react';
@@ -1081,12 +1080,12 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             </section>
 
             <section className='grid gap-6 px-6'>
-              <CourseSkillsEditor
+              {/* <CourseSkillsEditor
                 courseUuid={targetCourseUuid}
                 saveRef={skillsSaveRef}
                 draftsRef={setupDraftRef}
                 isSaving={isSaving}
-              />
+              /> */}
               <CoursePrerequisitesEditor
                 courseUuid={targetCourseUuid}
                 isLive={isLive}

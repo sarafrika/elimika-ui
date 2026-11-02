@@ -1,5 +1,8 @@
 'use client';
 
+import { Button } from '@/components/ui/button';
+import { useUserProfile } from '@/context/profile-context';
+import { useStudent } from '@/context/student-context';
 import { useStudentsByIds } from '@/hooks/use-batched-lookups';
 import { extractPage } from '@/lib/api-helpers';
 import { STALE_TIMES } from '@/lib/query-client';
@@ -14,7 +17,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { Course } from '@/services/client/types.gen';
 import {
-  AccessCard,
   ActionsCard,
   ActivityTab,
   COURSE_DEFAULT_CURRENCY,
@@ -29,26 +31,29 @@ import {
   OverviewTab,
   OwnerDecisionsPanel,
   ReviewsTab,
-  summarise,
+  summarise
 } from '@/src/features/course-record/blocks';
 import { CourseRecordView } from '@/src/features/course-record/CourseRecordView';
 import type { CourseStats } from '@/src/features/course-record/types';
+import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
   absoluteUrl,
+  domainFromPath,
   publicCourseUrl,
   routeSegmentFromPath,
 } from '@/src/features/dashboard/lib/dashboard-url';
+import { LearnerProgrammeReport } from '@/src/features/program-report/LearnerProgrammesPanel';
+import { programmeReportPrintHref } from '@/src/features/program-report/print-href';
 import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { type ReactNode, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { useStudent } from '@/context/student-context';
-import { useUserProfile } from '@/context/profile-context';
-import { LearnerProgrammeReport } from '@/src/features/program-report/LearnerProgrammesPanel';
-import { programmeReportPrintHref } from '@/src/features/program-report/print-href';
 import { ProgramAssessmentPlanPanel, useProgramAssessmentPlan } from './ProgramAssessmentPlan';
 import { ProgramCurriculumPanel } from './ProgramCurriculumPanel';
+import { ProgramDetailsAsideCard } from './ProgramDetailsAsideCard';
 import { ProgramEnrollmentsPanel } from './ProgramEnrollmentsPanel';
+import { useProgramAccess } from './use-program-access';
 
 interface ProgramRecordPageProps {
   programUuid: string;
@@ -147,7 +152,12 @@ export function ProgramRecordPage({
   });
   const creator = creatorQ.data;
 
-  const segment = routeSegmentFromPath(usePathname());
+  const pathname = usePathname();
+  const segment = routeSegmentFromPath(pathname);
+  const availableClassesHref = roleScopedDashboardPath(
+    domainFromPath(pathname),
+    `/dashboard/courses/available-programs/${encodeURIComponent(programUuid)}`
+  );
 
   // Simple derived figures
   const enrolledCount = enrollments.length;
@@ -185,27 +195,12 @@ export function ProgramRecordPage({
     [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || undefined;
   const openTab = useSearchParams()?.get('tab');
 
-  // Derive viewer access from the current dashboard path segment so the
-  // ProgramRecordPage mirrors CourseRecordPage behaviour and shows creator/
-  // instructor/admin views when opened on those dashboards.
-  const access = (() => {
-    switch (segment) {
-      case 'course-creator':
-        return 'creator' as const;
-      case 'instructor':
-        return 'instructor' as const;
-      case 'organisation':
-        return 'organisation' as const;
-      case 'admin':
-        return 'admin' as const;
-      case 'student':
-        return 'student' as const;
-      case 'parent':
-        return 'prospect' as const;
-      default:
-        return 'prospect' as const;
-    }
-  })();
+  const programAccess = useProgramAccess(
+    programUuid,
+    programQ.data?.error || programQ.data?.success === false ? undefined : program,
+    segment
+  );
+  const { access } = programAccess;
 
   // Builders and admins see the assessment plan; course components load once its tab is open.
   const showsPlan = access === 'creator' || access === 'admin';
@@ -361,15 +356,15 @@ export function ProgramRecordPage({
     () =>
       program
         ? {
-            ...program,
-            name: program.title,
-            duration_hours: program.total_duration_hours,
-            duration_minutes: program.total_duration_minutes,
-            price: program.price ?? 0,
-            minimum_training_fee: program.price ?? 0,
-            creator_share_percentage: 60,
-            instructor_share_percentage: 40,
-          }
+          ...program,
+          name: program.title,
+          duration_hours: program.total_duration_hours,
+          duration_minutes: program.total_duration_minutes,
+          price: program.price ?? 0,
+          minimum_training_fee: program.price ?? 0,
+          creator_share_percentage: 60,
+          instructor_share_percentage: 40,
+        }
         : undefined,
     [program]
   );
@@ -439,7 +434,21 @@ export function ProgramRecordPage({
 
   const rail = useMemo(() => {
     const cards: ReactNode[] = [
-      <AccessCard key='access' access={access} vars={vars} />,
+      <ProgramDetailsAsideCard
+        key='details'
+        program={programQ.data?.error ? undefined : program}
+        currencyCode={COURSE_DEFAULT_CURRENCY}
+        courses={
+          coursesQ.isError || coursesQ.data?.error || coursesQ.data?.success === false
+            ? undefined
+            : coursesQ.data
+              ? courses
+              : undefined
+        }
+        loading={programQ.isLoading}
+        coursesLoading={coursesQ.isLoading}
+      />,
+      // <AccessCard key='access' access={access} vars={vars} />,
       <GlanceCard key='glance' access={access} vars={vars} />,
     ];
 
@@ -453,12 +462,26 @@ export function ProgramRecordPage({
 
     cards.push(<ActionsCard key='actions' access={access} vars={vars} actions={actions} />);
     return cards;
-  }, [access, actions, vars]);
+  }, [
+    access,
+    actions,
+    vars,
+    program,
+    programQ.data?.error,
+    programQ.isLoading,
+    courses,
+    coursesQ.data,
+    coursesQ.isError,
+    coursesQ.isLoading,
+  ]);
 
   return (
     <>
       <CourseRecordView
         access={access}
+        accessLabel={programAccess.label}
+        accessLoading={programAccess.loading}
+        primaryActionLabel={access === 'creator' ? 'Edit programme' : undefined}
         className={className}
         eyebrow='Programme'
         courseName={program?.title}
@@ -467,6 +490,11 @@ export function ProgramRecordPage({
         onShare={onShare ?? handleShare}
         onExport={onExport}
         primaryAction={primaryAction}
+        secondaryAction={
+          <Button asChild variant='default' className='h-10 w-full rounded-[10px]'>
+            <Link href={availableClassesHref}>Enroll</Link>
+          </Button>
+        }
         onPrimaryAction={onPrimaryAction}
         hero={{
           title: program?.title,
