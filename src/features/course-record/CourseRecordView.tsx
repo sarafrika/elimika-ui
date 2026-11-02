@@ -65,6 +65,10 @@ import {
 interface CourseRecordViewProps {
   /** From the API. See `use-course-access.ts`. */
   access: CourseAccess;
+  /** Entity-specific access copy; course records use their capability map by default. */
+  accessLabel?: string;
+  accessLoading?: boolean;
+  primaryActionLabel?: string;
   /** The record's identity, drawn as the compact header card. */
   hero: CourseHeroProps;
   /** Small caps line above the title. Defaults to "Course". */
@@ -80,6 +84,8 @@ interface CourseRecordViewProps {
   onPrimaryAction?: () => void;
   /** Replaces the capability map's primary button outright. */
   primaryAction?: ReactNode;
+  /** Additional action displayed below the primary action in the header aside. */
+  secondaryAction?: ReactNode;
   onShare?: () => void;
   onExport?: () => void;
 
@@ -125,6 +131,9 @@ const FACT_ICONS: Record<CourseHeaderFactKey, LucideIcon> = {
 
 export function CourseRecordView({
   access,
+  accessLabel,
+  accessLoading,
+  primaryActionLabel,
   hero,
   eyebrow = 'Course',
   courseName,
@@ -133,6 +142,7 @@ export function CourseRecordView({
   priceLabel,
   onPrimaryAction,
   primaryAction,
+  secondaryAction,
   onShare,
   onExport,
   kpiBand,
@@ -160,7 +170,8 @@ export function CourseRecordView({
   };
 
   const crumb = [capability.breadcrumbRoot, courseName].filter(Boolean).join(' · ');
-  const primaryLabel = fillCourseCopy(capability.primaryAction, { price: priceLabel });
+  const primaryLabel =
+    primaryActionLabel ?? fillCourseCopy(capability.primaryAction, { price: priceLabel });
   // Only the pending applicant's access pill is amber; every other state is
   // brand-hued. The gate tone is what distinguishes it in the capability map.
   const warnTone = capability.gate?.tone === 'warning';
@@ -271,21 +282,28 @@ export function CourseRecordView({
           aside={
             <div className='bg-muted/40 flex h-full flex-col gap-3 rounded-[14px] border p-[18px]'>
               <span className={surfaceTheme.sectionLabel}>Your access</span>
-              <span
-                className={cn(
-                  'inline-flex min-h-[26px] w-fit items-center gap-1.5 rounded-[10px] border px-2.5 py-1 text-xs font-semibold',
-                  warnTone
-                    ? 'border-warning/35 bg-warning/10 text-warning'
-                    : 'border-primary/30 bg-primary/10 text-primary'
-                )}
-              >
-                <span className='size-1.5 shrink-0 rounded-full bg-current' />
-                {capability.accessLabel}
-              </span>
-              {primary ? (
+              {accessLoading ? (
+                <Skeleton className='h-7 w-48' aria-label='Checking programme access' />
+              ) : (
+                <span
+                  className={cn(
+                    'inline-flex min-h-[26px] w-fit items-center gap-1.5 rounded-[10px] border px-2.5 py-1 text-xs font-semibold',
+                    warnTone
+                      ? 'border-warning/35 bg-warning/10 text-warning'
+                      : 'border-primary/30 bg-primary/10 text-primary'
+                  )}
+                >
+                  <span className='size-1.5 shrink-0 rounded-full bg-current' />
+                  {accessLabel ?? capability.accessLabel}
+                </span>
+              )}
+              {!accessLoading && (primary || secondaryAction) ? (
                 <>
                   <div className='grow' />
-                  <div className='flex flex-col gap-2 print:hidden'>{primary}</div>
+                  <div className='flex flex-col gap-2 print:hidden'>
+                    {primary}
+                    {secondaryAction}
+                  </div>
                 </>
               ) : null}
             </div>

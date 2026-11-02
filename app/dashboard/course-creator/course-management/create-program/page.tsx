@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
+import { useUserProfile } from '@/context/profile-context';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getProgramRequirementsOptions,
@@ -39,6 +40,7 @@ export default function CreateProgramPage() {
 
 function ExistingProgram({ programId }: { programId: string }) {
   const queryClient = useQueryClient();
+  const profile = useUserProfile();
   const [loaded, setLoaded] = useState<{ program: TrainingProgram; values: ProgramFormValues }>();
   const [error, setError] = useState('');
   const [attempt, setAttempt] = useState(0);
@@ -140,6 +142,16 @@ function ExistingProgram({ programId }: { programId: string }) {
         action={<Button onClick={() => setAttempt(value => value + 1)}>Try again</Button>}
       />
     );
-  if (!loaded) return <ProgramLoading />;
+  if (!loaded || profile?.isLoading) return <ProgramLoading />;
+  if (
+    !profile?.courseCreator?.uuid ||
+    loaded.program.course_creator_uuid !== profile.courseCreator.uuid
+  )
+    return (
+      <EmptyState
+        title='Program editing unavailable'
+        description='You can only edit programs you created.'
+      />
+    );
   return <ProgramEditor program={loaded.program} initialValues={loaded.values} />;
 }

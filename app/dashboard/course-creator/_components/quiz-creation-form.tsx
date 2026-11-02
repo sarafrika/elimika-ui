@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { Check, FileText, Plus, Trash2 } from 'lucide-react';
+import { Check, FileText, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
@@ -430,8 +430,8 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
     createQuizForLesson,
     updateQuizForLesson,
     deleteQuizForLesson,
-    saveQuizQuestions,
-    isSavingQuestions,
+    saveQuizQuestions: persistQuizQuestions,
+    isSavingQuestions: isQuestionMutationPending,
     isPending,
     openBulkUploadSheet,
     onDraftChange,
@@ -446,6 +446,20 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
   const [isDeletingQuiz, setIsDeletingQuiz] = useState(false);
   const [quizAction, setQuizAction] = useState<'save' | 'publish' | 'unpublish' | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [isSavingQuestionBatch, setIsSavingQuestionBatch] = useState(false);
+  const isSavingQuestions = isQuestionMutationPending || isSavingQuestionBatch;
+
+  const saveQuizQuestions = useCallback(
+    async (draft: QuizPayload, notify?: boolean) => {
+      setIsSavingQuestionBatch(true);
+      try {
+        return await persistQuizQuestions(draft, notify);
+      } finally {
+        setIsSavingQuestionBatch(false);
+      }
+    },
+    [persistQuizQuestions]
+  );
 
   // The picker searches rubrics on the server; the chosen one is read by id.
   const { data: selectedRubricData } = useQuery({
@@ -601,7 +615,8 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
       if (!savedQuizUuid) return;
 
       if (questions.length > 0 && quizUuid) {
-        await saveQuizQuestions(draftPayload, false);
+        const savedQuestionsQuizUuid = await saveQuizQuestions(draftPayload, false);
+        if (!savedQuestionsQuizUuid) return;
       }
 
       await updateQuizForLesson(savedQuizUuid, {
@@ -627,6 +642,16 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
       setQuizAction(null);
     }
   }, [commitQuiz, handleQuizSelect, questions.length, quizUuid, saveQuizQuestions, selectedQuizData, updateQuizForLesson, validateQuestions]);
+
+  const handleSaveQuestions = async () => {
+    if (isSavingQuestions || !validateQuestions()) return;
+
+    try {
+      await saveQuizQuestions(selectedQuizData, true);
+    } catch (err) {
+      toast.error(`Failed to save questions: ${getApiErrorMessage(err)}`);
+    }
+  };
 
   const handleUnpublishQuiz = useCallback(async () => {
     if (!quizUuid) return;
@@ -680,6 +705,22 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
 
   return (
     <div className='bg-card space-y-6 rounded-xl border p-6 shadow-sm'>
+      {isSavingQuestions && (
+        <div
+          className='bg-background/80 fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm'
+          role='status'
+          aria-live='polite'
+          aria-label='Saving quiz questions'
+        >
+          <div className='bg-card border-border flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border p-8 text-center shadow-2xl'>
+            <Loader2 className='text-primary h-8 w-8 animate-spin' aria-hidden='true' />
+            <p className='text-foreground font-medium'>Saving questions…</p>
+            <p className='text-muted-foreground text-sm'>
+              Please wait while your questions and answers are saved.
+            </p>
+          </div>
+        </div>
+      )}
       <div className='flex items-center justify-between gap-4 border-b pb-4'>
         <div className='space-y-1'>
           <h3 className='text-foreground text-lg font-bold uppercase'>
@@ -916,7 +957,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
         <div className='flex flex-wrap items-center gap-2'>
           {quizUuid && quizUuid !== '' && (
             <>
-              <Button size='sm' variant='destructive' onClick={handleDeleteQuiz}>
+              <Button size='sm' variant='destructive' onClick={handleDeleteQuiz} disabled={isSavingQuestions}>
                 <Trash2 className='mr-2 h-4 w-4' />
                 Delete Quiz
               </Button>
@@ -937,7 +978,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
                   size='sm'
                   variant='outline'
                   onClick={handleUnpublishQuiz}
-                  disabled={isPending || isUnpublishingQuiz}
+                  disabled={isPending || isSavingQuestions || isUnpublishingQuiz}
                 >
                   {isUnpublishingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
                   Unpublish Quiz
@@ -952,13 +993,12 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
             <Button
               size='sm'
               variant='outline'
-              onClick={() => {
-                if (validateQuestions()) void saveQuizQuestions(selectedQuizData, true);
-              }}
+              onClick={handleSaveQuestions}
               disabled={isPending || isSavingQuestions}
+              aria-busy={isSavingQuestions}
             >
               {isSavingQuestions ? <Spinner className='mr-2 h-4 w-4' /> : null}
-              {'Save Questions'}
+              {isSavingQuestions ? 'Saving Questions…' : 'Save Questions'}
             </Button>}
 
 
@@ -969,7 +1009,7 @@ export const QuizCreationForm = (props: QuizCreationFormProps) => {
             </Button>
           )}
 
-          {quizUuid && <Button size='sm' onClick={handleSaveQuiz} disabled={isPending}>
+          {quizUuid && <Button size='sm' onClick={handleSaveQuiz} disabled={isPending || isSavingQuestions}>
             {isSavingQuiz ? <Spinner className='mr-2 h-4 w-4' /> : null}
             {'Update Quiz Details'}
           </Button>}

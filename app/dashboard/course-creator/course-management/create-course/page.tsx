@@ -1154,6 +1154,7 @@ export default function CreateCoursePage() {
                                                                                 setSelectedLessonId={setSelectedAssessmentLessonId}
                                                                                 setSelectedLesson={setSelectedAssessmentLesson}
                                                                                 onQuizSaved={() => {
+                                                                                    setInlineAssessmentOpen(false);
                                                                                     void refreshAssessmentLists();
                                                                                 }}
                                                                                 onAssignmentSaved={() => {
