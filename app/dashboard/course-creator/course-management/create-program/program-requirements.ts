@@ -2,12 +2,13 @@ import type { RequirementEntry } from '../../_components/training-requirement-fi
 import type { ProgramFormValues } from './program-schema';
 
 export function programRequirementText(resource: RequirementEntry) {
-  return `Name: ${resource.name.trim()}\nType: ${resource.requirement_type}\nQuantity: ${resource.quantity || '0'}\nUnit: ${resource.unit}\nDescription: ${resource.description.trim()}`;
+  const description = resource.description?.trim();
+  return `Name: ${resource.name.trim()}\nType: ${resource.requirement_type}\nQuantity: ${resource.quantity || '0'}\nUnit: ${resource.unit}${description ? `\nDescription: ${description}` : ''}`;
 }
 
 export function readProgramRequirementText(text: string): RequirementEntry {
   const match =
-    /^Name: ([\s\S]*?)\nType: (\w+)\nQuantity: ([^\n]+)\nUnit: ([^\n]+)\nDescription: ?([\s\S]*)$/.exec(
+    /^Name: ([\s\S]*?)\nType: (\w+)\nQuantity: ([^\n]+)\nUnit: ([^\n]+)(?:\nDescription: ?([\s\S]*))?$/.exec(
       text
     );
   return {
