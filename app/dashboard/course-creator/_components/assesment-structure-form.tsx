@@ -1,9 +1,21 @@
 'use client';
 
 import { AsyncSection } from '@/components/data/async-section';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { getErrorMessage } from '@/lib/error-utils';
@@ -21,16 +33,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../../../../components/ui/select';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import Spinner from '../../../../components/ui/spinner';
 import {
   addCourseAssessmentMutation,
@@ -51,7 +53,6 @@ import type {
 } from '../../../../services/client/types.gen';
 import { ASSESSMENT_TYPES } from '../rubrics/rubric-manager';
 import { CATEGORY_META, LinkItemsModal, TaskItemType } from './assesment-link-items';
-import { CourseGradeBandsForm } from './course-grade-bands-form';
 import { CoursePassMarkForm } from './course-pass-mark-form';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -146,6 +147,7 @@ type AssessmentDraft = {
   assessment_type: string;
   description: string;
   weight_percentage: number | '';
+  per_lesson: boolean;
   savedWithoutId?: boolean;
 };
 
@@ -159,6 +161,7 @@ function newAssessmentDraft(assessment?: Assessment): AssessmentDraft {
     assessment_type: assessment?.assessment_type ?? '',
     description: assessment?.description ?? '',
     weight_percentage: assessment?.weight_percentage ?? '',
+    per_lesson: assessment ? assessment.per_lesson === true : true,
   };
 }
 
@@ -198,10 +201,10 @@ function AssessmentBatchEditor({
   const savedWeight = editing
     ? 0
     : assessments.reduce(
-        (sum, assessment) =>
-          sum + (draftUuids.has(assessment.uuid) ? 0 : assessment.weight_percentage),
-        0
-      );
+      (sum, assessment) =>
+        sum + (draftUuids.has(assessment.uuid) ? 0 : assessment.weight_percentage),
+      0
+    );
   const totalWeight = Number(
     (
       savedWeight +
@@ -296,26 +299,27 @@ function AssessmentBatchEditor({
           aggregation_strategy: draft.original?.aggregation_strategy,
           rubric_uuid: draft.original?.rubric_uuid,
           sync_class_attendance: draft.original?.sync_class_attendance,
-          per_lesson: draft.original?.per_lesson,
+          per_lesson: draft.per_lesson,
         };
         if (
           draft.original &&
           body.title === draft.original.title &&
           body.assessment_type === draft.original.assessment_type &&
           body.description === (draft.original.description ?? '') &&
-          body.weight_percentage === draft.original.weight_percentage
+          body.weight_percentage === draft.original.weight_percentage &&
+          body.per_lesson === (draft.original.per_lesson ?? false)
         )
           continue;
         try {
           const result = draft.original
             ? await updateMut.mutateAsync({
-                path: { courseUuid, assessmentUuid: draft.original.uuid },
-                body,
-              })
+              path: { courseUuid, assessmentUuid: draft.original.uuid },
+              body,
+            })
             : await createMut.mutateAsync({
-                path: { courseUuid },
-                body,
-              });
+              path: { courseUuid },
+              body,
+            });
           if (result.error || result.success === false)
             throw new Error(getErrorMessage(result, 'Failed to save assessment.'));
           changed = true;
@@ -326,10 +330,10 @@ function AssessmentBatchEditor({
             current.map(item =>
               item.id === draft.id
                 ? {
-                    ...item,
-                    original: uuid ? { ...body, ...result.data, uuid } : undefined,
-                    savedWithoutId: !uuid,
-                  }
+                  ...item,
+                  original: uuid ? { ...body, ...result.data, uuid } : undefined,
+                  savedWithoutId: !uuid,
+                }
                 : item
             )
           );
@@ -487,6 +491,15 @@ function AssessmentBatchEditor({
                 placeholder='What is assessed and how.'
                 onChange={event => patchDraft(draft.id, { description: event.target.value })}
               />
+              <div className='flex items-center gap-2 sm:col-span-4'>
+                <Checkbox
+                  id={`${draft.id}-per-lesson`}
+                  checked={draft.per_lesson}
+                  disabled={isSaving || disabled || draft.savedWithoutId}
+                  onCheckedChange={checked => patchDraft(draft.id, { per_lesson: checked === true })}
+                />
+                <Label htmlFor={`${draft.id}-per-lesson`}>Grade per lesson</Label>
+              </div>
               {draft.savedWithoutId && (
                 <p className='text-muted-foreground text-xs sm:col-span-4'>
                   Saved. Reopen the editor to change this component.
@@ -714,7 +727,7 @@ export const CourseAssessmentStructure = ({
       <div className='mb-4'>
         <div className='flex flex-col gap-4'>
           <CoursePassMarkForm courseUuid={courseUuid} />
-          <CourseGradeBandsForm courseUuid={courseUuid} />
+          {/* <CourseGradeBandsForm courseUuid={courseUuid} /> */}
         </div>
       </div>
 
@@ -856,11 +869,10 @@ export const CourseAssessmentStructure = ({
                               {a.weight_percentage}% (0–{a.weight_percentage})
                             </span>
                             <span
-                              className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                a.is_required
-                                  ? 'bg-success/10 text-success/70'
-                                  : 'bg-muted-foreground/10 text-muted-foreground'
-                              }`}
+                              className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
+                                ? 'bg-success/10 text-success/70'
+                                : 'bg-muted-foreground/10 text-muted-foreground'
+                                }`}
                             >
                               {a.is_required ? 'Required' : 'Not required'}
                             </span>

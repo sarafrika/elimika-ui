@@ -73,7 +73,7 @@ const programFieldsSchema = z.object({
               'Quantity must be zero or greater'
             ),
           unit: z.string(),
-          description: z.string(),
+          description: z.string().trim().default(''),
           is_mandatory: z.boolean(),
         })
         .optional(),
