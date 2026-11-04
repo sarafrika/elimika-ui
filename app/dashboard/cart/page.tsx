@@ -31,6 +31,7 @@ import {
   getCartQueryKey,
   removeItemMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { UnpaidOrdersNotice } from '@/src/features/checkout/unpaid-orders-notice';
 import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useCartStore } from '@/store/cart-store';
@@ -226,6 +227,8 @@ export default function CartPage() {
           }
           emptyState={
             /* Empty Cart State */
+            <div className='flex flex-col gap-4'>
+            <UnpaidOrdersNotice />
             <Card className='border-border bg-card/80'>
               <CardHeader className='space-y-4 text-center'>
                 <div className='bg-primary/10 mx-auto flex h-20 w-20 items-center justify-center rounded-full'>
@@ -250,6 +253,7 @@ export default function CartPage() {
                 </Link>
               </CardHeader>
             </Card>
+            </div>
           }
         >
           {/* Cart with Items */}

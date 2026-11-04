@@ -4,7 +4,7 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, ArrowLeft, Lock } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/dashboard/page-header';
@@ -22,6 +22,7 @@ import type { CartItemResponse } from '@/services/client';
 import {
   completeCheckoutMutation,
   getClassEnrolmentEligibilityOptions,
+  getOrderOptions,
   getPaymentStatusOptions,
   payWithMpesaMutation,
   selectPaymentSessionMutation,
@@ -62,6 +63,8 @@ export function CheckoutPage() {
   const profile = useUserProfile();
   const { paymentRequired } = usePaymentMode();
   const { cartId, clearCart } = useCartStore();
+  // `?order=` resumes paying for an order already placed, e.g. from the cart's unpaid-order notice.
+  const resumeOrderId = useSearchParams().get('order');
 
   const [stage, setStage] = useState<Stage>('form');
   const [phone, setPhone] = useState('');
@@ -118,6 +121,31 @@ export function CheckoutPage() {
   });
   const checkingEligibility = Boolean(studentUuid) && eligibility.some(q => q.isLoading);
 
+  const resumed = useQuery({
+    ...getOrderOptions({ path: { orderId: resumeOrderId ?? 'unset' } }),
+    enabled: Boolean(resumeOrderId) && !order,
+    retry: false,
+  });
+  useEffect(() => {
+    const data = resumed.data?.data;
+    if (!data?.id || order) return;
+    if ((data.payment_status ?? '').toUpperCase() !== 'AWAITING_PAYMENT') {
+      router.replace('/dashboard/student/wallet');
+      return;
+    }
+    setOrder({
+      id: data.id,
+      number: data.display_id ?? null,
+      total: data.total,
+      lines: (data.items ?? []).map(item => ({
+        id: item.id ?? item.title ?? 'line',
+        title: item.title ?? 'Class',
+        detail: lineDetail(item),
+        total: item.total ?? item.subtotal,
+      })),
+    });
+  }, [resumed.data, order, router]);
+
   const selectPaymentSession = useMutation(selectPaymentSessionMutation());
   const completeCheckout = useMutation(completeCheckoutMutation());
   const payWithMpesa = useMutation(payWithMpesaMutation());
@@ -160,8 +188,8 @@ export function CheckoutPage() {
   }, [paymentRequired, router]);
 
   useEffect(() => {
-    if (stage === 'form' && !cartId && !cartQuery.isLoading) router.replace('/dashboard/cart');
-  }, [stage, cartId, cartQuery.isLoading, router]);
+    if (stage === 'form' && !cartId && !resumeOrderId && !order && !cartQuery.isLoading) router.replace('/dashboard/cart');
+  }, [stage, cartId, resumeOrderId, order, cartQuery.isLoading, router]);
 
   const sendPrompt = async (orderId: string, number: string) => {
     await payWithMpesa.mutateAsync({ path: { orderId }, body: { phone_number: number } });
@@ -176,7 +204,7 @@ export function CheckoutPage() {
       return;
     }
     setPhoneError(null);
-    if (!cartId) return;
+    if (!cartId && !order) return;
     if (blockers.length > 0) {
       toast.error(blockers[0].reason);
       return;
@@ -361,7 +389,7 @@ export function CheckoutPage() {
               <Button
                 size='lg'
                 className='hidden sm:inline-flex'
-                disabled={stage === 'sending' || checkingEligibility || blockers.length > 0 || !cartId}
+                disabled={stage === 'sending' || checkingEligibility || blockers.length > 0 || (!cartId && !order)}
                 onClick={() => void startPayment()}
               >
                 <Lock aria-hidden className='size-4' />
@@ -383,7 +411,7 @@ export function CheckoutPage() {
           <Button
             size='lg'
             className='flex-1'
-            disabled={stage === 'sending' || checkingEligibility || blockers.length > 0 || !cartId}
+            disabled={stage === 'sending' || checkingEligibility || blockers.length > 0 || (!cartId && !order)}
             onClick={() => void startPayment()}
           >
             {stage === 'sending' ? 'Sending…' : 'Send M-Pesa prompt'}
