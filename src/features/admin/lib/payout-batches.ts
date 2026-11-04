@@ -44,14 +44,38 @@ export interface PayoutBatch {
   created_date?: string | null;
   updated_date?: string | null;
   can_approve?: boolean | null;
+  /** Rows whose wallet check raised a flag; approving needs `acknowledge_wallet_issues`. */
+  wallet_issue_count?: number | null;
+  /** Rows whose wallet the server could check. */
+  wallets_checked?: number | null;
 }
 
-/** A withdrawal as the batch endpoints return it, with the batch it sits in. */
+export type WalletFlag = 'LEDGER_MISMATCH' | 'WALLET_SHORT';
+
+/** The earner's wallet as the server read it when it listed the withdrawal. */
+export interface WalletCheck {
+  account_balance?: number | string | null;
+  held_amount?: number | string | null;
+  held_count?: number | null;
+  available_balance?: number | string | null;
+  balance_after?: number | string | null;
+  ledger_balance?: number | string | null;
+  ledger_matches?: boolean | null;
+  covers?: boolean | null;
+  checked_at?: string | null;
+}
+
+/**
+ * A withdrawal as the admin endpoints return it, with its batch and wallet check. The
+ * wallet fields are hand-written too until the client is regenerated.
+ */
 export type BatchWithdrawal = Omit<
   Withdrawal,
   'created_date' | 'confirmed_at' | 'sent_at' | 'completed_at'
 > & {
   payout_batch_uuid?: string | null;
+  wallet_check?: WalletCheck | null;
+  wallet_flags?: string[] | null;
   created_date?: string | Date | null;
   confirmed_at?: string | Date | null;
   sent_at?: string | Date | null;
@@ -113,6 +137,11 @@ export const BATCH_STATUS: Record<
 
 /* Money ------------------------------------------------------------------------------ */
 
+/** "1 withdrawal", "2 withdrawals". */
+export function plural(count: number, word: string, many = `${word}s`): string {
+  return `${count} ${count === 1 ? word : many}`;
+}
+
 export function toAmount(value: number | string | null | undefined): number | null {
   if (value === null || value === undefined || value === '') return null;
   const n = typeof value === 'number' ? value : Number(value);
@@ -148,6 +177,75 @@ export function floatState(
   return gap >= 0
     ? { kind: 'enough', float: available, spare: gap }
     : { kind: 'short', float: available, shortBy: -gap };
+}
+
+/* Wallet check ----------------------------------------------------------------------- */
+
+export const WALLET_FLAG_LABELS: Record<WalletFlag, string> = {
+  LEDGER_MISMATCH: 'Ledger mismatch',
+  WALLET_SHORT: 'Wallet short',
+};
+
+const WALLET_FLAG_ORDER: WalletFlag[] = ['LEDGER_MISMATCH', 'WALLET_SHORT'];
+
+/**
+ * A row's wallet flags: the server's list, plus any its wallet check implies, so a
+ * mismatch still shows if the two ever disagree. Unknown flags are dropped.
+ */
+export function walletFlagsOf(
+  row: Pick<BatchWithdrawal, 'wallet_check' | 'wallet_flags'>
+): WalletFlag[] {
+  const found = new Set(row.wallet_flags ?? []);
+  if (row.wallet_check?.ledger_matches === false) found.add('LEDGER_MISMATCH');
+  if (row.wallet_check?.covers === false) found.add('WALLET_SHORT');
+  return WALLET_FLAG_ORDER.filter(flag => found.has(flag));
+}
+
+/** How far the wallet's balance is from its ledger, or null when either is unknown. */
+export function ledgerGap(check: WalletCheck | null | undefined): number | null {
+  const balance = toAmount(check?.account_balance);
+  const ledger = toAmount(check?.ledger_balance);
+  if (balance === null || ledger === null) return null;
+  return Math.abs(sumAmounts([balance, -ledger]));
+}
+
+export type WalletSummary =
+  | { kind: 'unchecked' }
+  | { kind: 'clear'; checked: number; unchecked: number }
+  | {
+      kind: 'issues';
+      issues: number;
+      total: number;
+      flags: { flag: WalletFlag; count: number }[];
+    };
+
+/**
+ * The batch's wallets in one line. The server's counts win; the rows fill in when an
+ * older response lacks them.
+ */
+export function walletSummary(
+  batch: Pick<PayoutBatch, 'row_count' | 'wallet_issue_count' | 'wallets_checked'>,
+  rows: Pick<BatchWithdrawal, 'wallet_check' | 'wallet_flags'>[]
+): WalletSummary {
+  const total = Math.max(Number(batch.row_count ?? 0), rows.length);
+  const rowFlags = rows.map(walletFlagsOf);
+  const issues = Math.max(
+    Number(batch.wallet_issue_count ?? 0),
+    rowFlags.filter(flags => flags.length > 0).length
+  );
+  if (issues > 0) {
+    const flags = WALLET_FLAG_ORDER.map(flag => ({
+      flag,
+      count: rowFlags.filter(list => list.includes(flag)).length,
+    })).filter(entry => entry.count > 0);
+    return { kind: 'issues', issues, total, flags };
+  }
+  const checked = Math.max(
+    Number(batch.wallets_checked ?? 0),
+    rows.filter(row => row.wallet_check).length
+  );
+  if (checked === 0) return { kind: 'unchecked' };
+  return { kind: 'clear', checked, unchecked: Math.max(0, total - checked) };
 }
 
 /* Progress --------------------------------------------------------------------------- */
@@ -204,8 +302,17 @@ export function approveBlockReason(
   return null;
 }
 
-/** Whether the confirm step may go ahead with the current override choice. */
-export function canConfirmApproval(float: FloatState, override: boolean): boolean {
+/**
+ * Whether the confirm step may go ahead: an unknown float needs the override, and wallet
+ * issues need the approver to say they checked those wallets.
+ */
+export function canConfirmApproval(
+  float: FloatState,
+  override: boolean,
+  walletIssues = 0,
+  walletsAcknowledged = false
+): boolean {
   if (float.kind === 'short') return false;
+  if (walletIssues > 0 && !walletsAcknowledged) return false;
   return float.kind === 'enough' || override;
 }

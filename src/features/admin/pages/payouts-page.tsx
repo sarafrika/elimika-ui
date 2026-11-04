@@ -43,6 +43,7 @@ import type { PayoutSettings } from '@/services/client/types.gen';
 import { WaitingQueue } from '../components/batch-queue';
 import { PayoutBatchesList } from '../components/payout-batches-list';
 import { SectionBoundary } from '../components/section-boundary';
+import { WalletCheckBlock } from '../components/wallet-check';
 import { WithdrawalTable } from '../components/withdrawal-table';
 import { invalidatePayouts } from '../hooks/use-payout-batches';
 import { adminRoutes } from '../lib/admin-routes';
@@ -341,6 +342,7 @@ function ReviewSheet({
               </div>
             ))}
           </dl>
+          <WalletCheckBlock row={withdrawal} />
           {rejecting ? (
             <div className='space-y-2'>
               <Label htmlFor={reasonId}>Reason the earner will see</Label>

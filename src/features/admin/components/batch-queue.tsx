@@ -29,7 +29,7 @@ import {
   usePayoutBatches,
 } from '../hooks/use-payout-batches';
 import { adminRoutes } from '../lib/admin-routes';
-import { type BatchWithdrawal, sumAmounts } from '../lib/payout-batches';
+import { type BatchWithdrawal, plural, sumAmounts } from '../lib/payout-batches';
 import { SectionBoundary } from './section-boundary';
 import { WithdrawalTable } from './withdrawal-table';
 
@@ -131,10 +131,7 @@ export function WaitingQueue({ active, mode, hint, rowActions }: WaitingQueuePro
     const { data, error } = await payoutBatchActions.create([...ids]);
     setBusy(false);
     if (error) return toast.error(error);
-    await done(
-      data?.uuid,
-      `Draft batch created with ${ids.size} withdrawal${ids.size === 1 ? '' : 's'}`
-    );
+    await done(data?.uuid, `Draft batch created with ${plural(ids.size, 'withdrawal')}`);
   };
 
   const addTo = async (batchUuid: string) => {
@@ -143,7 +140,7 @@ export function WaitingQueue({ active, mode, hint, rowActions }: WaitingQueuePro
     setBusy(false);
     if (error) return toast.error(error);
     setPickDraft(false);
-    await done(batchUuid, `Added ${ids.size} withdrawal${ids.size === 1 ? '' : 's'} to the batch`);
+    await done(batchUuid, `Added ${plural(ids.size, 'withdrawal')} to the batch`);
   };
 
   return (
@@ -308,7 +305,7 @@ function DraftPicker({
         <DialogHeader>
           <DialogTitle className='text-base'>Add to a draft batch</DialogTitle>
           <DialogDescription>
-            {count} withdrawal{count === 1 ? '' : 's'} · {formatMoney(total)}
+            {plural(count, 'withdrawal')} · {formatMoney(total)}
           </DialogDescription>
         </DialogHeader>
         <SectionBoundary
@@ -346,7 +343,7 @@ function DraftPicker({
                 />
                 <span className='flex-1'>
                   <span className='block font-semibold'>
-                    {batch.row_count ?? 0} rows · {formatMoney(batch.total_amount)}
+                    {plural(batch.row_count ?? 0, 'row')} · {formatMoney(batch.total_amount)}
                   </span>
                   <span className='text-muted-foreground text-xs'>
                     {batch.created_by_name ?? 'An admin'} · {formatDateTime(batch.created_date)}
