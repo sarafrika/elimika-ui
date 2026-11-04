@@ -16,7 +16,7 @@ import {
 import { formatMoney, formatMoneyDate } from './format';
 import type { ObligationLike, OrderLike } from './ledger';
 
-const POLL_MS = 4000;
+const POLL_MS = 5000;
 const GIVE_UP_MS = 120_000;
 
 function Lines({ lines }: { lines: [string, string][] }) {
@@ -92,7 +92,7 @@ export function CompletePaymentSheet({
       setState('paid');
       toast.success('Payment received. Your seat is confirmed.');
       onPaid();
-    } else if (result === 'FAILED' || result === 'CANCELLED') {
+    } else if (result === 'FAILED' || result === 'CANCELLED' || result === 'CANCELED' || result === 'REFUSED') {
       setState('failed');
     }
   }, [status.data, state, onPaid]);

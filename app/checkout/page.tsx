@@ -52,7 +52,7 @@ const DEFAULT_CURRENCY = 'KES';
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 // How long we wait for the customer to confirm the STK Push before giving up.
-const MPESA_POLL_INTERVAL_MS = 4000;
+const MPESA_POLL_INTERVAL_MS = 5000;
 const MPESA_TIMEOUT_MS = 120_000;
 
 const formatMoney = (amount: number | string | undefined, currency = DEFAULT_CURRENCY) => {
@@ -120,7 +120,7 @@ const INSTALLMENT_PLANS: InstallmentPlan[] = [
 ];
 
 // M-Pesa STK Push lifecycle.
-type MpesaStatus = 'idle' | 'initiating' | 'waiting' | 'success' | 'failed' | 'timeout';
+type MpesaStatus = 'idle' | 'initiating' | 'waiting' | 'success' | 'failed' | 'timeout' | 'refused';
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -245,10 +245,14 @@ export default function CheckoutPage() {
 
     if (status === 'SUCCESS' || status === 'CAPTURED') {
       setMpesaStatus('success');
-    } else if (status === 'FAILED' || status === 'CANCELLED') {
+    } else if (status === 'REFUSED') {
+      // M-Pesa took the money but the seat could not be confirmed; support must act on it.
+      setMpesaStatus('refused');
+      clearCart();
+    } else if (status === 'FAILED' || status === 'CANCELLED' || status === 'CANCELED') {
       setMpesaStatus('failed');
     }
-  }, [paymentStatusQuery.data, mpesaStatus]);
+  }, [paymentStatusQuery.data, mpesaStatus, clearCart]);
 
   // Give up if the customer never confirms.
   useEffect(() => {
@@ -453,6 +457,29 @@ export default function CheckoutPage() {
                     </p>
                   </div>
                   <Loader2 className='text-muted-foreground h-4 w-4 animate-spin' />
+                </>
+              )}
+
+              {mpesaStatus === 'refused' && (
+                <>
+                  <div className='bg-destructive/10 flex h-16 w-16 items-center justify-center rounded-full'>
+                    <XCircle className='text-destructive h-8 w-8' />
+                  </div>
+                  <div className='space-y-2'>
+                    <h2 className='text-xl font-bold'>Payment received, seat not confirmed</h2>
+                    <p className='text-muted-foreground text-sm'>
+                      M-Pesa took your payment but we could not confirm your seat. Don&apos;t pay
+                      again — contact support with your order number and we will enrol or refund you.
+                    </p>
+                    {orderNumber && (
+                      <p className='text-muted-foreground text-xs'>
+                        Order <span className='text-foreground font-mono font-semibold'>{orderNumber}</span>
+                      </p>
+                    )}
+                  </div>
+                  <Button variant='outline' onClick={() => router.push('/dashboard/student/wallet')} className='w-full'>
+                    Go to my wallet
+                  </Button>
                 </>
               )}
 
