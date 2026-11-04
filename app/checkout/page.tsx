@@ -137,6 +137,7 @@ export default function CheckoutPage() {
   const [mpesaPhoneDisplay, setMpesaPhoneDisplay] = useState('');
   const [waitStartedAt, setWaitStartedAt] = useState<number | null>(null);
   const successHandledRef = useRef(false);
+  const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
@@ -267,10 +268,14 @@ export default function CheckoutPage() {
     successHandledRef.current = true;
     void invalidateEnrollmentSuccessQueries(queryClient, { cartId });
     toast.success('Payment received! Your courses are unlocked.');
+    // clearCart changes cartId and re-runs this effect, so the timer must not be its cleanup.
+    redirectTimerRef.current = setTimeout(() => router.push('/dashboard/student/learning-hub'), 1500);
     clearCart();
-    const timer = setTimeout(() => router.push('/dashboard/student/learning-hub'), 1500);
-    return () => clearTimeout(timer);
   }, [mpesaStatus, queryClient, cartId, clearCart, router]);
+
+  useEffect(() => () => {
+    if (redirectTimerRef.current) clearTimeout(redirectTimerRef.current);
+  }, []);
 
   const startMpesaPayment = async (values: CheckoutFormValues) => {
     if (!cartId) {
