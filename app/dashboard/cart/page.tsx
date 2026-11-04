@@ -357,7 +357,7 @@ export default function CartPage() {
                         className='bg-primary hover:bg-primary/90 w-full rounded-full text-base font-semibold shadow-lg transition'
                         asChild
                       >
-                        <Link href='/checkout'>
+                        <Link href='/dashboard/checkout'>
                           Proceed to Checkout
                           <ArrowRight className='ml-2 h-4 w-4' />
                         </Link>
