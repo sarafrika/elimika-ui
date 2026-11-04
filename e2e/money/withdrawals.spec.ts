@@ -14,7 +14,7 @@ const withdrawal = (status: string, extra: Record<string, unknown> = {}) => ({
 
 // The admin endpoints add each earner's wallet as the server read it.
 const WALLET_OK = { account_balance: 23880, held_amount: 2000, held_count: 1, available_balance: 21880, balance_after: 21880,
-  ledger_balance: 23880, ledger_matches: true, covers: true, checked_at: '2026-10-23T09:00:00Z' };
+  ledger_balance: 21880, ledger_matches: true, covers: true, held_debited_amount: 2000, checked_at: '2026-10-23T09:00:00Z' };
 const adminRow = (status: string, extra: Record<string, unknown> = {}) =>
   withdrawal(status, { wallet_check: WALLET_OK, wallet_flags: [], ...extra });
 
@@ -255,7 +255,7 @@ test.describe('Admin payout batches', () => {
 
   test('a wallet whose ledger disagrees is flagged and needs the approver’s check', async ({ page, baseURL }) => {
     const mismatch = adminRow('NEEDS_REVIEW', { payout_batch_uuid: 'b-1', wallet_flags: ['LEDGER_MISMATCH'],
-      wallet_check: { ...WALLET_OK, ledger_balance: 23380, ledger_matches: false } });
+      wallet_check: { ...WALLET_OK, ledger_balance: 21380, ledger_matches: false } });
     const api = await admin(page, baseURL ?? '');
     api
       .get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, detail({ wallet_issue_count: 1 }, FLOAT, [mismatch]))

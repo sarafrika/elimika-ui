@@ -57,6 +57,8 @@ export interface WalletCheck {
   account_balance?: number | string | null;
   held_amount?: number | string | null;
   held_count?: number | null;
+  /** Withdrawal and fee debits actually recorded for the held withdrawals. */
+  held_debited_amount?: number | string | null;
   available_balance?: number | string | null;
   balance_after?: number | string | null;
   ledger_balance?: number | string | null;
@@ -202,8 +204,9 @@ export function walletFlagsOf(
 }
 
 /** How far the wallet's balance is from its ledger, or null when either is unknown. */
+/** The ledger mirrors the wallet's available balance (held money has already left it). */
 export function ledgerGap(check: WalletCheck | null | undefined): number | null {
-  const balance = toAmount(check?.account_balance);
+  const balance = toAmount(check?.available_balance);
   const ledger = toAmount(check?.ledger_balance);
   if (balance === null || ledger === null) return null;
   return Math.abs(sumAmounts([balance, -ledger]));

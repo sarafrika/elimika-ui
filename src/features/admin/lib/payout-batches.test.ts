@@ -149,9 +149,9 @@ test('wallet flags come from the server and from what the check implies', () => 
 });
 
 test('the ledger gap is the distance between balance and ledger', () => {
-  assert.equal(ledgerGap({ account_balance: 189_465.5, ledger_balance: 189_465.5 }), 0);
-  assert.equal(ledgerGap({ account_balance: '1000.10', ledger_balance: 1200 }), 199.9);
-  assert.equal(ledgerGap({ account_balance: 1000, ledger_balance: null }), null);
+  assert.equal(ledgerGap({ account_balance: 189_465.5, available_balance: 189_365.5, ledger_balance: 189_365.5 }), 0);
+  assert.equal(ledgerGap({ available_balance: '1000.10', ledger_balance: 1200 }), 199.9);
+  assert.equal(ledgerGap({ available_balance: 1000, ledger_balance: null }), null);
   assert.equal(ledgerGap(null), null);
 });
 
