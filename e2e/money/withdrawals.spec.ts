@@ -170,12 +170,16 @@ test.describe('Admin payouts', () => {
 });
 
 test.describe('Admin payout batches', () => {
+  const FLOAT = { utility_funds: 98500, working_funds: 0, reported_at: '2026-10-23T09:00:00Z' };
   const batch = (extra: Record<string, unknown> = {}) => ({
     uuid: 'b-1', status: 'AWAITING_APPROVAL', created_by: 'other-admin', created_by_name: 'Kevin Otieno',
     submitted_by: 'other-admin', submitted_by_name: 'Kevin Otieno', submitted_at: '2026-10-23T09:00:00Z', row_count: 1,
     total_amount: 2000, paid_count: 0, failed_count: 0, in_flight_count: 0, created_date: '2026-10-23T08:30:00Z',
-    can_approve: true, withdrawals: [withdrawal('NEEDS_REVIEW', { payout_batch_uuid: 'b-1' })],
-    payout_float: { utility_funds: 98500, working_funds: 0, reported_at: '2026-10-23T09:00:00Z' }, ...extra,
+    can_approve: true, ...extra,
+  });
+  // GET /batches/{uuid} nests the batch beside its rows and float, as the API returns it.
+  const detail = (extra: Record<string, unknown> = {}, payoutFloat: unknown = FLOAT) => ({
+    batch: batch(extra), withdrawals: [withdrawal('NEEDS_REVIEW', { payout_batch_uuid: 'b-1' })], payout_float: payoutFloat,
   });
 
   async function admin(page: Page, baseURL: string) {
@@ -189,7 +193,7 @@ test.describe('Admin payout batches', () => {
     api
       .get(/\/api\/v1\/admin\/payouts\/withdrawals$/, paged([withdrawal('NEEDS_REVIEW', { review_flags: ['FIRST_PAYOUT_TO_NUMBER'] })]))
       .on('POST', /\/api\/v1\/admin\/payouts\/batches$/, batch({ status: 'DRAFT' }))
-      .get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, batch({ status: 'DRAFT' }));
+      .get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, detail({ status: 'DRAFT' }));
     await api.install(page);
 
     await page.goto('/dashboard/admin/payouts');
@@ -206,7 +210,7 @@ test.describe('Admin payout batches', () => {
 
   test('the admin who made a batch cannot approve it', async ({ page, baseURL }) => {
     const api = await admin(page, baseURL ?? '');
-    api.get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, batch({ created_by: USER, submitted_by: USER, can_approve: false }));
+    api.get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, detail({ created_by: USER, submitted_by: USER, can_approve: false }));
     await api.install(page);
 
     await page.goto('/dashboard/admin/payouts/batches/b-1');
@@ -217,7 +221,7 @@ test.describe('Admin payout batches', () => {
   test('an unknown float needs the approver to vouch for it', async ({ page, baseURL }) => {
     const api = await admin(page, baseURL ?? '');
     api
-      .get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, batch({ payout_float: null }))
+      .get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, detail({}, null))
       .on('POST', /\/api\/v1\/admin\/payouts\/batches\/b-1\/approve$/, batch({ status: 'RELEASED' }));
     await api.install(page);
 
@@ -236,7 +240,7 @@ test.describe('Admin payout batches', () => {
   test('shows the server’s reason when approval is refused', async ({ page, baseURL }) => {
     const api = await admin(page, baseURL ?? '');
     api
-      .get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, batch())
+      .get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, detail())
       .on('POST', /\/api\/v1\/admin\/payouts\/batches\/b-1\/approve$/, httpError(409, 'The payout float is below this batch’s total.'));
     await api.install(page);
 

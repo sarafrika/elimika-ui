@@ -70,19 +70,29 @@ export function usePayoutBatch(batchUuid: string | undefined) {
   return useQuery({
     queryKey: adminKeys.payoutBatch(batchUuid ?? ''),
     queryFn: async ({ signal }): Promise<PayoutBatchDetail | undefined> => {
-      const { data, error } = await client.get<Envelope<PayoutBatchDetail>>({
+      const { data, error } = await client.get<Envelope<PayoutBatchDetailResponse>>({
         url: `${BASE}/{batchUuid}`,
         path: { batchUuid: batchUuid ?? '' },
         security: BEARER,
         signal,
       });
       if (error) throw error;
-      return data?.data;
+      const detail = data?.data;
+      // The API nests the batch beside its rows and float; screens read one flat object.
+      return detail?.batch
+        ? { ...detail.batch, withdrawals: detail.withdrawals ?? [], payout_float: detail.payout_float ?? null }
+        : undefined;
     },
     enabled: Boolean(batchUuid),
     refetchInterval: query => (isBatchLive(query.state.data) ? LIVE_POLL_MS : false),
     ...listQuery,
   });
+}
+
+interface PayoutBatchDetailResponse {
+  batch?: PayoutBatch;
+  withdrawals?: PayoutBatchDetail['withdrawals'];
+  payout_float?: PayoutBatchDetail['payout_float'];
 }
 
 interface Result<T> {
