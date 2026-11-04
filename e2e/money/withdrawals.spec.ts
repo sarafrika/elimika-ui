@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { paged } from '../support/api';
+import { httpError, paged } from '../support/api';
 import { ORG, signedInAs, USER } from './fixtures';
 
 const RULES = { min_amount: 100, max_amount: 150000, daily_limit: 300000, fee_payer: 'PLATFORM', earner_fee: 0,
@@ -140,7 +140,7 @@ test.describe('Admin payouts', () => {
     const row = page.getByRole('row').filter({ hasText: 'WD-2026-000001' });
     await expect(row).toContainText('First payout to this number');
     await row.getByRole('button', { name: 'Open' }).click();
-    await page.getByRole('button', { name: 'Approve and send' }).click();
+    await page.getByRole('button', { name: 'Approve into its own batch' }).click();
 
     await expect.poll(() => api.callsTo('POST', /\/admin\/payouts\/withdrawals\/wd-1\/approve$/).length).toBe(1);
   });
@@ -166,5 +166,85 @@ test.describe('Admin payouts', () => {
     await expect.poll(() => api.callsTo('POST', /\/reject$/)[0]?.body).toEqual({
       reason: 'The name on this number does not match your profile.',
     });
+  });
+});
+
+test.describe('Admin payout batches', () => {
+  const batch = (extra: Record<string, unknown> = {}) => ({
+    uuid: 'b-1', status: 'AWAITING_APPROVAL', created_by: 'other-admin', created_by_name: 'Kevin Otieno',
+    submitted_by: 'other-admin', submitted_by_name: 'Kevin Otieno', submitted_at: '2026-10-23T09:00:00Z', row_count: 1,
+    total_amount: 2000, paid_count: 0, failed_count: 0, in_flight_count: 0, created_date: '2026-10-23T08:30:00Z',
+    can_approve: true, withdrawals: [withdrawal('NEEDS_REVIEW', { payout_batch_uuid: 'b-1' })],
+    payout_float: { utility_funds: 98500, working_funds: 0, reported_at: '2026-10-23T09:00:00Z' }, ...extra,
+  });
+
+  async function admin(page: Page, baseURL: string) {
+    const api = await signedInAs(page, 'admin', baseURL);
+    api.get(/\/api\/v1\/admin\/payouts\/summary$/, { payouts_configured: true, needs_review_count: 1, needs_review_amount: 2000 });
+    return api;
+  }
+
+  test('builds a batch from the withdrawals waiting for one', async ({ page, baseURL }) => {
+    const api = await admin(page, baseURL ?? '');
+    api
+      .get(/\/api\/v1\/admin\/payouts\/withdrawals$/, paged([withdrawal('NEEDS_REVIEW', { review_flags: ['FIRST_PAYOUT_TO_NUMBER'] })]))
+      .on('POST', /\/api\/v1\/admin\/payouts\/batches$/, batch({ status: 'DRAFT' }))
+      .get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, batch({ status: 'DRAFT' }));
+    await api.install(page);
+
+    await page.goto('/dashboard/admin/payouts');
+    await page.getByRole('checkbox', { name: 'Select WD-2026-000001' }).click();
+    const bar = page.getByRole('region', { name: 'Selection' });
+    await expect(bar).toContainText('1 selected');
+    await expect(bar).toContainText('KES 2,000');
+    await bar.getByRole('button', { name: 'Create batch' }).click();
+
+    await expect.poll(() => api.callsTo('POST', /\/admin\/payouts\/batches$/)[0]?.body).toEqual({ withdrawal_uuids: ['wd-1'] });
+    await expect(page).toHaveURL(/\/dashboard\/admin\/payouts\/batches\/b-1$/);
+    await expect(page.getByRole('button', { name: 'Submit for approval' })).toBeEnabled();
+  });
+
+  test('the admin who made a batch cannot approve it', async ({ page, baseURL }) => {
+    const api = await admin(page, baseURL ?? '');
+    api.get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, batch({ created_by: USER, submitted_by: USER, can_approve: false }));
+    await api.install(page);
+
+    await page.goto('/dashboard/admin/payouts/batches/b-1');
+    await expect(page.getByRole('button', { name: 'Approve and pay' })).toBeDisabled();
+    await expect(page.getByText('You made this batch — another admin must approve it.')).toBeVisible();
+  });
+
+  test('an unknown float needs the approver to vouch for it', async ({ page, baseURL }) => {
+    const api = await admin(page, baseURL ?? '');
+    api
+      .get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, batch({ payout_float: null }))
+      .on('POST', /\/api\/v1\/admin\/payouts\/batches\/b-1\/approve$/, batch({ status: 'RELEASED' }));
+    await api.install(page);
+
+    await page.goto('/dashboard/admin/payouts/batches/b-1');
+    await expect(page.getByText('Float unknown').first()).toBeVisible();
+    await page.getByRole('button', { name: 'Approve and pay' }).click();
+    const dialog = page.getByRole('dialog');
+    const confirm = dialog.getByRole('button', { name: 'Approve and pay' });
+    await expect(confirm).toBeDisabled();
+    await dialog.getByRole('checkbox').click();
+    await confirm.click();
+
+    await expect.poll(() => api.callsTo('POST', /\/batches\/b-1\/approve$/)[0]?.body).toEqual({ override_unknown_float: true });
+  });
+
+  test('shows the server’s reason when approval is refused', async ({ page, baseURL }) => {
+    const api = await admin(page, baseURL ?? '');
+    api
+      .get(/\/api\/v1\/admin\/payouts\/batches\/b-1$/, batch())
+      .on('POST', /\/api\/v1\/admin\/payouts\/batches\/b-1\/approve$/, httpError(409, 'The payout float is below this batch’s total.'));
+    await api.install(page);
+
+    await page.goto('/dashboard/admin/payouts/batches/b-1');
+    await expect(page.getByText(/Enough float/).first()).toBeVisible();
+    await page.getByRole('button', { name: 'Approve and pay' }).click();
+    await page.getByRole('dialog').getByRole('button', { name: 'Approve and pay' }).click();
+
+    await expect(page.getByText('The payout float is below this batch’s total.')).toBeVisible();
   });
 });

@@ -3,7 +3,7 @@
  * straight from a generated hook (queues, dossiers, joined lists). Generated queries keep
  * their own keys — never re-key those here, or invalidation stops matching.
  */
-const adminKeys = {
+export const adminKeys = {
   all: ['admin'] as const,
 
   dashboard: () => [...adminKeys.all, 'dashboard'] as const,
@@ -35,6 +35,10 @@ const adminKeys = {
   revenue: (range: string) => [...adminKeys.finance(), 'revenue', range] as const,
   sales: (filters: Record<string, string | number | undefined>) =>
     [...adminKeys.finance(), 'sales', filters] as const,
+  payoutBatches: () => [...adminKeys.finance(), 'payout-batches'] as const,
+  payoutBatchList: (filters: { statuses: string[]; page: number; size: number }) =>
+    [...adminKeys.payoutBatches(), 'list', filters] as const,
+  payoutBatch: (uuid: string) => [...adminKeys.payoutBatches(), 'detail', uuid] as const,
 
   platform: () => [...adminKeys.all, 'platform'] as const,
 } as const;

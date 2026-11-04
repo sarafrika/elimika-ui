@@ -1,14 +1,15 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, ArrowUpRight, CheckCircle2, Wallet, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Layers, Wallet, XCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/dashboard/page-header';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import { SectionTabPanel, SectionTabs, useSectionTab } from '@/components/data-display/section-tabs';
 import { StatCard } from '@/components/data-display/stat-tile';
-import { formatMoney, formatMoneyDate } from '@/components/money/format';
+import { formatMoney } from '@/components/money/format';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,10 +19,14 @@ import { Label } from '@/components/ui/label';
 import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
+import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { apiMessage } from '@/components/wallet/payout-api';
 import { REVIEW_FLAG_LABELS } from '@/components/wallet/withdrawal-api';
 import { WithdrawalStatusBadge } from '@/components/wallet/withdrawals-panel';
+import { useSearchState } from '@/hooks/use-search-state';
+import { enumParam } from '@/lib/search-state';
+import { formatDateTime } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import {
   getPayoutSettingsOptions,
@@ -34,37 +39,46 @@ import {
   rejectAdminWithdrawal,
   updatePayoutSettings,
 } from '@/services/client/sdk.gen';
-import type { PayoutSettings, Withdrawal } from '@/services/client/types.gen';
+import type { PayoutSettings } from '@/services/client/types.gen';
+import { WaitingQueue } from '../components/batch-queue';
+import { PayoutBatchesList } from '../components/payout-batches-list';
+import { SectionBoundary } from '../components/section-boundary';
+import { WithdrawalTable } from '../components/withdrawal-table';
+import { invalidatePayouts } from '../hooks/use-payout-batches';
+import { adminRoutes } from '../lib/admin-routes';
+import type { BatchWithdrawal } from '../lib/payout-batches';
 
-const TABS = ['review', 'flight', 'paid', 'returned', 'rules'] as const;
+/** Payout settings with the batch-era switch the generated type does not have yet. */
+type PayoutSettingsWithApproval = PayoutSettings & { require_admin_approval?: boolean };
+
+const TABS = ['review', 'batches', 'flight', 'paid', 'returned', 'rules'] as const;
 type Tab = (typeof TABS)[number];
-const STATUSES: Record<Exclude<Tab, 'rules'>, string[]> = {
-  review: ['NEEDS_REVIEW', 'AWAITING_SECOND_APPROVAL'],
+type ListTab = Exclude<Tab, 'review' | 'batches' | 'rules'>;
+const STATUSES: Record<ListTab, string[]> = {
   flight: ['SENDING', 'PROCESSING'],
   paid: ['PAID'],
   returned: ['FAILED', 'REJECTED'],
 };
-const HINTS: Record<Exclude<Tab, 'rules'>, string> = {
-  review: 'Flagged by the rules. Approving sends the money to M-Pesa at once; rejecting returns it to the earner’s wallet.',
+const HINTS: Record<ListTab, string> = {
   flight: 'With M-Pesa and waiting for Safaricom’s result. These are checked automatically every few seconds.',
   paid: 'Completed payouts with their M-Pesa receipts.',
   returned: 'M-Pesa failures and rejections. Every one has already been returned to the earner’s wallet.',
 };
+const WAITING_STATUSES = ['NEEDS_REVIEW', 'AWAITING_SECOND_APPROVAL'];
+const REVIEW_VIEWS = ['unbatched', 'all'] as const;
+const reviewViewParam = enumParam(REVIEW_VIEWS, 'unbatched');
 const PAGE = { pageable: { page: 0, size: 50 } };
-const PAYOUT_IDS = new Set(['getPayoutSummary', 'listAdminWithdrawals', 'getPayoutSettings']);
 
 /** The admin Payouts page: withdrawals that need a decision, those in flight, and the payout rules. */
 export function PayoutsPage() {
   const queryClient = useQueryClient();
   const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'review');
-  const [open, setOpen] = useState<Withdrawal | null>(null);
+  const [open, setOpen] = useState<{ withdrawal: BatchWithdrawal; rejecting: boolean } | null>(null);
   const summary = useQuery({ ...getPayoutSummaryOptions(), refetchInterval: 30_000 });
   const s = summary.data?.data;
 
-  const refresh = () =>
-    void queryClient.invalidateQueries({
-      predicate: query => PAYOUT_IDS.has(String((query.queryKey[0] as { _id?: string } | undefined)?._id)),
-    });
+  const refresh = () => void invalidatePayouts(queryClient);
+  const openRow = (withdrawal: BatchWithdrawal, rejecting = false) => setOpen({ withdrawal, rejecting });
 
   const counts: Partial<Record<Tab, number>> = {
     review: s ? Number(s.needs_review_count ?? 0) : undefined,
@@ -76,7 +90,7 @@ export function PayoutsPage() {
       <PageHeader
         eyebrow='Finance'
         title='Payouts'
-        description='Withdrawals by instructors, course creators and organisations to M-Pesa. Most go out automatically; the ones the rules flag wait here for a decision.'
+        description='Withdrawals by instructors, course creators and organisations to M-Pesa. Each one waits here until an admin puts it in a batch and a second admin approves the batch.'
       />
       {s && !s.payouts_configured ? (
         <div className='border-warning/40 bg-warning/10 flex items-start gap-2 rounded-lg border p-3 text-sm'>
@@ -92,11 +106,11 @@ export function PayoutsPage() {
             {summary.isLoading ? <Skeleton className='h-7 w-28' /> : s?.float_amount != null ? formatMoney(s.float_amount) : '—'}
           </div>
           <p className='text-xs opacity-85'>
-            {s?.float_reported_at ? `As M-Pesa reported it ${formatMoneyDate(s.float_reported_at)}` : 'Shown after the first payout'}
+            {s?.float_reported_at ? `As M-Pesa reported it ${formatDateTime(s.float_reported_at)}` : 'Shown after the first payout'}
           </p>
         </div>
         <StatCard
-          label='Needs review'
+          label='Waiting for approval'
           value={String(s?.needs_review_count ?? 0)}
           hint={`${formatMoney(s?.needs_review_amount ?? 0)} waiting`}
           icon={AlertTriangle}
@@ -108,7 +122,8 @@ export function PayoutsPage() {
       <SectionTabs
         label='Payout sections'
         tabs={[
-          { id: 'review', label: 'Needs review', count: counts.review ?? null },
+          { id: 'review', label: 'Waiting for a batch', count: counts.review ?? null },
+          { id: 'batches', label: 'Batches' },
           { id: 'flight', label: 'In progress', count: counts.flight ?? null },
           { id: 'paid', label: 'Paid' },
           { id: 'returned', label: 'Failed & rejected' },
@@ -118,17 +133,83 @@ export function PayoutsPage() {
         onValueChange={setTab}
         hrefFor={hrefFor}
       >
-        {(Object.keys(STATUSES) as Exclude<Tab, 'rules'>[]).map(key => (
+        <SectionTabPanel value='review'>
+          <ReviewPanel active={tab === 'review'} onOpen={openRow} />
+        </SectionTabPanel>
+        <SectionTabPanel value='batches'>
+          <Card className='gap-0 overflow-hidden py-0'>
+            <PayoutBatchesList active={tab === 'batches'} />
+          </Card>
+        </SectionTabPanel>
+        {(Object.keys(STATUSES) as ListTab[]).map(key => (
           <SectionTabPanel key={key} value={key}>
-            <WithdrawalQueue statuses={STATUSES[key]} hint={HINTS[key]} active={tab === key} onOpen={setOpen} />
+            <WithdrawalQueue statuses={STATUSES[key]} hint={HINTS[key]} active={tab === key} onOpen={openRow} />
           </SectionTabPanel>
         ))}
         <SectionTabPanel value='rules'>
           <RulesForm active={tab === 'rules'} onSaved={refresh} />
         </SectionTabPanel>
       </SectionTabs>
-      <ReviewSheet withdrawal={open} onClose={() => setOpen(null)} onChanged={refresh} />
+      <ReviewSheet
+        withdrawal={open?.withdrawal ?? null}
+        startRejecting={open?.rejecting ?? false}
+        onClose={() => setOpen(null)}
+        onChanged={refresh}
+      />
     </div>
+  );
+}
+
+/** Rows open to a decision: Open for the details, Reject straight from the row. */
+function rowActions(onOpen: (w: BatchWithdrawal, rejecting?: boolean) => void) {
+  return (w: BatchWithdrawal) => (
+    <>
+      {WAITING_STATUSES.includes(w.status ?? '') ? (
+        <Button size='sm' variant='ghost' onClick={() => onOpen(w, true)}>
+          Reject
+        </Button>
+      ) : null}
+      <Button size='sm' variant='ghost' onClick={() => onOpen(w)}>
+        Open
+      </Button>
+    </>
+  );
+}
+
+/** Withdrawals waiting for an admin: those not yet in a batch, or every one still waiting. */
+function ReviewPanel({ active, onOpen }: { active: boolean; onOpen: (w: BatchWithdrawal, rejecting?: boolean) => void }) {
+  const [view, setView] = useSearchState('view', reviewViewParam);
+  return (
+    <Card className='gap-0 overflow-hidden py-0'>
+      <div role='group' aria-label='Which withdrawals' className='flex flex-wrap items-center gap-2 border-b px-5 py-3'>
+        {(
+          [
+            ['unbatched', 'Not in a batch'],
+            ['all', 'All waiting'],
+          ] as const
+        ).map(([id, label]) => (
+          <Button key={id} size='sm' variant={view === id ? 'default' : 'outline'} aria-pressed={view === id} onClick={() => setView(id)}>
+            {label}
+          </Button>
+        ))}
+      </div>
+      {view === 'unbatched' ? (
+        <WaitingQueue
+          active={active}
+          mode={{ kind: 'page' }}
+          hint='Every confirmed withdrawal waits here. Select rows to build a batch; another admin approves it before anything is paid. Rejecting returns the money to the earner’s wallet.'
+          rowActions={rowActions(onOpen)}
+        />
+      ) : (
+        <WithdrawalQueue
+          bare
+          statuses={WAITING_STATUSES}
+          hint='Everything still waiting, including withdrawals already in a batch and organisation withdrawals waiting for their second approver.'
+          active={active}
+          onOpen={onOpen}
+        />
+      )}
+    </Card>
   );
 }
 
@@ -137,86 +218,50 @@ function WithdrawalQueue({
   hint,
   active,
   onOpen,
+  bare,
 }: {
   statuses: string[];
   hint: string;
   active: boolean;
-  onOpen: (w: Withdrawal) => void;
+  onOpen: (w: BatchWithdrawal, rejecting?: boolean) => void;
+  /** Render without its own card, inside a panel that has one. */
+  bare?: boolean;
 }) {
   const query = useQuery({
     ...listAdminWithdrawalsOptions({ query: { status: statuses, ...PAGE } as never }),
     enabled: active,
     refetchInterval: active ? 15_000 : false,
   });
-  const rows: Withdrawal[] = query.data?.data?.content ?? [];
-  return (
-    <Card className='gap-0 overflow-hidden py-0'>
+  const rows = (query.data?.data?.content ?? []) as BatchWithdrawal[];
+  const body = (
+    <>
       <p className='text-muted-foreground border-b px-5 py-4 text-sm'>{hint}</p>
-      {query.isLoading ? (
-        <Skeleton className='m-5 h-24' />
-      ) : rows.length === 0 ? (
-        <EmptyState variant='compact' icon={Wallet} title='Nothing here right now' description='New withdrawals appear here.' />
-      ) : (
-        <div className='overflow-x-auto'>
-          <table className='w-full min-w-[960px] text-sm'>
-            <caption className='sr-only'>Withdrawals</caption>
-            <thead className='bg-muted/40 text-muted-foreground text-left text-xs'>
-              <tr>
-                {['Earner', 'Reference', 'Amount', 'To M-Pesa', 'Requested', 'Flags', 'Status', ''].map(h => (
-                  <th key={h} className='px-4 py-3 font-semibold'>
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(w => (
-                <tr key={w.uuid} className='hover:bg-muted/30 border-t'>
-                  <td className='px-4 py-3'>
-                    <div className='flex flex-col gap-1'>
-                      <span className='font-semibold'>{w.requester_name ?? 'Earner'}</span>
-                      <Badge variant='outline' className='self-start text-[10px]'>
-                        {w.owner_type === 'ORGANISATION' ? 'Organisation' : 'Person'}
-                      </Badge>
-                    </div>
-                  </td>
-                  <td className='px-4 py-3 font-mono text-xs'>{w.reference}</td>
-                  <td className='px-4 py-3 font-semibold tabular-nums'>{formatMoney(w.amount, w.currency_code)}</td>
-                  <td className='px-4 py-3 font-mono text-xs'>{w.masked_msisdn}</td>
-                  <td className='px-4 py-3'>{formatMoneyDate(w.created_date)}</td>
-                  <td className='px-4 py-3'>
-                    <div className='flex flex-wrap gap-1'>
-                      {(w.review_flags ?? []).map(flag => (
-                        <Badge key={flag} variant='outline' className='border-warning/40 bg-warning/10 text-[10px]'>
-                          {REVIEW_FLAG_LABELS[flag] ?? flag}
-                        </Badge>
-                      ))}
-                    </div>
-                  </td>
-                  <td className='px-4 py-3'>
-                    <WithdrawalStatusBadge status={w.status} />
-                  </td>
-                  <td className='px-4 py-3 text-right'>
-                    <Button size='sm' variant='ghost' onClick={() => onOpen(w)}>
-                      Open
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </Card>
+      <SectionBoundary
+        label='the withdrawals'
+        loading={query.isLoading && !query.data}
+        error={query.error}
+        onRetry={() => void query.refetch()}
+        skeleton={<Skeleton className='m-5 h-24' />}
+        empty={rows.length === 0}
+        emptyState={
+          <EmptyState variant='compact' icon={Wallet} title='Nothing here right now' description='New withdrawals appear here.' />
+        }
+      >
+        <WithdrawalTable rows={rows} caption='Withdrawals' actions={rowActions(onOpen)} />
+      </SectionBoundary>
+    </>
   );
+  return bare ? body : <Card className='gap-0 overflow-hidden py-0'>{body}</Card>;
 }
 
 function ReviewSheet({
   withdrawal,
+  startRejecting,
   onClose,
   onChanged,
 }: {
-  withdrawal: Withdrawal | null;
+  withdrawal: BatchWithdrawal | null;
+  startRejecting: boolean;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -227,10 +272,10 @@ function ReviewSheet({
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    setRejecting(false);
+    setRejecting(startRejecting);
     setReason('');
     setError('');
-  }, [withdrawal?.uuid]);
+  }, [withdrawal?.uuid, startRejecting]);
 
   if (!withdrawal) return null;
   const uuid = withdrawal.uuid ?? '';
@@ -280,7 +325,8 @@ function ReviewSheet({
           <dl className='divide-border/60 divide-y rounded-md border text-sm'>
             {(
               [
-                ['Requested', formatMoneyDate(withdrawal.created_date)],
+                ['Requested', formatDateTime(withdrawal.created_date)],
+                ['Confirmed', formatDateTime(withdrawal.confirmed_at)],
                 ['Amount', formatMoney(withdrawal.amount, withdrawal.currency_code)],
                 ['Arrives on M-Pesa', formatMoney(withdrawal.net_amount, withdrawal.currency_code)],
                 ['To M-Pesa', withdrawal.masked_msisdn ?? ''],
@@ -308,6 +354,15 @@ function ReviewSheet({
               <p className='text-muted-foreground text-xs'>The amount goes back to their wallet straight away.</p>
             </div>
           ) : null}
+          {withdrawal.payout_batch_uuid ? (
+            <Link
+              href={adminRoutes.payoutBatch(withdrawal.payout_batch_uuid)}
+              className='text-primary inline-flex items-center gap-1 text-sm font-medium hover:underline'
+            >
+              <Layers aria-hidden className='size-4' />
+              Open the batch it is in
+            </Link>
+          ) : null}
           {error ? <p className='text-destructive text-sm font-medium'>{error}</p> : null}
         </div>
         <SheetFooter className='flex-row flex-wrap justify-end gap-2 border-t'>
@@ -332,14 +387,20 @@ function ReviewSheet({
                 <Button variant='outline' onClick={() => setRejecting(true)}>
                   Reject
                 </Button>
-                {status === 'NEEDS_REVIEW' ? (
+                {status === 'NEEDS_REVIEW' && !withdrawal.payout_batch_uuid ? (
                   <Button
                     disabled={busy}
-                    onClick={() => void run(() => approveAdminWithdrawal({ path: { withdrawalUuid: uuid } }), 'Sent to M-Pesa')}
+                    title='Puts it in a batch of its own; another admin approves the batch before it is paid.'
+                    onClick={() =>
+                      void run(
+                        () => approveAdminWithdrawal({ path: { withdrawalUuid: uuid } }),
+                        'Approved into a one-row batch. Another admin must approve it.'
+                      )
+                    }
                   >
                     {busy && <Spinner />}
-                    <ArrowUpRight aria-hidden className='size-4' />
-                    Approve and send
+                    <Layers aria-hidden className='size-4' />
+                    Approve into its own batch
                   </Button>
                 ) : null}
               </>
@@ -377,8 +438,9 @@ const FIELDS: { key: keyof PayoutSettings; label: string; hint: string }[] = [
 
 function RulesForm({ active, onSaved }: { active: boolean; onSaved: () => void }) {
   const query = useQuery({ ...getPayoutSettingsOptions(), enabled: active });
-  const current = query.data?.data;
+  const current = query.data?.data as PayoutSettingsWithApproval | undefined;
   const [form, setForm] = useState<Record<string, string>>({});
+  const [requireApproval, setRequireApproval] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -393,6 +455,7 @@ function RulesForm({ active, onSaved }: { active: boolean; onSaved: () => void }
       fee_payer: current.fee_payer ?? 'PLATFORM',
       earner_fee: String(current.earner_fee ?? '0'),
     });
+    setRequireApproval(current.require_admin_approval ?? true);
   }, [current]);
 
   const save = async () => {
@@ -408,6 +471,7 @@ function RulesForm({ active, onSaved }: { active: boolean; onSaved: () => void }
         second_approval_limit: n('second_approval_limit'),
         fee_payer: form.fee_payer as PayoutSettings['fee_payer'],
         earner_fee: n('earner_fee'),
+        require_admin_approval: requireApproval,
       } as never,
     });
     setBusy(false);
@@ -480,6 +544,21 @@ function RulesForm({ active, onSaved }: { active: boolean; onSaved: () => void }
               </div>
             ) : null}
           </fieldset>
+          <div className='flex items-start justify-between gap-4 rounded-xl border p-3'>
+            <div className='space-y-0.5'>
+              <Label htmlFor='rule-require-admin-approval' className='text-sm font-semibold'>
+                Every withdrawal waits for admin approval
+              </Label>
+              <p className='text-muted-foreground text-xs'>
+                Withdrawals are paid only through a payout batch that one admin builds and a different admin approves.
+              </p>
+            </div>
+            <Switch
+              id='rule-require-admin-approval'
+              checked={requireApproval}
+              onCheckedChange={setRequireApproval}
+            />
+          </div>
           {error ? <p className='text-destructive text-sm font-medium'>{error}</p> : null}
           <div className='flex justify-end'>
             <Button onClick={() => void save()} disabled={busy}>

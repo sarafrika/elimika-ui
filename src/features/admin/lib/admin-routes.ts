@@ -86,7 +86,9 @@ export const adminRoutes = {
   sales: (filters?: { status?: string; scope?: string; order?: string; page?: string }) =>
     withQuery(admin('sales'), filters ?? {}),
   currencies: () => admin('currencies'),
-  payouts: (tab?: string) => withQuery(admin('payouts'), { tab }),
+  payouts: (tab?: string, filters?: { group?: string; view?: string }) =>
+    withQuery(admin('payouts'), { tab, ...filters }),
+  payoutBatch: (uuid: string) => admin(`payouts/batches/${uuid}`),
 
   categories: () => admin('platform/categories'),
   skills: () => admin('platform/skills'),
