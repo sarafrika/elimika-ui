@@ -47,7 +47,7 @@ import { WalletCheckBlock } from '../components/wallet-check';
 import { WithdrawalTable } from '../components/withdrawal-table';
 import { invalidatePayouts } from '../hooks/use-payout-batches';
 import { adminRoutes } from '../lib/admin-routes';
-import type { BatchWithdrawal } from '../lib/payout-batches';
+import { type BatchWithdrawal, withdrawalPurseLabel } from '../lib/payout-batches';
 
 /** Payout settings with the batch-era switch the generated type does not have yet. */
 type PayoutSettingsWithApproval = PayoutSettings & { require_admin_approval?: boolean };
@@ -306,6 +306,11 @@ function ReviewSheet({
               <Badge variant='outline' className='text-[11px]'>
                 {withdrawal.owner_type === 'ORGANISATION' ? 'Organisation wallet' : 'Personal wallet'}
               </Badge>
+              {withdrawalPurseLabel(withdrawal) ? (
+                <Badge variant='outline' className='text-[11px]'>
+                  {withdrawalPurseLabel(withdrawal)}
+                </Badge>
+              ) : null}
             </div>
           </SheetDescription>
         </SheetHeader>
@@ -332,6 +337,7 @@ function ReviewSheet({
                 ['Arrives on M-Pesa', formatMoney(withdrawal.net_amount, withdrawal.currency_code)],
                 ['To M-Pesa', withdrawal.masked_msisdn ?? ''],
                 ['Name on account', withdrawal.requester_name ?? '—'],
+                ['Paid from', withdrawalPurseLabel(withdrawal) ?? '—'],
                 ['Name on M-Pesa', withdrawal.mpesa_recipient_name ?? 'Known after the first payout'],
                 ['M-Pesa receipt', withdrawal.mpesa_receipt ?? '—'],
               ] as [string, string][]

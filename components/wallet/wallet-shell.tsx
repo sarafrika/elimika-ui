@@ -6,9 +6,11 @@ import { PageHeader } from '@/components/dashboard/page-header';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import { type SectionTab, SectionTabs } from '@/components/data-display/section-tabs';
 import { formatMoney } from '@/components/money/format';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+import { purseLabel, STUDENT_PURSE_NOTE } from '@/src/features/wallet/purses';
 import { useWalletFigures, type WalletScope } from './wallet-scope';
 
 interface WalletShellProps<T extends string> {
@@ -30,7 +32,7 @@ interface WalletShellProps<T extends string> {
   children: ReactNode;
 }
 
-/** Every dashboard's wallet: balances and Withdraw in the header, chip tabs below. Only the domain colour differs. */
+/** Every dashboard's wallet: its purse's balances and Withdraw in the header, chip tabs below. */
 export function WalletShell<T extends string>({
   scope,
   title,
@@ -48,9 +50,11 @@ export function WalletShell<T extends string>({
   const { figures, isLoading } = useWalletFigures(scope);
   const currency = figures?.currency ?? 'KES';
   const balances = [
-    { label: 'Account balance', value: figures ? figures.balance + figures.held : undefined },
+    { label: 'Account balance', value: figures?.account },
     { label: 'Available balance', value: figures?.available },
+    ...(figures?.held ? [{ label: 'Held', value: figures.held }] : []),
   ];
+  const purse = purseLabel(scope.purse);
 
   return (
     <div className={cn(surfaceTheme.page, 'min-w-0 space-y-5')}>
@@ -60,6 +64,16 @@ export function WalletShell<T extends string>({
         description={description}
         actions={
           <div className='flex flex-wrap items-end gap-4'>
+            {purse ? (
+              <div className='space-y-1'>
+                <Badge variant='outline' className='text-[11px]'>
+                  {purse}
+                </Badge>
+                {scope.purse === 'STUDENT' ? (
+                  <p className='text-muted-foreground max-w-56 text-xs'>{STUDENT_PURSE_NOTE}</p>
+                ) : null}
+              </div>
+            ) : null}
             <dl className='flex flex-wrap gap-5'>
               {balances.map(({ label, value }) => (
                 <div key={label}>

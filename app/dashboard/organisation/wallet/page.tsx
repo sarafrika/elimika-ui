@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, ArrowUpRight, Coins, FileText, Landmark, LayoutDashboard, Receipt, ShieldCheck, Smartphone, Undo2, Users } from 'lucide-react';
+import { ArrowLeftRight, ArrowUpRight, Coins, FileText, Landmark, LayoutDashboard, Receipt, ReceiptText, ShieldCheck, Smartphone, Undo2, Users } from 'lucide-react';
 import { useState } from 'react';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
@@ -13,6 +13,7 @@ import { RecordPaymentSheet } from '@/components/money/money-sheets';
 import { usePayoutApprovers } from '@/components/wallet/payout-api';
 import { PayoutApproversCard } from '@/components/wallet/payout-approvers-card';
 import { PayoutDetailsPanel } from '@/components/wallet/payout-details-panel';
+import { SalesPanel } from '@/components/wallet/sales-panel';
 import {
   AccountCards,
   AuditPanel,
@@ -30,7 +31,7 @@ import { useUserProfile } from '@/context/profile-context';
 import { useClassDefinitionsByIds, useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { listObligationsOptions, listObligationsQueryKey } from '@/services/client/@tanstack/react-query.gen';
 
-const TABS = ['dashboard', 'accounts', 'transactions', 'withdrawals', 'payout', 'refunds', 'statements', 'audit'] as const;
+const TABS = ['dashboard', 'sales', 'accounts', 'transactions', 'withdrawals', 'payout', 'refunds', 'statements', 'audit'] as const;
 const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'WITHDRAWAL', 'WITHDRAWAL_REVERSAL', 'PAYOUT_FEE', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
 const PAGE = { pageable: { page: 0, size: 100 } };
 const PAYABLE_FILTERS = [
@@ -46,7 +47,7 @@ export default function OrganisationWalletPage() {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
   const user = useUserProfile();
-  const scope: WalletScope = { kind: 'organisation', organisationUuid };
+  const scope: WalletScope = { kind: 'organisation', organisationUuid, purse: 'EARNINGS' };
   const queryClient = useQueryClient();
   const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'dashboard');
   const [settling, setSettling] = useState<LedgerEntry<Obligation> | null>(null);
@@ -79,6 +80,7 @@ export default function OrganisationWalletPage() {
         description='Class orders delivered by your organisation, what you owe hired instructors, and wallet activity.'
         tabs={[
           { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { id: 'sales', label: 'Sales', icon: ReceiptText },
           { id: 'accounts', label: 'Accounts', icon: Landmark, count: owedList.length || null },
           { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
           { id: 'withdrawals', label: 'Withdrawals', icon: ArrowUpRight },
@@ -110,6 +112,9 @@ export default function OrganisationWalletPage() {
             <StatCard label='Owed to instructors' value={formatMoney(owed, currency)} hint={sessions} icon={Users} tone='warning' />
           </section>
           <RecentTransactions scope={scope} active={tab === 'dashboard'} onViewAll={() => setTab('transactions')} />
+        </SectionTabPanel>
+        <SectionTabPanel value='sales'>
+          <SalesPanel scope={scope} active={tab === 'sales'} transactionsHref={hrefFor('transactions')} />
         </SectionTabPanel>
         <SectionTabPanel value='accounts' className='space-y-5'>
           <AccountCards

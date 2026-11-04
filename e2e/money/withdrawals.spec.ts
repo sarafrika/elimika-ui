@@ -48,7 +48,8 @@ test.describe('Withdrawals', () => {
     await page.getByRole('button', { name: 'Withdraw', exact: true }).first().click();
     const sheet = page.getByRole('dialog');
     await sheet.getByLabel('Amount (KES)').fill('2000');
-    await expect(sheet).toContainText('Left in wallet');
+    await expect(sheet).toContainText('Left in purse');
+    await expect(sheet).toContainText(`From: ${role === 'instructor' ? 'Instructor' : 'Course creator'} purse · available`);
     await expect(sheet).toContainText('KES 21,880');
     await sheet.getByRole('button', { name: 'Continue' }).click();
 
@@ -58,7 +59,7 @@ test.describe('Withdrawals', () => {
     await expect(sheet).toContainText('TJL4DE02A5');
 
     const [request] = api.callsTo('POST', /\/api\/v1\/wallets\/[^/]+\/withdrawals$/);
-    expect(request?.body).toMatchObject({ amount: 2000, payout_method_uuid: 'pm-1' });
+    expect(request?.body).toMatchObject({ amount: 2000, payout_method_uuid: 'pm-1', purse: role === 'instructor' ? 'INSTRUCTOR' : 'COURSE_CREATOR' });
     expect((request?.body as { idempotency_key?: string }).idempotency_key).toBeTruthy();
     expect(api.callsTo('POST', /\/confirm$/)[0]?.body).toEqual({ code: '574851' });
   });

@@ -1,4 +1,5 @@
 import type { Withdrawal } from '@/services/client/types.gen';
+import { purseLabel } from '@/src/features/wallet/purses';
 
 /**
  * Payout batches: every approved withdrawal is paid through one. One admin builds and
@@ -54,6 +55,8 @@ export type WalletFlag = 'LEDGER_MISMATCH' | 'WALLET_SHORT';
 
 /** The earner's wallet as the server read it when it listed the withdrawal. */
 export interface WalletCheck {
+  /** The purse these figures are for; the withdrawal is paid from it. */
+  purse?: string | null;
   account_balance?: number | string | null;
   held_amount?: number | string | null;
   held_count?: number | null;
@@ -76,6 +79,8 @@ export type BatchWithdrawal = Omit<
   'created_date' | 'confirmed_at' | 'sent_at' | 'completed_at'
 > & {
   payout_batch_uuid?: string | null;
+  /** The purse the withdrawal is paid from, e.g. INSTRUCTOR. */
+  purse?: string | null;
   wallet_check?: WalletCheck | null;
   wallet_flags?: string[] | null;
   created_date?: string | Date | null;
@@ -318,4 +323,9 @@ export function canConfirmApproval(
   if (float.kind === 'short') return false;
   if (walletIssues > 0 && !walletsAcknowledged) return false;
   return float.kind === 'enough' || override;
+}
+
+/** "Instructor purse" for the purse a withdrawal is paid from, or null before purses existed. */
+export function withdrawalPurseLabel(row: Pick<BatchWithdrawal, 'purse' | 'wallet_check'>): string | null {
+  return purseLabel(row.purse ?? row.wallet_check?.purse);
 }

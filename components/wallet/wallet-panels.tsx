@@ -12,17 +12,44 @@ import { cn } from '@/lib/utils';
 import { ArrowLeftRight, Download, History, ReceiptText } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { toast } from 'sonner';
+import { SaleSplitSheet } from './sales-panel';
 import { auditEventLabel, monthLabel, monthRange, transactionTypeLabel } from './wallet-labels';
 import {
   downloadWalletCsv,
   useWalletAudit,
   useWalletStatements,
+  type PurseTransaction,
   useWalletTransactions,
   type WalletScope,
 } from './wallet-scope';
 import { WalletTxnRow } from './wallet-txn-row';
 
 const ALL = 'all';
+
+/** Ledger rows, each sale share and platform fee with a way into its split. */
+function TxnList({ scope, rows }: { scope: WalletScope; rows: PurseTransaction[] }) {
+  const [split, setSplit] = useState<string | null>(null);
+  return (
+    <>
+      <ul className='divide-y'>
+        {rows.map(txn => (
+          <WalletTxnRow
+            key={txn.uuid}
+            txn={txn}
+            action={
+              txn.sale_split_uuid ? (
+                <Button variant='outline' size='sm' onClick={() => setSplit(txn.sale_split_uuid ?? null)}>
+                  View split
+                </Button>
+              ) : null
+            }
+          />
+        ))}
+      </ul>
+      <SaleSplitSheet scope={scope} splitUuid={split} onClose={() => setSplit(null)} />
+    </>
+  );
+}
 
 function RowsSkeleton() {
   return (
@@ -133,11 +160,7 @@ export function TransactionsPanel({
         ) : query.rows.length === 0 ? (
           <EmptyState variant='compact' icon={ArrowLeftRight} title={emptyTitle} description={emptyDescription} />
         ) : (
-          <ul className='divide-y'>
-            {query.rows.map(txn => (
-              <WalletTxnRow key={txn.uuid} txn={txn} />
-            ))}
-          </ul>
+          <TxnList scope={scope} rows={query.rows} />
         )}
         <LoadMore show={query.hasNextPage} loading={query.isFetchingNextPage} onClick={query.fetchNextPage} />
       </CardContent>
@@ -317,11 +340,7 @@ export function RecentTransactions({
             description='Wallet activity will appear here once money moves.'
           />
         ) : (
-          <ul className='divide-y'>
-            {rows.map(txn => (
-              <WalletTxnRow key={txn.uuid} txn={txn} />
-            ))}
-          </ul>
+          <TxnList scope={scope} rows={rows} />
         )}
       </CardContent>
     </Card>

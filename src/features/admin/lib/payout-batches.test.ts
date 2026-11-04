@@ -16,6 +16,7 @@ import {
   WALLET_FLAG_LABELS,
   walletFlagsOf,
   walletSummary,
+  withdrawalPurseLabel,
 } from './payout-batches';
 
 test('every batch status sits in exactly one list tab', () => {
@@ -188,4 +189,10 @@ test('wallet issues need the approver’s acknowledgement to confirm', () => {
   assert.equal(canConfirmApproval(enough, false, 0, false), true);
   assert.equal(canConfirmApproval({ kind: 'unknown' }, false, 1, true), false);
   assert.equal(canConfirmApproval({ kind: 'unknown' }, true, 1, true), true);
+});
+
+test('a withdrawal is labelled with the purse it is paid from', () => {
+  assert.equal(withdrawalPurseLabel({ purse: 'INSTRUCTOR' }), 'Instructor purse');
+  assert.equal(withdrawalPurseLabel({ wallet_check: { purse: 'EARNINGS' } }), 'Earnings purse');
+  assert.equal(withdrawalPurseLabel({}), null);
 });

@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import type { PayoutMethod, VerificationCode, Withdrawal } from '@/services/client/types.gen';
+import { purseLabel } from '@/src/features/wallet/purses';
 import { usePayoutMethods } from './payout-api';
 import type { WalletScope } from './wallet-scope';
 import { IN_FLIGHT, REVIEW_FLAG_LABELS, usePayoutRules, WAITING, withdrawalActions } from './withdrawal-api';
@@ -128,7 +129,12 @@ export function WithdrawDialog({
     if (value > available) return setError(`You can withdraw up to ${formatMoney(available, currency)}.`);
     if (!methodUuid) return setError('Choose a number to send to.');
     setBusy(true);
-    const result = await actions.request({ amount: value, payout_method_uuid: methodUuid, idempotency_key: idempotencyKey.current });
+    const result = await actions.request({
+      amount: value,
+      payout_method_uuid: methodUuid,
+      idempotency_key: idempotencyKey.current,
+      ...(scope.purse ? { purse: scope.purse } : {}),
+    });
     setBusy(false);
     if (result.error || !result.data?.withdrawal) return setError(result.error ?? 'Could not start the withdrawal.');
     setWithdrawal(result.data.withdrawal);
@@ -169,7 +175,7 @@ export function WithdrawDialog({
     ['You withdraw', formatMoney(value, currency)],
     ['M-Pesa charge', fee > 0 ? formatMoney(fee, currency) : 'Free'],
     ['Arrives on M-Pesa', formatMoney(net, currency)],
-    ['Left in wallet', formatMoney(Math.max(0, available - value), currency)],
+    [scope.purse ? 'Left in purse' : 'Left in wallet', formatMoney(Math.max(0, available - value), currency)],
   ];
 
   return (
@@ -180,7 +186,10 @@ export function WithdrawDialog({
             {step === 'result' ? 'Submitted' : step === 'code' ? 'Step 2 of 2' : 'Step 1 of 2'}
           </p>
           <DialogTitle>Withdraw to M-Pesa</DialogTitle>
-          <DialogDescription>Available {formatMoney(available, currency)}</DialogDescription>
+          <DialogDescription>
+            {purseLabel(scope.purse) ? `From: ${purseLabel(scope.purse)} · available ` : 'Available '}
+            {formatMoney(available, currency)}
+          </DialogDescription>
         </DialogHeader>
 
         {step === 'amount' ? (

@@ -20,6 +20,7 @@ import {
   resendWithdrawalCode,
 } from '@/services/client/sdk.gen';
 import type { PayoutRules, VerificationCode, Withdrawal } from '@/services/client/types.gen';
+import type { Purse } from '@/src/features/wallet/purses';
 import { apiMessage } from './payout-api';
 import { scopeReady, type WalletScope } from './wallet-scope';
 
@@ -78,7 +79,10 @@ export function useWithdrawals(scope: WalletScope, statuses: string[] | undefine
     enabled: ready && scope.kind === 'organisation',
   });
   const active = scope.kind === 'user' ? user : org;
-  const rows: Withdrawal[] = (active.data?.pages ?? []).flatMap(page => page.data?.content ?? []);
+  // The list has no purse filter: keep this purse's rows, and rows from before purses existed.
+  const rows: PurseWithdrawal[] = (active.data?.pages ?? [])
+    .flatMap(page => (page.data?.content ?? []) as PurseWithdrawal[])
+    .filter(row => !scope.purse || !row.purse || row.purse === scope.purse);
   return {
     rows,
     isLoading: active.isLoading,
@@ -89,6 +93,9 @@ export function useWithdrawals(scope: WalletScope, statuses: string[] | undefine
     refetch: () => void active.refetch(),
   };
 }
+
+/** A withdrawal with the purse it is paid from; `purse` postdates the generated type. */
+export type PurseWithdrawal = Withdrawal & { purse?: string | null };
 
 interface Result<T> {
   data?: T;
@@ -106,9 +113,12 @@ export function withdrawalActions(scope: WalletScope) {
   const user = scope.kind === 'user' ? { userUuid: scope.userUuid } : null;
   const org = scope.kind === 'organisation' ? { organisationUuid: scope.organisationUuid } : null;
   return {
-    request: (body: { amount: number; payout_method_uuid: string; idempotency_key: string }) =>
-      unwrap<{ withdrawal?: Withdrawal; verification?: VerificationCode }>(
-        user ? requestWithdrawal({ path: user, body }) : requestOrganisationWithdrawal({ path: org!, body }),
+    // `purse` is not in the generated body yet; the server refuses STUDENT and asks for one when two are funded.
+    request: (body: { amount: number; payout_method_uuid: string; idempotency_key: string; purse?: Purse }) =>
+      unwrap<{ withdrawal?: PurseWithdrawal; verification?: VerificationCode }>(
+        user
+          ? requestWithdrawal({ path: user, body: body as never })
+          : requestOrganisationWithdrawal({ path: org!, body: body as never }),
         'Could not start the withdrawal.'
       ),
     resend: (withdrawalUuid: string) =>

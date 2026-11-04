@@ -18,10 +18,12 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { absoluteDateTime, formatDate } from '@/lib/date';
 import { getErrorMessage } from '@/lib/error-utils';
 import type { RevenueSaleLineItemDto } from '@/services/client';
+import { SaleSplitBreakdown } from '@/components/wallet/sale-split-breakdown';
 import { ConfirmDialog } from '../components/confirm-dialog';
 import { formatMoney } from '../components/money-list';
 import { SectionBoundary } from '../components/section-boundary';
 import { REVENUE_RANGES, type RevenueRange } from '../hooks/use-revenue';
+import { useAdminOrderSplits } from '../hooks/use-sale-splits';
 import {
   exportPageCount,
   fetchSalesCsv,
@@ -291,6 +293,8 @@ function OrderDrawer({
 }) {
   const { order, query: orderQuery } = useOrder(orderId || undefined);
   const { payments, query: paymentsQuery } = useOrderPayments(range, orderId || undefined);
+  const splitsQuery = useAdminOrderSplits(orderId || undefined);
+  const splits = splitsQuery.data ?? [];
 
   return (
     <Sheet open={Boolean(orderId)} onOpenChange={open => !open && onClose()}>
@@ -340,6 +344,27 @@ function OrderDrawer({
                 </li>
               ) : null}
             </ul>
+          </SectionCard>
+
+          <SectionCard title='Splits' description='How each line was shared out, platform fees included.'>
+            <SectionBoundary
+              label='the splits'
+              loading={splitsQuery.isLoading && !splitsQuery.data}
+              error={splitsQuery.error}
+              empty={splits.length === 0}
+              onRetry={splitsQuery.refetch}
+              emptyTitle='No splits recorded'
+              emptyDescription='A line is split once its payment is captured.'
+            >
+              <div className='divide-border/60 flex flex-col divide-y'>
+                {splits.map(split => (
+                  <section key={split.uuid} aria-label={`Split · ${split.title ?? 'line'}`} className='py-3 first:pt-0'>
+                    <p className='mb-2 text-sm font-semibold'>{split.title ?? 'Line'}</p>
+                    <SaleSplitBreakdown split={split} />
+                  </section>
+                ))}
+              </div>
+            </SectionBoundary>
           </SectionCard>
 
           <SectionCard title='Payments' description='Every attempt recorded against this order.'>

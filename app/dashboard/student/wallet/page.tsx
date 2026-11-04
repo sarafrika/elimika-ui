@@ -28,8 +28,11 @@ import {
   StatementsPanel,
   TransactionsPanel,
 } from '@/components/wallet/wallet-panels';
-import { useWalletFigures, type WalletScope } from '@/components/wallet/wallet-scope';
+import { PurseMoveDialog } from '@/components/wallet/purse-move-dialog';
+import { invalidateWallet, useWalletFigures, type WalletScope } from '@/components/wallet/wallet-scope';
 import { WalletShell } from '@/components/wallet/wallet-shell';
+import { Button } from '@/components/ui/button';
+import { movableSources, STUDENT_PURSE_NOTE } from '@/src/features/wallet/purses';
 import { useUserProfile } from '@/context/profile-context';
 import { STALE_TIMES } from '@/lib/query-client';
 import { listMyOrdersOptions, listMyOrdersQueryKey } from '@/services/client/@tanstack/react-query.gen';
@@ -43,16 +46,18 @@ const PAYMENT_FILTERS = [
 ];
 const STUDENT_TYPES = ['DEPOSIT', 'TRANSFER_IN', 'TRANSFER_OUT'];
 
-/** A learner's class payments and the refunds and credits their wallet holds. */
+/** A learner's class payments and the refunds and credits their Student purse holds. It is spend-only. */
 export default function StudentWalletPage() {
   const user = useUserProfile();
   const userUuid = user?.uuid ?? '';
-  const scope: WalletScope = { kind: 'user', userUuid };
+  const scope: WalletScope = { kind: 'user', userUuid, purse: 'STUDENT' };
   const queryClient = useQueryClient();
   const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'dashboard');
   const [receipt, setReceipt] = useState<OrderLike | null>(null);
   const [paying, setPaying] = useState<OrderLike | null>(null);
-  const { figures, isLoading } = useWalletFigures(scope);
+  const { figures, wallet, isLoading } = useWalletFigures(scope);
+  const [moveOpen, setMoveOpen] = useState(false);
+  const canTopUp = movableSources(wallet).length > 0;
   const currency = figures?.currency ?? 'KES';
 
   const orders = useQuery({ ...listMyOrdersOptions({ query: PAGE }), staleTime: STALE_TIMES.live });
@@ -93,6 +98,13 @@ export default function StudentWalletPage() {
         tab={tab}
         onTabChange={setTab}
         hrefFor={hrefFor}
+        actions={
+          canTopUp ? (
+            <Button variant='outline' onClick={() => setMoveOpen(true)}>
+              Add from my other purses
+            </Button>
+          ) : null
+        }
       >
         <SectionTabPanel value='dashboard' className='space-y-5'>
           <section aria-label='Summary' className={surfaceTheme.statGrid}>
@@ -112,9 +124,9 @@ export default function StudentWalletPage() {
             />
             <StatCard label='Classes paid for' value={String(classesPaidFor)} icon={LayoutDashboard} />
             <StatCard
-              label='Wallet balance'
+              label='Student purse'
               value={formatMoney(figures?.balance ?? 0, currency)}
-              hint='Refunds and credits land here'
+              hint='Refunds and credits land here · spend-only'
               icon={Wallet}
             />
           </section>
@@ -136,9 +148,9 @@ export default function StudentWalletPage() {
             loading={isLoading}
             cards={[
               {
-                label: 'Personal wallet',
+                label: 'Student purse',
                 value: formatMoney(figures?.balance ?? 0, currency),
-                hint: 'Refunds and credits · usable for any Elimika payment',
+                hint: `Refunds and credits · usable for any Elimika payment. ${STUDENT_PURSE_NOTE}`,
                 tone: 'success',
               },
             ]}
@@ -175,6 +187,14 @@ export default function StudentWalletPage() {
           <AuditPanel scope={scope} active={tab === 'audit'} selfUuid={userUuid} />
         </SectionTabPanel>
       </WalletShell>
+      <PurseMoveDialog
+        open={moveOpen}
+        onOpenChange={setMoveOpen}
+        userUuid={userUuid}
+        wallet={wallet}
+        to='STUDENT'
+        onMoved={() => void invalidateWallet(queryClient)}
+      />
       <ReceiptSheet order={receipt} onOpenChange={open => !open && setReceipt(null)} />
       <CompletePaymentSheet order={paying} onOpenChange={open => !open && setPaying(null)} onPaid={refreshOrders} />
     </>

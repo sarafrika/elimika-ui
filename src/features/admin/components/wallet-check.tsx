@@ -15,6 +15,7 @@ import {
   type WalletFlag,
   type WalletSummary,
   walletFlagsOf,
+  withdrawalPurseLabel,
 } from '../lib/payout-batches';
 
 export const LEDGER_MISMATCH_HINT =
@@ -46,8 +47,10 @@ export function WalletCell({ row }: { row: BatchWithdrawal }) {
   if (!check) return <span className='text-muted-foreground text-xs'>—</span>;
   const held = toAmount(check.held_amount) ?? 0;
   const currency = row.currency_code ?? 'KES';
+  const purse = withdrawalPurseLabel(row);
   return (
     <div className='text-xs whitespace-nowrap tabular-nums'>
+      {purse ? <div className='text-muted-foreground'>{purse}</div> : null}
       <div className='text-sm font-semibold'>{formatMoney(check.available_balance, currency)}</div>
       <div className={cn('text-muted-foreground', check.covers === false && 'text-destructive')}>
         after {formatMoney(check.balance_after, currency)}
@@ -76,10 +79,14 @@ export function WalletCheckBlock({ row }: { row: BatchWithdrawal }) {
   }
   const gap = ledgerGap(check);
   const heldCount = Number(check.held_count ?? 0);
+  const purse = withdrawalPurseLabel(row);
   return (
     <section aria-label='Wallet check' className='space-y-2'>
       <div className='flex flex-wrap items-center justify-between gap-2'>
-        <p className='text-sm font-semibold'>Wallet check</p>
+        <p className='text-sm font-semibold'>
+          Wallet check
+          {purse ? <span className='text-muted-foreground font-normal'> · {purse}</span> : null}
+        </p>
         <div className='flex flex-wrap gap-1'>
           <WalletFlagChips flags={flags} />
         </div>
@@ -87,7 +94,7 @@ export function WalletCheckBlock({ row }: { row: BatchWithdrawal }) {
       <dl className='divide-border/60 divide-y rounded-md border text-sm'>
         {(
           [
-            ['Account balance', formatMoney(check.account_balance, currency)],
+            [purse ? `${purse} balance` : 'Account balance', formatMoney(check.account_balance, currency)],
             [
               `Held${heldCount > 0 ? ` (${plural(heldCount, 'withdrawal')})` : ''}`,
               formatMoney(check.held_amount ?? 0, currency),

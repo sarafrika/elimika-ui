@@ -38,6 +38,14 @@ import { cn } from '@/lib/utils';
 import type { ApiResponseWallet, CartResponse } from '@/services/client';
 import { getOrganisationWalletOptions, getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useLogout } from '@/src/features/auth/logout';
+import { formatMoney } from '@/components/money/format';
+import {
+  purseBalances,
+  purseFigures,
+  purseForDomain,
+  purseLabel,
+  type WalletWithPurses,
+} from '@/src/features/wallet/purses';
 import {
   type CreateAction,
   dashboardDomainDisplayConfig,
@@ -180,12 +188,14 @@ export default function DashboardTopBar() {
     staleTime: 5 * 60 * 1000,
   });
   const walletData = walletQuery.data;
+  // The chip shows the purse of the dashboard you are on; the menu adds every purse and their total.
+  const wallet = walletData?.data as WalletWithPurses | undefined;
+  const activePurse = purseForDomain(activeDomain);
+  const purseFigure = purseFigures(wallet, activePurse);
+  const allPurses = purseBalances(wallet);
 
-  const walletBalance = formatBalance(
-    walletData?.data?.balance_amount,
-    walletData?.data?.currency_code
-  );
-  const balance = walletData?.data?.balance_amount;
+  const walletBalance = formatBalance(purseFigure?.account, walletData?.data?.currency_code);
+  const balance = purseFigure?.account;
   const walletBalanceDisplay = walletBalanceVisible ? walletBalance : '••••••';
 
   const activeDomainLabel = activeDomainConfig?.title ?? dashboardLabelByDomain(activeDomain);
@@ -228,6 +238,9 @@ export default function DashboardTopBar() {
               balance={balance as number}
               walletCurrency={walletData?.data?.currency_code}
               walletHref={walletHref}
+              purseName={purseLabel(activePurse)}
+              allPurses={allPurses.purses.length > 1 ? allPurses : null}
+              hidden={!walletBalanceVisible}
               openLabel={isParent ? 'Open billing' : 'Open wallet'}
               onToggleBalance={() => setWalletBalanceVisiblePersisted(!walletBalanceVisible)}
             />
@@ -497,6 +510,9 @@ function DashboardWalletMenu({
   balance,
   walletCurrency,
   walletHref,
+  purseName,
+  allPurses,
+  hidden,
   openLabel,
   onToggleBalance,
 }: {
@@ -505,6 +521,9 @@ function DashboardWalletMenu({
   balance: number | string;
   walletCurrency?: string | null;
   walletHref: string;
+  purseName?: string | null;
+  allPurses?: ReturnType<typeof purseBalances> | null;
+  hidden?: boolean;
   openLabel: string;
   onToggleBalance: () => void;
 }) {
@@ -548,7 +567,7 @@ function DashboardWalletMenu({
         <div className='bg-muted/60 flex items-start justify-between gap-3 rounded-md p-3'>
           <div className='min-w-0'>
             <div className='flex flex-row items-center gap-4'>
-              <p className='text-muted-foreground text-xs tracking-wide'>Balance</p>
+              <p className='text-muted-foreground text-xs tracking-wide'>{purseName ?? 'Balance'}</p>
               <button
                 type='button'
                 aria-label={walletBalance === '••••••' ? 'Show balance' : 'Hide balance'}
@@ -559,11 +578,28 @@ function DashboardWalletMenu({
               </button>
             </div>
             <p className='text-foreground truncate text-2xl font-bold tabular-nums'>
-              {walletBalance === '••••••' ? walletBalance : `${walletCurrency ?? 'KES'} ${balance ?? 0}`}
+              {walletBalance === '••••••' ? walletBalance : formatMoney(balance ?? 0, walletCurrency ?? 'KES')}
             </p>
-            <p className='text-muted-foreground mt-1 text-xs'>What the platform holds for you</p>
+            <p className='text-muted-foreground mt-1 text-xs'>
+              {purseName ? 'This dashboard’s purse' : 'What the platform holds for you'}
+            </p>
           </div>
         </div>
+
+        {allPurses ? (
+          <section aria-label='All purses' className='mt-3 space-y-1 px-1 text-xs'>
+            <div className='flex justify-between gap-3 font-semibold'>
+              <span>All purses</span>
+              <span className='tabular-nums'>{hidden ? '••••••' : formatMoney(allPurses.total, allPurses.currency)}</span>
+            </div>
+            {allPurses.purses.map(item => (
+              <div key={item.purse} className='text-muted-foreground flex justify-between gap-3'>
+                <span>{item.label}</span>
+                <span className='tabular-nums'>{hidden ? '••••••' : formatMoney(item.account, item.currency)}</span>
+              </div>
+            ))}
+          </section>
+        ) : null}
 
         <DropdownMenuSeparator className='my-3' />
 

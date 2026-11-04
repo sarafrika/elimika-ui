@@ -57,6 +57,7 @@ import {
   type WalletSummary,
   walletFlagsOf,
   walletSummary,
+  withdrawalPurseLabel,
 } from '../lib/payout-batches';
 
 type Dialogs = 'add' | 'approve' | 'reject' | 'submit' | 'return' | 'cancel' | null;
@@ -581,6 +582,9 @@ function ApproveDialog({
                   >
                     <span className='min-w-0'>
                       <span className='font-semibold'>{row.requester_name ?? 'Earner'}</span>
+                      {withdrawalPurseLabel(row) ? (
+                        <span className='text-muted-foreground text-xs'> · {withdrawalPurseLabel(row)}</span>
+                      ) : null}
                       <span className='text-muted-foreground font-mono text-xs'>
                         {' '}
                         {row.reference}
