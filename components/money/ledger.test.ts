@@ -66,26 +66,26 @@ test('a reversal and a transfer out are money out; the reversal carries its stat
 
 test('orders become payments: paid ones offer a receipt, waiting ones offer to finish paying', () => {
   const entries = orderEntries([
-    { id: 'a', display_id: '2', payment_status: 'AWAITING_PAYMENT', currency_code: 'KES', total: 49500, created_at: '2026-08-24T15:33:00Z', items: [{ id: 'l', title: 'Saturday Test Class', quantity: 1, total: 49500 }] },
-    { id: 'b', display_id: '23', payment_status: 'CAPTURED', currency_code: 'KES', total: 10000, created_at: '2026-10-17T20:19:30Z', items: [{ id: 'm', title: 'AI and ML', quantity: 1, total: 10000 }] },
+    { id: 'a', display_id: 'ELM-Q3HV8T', payment_status: 'AWAITING_PAYMENT', currency_code: 'KES', total: 49500, created_at: '2026-08-24T15:33:00Z', items: [{ id: 'l', title: 'Saturday Test Class', quantity: 1, total: 49500 }] },
+    { id: 'b', display_id: 'ELM-7KJ2XD', payment_status: 'CAPTURED', currency_code: 'KES', total: 10000, created_at: '2026-10-17T20:19:30Z', items: [{ id: 'm', title: 'AI and ML', quantity: 1, total: 10000 }] },
   ]);
 
   assert.deepEqual(entries.map(e => [e.kind, e.title, e.status, e.action]), [
     ['waiting', 'Saturday Test Class', 'Awaiting payment', 'pay'],
     ['payment', 'AI and ML', 'Paid', 'receipt'],
   ]);
-  assert.equal(entries[1]!.meta, 'Order #23 · 17 Oct 2026, 23:19 · 1 seat');
+  assert.equal(entries[1]!.meta, 'Order ELM-7KJ2XD · 17 Oct 2026, 23:19 · 1 seat');
   assert.deepEqual(entries[0]!.groups, ['wait']);
   assert.deepEqual(entries[1]!.groups, ['paid']);
 });
 
 test('a parent sees which child each order was for, and can filter by child', () => {
   const entries = orderEntries(
-    [{ id: 'c', display_id: '26', payment_status: 'CAPTURED', currency_code: 'KES', total: 10000, created_at: '2026-10-18T06:12:00Z', items: [{ id: 'n', title: 'AI and ML', quantity: 1, total: 10000, metadata: { student_uuid: 's-1' } }] }],
+    [{ id: 'c', display_id: 'ELM-N5PWGA', payment_status: 'CAPTURED', currency_code: 'KES', total: 10000, created_at: '2026-10-18T06:12:00Z', items: [{ id: 'n', title: 'AI and ML', quantity: 1, total: 10000, metadata: { student_uuid: 's-1' } }] }],
     { childName: uuid => (uuid === 's-1' ? 'Jabari' : undefined) }
   );
 
-  assert.equal(entries[0]!.meta, 'For Jabari · Order #26 · 18 Oct 2026, 09:12 · 1 seat');
+  assert.equal(entries[0]!.meta, 'For Jabari · Order ELM-N5PWGA · 18 Oct 2026, 09:12 · 1 seat');
   assert.deepEqual(entries[0]!.groups, ['paid', 'child:s-1']);
 });
 

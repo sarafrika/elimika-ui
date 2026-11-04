@@ -130,14 +130,14 @@ export function orderEntries(
     const captured = (order.payment_status ?? '').toUpperCase() === 'CAPTURED';
     const parts = [
       child ? `For ${child}` : null,
-      `Order #${order.display_id ?? order.id}`,
+      `Order ${order.display_id ?? order.id}`,
       formatMoneyDate(order.created_at),
       `${seats} ${seats === 1 ? 'seat' : 'seats'}`,
     ].filter(Boolean);
     return {
       id: order.id ?? `${order.display_id}`,
       kind: captured ? 'payment' : 'waiting',
-      title: items.map(item => item.title).filter(Boolean).join(', ') || `Order #${order.display_id}`,
+      title: items.map(item => item.title).filter(Boolean).join(', ') || `Order ${order.display_id}`,
       meta: parts.join(' · '),
       amount: num(order.total),
       currency: order.currency_code ?? 'KES',

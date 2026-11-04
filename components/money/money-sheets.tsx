@@ -38,7 +38,7 @@ export function ReceiptSheet({ order, onOpenChange }: { order: OrderLike | null;
     <Sheet open={!!order} onOpenChange={onOpenChange}>
       <SheetContent side='right' className='w-full gap-6 sm:max-w-md'>
         <SheetHeader>
-          <SheetTitle>Receipt · Order #{order?.display_id}</SheetTitle>
+          <SheetTitle>Receipt · Order {order?.display_id}</SheetTitle>
           <SheetDescription>{formatMoneyDate(order?.created_at)}</SheetDescription>
         </SheetHeader>
         <div className='space-y-4 px-4'>
@@ -124,7 +124,7 @@ export function CompletePaymentSheet({
       <SheetContent side='right' className='w-full gap-6 sm:max-w-md'>
         <SheetHeader>
           <SheetTitle>Complete payment</SheetTitle>
-          <SheetDescription>Order #{order?.display_id} · your seat stays held while you pay.</SheetDescription>
+          <SheetDescription>Order {order?.display_id} · your seat stays held while you pay.</SheetDescription>
         </SheetHeader>
         <div className='space-y-4 px-4'>
           <Lines

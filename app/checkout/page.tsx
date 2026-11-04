@@ -133,6 +133,7 @@ export default function CheckoutPage() {
   // M-Pesa flow state.
   const [mpesaStatus, setMpesaStatus] = useState<MpesaStatus>('idle');
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [mpesaPhoneDisplay, setMpesaPhoneDisplay] = useState('');
   const [waitStartedAt, setWaitStartedAt] = useState<number | null>(null);
   const successHandledRef = useRef(false);
@@ -309,6 +310,7 @@ export default function CheckoutPage() {
         throw new Error('Order id missing from checkout response');
       }
       setOrderId(newOrderId);
+      setOrderNumber(order?.data?.display_id ?? null);
 
       await payWithMpesa.mutateAsync({
         path: { orderId: newOrderId },
@@ -350,6 +352,7 @@ export default function CheckoutPage() {
   const cancelMpesaPayment = () => {
     setMpesaStatus('idle');
     setOrderId(null);
+    setOrderNumber(null);
     setWaitStartedAt(null);
   };
 
@@ -424,6 +427,12 @@ export default function CheckoutPage() {
                     {mpesaStatus === 'initiating' ? 'Starting…' : 'Waiting for confirmation…'}
                   </div>
                   <p className='text-primary text-lg font-bold'>{formatMoney(total, currency)}</p>
+                  {orderNumber && (
+                    <p className='text-muted-foreground text-xs'>
+                      Order <span className='text-foreground font-mono font-semibold'>{orderNumber}</span>
+                      {' '}· shown as the account number on your M-Pesa prompt
+                    </p>
+                  )}
                   {mpesaStatus === 'waiting' && (
                     <Button variant='ghost' size='sm' onClick={cancelMpesaPayment}>
                       Cancel
@@ -465,6 +474,11 @@ export default function CheckoutPage() {
                         ? "We didn't get a confirmation in time. You can send the prompt again."
                         : 'The M-Pesa payment was cancelled or failed. Please try again.'}
                     </p>
+                    {orderNumber && (
+                      <p className='text-muted-foreground text-xs'>
+                        Order <span className='text-foreground font-mono font-semibold'>{orderNumber}</span>
+                      </p>
+                    )}
                   </div>
                   <div className='flex w-full flex-col gap-2'>
                     <Button
