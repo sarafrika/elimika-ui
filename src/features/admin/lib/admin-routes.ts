@@ -96,6 +96,7 @@ export const adminRoutes = {
   rules: (filters?: { rule?: string; category?: string; status?: string }) =>
     withQuery(admin('platform/rules'), filters ?? {}),
   config: (tab?: string) => withQuery(admin('platform/config'), { tab }),
+  messages: (template?: string) => withQuery(admin('platform/messages'), { template }),
   access: () => admin('access'),
   notifications: () => admin('notifications'),
   settings: () => admin('settings'),

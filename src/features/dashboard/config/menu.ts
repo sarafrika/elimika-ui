@@ -1,4 +1,3 @@
-import type { UserDomain } from '@/lib/types';
 import {
   BadgeCheck,
   BarChart3,
@@ -27,6 +26,7 @@ import {
   LineChart,
   ListTodo,
   MapPin,
+  MessageSquareText,
   PiggyBank,
   Rocket,
   School,
@@ -44,6 +44,7 @@ import {
   Wrench
 } from 'lucide-react';
 import type { ComponentType } from 'react';
+import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -540,6 +541,7 @@ export default {
         { title: 'Skill levels', url: '/dashboard/platform/skill-levels', icon: Sparkles },
         { title: 'System rules', url: '/dashboard/platform/rules', icon: BoltIcon },
         { title: 'Config lists', url: '/dashboard/platform/config', icon: Settings },
+        { title: 'SMS messages', url: '/dashboard/platform/messages', icon: MessageSquareText },
         { title: 'Notifications', url: '/dashboard/notifications', icon: Bell },
         { title: 'Settings', url: '/dashboard/settings', icon: Settings },
       ],
