@@ -1,87 +1,35 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
-import { ClassScheduleCalendar } from '@/app/class-invite/ClassInviteClient';
-import { Badge } from '@/components/ui/badge';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { AlertCircle, ArrowLeft, Calendar, Clock, Users, Zap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Separator } from '@/components/ui/separator';
+import { Card } from '@/components/ui/card';
 import useBundledClassInfo from '@/hooks/use-course-classes';
-import { formatRate, formatRateAmount } from '@/lib/rate-card';
 import {
-  addItemMutation,
-  createCartMutation,
   enrollStudentMutation,
-  getCartQueryKey,
   getClassEnrolmentEligibilityOptions,
   getEnrollmentsForClassOptions,
   joinWaitlistMutation
 } from '@/services/client/@tanstack/react-query.gen';
+import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { StudentEnrollmentGate } from '@/src/features/dashboard/courses/components/StudentEnrollmentGate';
 import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { useCartStore } from '@/store/cart-store';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import {
-  AlertCircle,
-  AlertTriangle,
-  ArrowLeft,
-  Building2,
-  Calendar,
-  CheckCircle2,
-  Clock,
-  GraduationCap,
-  Languages,
-  MapPin,
-  ShieldCheck,
-  User,
-  Wallet
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { useOrganisationsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { useUserProfile } from '../../../profile/context/profile-context';
-import { formatSessionSchedule } from '../components/availability-listing-layout';
 import { EnrollmentLoadingState } from '../components/EnrollmentLoadingState';
+import { ClassJoinView, type JoinCheckItem } from '../enrollment/class-join-view';
+import { durationLabel, joinPrice, toJoinSessions, useAddClassToCart } from '../enrollment/join-data';
 import { type BundledClass, getErrorMessage } from '../types';
-import PaymentMethodPicker, { formatKES } from './PaymentMethodPicker';
 
 const ACTIVE_ENROLLMENT_STATUSES = new Set(['ENROLLED', 'ATTENDED', 'ABSENT']);
-
-// Renders a field's value, or a muted "Not available" note when the current
-// data model doesn't expose that field.
-function FieldValue({ value }: { value: React.ReactNode }) {
-  if (value === null || value === undefined || value === '') {
-    return <span className='text-muted-foreground text-sm italic'>Not available</span>;
-  }
-  return <>{value}</>;
-}
-
-function InfoRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: React.ReactNode;
-}) {
-  return (
-    <div className='inline-flex items-start gap-2 text-sm'>
-      <span className='text-muted-foreground mt-0.5'>{icon}</span>
-      <span>
-        <span className='sr-only'>{label}: </span>
-        <FieldValue value={value} />
-      </span>
-    </div>
-  );
-}
 
 function formatAgeRange(lower?: number | null, upper?: number | null): string | null {
   if (lower == null && upper == null) return null;
@@ -114,10 +62,7 @@ function ClassEnrollmentContent({
 
   const [enrollmentError, setEnrollmentError] = useState(false);
   const [termsOk, setTermsOk] = useState(false);
-  const [paymentOk, setPaymentOk] = useState(false);
   const [requirementsChecked, setRequirementsChecked] = useState<Record<string, boolean>>({});
-  const [method, setMethod] = useState<PaymentMethod>('personal_wallet');
-  const [accountId, setAccountId] = useState<string | null>(null);
 
   // ── Data fetching ──────────────────────────────────────────────────────
   const { classes = [], loading } = useBundledClassInfo(courseId, student, classId);
@@ -145,41 +90,6 @@ function ClassEnrollmentContent({
     [classes, classId]
   );
 
-  const schedule = enrollingClass?.schedule ?? [];
-
-  const calendarSchedule = schedule.flatMap(item => {
-    if (
-      !item.uuid ||
-      !item.class_definition_uuid ||
-      !item.start_time ||
-      !item.end_time ||
-      !item.timezone ||
-      !item.title ||
-      !item.status
-    ) {
-      return [];
-    }
-
-    return [
-      {
-        uuid: item.uuid,
-        class_definition_uuid: item.class_definition_uuid,
-        instructor_uuid: String(item.instructor_uuid ?? enrollingClass?.instructor?.uuid ?? ''),
-        start_time: item.start_time,
-        end_time: item.end_time,
-        timezone: item.timezone,
-        title: item.title,
-        location_type: item.location_type === 'ONLINE' ? 'ONLINE' : 'PHYSICAL',
-        location_name: item.location_name ?? undefined,
-        status: item.status === 'CANCELLED' ? 'CANCELLED' : 'SCHEDULED',
-        duration_minutes: Number(item.duration_minutes ?? 0),
-        duration_formatted: item.duration_formatted ?? '',
-        time_range: item.time_range ?? '',
-        is_currently_active: item.is_currently_active ?? false,
-        can_be_cancelled: item.can_be_cancelled ?? false,
-      },
-    ];
-  }) as unknown as Parameters<typeof ClassScheduleCalendar>[0]['schedules'];
 
   const activeEnrollments = useMemo(
     () =>
@@ -207,41 +117,6 @@ function ClassEnrollmentContent({
   const occupancyPercentage = maxParticipants > 0 ? (enrolledCount / maxParticipants) * 100 : 0;
   const isAlmostFull = !isClassFull && occupancyPercentage >= 75;
 
-  const { formattedDates } = useMemo(() => {
-    if (!enrollingClass) return { formattedDates: '' };
-    try {
-      // default_start_time / default_end_time bound the FIRST session, not the class. Using them as
-      // a range printed the same date twice for every recurring class.
-      const templates = enrollingClass.session_templates ?? [];
-      const starts = templates
-        .map(t => (t.start_time ? new Date(t.start_time).getTime() : Number.NaN))
-        .filter(n => !Number.isNaN(n));
-      const seriesEnds = templates
-        .map(t => (t.recurrence?.end_date ? new Date(t.recurrence.end_date).getTime() : Number.NaN))
-        .filter(n => !Number.isNaN(n));
-
-      const start = starts.length
-        ? new Date(Math.min(...starts))
-        : enrollingClass.default_start_time
-          ? new Date(enrollingClass.default_start_time)
-          : null;
-      const end = seriesEnds.length
-        ? new Date(Math.max(...seriesEnds))
-        : enrollingClass.academic_period_end_date
-          ? new Date(enrollingClass.academic_period_end_date)
-          : null;
-
-      if (!start) return { formattedDates: 'N/A' };
-      if (!end || format(start, 'dd/MM/yyyy') === format(end, 'dd/MM/yyyy')) {
-        return { formattedDates: format(start, 'dd/MM/yyyy') };
-      }
-      return {
-        formattedDates: `${format(start, 'dd/MM/yyyy')} → ${format(end, 'dd/MM/yyyy')}`,
-      };
-    } catch {
-      return { formattedDates: 'N/A' };
-    }
-  }, [enrollingClass]);
 
   // ORGANISATION DETAILS
   const { organisationMap } = useOrganisationsByIds([enrollingClass?.organisation_uuid!]);
@@ -255,10 +130,8 @@ function ClassEnrollmentContent({
   );
 
   const firstSchedule = sortedSchedules[0];
-  const lastSchedule = sortedSchedules[sortedSchedules.length - 1];
 
   const startsAt = firstSchedule?.start_time;
-  const endsAt = lastSchedule?.end_time;
 
   // ── Age & material requirements (real course data) ─────────────────────
   const ageRange = formatAgeRange(
@@ -283,72 +156,14 @@ function ClassEnrollmentContent({
   const toggleRequirement = (uuid: string, checked: boolean) =>
     setRequirementsChecked(prev => ({ ...prev, [uuid]: checked }));
 
-  const trainingFee = enrollingClass?.sale_price;
-  const hasFee = typeof trainingFee === 'number' ? trainingFee > 0 : Boolean(trainingFee);
-  const feeBasis = enrollingClass?.rate_basis;
-  const feeDisplay =
-    trainingFee || trainingFee === 0
-      ? feeBasis
-        ? formatRate(Number(trainingFee), feeBasis)
-        : formatRateAmount(Number(trainingFee))
-      : 'Free';
+  // The catalogue's whole-class amount is what the cart charges, so it also decides paid vs free.
+  const price = enrollingClass ? joinPrice(enrollingClass) : null;
+  const hasFee = Boolean(price && !price.isFree);
 
-  // ── Cart mutations ─────────────────────────────────────────────────────
-  const { cartId: savedCartId, setCartId } = useCartStore();
-  const createCart = useMutation(createCartMutation());
-  const addItemToCart = useMutation(addItemMutation());
-
-  const handleCreateCartAndPay = (cls: BundledClass | undefined) => {
+  const cart = useAddClassToCart();
+  const handleCreateCartAndPay = (cls: BundledClass | undefined, destination = '/dashboard/checkout') => {
     if (!cls) return;
-    const catalogue = cls.catalogue;
-
-    if (!catalogue?.variant_code) {
-      toast.error('No catalogue found for this class');
-      return;
-    }
-
-    if (!savedCartId) {
-      createCart.mutate(
-        {
-          body: {
-            currency_code: 'KES',
-            region_code: 'KE',
-            items: [{ variant_id: catalogue.variant_code, quantity: 1 }],
-          },
-        },
-        {
-          onSuccess: data => {
-            const cartId = data?.data?.id ?? null;
-            if (cartId) setCartId(cartId);
-            qc.invalidateQueries({
-              queryKey: getCartQueryKey({ path: { cartId: cartId as string } }),
-            });
-            toast.success('Class added to cart!');
-            router.push('/dashboard/cart');
-          },
-          onError: error => {
-            toast.error(getErrorMessage(error, 'Failed to add class to cart'));
-          },
-        }
-      );
-      return;
-    }
-
-    addItemToCart.mutate(
-      {
-        path: { cartId: savedCartId as string },
-        body: { variant_id: catalogue.variant_code, quantity: 1 },
-      },
-      {
-        onSuccess: () => {
-          qc.invalidateQueries({
-            queryKey: getCartQueryKey({ path: { cartId: savedCartId as string } }),
-          });
-          router.push('/dashboard/cart');
-          toast.success('Class added to cart!');
-        },
-      }
-    );
+    cart.add(cls.catalogue?.variant_code, destination);
   };
 
   // ── Enrollment mutations ───────────────────────────────────────────────
@@ -436,14 +251,14 @@ function ClassEnrollmentContent({
     );
   }
 
-  if (!enrollingClass) {
+  if (!enrollingClass || !price) {
     return (
       <div className='mx-auto w-full max-w-6xl space-y-4 px-6 py-12 lg:py-16'>
         <Button variant='ghost' onClick={handleCancel} className='gap-2'>
           <ArrowLeft className='h-4 w-4' />
           Back to Classes
         </Button>
-        <Card className='border-border/70 bg-card flex flex-col items-center justify-center space-y-2 rounded-[28px] border p-10 text-center shadow-sm'>
+        <Card className='border-border/70 bg-card flex flex-col items-center justify-center space-y-2 rounded-md border p-10 text-center shadow-sm'>
           <AlertCircle className='text-muted-foreground h-10 w-10' />
           <h3 className='text-foreground text-lg font-medium'>Class Not Found</h3>
           <p className='text-muted-foreground text-sm'>
@@ -454,273 +269,114 @@ function ClassEnrollmentContent({
     );
   }
 
-  // console.log(enrollingClass?.schedule, "ENROLLING CLASS")
-  // // check enrolling class schedule against students current schedule
-  // const { data: studentScheduleResp } = useQuery({
-  //   ...getStudentScheduleOptions({
-  //     path: { studentUuid: student?.uuid as string }
-  //   })
-  // })
-  // console.log(studentScheduleResp?.data, "SCHED")
+  const isPending = enrollStudent.isPending || waitlistStudent.isPending || cart.pending;
+  const sessions = toJoinSessions(sortedSchedules);
+  const firstLength = Number(sortedSchedules[0]?.duration_minutes ?? 0);
+  const totalMinutes = sortedSchedules.reduce((sum, item) => sum + Number(item.duration_minutes ?? 0), 0);
+  const closesOn = enrollingClass.registration_period_end_date ?? eligibility?.registration_window?.closes_on;
+  const instructorName = enrollingClass.instructor?.data?.full_name;
+  const place =
+    enrollingClass.location_type === 'ONLINE'
+      ? 'Online'
+      : (enrollingClass.location_name ?? organisation?.name ?? 'In person');
 
+  const blockers = [
+    alreadyEnrolled ? 'You are already enrolled in this class.' : null,
+    eligibilityKnown && !eligibleToJoin && !isClassFull ? (eligibility?.reason ?? 'You cannot join this class right now.') : null,
+    enrollmentError ? 'Something went wrong. Refresh and try again.' : null,
+  ].filter((reason): reason is string => Boolean(reason));
 
-  const isPending = enrollStudent.isPending || waitlistStudent.isPending;
-  const canSubmit =
-    !isPending &&
-    !enrollmentError &&
-    !alreadyEnrolled &&
-    eligibleToJoin &&
-    termsOk &&
-    allMandatoryRequirementsChecked
+  const items: JoinCheckItem[] = studentRequirements.map(requirement => ({
+    id: requirement.uuid,
+    name: requirement.quantity ? `${requirement.name} (${requirement.quantity} ${requirement.unit ?? ''})`.trim() : requirement.name,
+    detail: requirement.description ?? undefined,
+    required: Boolean(requirement.is_mandatory),
+    checked: Boolean(requirementsChecked[requirement.uuid]),
+    onToggle: checked => toggleRequirement(requirement.uuid, checked),
+  }));
 
-  // ── Render ─────────────────────────────────────────────────────────────
   return (
-    <div className='w-full max-w-5xl space-y-4 px-6 pt-4 pb-12'>
-      <Button variant='ghost' onClick={handleCancel} className='-ml-2 gap-2'>
-        <ArrowLeft className='h-4 w-4' />
-        Back to Classes
-      </Button>
-
-      <h1 className='text-2xl font-semibold'>Join Class</h1>
-      <p className='text-muted-foreground text-sm'>
-        Confirm details before enrolling in {enrollingClass.course?.name ?? enrollingClass.title}
-      </p>
-
-      {/* Summary */}
-      <Card className='rounded-[28px]'>
-        <CardHeader className='pb-3'>
-          <CardTitle className='text-lg'>
-            {enrollingClass.course?.name || enrollingClass.title || 'Class Enrollment'}
-          </CardTitle>
-          <div className='mt-1 flex flex-wrap gap-2 text-xs'>
-            {enrollingClass.session_format && (
-              <Badge variant='secondary' className='capitalize'>
-                {enrollingClass.session_format}
-              </Badge>
-            )}
-            {enrollingClass.class_visibility && (
-              <Badge variant='outline' className='capitalize'>
-                {enrollingClass.class_visibility}
-              </Badge>
-            )}
-            {enrollingClass.duration_formatted && (
-              <Badge variant='outline'>{enrollingClass.duration_formatted}</Badge>
-            )}
-          </div>
-        </CardHeader>
-
-        <CardContent className='grid gap-2 sm:grid-cols-2'>
-          {organisation && <InfoRow icon={<Building2 className='h-4 w-4' />} label='Institution' value={organisation?.name || "-"} />}
-
-          <InfoRow
-            icon={<User className='h-4 w-4' />}
-            label='Instructor'
-            value={`${enrollingClass.instructor?.data?.full_name} - (Instructor)`}
-          />
-          {/* No discrete "academic period" field is exposed for this class. */}
-          <InfoRow
-            icon={<Calendar className='h-4 w-4' />}
-            label='Academic period'
-            value={
-              <>
-                <div>Start at: {startsAt ? formatScheduleDate(startsAt) : 'Not available'}</div>
-                <div>End at: {endsAt ? formatScheduleDate(endsAt) : 'Not available'}</div>
-              </>
-            }
-          />
-
-          <InfoRow
-            icon={<Clock className='h-4 w-4' />}
-            label='Session duration'
-            value={formatSessionSchedule(enrollingClass.session_templates)}
-          />
-
-          <InfoRow icon={<Calendar className='h-4 w-4' />} label='Dates' value={`Starts ${formattedDates}`} />
-
-          <InfoRow
-            icon={<MapPin className='h-4 w-4' />}
-            label='Location'
-            value={
-              enrollingClass.location_type === 'ONLINE'
-                ? 'Online'
-                : (enrollingClass.location_name ?? enrollingClass.meeting_link ?? null)
-            }
-          />
-          <InfoRow icon={<Languages className='h-4 w-4' />} label='Language' value={'English'} />
-          <InfoRow icon={<GraduationCap className='h-4 w-4' />} label='Level of study' value={difficultyMap[enrollingClass?.course?.difficulty_uuid]} />
-        </CardContent>
-      </Card>
-
-      {/* Seats */}
-      <Card>
-        <CardContent className='flex items-center justify-between py-4'>
-          <div>
-            <div className='text-sm font-medium'>Seat availability</div>
-            <div className='text-muted-foreground text-xs'>
-              {availableSeats} of {maxParticipants || '?'} seats left
-            </div>
-          </div>
-
-          {isClassFull ? (
-            <Badge variant='destructive'>Full</Badge>
-          ) : isAlmostFull ? (
-            <Badge className='bg-warning/15 text-warning hover:bg-warning/15'>Almost full</Badge>
-          ) : (
-            <Badge className='bg-success/15 text-success hover:bg-success/15'>Open</Badge>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Eligibility checks */}
-      <Card>
-        <CardHeader className='pb-2'>
-          <CardTitle className='text-base'>Eligibility checks</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          {/* Age requirement — backed by course.age_lower_limit / age_upper_limit when present. */}
-          <div className='flex items-start gap-3'>
-            {eligibilityKnown && !eligibleToJoin ? (
-              <AlertTriangle className='text-destructive mt-0.5 h-5 w-5' />
-            ) : (
-              <CheckCircle2 className='text-success mt-0.5 h-5 w-5' />
-            )}
-            <div className='flex-1'>
-              <div className='text-sm font-medium'>Age requirement: {ageRange ?? 'Any'}</div>
-              {eligibilityQuery.isLoading ? (
-                <div className='text-muted-foreground text-xs italic'>
-                  Checking your profile…
-                </div>
-              ) : eligibility && !eligibility.eligible ? (
-                <div className='text-destructive mt-1 text-sm'>{eligibility.reason}</div>
-              ) : eligibility?.student_age != null ? (
-                <div className='text-muted-foreground text-xs'>
-                  Your profile says you are {eligibility.student_age}. You meet this requirement.
-                </div>
-              ) : (
-                <div className='text-muted-foreground text-xs italic'>
-                  No age restriction on file for this class.
-                </div>
-              )}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Materials / items the student needs to supply, from course training requirements. */}
-          <div className='flex items-start gap-3'>
-            <ShieldCheck className='mt-0.5 h-5 w-5 text-muted-foreground' />
-            <div className='flex-1'>
-              <div className='text-sm font-medium'>Things you'll need to bring</div>
-              {studentRequirements.length === 0 ? (
-                <div className='text-muted-foreground mt-1 text-xs italic'>
-                  No student-provided items listed for this course.
-                </div>
-              ) : (
-                <div className='mt-2 space-y-2'>
-                  {studentRequirements.map(requirement => (
-                    <label key={requirement.uuid} className='flex items-start gap-2 text-sm'>
-                      <Checkbox
-                        checked={!!requirementsChecked[requirement.uuid]}
-                        onCheckedChange={v => toggleRequirement(requirement.uuid, !!v)}
-                      />
-                      <span>
-                        {requirement.name}
-                        {requirement.quantity ? ` (${requirement.quantity} ${requirement.unit ?? ''})` : ''}
-                        {requirement.is_mandatory && (
-                          <span className='text-destructive'> · required</span>
-                        )}
-                        {requirement.description && (
-                          <span className='text-muted-foreground block text-xs'>
-                            {requirement.description}
-                          </span>
-                        )}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <Separator />
-
-          <div className='flex items-start gap-3'>
-            <ShieldCheck className='mt-0.5 h-5 w-5 text-muted-foreground' />
-            <div className='flex-1'>
-              <div className='text-sm font-medium'>Tuition &amp; terms</div>
-              <div className='text-muted-foreground text-xs'>Training fee: {feeDisplay}</div>
-              <label className='mt-2 flex items-center gap-2 text-sm'>
-                <Checkbox className='border-black/70' checked={termsOk} onCheckedChange={v => setTermsOk(!!v)} />
-                I agree to the class schedule and tuition terms.
-              </label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Payment */}
-      <Card>
-        <CardHeader className='pb-2'>
-          <div className='flex items-center justify-between gap-2'>
-            <CardTitle className='flex items-center gap-2 text-base'>
-              <Wallet className='h-4 w-4 text-primary' /> Payment method
-            </CardTitle>
-            <div className='text-right'>
-              <div className='text-muted-foreground text-xs'>Amount due</div>
-              <div className='text-primary text-base font-semibold'>{formatKES(enrollingClass?.catalogue?.unit_amount)}</div>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {!hasFee ? (
-            <p className='text-sm text-muted-foreground'>
-              This class is free — no payment required.
-            </p>
-          ) : !student ? (
-            <p className='text-sm text-muted-foreground'>Sign in to choose a payment method.</p>
-          ) : (
-            <PaymentMethodPicker />
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Notices */}
-      {alreadyEnrolled && (
-        <div className='rounded-md border border-success/30 bg-success/10 p-3 text-sm text-success'>
-          You're already enrolled in this class.
-        </div>
-      )}
-
-      {isClassFull && !alreadyEnrolled && (
-        <div className='rounded-md border border-warning/30 bg-warning/10 p-3 text-sm text-warning'>
-          This class is full. You'll be added to the waitlist instead of being enrolled directly.
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className='flex flex-wrap items-center justify-end gap-2 pt-2'>
-        <Button variant='outline' onClick={handleCancel} className='rounded-full px-6'>
-          Cancel
-        </Button>
-        <Button
-          onClick={handleEnrollStudent}
-          disabled={!canSubmit}
-          size='lg'
-          className='rounded-full px-10 disabled:cursor-not-allowed disabled:opacity-60'
-          variant='success'
-        >
-          {isPending ? 'Processing…' : isClassFull ? 'Join Waitlist' : 'Yes, Enroll Me'}
-        </Button>
-      </div>
-    </div>
+    <ClassJoinView
+      onBack={handleCancel}
+      title={enrollingClass.title || enrollingClass.course?.name || 'Class'}
+      subtitle={
+        <>
+          {enrollingClass.course?.name ?? 'Course'}
+          {instructorName ? (
+            <>
+              {' '}
+              · with <strong className='text-foreground'>{instructorName}</strong>
+            </>
+          ) : null}{' '}
+          · {place}
+          {difficultyMap[enrollingClass?.course?.difficulty_uuid] ? ` · ${difficultyMap[enrollingClass.course.difficulty_uuid]}` : ''}
+        </>
+      }
+      chips={[
+        isClassFull
+          ? { label: 'Full · waitlist open', tone: 'destructive' }
+          : closesOn
+            ? { label: `Open · closes ${format(new Date(closesOn), 'EEE d MMM')}`, tone: 'success' }
+            : { label: 'Open for registration', tone: 'success' },
+        { label: enrollingClass.location_type === 'ONLINE' ? 'Online' : 'In person', tone: 'info' },
+        ...(enrollingClass.session_format ? [{ label: String(enrollingClass.session_format).toLowerCase().replace(/^./, c => c.toUpperCase()), tone: 'neutral' as const }] : []),
+      ]}
+      stats={[
+        {
+          label: 'Starts',
+          value: startsAt ? format(new Date(startsAt), 'EEE d MMM') : 'Not scheduled',
+          hint: sessions[0]?.timeLabel ? `${sessions[0].timeLabel} EAT` : undefined,
+          tone: 'info',
+          icon: Calendar,
+        },
+        {
+          label: 'Sessions',
+          value: sessions.length ? `${sessions.length} × ${durationLabel(firstLength) || '—'}` : '—',
+          hint: totalMinutes ? `${durationLabel(totalMinutes)} of teaching` : undefined,
+          tone: 'neutral',
+          icon: Clock,
+        },
+        {
+          label: 'Seats left',
+          value: maxParticipants > 0 ? `${availableSeats} of ${maxParticipants}` : 'Open',
+          hint: isClassFull ? 'Full — join the waitlist' : isAlmostFull || (maxParticipants > 0 && availableSeats <= 3) ? 'Filling fast' : 'Plenty of room',
+          tone: isClassFull ? 'destructive' : maxParticipants > 0 && availableSeats <= 3 ? 'warning' : 'success',
+          icon: Users,
+        },
+        {
+          label: 'Registration',
+          value: closesOn ? `Closes ${format(new Date(closesOn), 'EEE d MMM')}` : 'Open',
+          hint: closesOn ? format(new Date(closesOn), 'd MMMM yyyy') : 'No closing date set',
+          tone: 'success',
+          icon: Zap,
+        },
+      ]}
+      sessions={sessions}
+      eligibility={
+        eligibilityQuery.isLoading
+          ? { state: 'loading', title: 'Checking your profile…' }
+          : eligibility && !eligibility.eligible && !isClassFull
+            ? { state: 'blocked', title: `Age requirement: ${ageRange ?? 'Any'}`, detail: eligibility.reason }
+            : eligibility?.student_age != null
+              ? { state: 'ok', title: `Age ${ageRange ?? 'any'} — you meet it`, detail: 'Checked against your profile' }
+              : { state: 'none', title: 'No age restriction for this class' }
+      }
+      items={items}
+      terms={{ checked: termsOk, onToggle: setTermsOk, detail: `One payment covers every session${price.rateLabel ? ` · ${price.rateLabel}` : ''}.` }}
+      price={price}
+      seatsBadge={
+        maxParticipants > 0
+          ? { label: isClassFull ? 'Full' : `${availableSeats} ${availableSeats === 1 ? 'seat' : 'seats'} left`, tone: isClassFull ? 'destructive' : availableSeats <= 3 ? 'warning' : 'success' }
+          : null
+      }
+      blockers={blockers}
+      notices={isClassFull && !alreadyEnrolled ? [{ label: 'This class is full. You will join the waitlist instead.', tone: 'warning' }] : []}
+      primary={{
+        label: isClassFull ? 'Join the waitlist' : hasFee ? 'Continue to pay' : 'Join for free',
+        pending: isPending,
+        onClick: handleEnrollStudent,
+      }}
+      secondary={hasFee && !isClassFull ? { label: 'Add to cart', onClick: () => handleCreateCartAndPay(enrollingClass, '/dashboard/cart') } : null}
+    />
   );
 }
-
-const formatScheduleDate = (date: Date | string) =>
-  new Date(date).toLocaleString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
