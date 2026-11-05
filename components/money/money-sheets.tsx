@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { Smartphone } from 'lucide-react';
+import { Download, Smartphone } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
@@ -14,6 +14,7 @@ import { Sheet, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetT
 import Spinner from '@/components/ui/spinner';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
+import { API_BASE_URL } from '@/services/api/base-url';
 import {
   getPaymentStatusOptions,
   payWithMpesaMutation,
@@ -40,7 +41,25 @@ function Lines({ lines }: { lines: [string, string][] }) {
 }
 
 /** What was bought, for how much, and how it was paid. */
+/** Fetches the order's PDF receipt through the authenticated proxy and saves it. */
+async function downloadReceiptPdf(orderId: string, displayId?: string | null) {
+  const response = await fetch(`${API_BASE_URL}/api/v1/commerce/orders/${encodeURIComponent(orderId)}/receipt.pdf`, {
+    headers: { Accept: 'application/pdf' },
+  });
+  if (!response.ok) throw new Error('The receipt could not be downloaded. Try again in a moment.');
+  const url = URL.createObjectURL(await response.blob());
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `Elimika-receipt-${displayId ?? orderId}.pdf`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
 export function ReceiptSheet({ order, onOpenChange }: { order: OrderLike | null; onOpenChange: (open: boolean) => void }) {
+  const download = useMutation({
+    mutationFn: () => downloadReceiptPdf(order?.id ?? '', order?.display_id),
+    onError: error => toast.error(error instanceof Error ? error.message : 'The receipt could not be downloaded.'),
+  });
   return (
     <Sheet open={!!order} onOpenChange={onOpenChange}>
       <SheetContent side='right' className='w-full gap-6 sm:max-w-md'>
@@ -61,6 +80,12 @@ export function ReceiptSheet({ order, onOpenChange }: { order: OrderLike | null;
           />
           <p className='text-muted-foreground text-sm'>A copy of this receipt was emailed when the payment went through.</p>
         </div>
+        <SheetFooter>
+          <Button type='button' onClick={() => download.mutate()} disabled={!order?.id || download.isPending}>
+            {download.isPending ? <Spinner /> : <Download aria-hidden='true' />}
+            Download PDF receipt
+          </Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
