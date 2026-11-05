@@ -19,7 +19,8 @@ import type { CardInstructor } from '../src/features/dashboard/courses/types';
 // Matches ClassBatchLookupService.MAX_BATCH_SIZE on the backend.
 const CLASS_BATCH_SIZE = 100;
 const MAX_CLASS_BATCHES = 5;
-const STUDENT_OVERVIEW_PAGE_SIZE = 100;
+const STUDENT_OVERVIEW_PAGE_SIZE = 50;
+const MAX_STUDENT_OVERVIEW_PAGES = 10;
 
 // Seat counts (batch class endpoint), the viewer's own enrolments and the catalogue rows for one
 // course or program, in a fixed number of requests however many classes are listed.
@@ -54,11 +55,16 @@ export function useClassListingSummaries(
     combine: results => {
       const summaryMap: Record<string, ClassBatchSummary> = {};
       for (const result of results) {
+        if (result.data?.error || result.data?.success === false) continue;
         for (const summary of result.data?.data ?? []) {
           if (summary.uuid) summaryMap[summary.uuid] = summary;
         }
       }
-      return { summaryMap, isLoading: results.some(r => r.isLoading) };
+      return {
+        summaryMap,
+        isLoading: results.some(r => r.isLoading),
+        isError: results.some(r => r.isError || r.data?.error || r.data?.success === false),
+      };
     },
   });
 
@@ -70,24 +76,43 @@ export function useClassListingSummaries(
     enabled: !!studentUuid,
     staleTime: STALE_TIMES.live,
   });
-  const overviewTotal = overviewQuery.data?.data?.enrollments?.metadata?.totalElements;
-  useEffect(() => {
-    if (overviewTotal !== undefined && Number(overviewTotal) > STUDENT_OVERVIEW_PAGE_SIZE) {
-      logger.warn('Enrolled-class check covers only the first page of enrolments', {
-        total: Number(overviewTotal),
-        pageSize: STUDENT_OVERVIEW_PAGE_SIZE,
-      });
-    }
-  }, [overviewTotal]);
+  const overviewFailed = overviewQuery.data?.error || overviewQuery.data?.success === false;
+  const overview = overviewFailed ? undefined : overviewQuery.data?.data?.enrollments;
+  const overviewPageCount = overview?.metadata?.totalPages ?? 1;
+  const overviewTooLarge = overviewPageCount > MAX_STUDENT_OVERVIEW_PAGES;
+  const remainingOverview = useQueries({
+    queries: Array.from(
+      { length: overviewTooLarge ? 0 : Math.max(0, overviewPageCount - 1) },
+      (_, index) => ({
+        ...getStudentCourseOverviewOptions({
+          path: { studentUuid: studentUuid ?? '' },
+          query: { pageable: { page: index + 1, size: STUDENT_OVERVIEW_PAGE_SIZE } },
+        }),
+        enabled: Boolean(studentUuid) && overviewQuery.isSuccess && !overviewFailed,
+        staleTime: STALE_TIMES.live,
+      })
+    ),
+    combine: results => ({
+      rows: results.flatMap(result =>
+        result.data?.error || result.data?.success === false
+          ? []
+          : (result.data?.data?.enrollments?.content ?? [])
+      ),
+      isLoading: results.some(result => result.isPending),
+      isError: results.some(
+        result => result.isError || result.data?.error || result.data?.success === false
+      ),
+    }),
+  });
 
   const enrolledClassUuids = useMemo(
     () =>
       new Set(
-        (overviewQuery.data?.data?.enrollments?.content ?? []).map(
+        [...(overview?.content ?? []), ...remainingOverview.rows].map(
           item => item.class_definition_uuid
         )
       ),
-    [overviewQuery.data]
+    [overview, remainingOverview.rows]
   );
 
   // A 404 means nothing is sold here: cache it as empty so remounts reuse it instead of refetching.
@@ -108,6 +133,7 @@ export function useClassListingSummaries(
   });
   const catalogueMap = useMemo(() => {
     const map: Record<string, CommerceCatalogueItem> = {};
+    if (catalogueQuery.data?.error || catalogueQuery.data?.success === false) return map;
     for (const item of catalogueQuery.data?.data ?? []) {
       if (item.class_definition_uuid) map[item.class_definition_uuid] = item;
     }
@@ -118,7 +144,20 @@ export function useClassListingSummaries(
     summaryMap: batch.summaryMap,
     enrolledClassUuids,
     catalogueMap,
-    isLoading: batch.isLoading || overviewQuery.isLoading || catalogueQuery.isLoading,
+    isLoading:
+      batch.isLoading ||
+      overviewQuery.isLoading ||
+      remainingOverview.isLoading ||
+      catalogueQuery.isLoading,
+    isError:
+      batch.isError ||
+      chunks.length > MAX_CLASS_BATCHES ||
+      overviewQuery.isError ||
+      Boolean(overviewFailed) ||
+      overviewTooLarge ||
+      remainingOverview.isError ||
+      catalogueQuery.isError ||
+      Boolean(catalogueQuery.data?.error || catalogueQuery.data?.success === false),
   };
 }
 

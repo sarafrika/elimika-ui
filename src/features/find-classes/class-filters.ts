@@ -72,9 +72,8 @@ const startOf = (definition: Pick<ClassDefinition, 'default_start_time'>) => {
 };
 
 /**
- * The same filters, applied to a loaded row. `GET /classes` applies its filters only on
- * the search path (with `q` or `near`); the plain listing ignores them, so the page also
- * narrows what it was sent. Where the server did filter, this changes nothing.
+ * Matches an individual definition against filters. Paginated listings must send
+ * these filters to the server instead, so their rows and totals stay consistent.
  */
 export function matchesClassFilters(
   definition: Pick<

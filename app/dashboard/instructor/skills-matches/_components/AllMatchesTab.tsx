@@ -110,7 +110,7 @@ export default function AllMatchesTab() {
   });
   const trainingQuery = useQuery({
     ...searchApplyToTrainCatalogueOptions({
-      query: { show: 'all', fit: 'open', page: '0', size: '3' },
+      query: { show: 'all', fit: 'open', sort: 'newest', page: '0', size: '3' },
     }),
     enabled,
     staleTime: STALE_TIMES.live,

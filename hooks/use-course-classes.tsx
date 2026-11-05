@@ -1,6 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
-import { logger } from '@/lib/logger';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import { STALE_TIMES } from '@/lib/query-client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import {
@@ -18,6 +17,7 @@ import { useClassSchedule } from './use-class-schedule';
 
 // Backend cap on class_uuids for GET /classes/schedules (ClassScheduleBatchService.MAX_BATCH_SIZE).
 const MAX_CLASSES_PER_CALL = 100;
+const MAX_SCHEDULE_BATCHES = 5;
 
 type StudentLike =
   | {
@@ -40,9 +40,11 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
   });
   const classes: ClassDefinition[] = useMemo(
     () =>
-      data?.data
-        ?.map(item => item?.class_definition)
-        .filter((item): item is ClassDefinition => item !== undefined) ?? [],
+      data?.error || data?.success === false
+        ? []
+        : (data?.data
+            ?.map(item => item?.class_definition)
+            .filter((item): item is ClassDefinition => item !== undefined) ?? []),
     [data]
   );
   // The enrolment page summarises only its own class; listings summarise every class.
@@ -62,36 +64,47 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
     );
     return classUuids.filter(uuid => undated.has(uuid)).sort();
   }, [classUuids, classes, isLearnerDomain, onlyClassUuid]);
-  const scheduleIds = useMemo(
-    () => undatedClassUuids.slice(0, MAX_CLASSES_PER_CALL),
-    [undatedClassUuids]
+  const schedulesTooLarge = undatedClassUuids.length > MAX_CLASSES_PER_CALL * MAX_SCHEDULE_BATCHES;
+  const scheduleBatches = useMemo(
+    () =>
+      schedulesTooLarge
+        ? []
+        : Array.from(
+            { length: Math.ceil(undatedClassUuids.length / MAX_CLASSES_PER_CALL) },
+            (_, index) =>
+              undatedClassUuids.slice(
+                index * MAX_CLASSES_PER_CALL,
+                (index + 1) * MAX_CLASSES_PER_CALL
+              )
+          ),
+    [undatedClassUuids, schedulesTooLarge]
   );
-  useEffect(() => {
-    if (undatedClassUuids.length > MAX_CLASSES_PER_CALL) {
-      logger.warn('Available classes: schedule batch truncated', {
-        classes: undatedClassUuids.length,
-        kept: MAX_CLASSES_PER_CALL,
-      });
-    }
-  }, [undatedClassUuids.length]);
-  const schedulesQuery = useQuery({
-    ...getClassSchedulesOptions({ query: { class_uuids: scheduleIds } }),
-    enabled: scheduleIds.length > 0,
-    staleTime: STALE_TIMES.live,
+  const schedulesQuery = useQueries({
+    queries: scheduleBatches.slice(0, MAX_SCHEDULE_BATCHES).map(ids => ({
+      ...getClassSchedulesOptions({ query: { class_uuids: ids } }),
+      staleTime: STALE_TIMES.live,
+    })),
+    combine: results => {
+      const map = new Map<string, ScheduledInstance[]>();
+      for (let index = 0; index < results.length; index++) {
+        const result = results[index];
+        if (!result?.isSuccess || result.data?.error || result.data?.success === false) continue;
+        for (const uuid of scheduleBatches[index] ?? []) map.set(uuid, []);
+        for (const instance of result.data?.data ?? []) {
+          if (instance.class_definition_uuid)
+            map.get(instance.class_definition_uuid)?.push(instance);
+        }
+      }
+      return {
+        map,
+        isPending: results.some(result => result.isPending),
+        isError: results.some(
+          result => result.isError || result.data?.error || result.data?.success === false
+        ),
+      };
+    },
   });
-  const batchedSchedules = useMemo(() => {
-    const map = new Map<string, ScheduledInstance[]>();
-    // A failed batch settles as empty, as a failed per-card fetch did, so enrolment is not stuck.
-    if (!schedulesQuery.isSuccess && !schedulesQuery.isError) return map;
-    for (const uuid of scheduleIds) map.set(uuid, []);
-    for (const instance of schedulesQuery.data?.data ?? []) {
-      const list = instance.class_definition_uuid
-        ? map.get(instance.class_definition_uuid)
-        : undefined;
-      list?.push(instance);
-    }
-    return map;
-  }, [scheduleIds, schedulesQuery.data, schedulesQuery.isError, schedulesQuery.isSuccess]);
+  const batchedSchedules = schedulesQuery.map;
 
   const courseQuery = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseUuid ?? '' } }),
@@ -118,6 +131,7 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
     enrolledClassUuids,
     catalogueMap,
     isLoading: isSummariesLoading,
+    isError: isSummariesError,
   } = useClassListingSummaries(
     classUuids,
     courseUuid ? { course_uuid: courseUuid } : undefined,
@@ -189,12 +203,18 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
     isFetching ||
     courseQuery.isLoading ||
     detailSchedule.isLoading ||
+    schedulesQuery.isPending ||
     isSummariesLoading;
 
   return {
     classes: bundledClassInfo,
     loading,
-    isError,
+    isError:
+      isError ||
+      Boolean(data?.error || data?.success === false) ||
+      schedulesTooLarge ||
+      schedulesQuery.isError ||
+      isSummariesError,
   };
 }
 
