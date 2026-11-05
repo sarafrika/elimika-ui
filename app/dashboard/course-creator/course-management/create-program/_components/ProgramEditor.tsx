@@ -293,6 +293,16 @@ export default function ProgramEditor({
       navigationLock.current = false;
     }
   };
+  const removeProgramCourse = async (courseUuid: string) => {
+    if (navigationLock.current || save.isPending)
+      throw new Error('Please wait for the current operation to finish.');
+    navigationLock.current = true;
+    try {
+      await save.removeCourse(courseUuid);
+    } finally {
+      navigationLock.current = false;
+    }
+  };
   const backToPrograms = () => router.push('/dashboard/course-creator/course-management');
 
   return (
@@ -437,7 +447,12 @@ export default function ProgramEditor({
                       )}
                     </>
                   )}
-                  {step === 1 && <ProgramCourses creatorUuid={creatorUuid} />}
+                  {step === 1 && (
+                    <ProgramCourses
+                      creatorUuid={creatorUuid}
+                      onRemoveCourse={removeProgramCourse}
+                    />
+                  )}
                   {step === 2 && <ProgramWeights />}
                   {/* {step === 3 && save.programUuid && (
                     <ProgramSkills
