@@ -1,22 +1,15 @@
 'use client';
 
-import { EmptyState } from '@/components/ui/empty-state';
-import { cn } from '@/lib/utils';
-import { useClassCatalogue } from '@/src/features/find-classes/use-class-catalogue';
-import {
-  AVAILABLE_CLASS_VIEWS,
-  type AvailableClassView,
-  availableClassCounts,
-  availableClassPage,
-  availableClassStatus,
-} from './available-class-views';
 import { SearchUnavailable } from '@/components/search/search-unavailable';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
 import { isSearchUnavailable } from '@/lib/api-errors';
+import { cn } from '@/lib/utils';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import AvailabilityClassCard from '@/src/features/dashboard/courses/components/availability-listing-layout';
+import { useClassCatalogue } from '@/src/features/find-classes/use-class-catalogue';
 import { useNearMe } from '@/src/features/near-me/near-me';
 import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
 import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
@@ -36,6 +29,13 @@ import { useUserProfile } from '../../../profile/context/profile-context';
 import { roleScopedDashboardPath } from '../../lib/active-domain-storage';
 import { CourseDetailsSheet } from '../shared/_components/CourseDetailsSheet';
 import { BundledClass } from '../types';
+import {
+  AVAILABLE_CLASS_VIEWS,
+  type AvailableClassView,
+  availableClassCounts,
+  availableClassPage,
+  availableClassStatus,
+} from './available-class-views';
 
 export default function AvailableClassesPage({
   courseId,
@@ -60,8 +60,6 @@ export default function AvailableClassesPage({
   useCourseLessonsWithContent({ courseUuid: courseId, contentEnabled: false });
 
   const course = classes[0]?.course;
-
-  // Catalogue membership (scoped to this course by the hook) decides whether a class is listed.
   const filteredClasses = useMemo(
     () => classes.filter(cls => cls.is_active && cls.catalogue !== null),
     [classes]
@@ -91,12 +89,12 @@ export default function AvailableClassesPage({
     () =>
       nearMe.active
         ? filteredClasses
-            .filter(cls => cls.uuid && nearBands.has(cls.uuid))
-            .sort(
-              (left, right) =>
-                (nearBands.get(left.uuid ?? '')?.rank ?? 0) -
-                (nearBands.get(right.uuid ?? '')?.rank ?? 0)
-            )
+          .filter(cls => cls.uuid && nearBands.has(cls.uuid))
+          .sort(
+            (left, right) =>
+              (nearBands.get(left.uuid ?? '')?.rank ?? 0) -
+              (nearBands.get(right.uuid ?? '')?.rank ?? 0)
+          )
         : filteredClasses,
     [filteredClasses, nearMe.active, nearBands]
   );

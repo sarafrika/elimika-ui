@@ -21,6 +21,9 @@ import { AsyncSection } from '@/components/data/async-section';
 import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import Spinner from '@/components/ui/spinner';
 import { useClassEditEligibility } from '@/hooks/use-class-edit-eligibility';
 import { useInstructorApprovedOfferings } from '@/hooks/use-instructor-approved-offerings';
@@ -31,6 +34,7 @@ import {
 import {
   type DeliveryMode,
   formatRateBasis,
+  getRateBasis,
   isSelectableRateBasis,
   rateFor,
   type SelectableRateBasis,
@@ -51,6 +55,8 @@ import {
   BillingBasisCards,
   ClassMediaUpload,
   DeliveryCards,
+  InstructorDeliverycards,
+  type InstructorDeliveryRate,
   LocationVenue,
   type MediaFile,
   type Offering,
@@ -713,7 +719,7 @@ const InstructorClassCreationPage = () => {
 
   const [schedulePreset, setSchedulePreset] = useState<SchedulePreset>('standard');
   const [service, setService] = useState<ServiceKey | null>(null);
-  // Picked from the approved rate card after delivery; nothing is chosen for the instructor.
+  // A service card chooses its approved rate, delivery mode and billing basis together.
   const [rateBasis, setRateBasis] = useState<SelectableRateBasis | null>(null);
   const [salePrice, setSalePrice] = useState('');
   const [instructorPay, setInstructorPay] = useState('');
@@ -1468,11 +1474,11 @@ const InstructorClassCreationPage = () => {
     }
     const locationType = normalizeLocationType(classDetails.location_type);
     if (!locationType) {
-      toast.error('Pick how the class is delivered.');
+      toast.error(resolvedId ? 'Pick how the class is delivered.' : 'Pick an approved service.');
       return false;
     }
     if (!rateBasis) {
-      toast.error('Pick a billing basis on your rate card.');
+      toast.error(resolvedId ? 'Pick a billing basis on your rate card.' : 'Pick an approved service.');
       return false;
     }
     if (!service) {
@@ -1592,16 +1598,18 @@ const InstructorClassCreationPage = () => {
         `Your rate card has no approved ${formatRateBasis(rateBasis)} rate for this service. Add it to your rate card first.`
       );
     }
-    const priceIssue = priceAndPayIssue({
-      salePrice,
-      instructorPay,
-      approvedRate,
-      basis: rateBasis,
-      currency: rateCard?.currency,
-      payAtLeastRate: true,
-    });
+    const priceIssue = resolvedId
+      ? priceAndPayIssue({
+          salePrice,
+          instructorPay,
+          approvedRate,
+          basis: rateBasis,
+          currency: rateCard?.currency,
+          payAtLeastRate: true,
+        })
+      : null;
     if (priceIssue) return toast.error(priceIssue.message);
-    const saleValue = num(salePrice) ?? 0;
+    const saleValue = resolvedId ? num(salePrice) ?? 0 : approvedRate;
     const payValue = num(instructorPay) ?? 0;
     setRefusedWindows([]);
 
@@ -1901,7 +1909,7 @@ const InstructorClassCreationPage = () => {
       scheduled_session_count: totalSessions,
       class_reminder_minutes: reminderToMinutes(notificationSettings.reminder),
       sale_price: saleValue,
-      instructor_pay: payValue,
+      ...(resolvedId ? { instructor_pay: payValue } : {}),
       rate_basis: rateBasis,
       allow_waitlist: allowWaitlist,
       is_active: !isDraft,
@@ -2105,7 +2113,19 @@ const InstructorClassCreationPage = () => {
   const selectedInstructorOffering = instructorOfferings.find(
     item => item.value === selectedOfferingValue
   );
-  const proposedRateCard = useProposedRateCard(selectedInstructorOffering);
+  const proposedRateCard = useProposedRateCard(resolvedId ? selectedInstructorOffering : undefined);
+
+  const handleInstructorRateChange = (rate: InstructorDeliveryRate) => {
+    setRateBasis(rate.basis);
+    setService(rate.service);
+    setSalePrice(String(rate.amount));
+    setInstructorPay('');
+    setClassDetails(prev => ({
+      ...prev,
+      location_type: rate.delivery,
+      class_type: serviceFormat(rate.service) === 'INDIVIDUAL' ? 'PRIVATE' : 'PUBLIC',
+    }));
+  };
 
   const handleDeliveryChange = (next: DeliveryMode) => {
     setClassDetails(prev => ({ ...prev, location_type: next }));
@@ -2442,63 +2462,135 @@ const InstructorClassCreationPage = () => {
             />
           </AsyncSection>
 
-          <DeliveryCards value={deliveryMode} onChange={handleDeliveryChange} />
-
-          {selectedInstructorOffering && deliveryMode ? (
+          {resolvedId ? (
             <>
-              <BillingBasisCards
-                value={rateBasis}
-                onChange={handleBasisChange}
-                hint='Learners are charged, and you are paid, per unit of this basis.'
-                statusFor={basis => basisStatus(rateCard, proposedRateCard, deliveryMode, basis)}
-                renderAddAction={basis => (
-                  <Button asChild size='sm' variant='outline'>
-                    <Link href={addRatesHref(basis.value)}>
-                      <Plus aria-hidden />
-                      Add {basis.phrase} rates
-                    </Link>
-                  </Button>
-                )}
-              />
+              <DeliveryCards value={deliveryMode} onChange={handleDeliveryChange} />
 
-              <ServiceCards
-                value={service}
-                onChange={handleServiceChange}
-                rateCard={rateCard as ApprovedRateCard | undefined}
-                delivery={deliveryMode}
-                basis={rateBasis}
-              />
+              {selectedInstructorOffering && deliveryMode ? (
+                <>
+                  <BillingBasisCards
+                    value={rateBasis}
+                    onChange={handleBasisChange}
+                    hint='Learners are charged, and you are paid, per unit of this basis.'
+                    statusFor={basis =>
+                      basisStatus(rateCard, proposedRateCard, deliveryMode, basis)
+                    }
+                    renderAddAction={basis => (
+                      <Button asChild size='sm' variant='outline'>
+                        <Link href={addRatesHref(basis.value)}>
+                          <Plus aria-hidden />
+                          Add {basis.phrase} rates
+                        </Link>
+                      </Button>
+                    )}
+                  />
+
+                  <ServiceCards
+                    value={service}
+                    onChange={handleServiceChange}
+                    rateCard={rateCard as ApprovedRateCard | undefined}
+                    delivery={deliveryMode}
+                    basis={rateBasis}
+                  />
+                </>
+              ) : (
+                <div className='border-border bg-muted/30 text-muted-foreground rounded-md border border-dashed px-4 py-5 text-center text-sm'>
+                  Pick the course or program and how it is delivered to see your approved rates.
+                </div>
+              )}
+
+              {rateBasis && service ? (
+                <PricingCapacity
+                  basis={rateBasis}
+                  approvedRate={approvedRate}
+                  currency={rateCard?.currency}
+                  salePrice={salePrice}
+                  onSalePriceChange={setSalePrice}
+                  instructorPay={instructorPay}
+                  onInstructorPayChange={setInstructorPay}
+                  maxParticipants={String(classDetails.class_limit || '')}
+                  onMaxChange={value =>
+                    setClassDetails(prev => ({ ...prev, class_limit: Number(value) || 0 }))
+                  }
+                  allowWaitlist={allowWaitlist}
+                  onAllowWaitlistChange={setAllowWaitlist}
+                  totals={{
+                    sessions: totalSessions,
+                    minutes: totalHours * 60,
+                    days: totalDays,
+                  }}
+                  payHint='What you are paid. It can’t be below your approved rate or above the sale price.'
+                  payAtLeastRate
+                />
+              ) : null}
             </>
           ) : (
-            <div className='border-border bg-muted/30 text-muted-foreground rounded-md border border-dashed px-4 py-5 text-center text-sm'>
-              Pick the course or program and how it is delivered to see your approved rates.
-            </div>
-          )}
+            <>
+              {selectedInstructorOffering ? (
+                <InstructorDeliverycards
+                  rateCard={rateCard}
+                  value={{ delivery: deliveryMode, service, basis: rateBasis }}
+                  onChange={handleInstructorRateChange}
+                  disabled={isSubmitting || offeringsLoading}
+                />
+              ) : (
+                <EmptyState
+                  variant='compact'
+                  title='Choose a course or program'
+                  description='Select an approved offering to see your delivery rates.'
+                />
+              )}
 
-          {rateBasis && service ? (
-            <PricingCapacity
-              basis={rateBasis}
-              approvedRate={approvedRate}
-              currency={rateCard?.currency}
-              salePrice={salePrice}
-              onSalePriceChange={setSalePrice}
-              instructorPay={instructorPay}
-              onInstructorPayChange={setInstructorPay}
-              maxParticipants={String(classDetails.class_limit || '')}
-              onMaxChange={value =>
-                setClassDetails(prev => ({ ...prev, class_limit: Number(value) || 0 }))
-              }
-              allowWaitlist={allowWaitlist}
-              onAllowWaitlistChange={setAllowWaitlist}
-              totals={{
-                sessions: totalSessions,
-                minutes: totalHours * 60,
-                days: totalDays,
-              }}
-              payHint='What you are paid. It can’t be below your approved rate or above the sale price.'
-              payAtLeastRate
-            />
-          ) : null}
+              {approvedRate !== undefined && rateBasis && service ? (
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='instructor-class-sale-price'>
+                      Sale price per {getRateBasis(rateBasis).unit} ({rateCard?.currency || 'KES'})
+                    </Label>
+                    <Input
+                      id='instructor-class-sale-price'
+                      type='number'
+                      value={approvedRate}
+                      readOnly
+                      aria-describedby='instructor-class-sale-price-hint'
+                    />
+                    <p
+                      id='instructor-class-sale-price-hint'
+                      className='text-muted-foreground text-xs'
+                    >
+                      Filled from your selected approved service rate.
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='instructor-class-max-participants'>Max participants</Label>
+                    <Input
+                      id='instructor-class-max-participants'
+                      type='number'
+                      inputMode='numeric'
+                      min={1}
+                      value={classDetails.class_limit || ''}
+                      onChange={event =>
+                        setClassDetails(prev => ({
+                          ...prev,
+                          class_limit: Number(event.target.value) || 0,
+                        }))
+                      }
+                    />
+                    <div className='flex items-center gap-2'>
+                      <Switch
+                        id='instructor-class-waitlist'
+                        checked={allowWaitlist}
+                        onCheckedChange={setAllowWaitlist}
+                      />
+                      <Label htmlFor='instructor-class-waitlist' className='font-normal'>
+                        Allow a waitlist
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
 
           <LocationVenue
             delivery={deliveryMode}

@@ -1,18 +1,15 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
 import { logger } from '@/lib/logger';
 import { STALE_TIMES } from '@/lib/query-client';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo } from 'react';
 import {
   getClassesBatchOptions,
   getStudentCourseOverviewOptions,
-  resolveByCourseOrClassQueryKey,
+  searchCatalogueOptions
 } from '../services/client/@tanstack/react-query.gen';
-import { resolveByCourseOrClass } from '../services/client/sdk.gen';
 import type {
   ClassBatchSummary,
   CommerceCatalogueItem,
-  ResolveByCourseOrClassData,
-  ResolveByCourseOrClassResponse,
 } from '../services/client/types.gen';
 import type { CardInstructor } from '../src/features/dashboard/courses/types';
 
@@ -21,12 +18,20 @@ const CLASS_BATCH_SIZE = 100;
 const MAX_CLASS_BATCHES = 5;
 const STUDENT_OVERVIEW_PAGE_SIZE = 50;
 const MAX_STUDENT_OVERVIEW_PAGES = 10;
+const MAX_CATALOGUE_PAGES = 5;
+
+type CatalogueScope = {
+  class_definition_uuid?: string;
+  class_uuid?: string;
+  course_uuid?: string;
+  program_uuid?: string;
+};
 
 // Seat counts (batch class endpoint), the viewer's own enrolments and the catalogue rows for one
 // course or program, in a fixed number of requests however many classes are listed.
 export function useClassListingSummaries(
   classUuids: string[],
-  catalogueScope: ResolveByCourseOrClassData['query'] | undefined,
+  catalogueScope: CatalogueScope | undefined,
   studentUuid?: string
 ) {
   const chunks = useMemo(() => {
@@ -115,30 +120,98 @@ export function useClassListingSummaries(
     [overview, remainingOverview.rows]
   );
 
-  // A 404 means nothing is sold here: cache it as empty so remounts reuse it instead of refetching.
-  const catalogueQuery = useQuery({
-    queryKey: resolveByCourseOrClassQueryKey({ query: catalogueScope }),
-    queryFn: async ({ signal }): Promise<ResolveByCourseOrClassResponse> => {
-      const { data, error, response } = await resolveByCourseOrClass({
-        query: catalogueScope,
-        signal,
-      });
-      if (response?.status === 404) return { data: [] };
-      if (error) throw error;
-      return data ?? { data: [] };
-    },
-    enabled: !!(catalogueScope?.course_uuid || catalogueScope?.program_uuid),
-    retry: false,
-    staleTime: STALE_TIMES.reference,
+  // Class mappings take priority: search the listed ids together, never once per class.
+  // Only fall back to course/program scope when no class ids are available.
+  const catalogueFilters = useMemo((): Record<string, string>[] => {
+    const classUuid = catalogueScope?.class_definition_uuid || catalogueScope?.class_uuid;
+    if (classUuid) return [{ class_definition_uuid: classUuid }];
+    if (chunks.length > 0) {
+      return chunks.slice(0, MAX_CLASS_BATCHES).map<Record<string, string>>(ids =>
+        ids.length === 1
+          ? { class_definition_uuid: ids.join(',') }
+          : { class_definition_uuid_in: ids.join(',') }
+      );
+    }
+    if (catalogueScope?.course_uuid) return [{ course_uuid: catalogueScope.course_uuid }];
+    if (catalogueScope?.program_uuid) return [{ program_uuid: catalogueScope.program_uuid }];
+    return [];
+  }, [
+    chunks,
+    catalogueScope?.class_definition_uuid,
+    catalogueScope?.class_uuid,
+    catalogueScope?.course_uuid,
+    catalogueScope?.program_uuid,
+  ]);
+  const catalogueQueries = useQueries({
+    queries: catalogueFilters.slice(0, MAX_CATALOGUE_PAGES).map(searchParams => ({
+      ...searchCatalogueOptions({
+        query: { searchParams, pageable: { page: 0, size: CLASS_BATCH_SIZE } },
+      }),
+      staleTime: STALE_TIMES.reference,
+    })),
   });
+  const cataloguePageCount = catalogueQueries.reduce(
+    (total, result) =>
+      total +
+      (result.data?.error || result.data?.success === false
+        ? 1
+        : Math.max(1, result.data?.data?.metadata?.totalPages ?? 1)),
+    0
+  );
+  const catalogueTooLarge = cataloguePageCount > MAX_CATALOGUE_PAGES;
+  const remainingCatalogue = useQueries({
+    queries: catalogueTooLarge
+      ? []
+      : catalogueQueries.flatMap((result, index) => {
+        if (!result.isSuccess || result.data?.error || result.data?.success === false) return [];
+        const searchParams = catalogueFilters[index];
+        if (!searchParams) return [];
+        return Array.from(
+          { length: Math.max(0, (result.data?.data?.metadata?.totalPages ?? 1) - 1) },
+          (_, page) => ({
+            ...searchCatalogueOptions({
+              query: {
+                searchParams,
+                pageable: { page: page + 1, size: CLASS_BATCH_SIZE },
+              },
+            }),
+            staleTime: STALE_TIMES.reference,
+          })
+        );
+      }),
+  });
+
+  const catalogueResponses = [...catalogueQueries, ...remainingCatalogue];
+  const catalogueLoading = catalogueResponses.some(result => result.isLoading);
+  const catalogueError =
+    catalogueTooLarge ||
+    catalogueResponses.some(
+      result => result.isError || result.data?.error || result.data?.success === false
+    );
+
   const catalogueMap = useMemo(() => {
     const map: Record<string, CommerceCatalogueItem> = {};
-    if (catalogueQuery.data?.error || catalogueQuery.data?.success === false) return map;
-    for (const item of catalogueQuery.data?.data ?? []) {
-      if (item.class_definition_uuid) map[item.class_definition_uuid] = item;
+    const classUuid = catalogueScope?.class_definition_uuid || catalogueScope?.class_uuid;
+    const wanted = new Set(classUuid ? [classUuid] : classUuids);
+    for (const result of [...catalogueQueries, ...remainingCatalogue]) {
+      if (result.data?.error || result.data?.success === false) continue;
+      for (const item of result.data?.data?.content ?? []) {
+        if (
+          item.class_definition_uuid &&
+          (wanted.size === 0 || wanted.has(item.class_definition_uuid))
+        ) {
+          map[item.class_definition_uuid] = item;
+        }
+      }
     }
     return map;
-  }, [catalogueQuery.data]);
+  }, [
+    catalogueQueries,
+    remainingCatalogue,
+    classUuids,
+    catalogueScope?.class_definition_uuid,
+    catalogueScope?.class_uuid,
+  ]);
 
   return {
     summaryMap: batch.summaryMap,
@@ -148,7 +221,7 @@ export function useClassListingSummaries(
       batch.isLoading ||
       overviewQuery.isLoading ||
       remainingOverview.isLoading ||
-      catalogueQuery.isLoading,
+      catalogueLoading,
     isError:
       batch.isError ||
       chunks.length > MAX_CLASS_BATCHES ||
@@ -156,8 +229,7 @@ export function useClassListingSummaries(
       Boolean(overviewFailed) ||
       overviewTooLarge ||
       remainingOverview.isError ||
-      catalogueQuery.isError ||
-      Boolean(catalogueQuery.data?.error || catalogueQuery.data?.success === false),
+      catalogueError,
   };
 }
 

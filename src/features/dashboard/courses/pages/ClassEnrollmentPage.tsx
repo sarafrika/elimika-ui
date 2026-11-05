@@ -1,12 +1,6 @@
 // @ts-nocheck -- pre-existing @hey-api generated-client type drift (see memory: elimika-ui-typecheck)
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { format } from 'date-fns';
-import { AlertCircle, ArrowLeft, Calendar, Clock, Users, Zap } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import useBundledClassInfo from '@/hooks/use-course-classes';
@@ -21,6 +15,12 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import { StudentEnrollmentGate } from '@/src/features/dashboard/courses/components/StudentEnrollmentGate';
 import { invalidateEnrollmentSuccessQueries } from '@/src/features/dashboard/courses/shared/enrollment-query-invalidation';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { format } from 'date-fns';
+import { AlertCircle, ArrowLeft, Calendar, Clock, Users, Zap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useOrganisationsByIds } from '../../../../../hooks/use-batched-lookups';
 import { useDifficultyLevels } from '../../../../../hooks/use-difficultyLevels';
 import { useUserProfile } from '../../../profile/context/profile-context';
