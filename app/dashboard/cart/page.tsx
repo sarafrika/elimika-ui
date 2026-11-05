@@ -263,7 +263,7 @@ export default function CartPage() {
               </Button>
               <p className='text-muted-foreground border-border/60 border-t pt-3 text-xs'>
                 {paymentRequired
-                  ? 'We hold your seat for 10 minutes once you start paying.'
+                  ? 'We hold your seat for 5 minutes once you start paying.'
                   : 'No payment is needed on this environment.'}
               </p>
             </aside>

@@ -160,11 +160,13 @@ export function CheckoutPage() {
 
   useEffect(() => {
     if (stage !== 'waiting') return;
+    // A resend reuses the order's query key: an answer from before this prompt is the last attempt's, not this one's.
+    if (!promptSentAt || statusQuery.dataUpdatedAt < promptSentAt) return;
     const status = statusQuery.data?.data?.status?.toUpperCase();
     if (status === 'SUCCESS' || status === 'CAPTURED') setStage('paid');
     else if (status === 'REFUSED') setStage('refused');
     else if (status === 'FAILED' || status === 'CANCELLED' || status === 'CANCELED') setStage('failed');
-  }, [statusQuery.data, stage]);
+  }, [statusQuery.data, statusQuery.dataUpdatedAt, stage, promptSentAt]);
 
   useEffect(() => {
     if (stage !== 'waiting') return;
@@ -250,7 +252,7 @@ export function CheckoutPage() {
       currency={currency}
       orderNumber={order?.number}
       className='xl:sticky xl:top-20'
-      footer={<ToneNote>Your seat is held for 10 minutes while you pay.</ToneNote>}
+      footer={<ToneNote>Your seat is held for 5 minutes while you pay.</ToneNote>}
     />
   );
 

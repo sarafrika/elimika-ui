@@ -372,7 +372,7 @@ export function ClassJoinView(props: ClassJoinViewProps) {
             {price.isFree ? null : (
               <p className='text-muted-foreground border-border/60 flex gap-2 border-t pt-3 text-xs'>
                 <Lock aria-hidden className='size-3.5 shrink-0' />
-                Your seat is held for 10 minutes while you pay with M-Pesa.
+                Your seat is held for 5 minutes while you pay with M-Pesa.
               </p>
             )}
           </aside>
