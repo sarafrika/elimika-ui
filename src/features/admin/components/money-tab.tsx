@@ -1,10 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import { SectionCard, SectionCardSkeleton, StatCard, StatusBadge } from '@/components/data-display';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { SaleSplitBreakdown } from '@/components/wallet/sale-split-breakdown';
 import { formatDate } from '@/lib/date';
 import type { Student } from '@/services/client';
+import { purseLabel } from '@/src/features/wallet/purses';
 import { useStudentPurchases, useWalletHistory } from '../hooks/use-person-record';
+import { useAdminSaleSplit } from '../hooks/use-sale-splits';
 import { SectionBoundary } from './section-boundary';
+
+/** `purse` and `sale_split_uuid` postdate the generated WalletTransaction. */
+type PurseFields = { purse?: string | null; sale_split_uuid?: string | null };
 
 const money = (amount?: number | null, currency?: string | null) =>
   amount == null ? '—' : `${currency ?? ''} ${amount.toLocaleString()}`.trim();
@@ -35,6 +44,7 @@ export function MoneyTab({
  */
 function WalletBlock({ userUuid }: { userUuid: string }) {
   const { transactions, hasWallet, balance, currency, query } = useWalletHistory(userUuid);
+  const [splitUuid, setSplitUuid] = useState<string | null>(null);
 
   return (
     <SectionBoundary
@@ -61,7 +71,9 @@ function WalletBlock({ userUuid }: { userUuid: string }) {
         >
           {transactions.length ? (
             <ul className='divide-border/60 divide-y'>
-              {transactions.map(transaction => (
+              {transactions.map(transaction => {
+                const extra = transaction as PurseFields;
+                return (
                 <li
                   key={transaction.uuid}
                   className='flex flex-wrap items-center gap-2 py-2.5 first:pt-0'
@@ -77,6 +89,7 @@ function WalletBlock({ userUuid }: { userUuid: string }) {
                       ) : null}
                     </span>
                   </span>
+                  {purseLabel(extra.purse) ? <StatusBadge tone='neutral' label={purseLabel(extra.purse) ?? ''} /> : null}
                   <StatusBadge tone='neutral' label={transaction.transaction_type ?? 'entry'} />
                   <span className='font-mono text-sm'>
                     {money(transaction.amount, transaction.currency_code)}
@@ -84,8 +97,14 @@ function WalletBlock({ userUuid }: { userUuid: string }) {
                   <span className='text-muted-foreground w-28 text-right font-mono text-xs'>
                     bal {money(transaction.balance_after, transaction.currency_code)}
                   </span>
+                  {extra.sale_split_uuid ? (
+                    <Button variant='outline' size='sm' onClick={() => setSplitUuid(extra.sale_split_uuid ?? null)}>
+                      View split
+                    </Button>
+                  ) : null}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           ) : (
             <p className='text-muted-foreground text-sm'>
@@ -95,7 +114,35 @@ function WalletBlock({ userUuid }: { userUuid: string }) {
           )}
         </SectionCard>
       </div>
+      <AdminSplitSheet splitUuid={splitUuid} onClose={() => setSplitUuid(null)} />
     </SectionBoundary>
+  );
+}
+
+function AdminSplitSheet({ splitUuid, onClose }: { splitUuid: string | null; onClose: () => void }) {
+  const query = useAdminSaleSplit(splitUuid);
+  return (
+    <Sheet open={Boolean(splitUuid)} onOpenChange={open => !open && onClose()}>
+      <SheetContent className='w-full sm:max-w-[560px]'>
+        <SheetHeader>
+          <SheetTitle>{query.data?.title ?? 'Sale split'}</SheetTitle>
+          <SheetDescription>How this line was shared out, platform fees included.</SheetDescription>
+        </SheetHeader>
+        <div className='flex-1 overflow-y-auto px-4 pb-6'>
+          <SectionBoundary
+            label='the split'
+            loading={query.isLoading && !query.data}
+            error={query.error}
+            empty={!query.isLoading && !query.data}
+            onRetry={query.refetch}
+            emptyTitle='No split recorded'
+            emptyDescription='This transaction has no split on record.'
+          >
+            {query.data ? <SaleSplitBreakdown split={query.data} /> : null}
+          </SectionBoundary>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
 

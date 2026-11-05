@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { ArrowLeftRight, ArrowUpRight, FileText, Landmark, LayoutDashboard, ShieldCheck, Smartphone, Undo2 } from 'lucide-react';
+import { ArrowLeftRight, ArrowUpRight, FileText, Landmark, LayoutDashboard, Receipt, ShieldCheck, Smartphone, Undo2 } from 'lucide-react';
 import { useState } from 'react';
 import { TrainingOrdersDashboard } from '@/app/dashboard/_components/wallet/TrainingOrdersDashboard';
 import { SectionTabPanel, useSectionTab } from '@/components/data-display/section-tabs';
@@ -11,6 +11,8 @@ import { LedgerPanel } from '@/components/money/ledger-panel';
 import { WalletTransferSheet } from '@/components/money/wallet-transfer-sheet';
 import { Button } from '@/components/ui/button';
 import { PayoutDetailsPanel } from '@/components/wallet/payout-details-panel';
+import { PurseMoveDialog } from '@/components/wallet/purse-move-dialog';
+import { SalesPanel } from '@/components/wallet/sales-panel';
 import {
   AccountCards,
   AuditPanel,
@@ -29,7 +31,7 @@ import {
   listInstructorObligationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 
-const TABS = ['dashboard', 'accounts', 'transactions', 'withdrawals', 'payout', 'refunds', 'statements', 'audit'] as const;
+const TABS = ['dashboard', 'sales', 'accounts', 'transactions', 'withdrawals', 'payout', 'refunds', 'statements', 'audit'] as const;
 const EARNER_TYPES = ['SALE', 'PLATFORM_FEE', 'SALE_REVERSAL', 'WITHDRAWAL', 'WITHDRAWAL_REVERSAL', 'PAYOUT_FEE', 'TRANSFER_IN', 'TRANSFER_OUT', 'DEPOSIT'];
 const PAGE = { pageable: { page: 0, size: 100 } };
 
@@ -39,11 +41,12 @@ type Obligation = ObligationLike & { organisation_uuid?: string; class_definitio
 export default function InstructorWalletPage() {
   const user = useUserProfile();
   const userUuid = user?.uuid ?? '';
-  const scope: WalletScope = { kind: 'user', userUuid };
+  const scope: WalletScope = { kind: 'user', userUuid, purse: 'INSTRUCTOR' };
   const queryClient = useQueryClient();
   const { value: tab, setValue: setTab, hrefFor } = useSectionTab(TABS, 'dashboard');
   const [transferOpen, setTransferOpen] = useState(false);
-  const { figures, isLoading } = useWalletFigures(scope);
+  const { figures, wallet, isLoading } = useWalletFigures(scope);
+  const [moveOpen, setMoveOpen] = useState(false);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const currency = figures?.currency ?? 'KES';
 
@@ -77,6 +80,7 @@ export default function InstructorWalletPage() {
         description='Course class orders, delivery progress and wallet activity.'
         tabs={[
           { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+          { id: 'sales', label: 'Sales', icon: Receipt },
           { id: 'accounts', label: 'Accounts', icon: Landmark },
           { id: 'transactions', label: 'Transactions', icon: ArrowLeftRight },
           { id: 'withdrawals', label: 'Withdrawals', icon: ArrowUpRight },
@@ -91,13 +95,21 @@ export default function InstructorWalletPage() {
         scrollButtons
         onWithdraw={() => setWithdrawOpen(true)}
         actions={
-          <Button variant='outline' onClick={() => setTransferOpen(true)} disabled={!figures || figures.available <= 0}>
-            Transfer
-          </Button>
+          <>
+            <Button variant='outline' onClick={() => setMoveOpen(true)} disabled={!figures || figures.available <= 0}>
+              Move between purses
+            </Button>
+            <Button variant='outline' onClick={() => setTransferOpen(true)} disabled={!figures || figures.available <= 0}>
+              Transfer
+            </Button>
+          </>
         }
       >
         <SectionTabPanel value='dashboard'>
           {tab === 'dashboard' ? <TrainingOrdersDashboard role='instructor' /> : null}
+        </SectionTabPanel>
+        <SectionTabPanel value='sales'>
+          <SalesPanel scope={scope} active={tab === 'sales'} transactionsHref={hrefFor('transactions')} />
         </SectionTabPanel>
         <SectionTabPanel value='accounts' className='space-y-5'>
           <AccountCards
@@ -173,7 +185,16 @@ export default function InstructorWalletPage() {
         userUuid={userUuid}
         balance={figures?.available ?? 0}
         currency={currency}
+        sourcePurse={scope.purse}
         onTransferred={() => void invalidateWallet(queryClient)}
+      />
+      <PurseMoveDialog
+        open={moveOpen}
+        onOpenChange={setMoveOpen}
+        userUuid={userUuid}
+        wallet={wallet}
+        from='INSTRUCTOR'
+        onMoved={() => void invalidateWallet(queryClient)}
       />
       <WithdrawDialog
         open={withdrawOpen}

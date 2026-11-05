@@ -1,24 +1,16 @@
 'use client';
 
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import {
-  ArrowRight,
-  CalendarDays,
-  ChevronLeft,
-  ChevronRight,
-  MapPin,
-  SearchX,
-  Users,
-  X,
-} from 'lucide-react';
-import Link from 'next/link';
+import { CalendarClock, ChevronLeft, ChevronRight, Clock, GraduationCap, SearchX, Video, X } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
+import { PageHeader } from '@/components/dashboard/page-header';
+import { surfaceTheme } from '@/components/data-display/page-shell';
+import { StatCard } from '@/components/data-display/stat-tile';
 import { EntityCombobox, type EntityOption } from '@/components/search/entity-combobox';
 import { SearchQueryInput } from '@/components/search/search-input';
 import { SearchNotice } from '@/components/search/search-notice';
 import { SearchUnavailable } from '@/components/search/search-unavailable';
-import { PageHeader } from '@/components/dashboard/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -37,23 +29,27 @@ import { useCoursesByIds } from '@/hooks/use-batched-lookups';
 import { useSearchState, useSearchStatePatch } from '@/hooks/use-search-state';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
 import { isSearchUnavailable } from '@/lib/api-errors';
-import { formatDate } from '@/lib/date';
 import { STALE_TIMES } from '@/lib/query-client';
 import { classifySearchError } from '@/lib/search/query';
 import { numberParam } from '@/lib/search-state';
+import { cn } from '@/lib/utils';
 import type {
-  ClassDefinition,
+  ClassBatchSummary,
   ClassDefinitionResponse,
   GetAllClassDefinitionsData,
   GetPublishedCoursesResponse,
 } from '@/services/client';
 import {
   getAllClassDefinitionsOptions,
+  getClassesBatchOptions,
+  getClassSchedulesOptions,
   getPublishedCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { useNearMe } from '@/src/features/near-me/near-me';
-import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
+import { NearMeControl } from '@/src/features/near-me/near-me-control';
+import { ClassCard } from './class-card';
+import { type ClassCardFacts, classCardFacts } from './class-card-facts';
 import {
   type ClassFilters,
   FORMAT_OPTIONS,
@@ -84,12 +80,15 @@ function rowCourseTitle(item: ClassDefinitionResponse): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
 }
 
-const LOCATION_LABEL = Object.fromEntries(
-  LOCATION_OPTIONS.map(option => [option.value, option.label])
-) as Record<string, string>;
-const FORMAT_LABEL = Object.fromEntries(
-  FORMAT_OPTIONS.map(option => [option.value, option.label])
-) as Record<string, string>;
+type View = 'open' | 'online' | 'in_person' | 'soon' | 'closed';
+const VIEWS: ReadonlyArray<{ id: View; label: string; keep: (facts: ClassCardFacts) => boolean }> = [
+  { id: 'open', label: 'All open', keep: f => !f.closed },
+  { id: 'online', label: 'Online', keep: f => !f.closed && f.online },
+  { id: 'in_person', label: 'In person', keep: f => !f.closed && !f.online },
+  { id: 'soon', label: 'Closing soon', keep: f => f.closingSoon },
+  { id: 'closed', label: 'Closed', keep: f => f.closed },
+];
+const isView = (value: string | null): value is View => VIEWS.some(view => view.id === value);
 
 /**
  * "Find classes" for learners: every class the caller may join, across all courses, from
@@ -152,6 +151,48 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
     return ids;
   }, [rows, filters.course, embeddedTitles]);
   const courses = useCoursesByIds(courseIds);
+
+  // One batch call each for seats/trainer and for sessions, so a card can show the full price
+  // (rate × scheduled units, as the cart charges) and whether the class is still open.
+  const classUuids = useMemo(() => rows.flatMap(row => (row.definition.uuid ? [row.definition.uuid] : [])), [rows]);
+  const summaries = useQuery({
+    ...getClassesBatchOptions({ query: { uuids: classUuids } }),
+    enabled: classUuids.length > 0,
+    staleTime: STALE_TIMES.live,
+  });
+  const schedules = useQuery({
+    ...getClassSchedulesOptions({ query: { class_uuids: classUuids } }),
+    enabled: classUuids.length > 0,
+    staleTime: STALE_TIMES.live,
+  });
+  const summaryByUuid = useMemo(() => {
+    const map: Record<string, ClassBatchSummary> = {};
+    for (const summary of summaries.data?.data ?? []) if (summary.uuid) map[summary.uuid] = summary;
+    return map;
+  }, [summaries.data]);
+  const cards = useMemo(() => {
+    const sessionsByClass: Record<string, NonNullable<typeof schedules.data>['data']> = {};
+    for (const session of schedules.data?.data ?? []) {
+      const key = session.class_definition_uuid;
+      if (!key) continue;
+      (sessionsByClass[key] ??= []).push(session);
+    }
+    const now = new Date();
+    return rows.map(row => {
+      const uuid = row.definition.uuid ?? '';
+      const summary = summaryByUuid[uuid];
+      return { ...row, summary, facts: classCardFacts(row.definition, sessionsByClass[uuid] ?? [], summary, now) };
+    });
+  }, [rows, schedules.data, summaryByUuid]);
+
+  const view: View = isView(params.get('view')) ? (params.get('view') as View) : 'open';
+  const viewCounts = useMemo(
+    () => Object.fromEntries(VIEWS.map(v => [v.id, cards.filter(card => v.keep(card.facts)).length])) as Record<View, number>,
+    [cards]
+  );
+  const keepView = VIEWS.find(v => v.id === view)?.keep ?? VIEWS[0]!.keep;
+  const visible = cards.filter(card => keepView(card.facts));
+  const startingThisWeek = cards.filter(card => card.facts.startsThisWeek).length;
   const courseLabel = (courseUuid: string) =>
     embeddedTitles[courseUuid] ?? courses.courseMap[courseUuid]?.name;
 
@@ -173,14 +214,22 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
   };
 
   return (
-    <div className='space-y-6 px-4 py-6 sm:px-5 lg:px-6'>
+    <main className={cn(surfaceTheme.pageWide, 'py-4 pb-16')}>
+      <div className={surfaceTheme.pageStack}>
       <PageHeader
-        eyebrow='Classes'
-        title='Find classes'
-        description='Every class you can join, across all courses. Search by name, trainer or place, or look near you.'
+        eyebrow='Find classes'
+        title='Classes you can join'
+        description='Every price is the full amount for the class — pay once with M-Pesa.'
       />
 
-      <Card className='gap-4 p-4'>
+      <section aria-label='Summary' className={surfaceTheme.statGrid}>
+        <StatCard label='Classes found' value={total} hint='Across every course' icon={GraduationCap} tone='info' />
+        <StatCard label='Starting this week' value={startingThisWeek} hint='On this page' icon={CalendarClock} tone='success' />
+        <StatCard label='Closing soon' value={viewCounts.soon} hint='Registration ends within 3 days' icon={Clock} tone='warning' />
+        <StatCard label='Online' value={viewCounts.online} hint='Open, on this page' icon={Video} tone='neutral' />
+      </section>
+
+      <Card className={cn(surfaceTheme.cardPadded, 'gap-3 p-4')}>
         <div className='flex flex-col gap-3 lg:flex-row lg:items-start'>
           <SearchQueryInput
             search={search}
@@ -271,9 +320,11 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
             onRetry={() => void classes.refetch()}
           />
         ) : classes.isLoading ? (
-          Array.from({ length: 4 }, (_, index) => (
-            <Skeleton key={index} className='h-36 w-full rounded-xl' />
-          ))
+          <div className={surfaceTheme.cardGrid}>
+            {Array.from({ length: 4 }, (_, index) => (
+              <Skeleton key={index} className='h-[440px] w-full rounded-2xl' />
+            ))}
+          </div>
         ) : classes.isError && !issue ? (
           <EmptyState
             variant='card'
@@ -310,33 +361,74 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
           />
         ) : (
           <>
+            <nav aria-label='Class views' className='thin-scrollbar flex gap-6 overflow-x-auto shadow-[inset_0_-1px_0_0_var(--color-border)]'>
+              {VIEWS.map(v => {
+                const active = v.id === view;
+                return (
+                  <button
+                    key={v.id}
+                    type='button'
+                    aria-pressed={active}
+                    onClick={() => patch({ view: v.id === 'open' ? undefined : v.id })}
+                    className={cn(
+                      'text-muted-foreground hover:text-foreground flex h-11 flex-none items-center gap-2 border-b-2 border-transparent text-sm font-medium',
+                      active && 'border-primary text-primary font-semibold'
+                    )}
+                  >
+                    {v.label}
+                    <span
+                      className={cn(
+                        'inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-semibold tabular-nums',
+                        active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                      )}
+                    >
+                      {viewCounts[v.id]}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
             <p className='text-muted-foreground text-sm' aria-live='polite'>
-              {searchPath || !filtered
-                ? `${total} ${total === 1 ? 'class' : 'classes'}`
-                : `${rows.length} matching on this page`}
+              <span className='text-foreground font-semibold tabular-nums'>{visible.length}</span>{' '}
+              {visible.length === 1 ? 'class' : 'classes'}
+              {totalPages > 1 ? ` on this page of ${total}` : ''}
               {nearMe.active ? ', nearest first' : ''}
+              {searchPath || !filtered ? '' : ' matching your filters'}
             </p>
-            <ul className='space-y-3'>
-              {rows.map(({ definition, band, courseTitle }) => (
-                <li key={definition.uuid}>
-                  <ClassRow
-                    definition={definition}
-                    band={nearMe.active ? band : undefined}
-                    courseName={
-                      courseTitle ??
-                      (definition.course_uuid
-                        ? courses.courseMap[definition.course_uuid]?.name
-                        : undefined)
-                    }
-                    href={
-                      definition.course_uuid && definition.uuid
-                        ? enrolHref(domain, definition.course_uuid, definition.uuid)
-                        : null
-                    }
-                  />
-                </li>
-              ))}
-            </ul>
+            {visible.length === 0 ? (
+              <EmptyState
+                variant='card'
+                icon={SearchX}
+                title={view === 'closed' ? 'No closed classes here' : 'No classes in this view'}
+                description='Try another tab, or change the filters above.'
+              />
+            ) : (
+              <ul className={surfaceTheme.cardGrid}>
+                {visible.map(({ definition, band, courseTitle, summary, facts }) => (
+                  <li key={definition.uuid} className='min-w-0'>
+                    <ClassCard
+                      title={definition.title}
+                      courseName={
+                        courseTitle ??
+                        summary?.course_title ??
+                        (definition.course_uuid ? courses.courseMap[definition.course_uuid]?.name : undefined) ??
+                        undefined
+                      }
+                      trainer={summary?.instructor?.display_name}
+                      thumbnailUrl={definition.thumbnail_url ?? summary?.thumbnail_url}
+                      locationType={definition.location_type}
+                      facts={facts}
+                      band={nearMe.active ? band : undefined}
+                      href={
+                        definition.course_uuid && definition.uuid
+                          ? enrolHref(domain, definition.course_uuid, definition.uuid)
+                          : null
+                      }
+                    />
+                  </li>
+                ))}
+              </ul>
+            )}
             {totalPages > 1 ? (
               <nav className='flex items-center justify-center gap-3 pt-2' aria-label='Pages'>
                 <Button
@@ -363,7 +455,8 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
           </>
         )}
       </section>
-    </div>
+      </div>
+    </main>
   );
 }
 
@@ -395,73 +488,5 @@ function FilterSelect({
         </SelectContent>
       </Select>
     </div>
-  );
-}
-
-function ClassRow({
-  definition,
-  band,
-  courseName,
-  href,
-}: {
-  definition: ClassDefinition;
-  band: string | undefined;
-  courseName: string | undefined;
-  href: string | null;
-}) {
-  const location = definition.location_type?.toUpperCase();
-  const format = definition.session_format?.toUpperCase();
-  const starts = definition.academic_period_start_date ?? definition.default_start_time;
-
-  return (
-    <Card className='gap-3 p-4 sm:flex-row sm:items-center sm:justify-between'>
-      <div className='min-w-0 space-y-2'>
-        <div className='space-y-0.5'>
-          <p className='text-foreground truncate font-semibold'>{definition.title}</p>
-          {courseName ? (
-            <p className='text-muted-foreground truncate text-sm'>{courseName}</p>
-          ) : null}
-        </div>
-        <div className='text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs'>
-          <span className='inline-flex items-center gap-1'>
-            <CalendarDays className='size-3.5' aria-hidden />
-            Starts {formatDate(starts)}
-          </span>
-          {definition.location_name ? (
-            <span className='inline-flex items-center gap-1'>
-              <MapPin className='size-3.5' aria-hidden />
-              {definition.location_name}
-            </span>
-          ) : null}
-          {definition.max_participants ? (
-            <span className='inline-flex items-center gap-1'>
-              <Users className='size-3.5' aria-hidden />
-              Up to {definition.max_participants}
-            </span>
-          ) : null}
-        </div>
-        <div className='flex flex-wrap gap-1.5'>
-          {location ? <Badge variant='outline'>{LOCATION_LABEL[location] ?? location}</Badge> : null}
-          {format ? <Badge variant='outline'>{FORMAT_LABEL[format] ?? format}</Badge> : null}
-          {typeof definition.sale_price === 'number' ? (
-            <Badge variant='secondary'>
-              {definition.sale_price === 0
-                ? 'Free'
-                : `KES ${definition.sale_price.toLocaleString()}`}
-            </Badge>
-          ) : null}
-          <DistanceBandBadge band={band} />
-        </div>
-      </div>
-      {href ? (
-        <Button asChild size='sm' className='shrink-0'>
-          <Link href={href}>
-            View and enrol <ArrowRight className='size-4' />
-          </Link>
-        </Button>
-      ) : (
-        <span className='text-muted-foreground shrink-0 text-xs'>Enrol through its program</span>
-      )}
-    </Card>
   );
 }

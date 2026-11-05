@@ -1,8 +1,5 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { adminRoutes } from './admin-routes';
-import { buildConfirm, confirmEffects } from './confirm-effects';
-import { mergeUserBody } from './user-body';
 import {
   applySearchState,
   booleanParam,
@@ -11,6 +8,9 @@ import {
   stringParam,
   withPageReset,
 } from '@/lib/search-state';
+import { adminRoutes } from './admin-routes';
+import { buildConfirm, confirmEffects } from './confirm-effects';
+import { mergeUserBody } from './user-body';
 
 test('admin routes carry the segment and drop empty filters', () => {
   assert.equal(adminRoutes.overview(), '/dashboard/admin/overview');
@@ -35,6 +35,7 @@ test('platform routes keep their nested segments', () => {
   assert.equal(adminRoutes.categories(), '/dashboard/admin/platform/categories');
   assert.equal(adminRoutes.rules({ rule: 'new' }), '/dashboard/admin/platform/rules?rule=new');
   assert.equal(adminRoutes.config('difficulty'), '/dashboard/admin/platform/config?tab=difficulty');
+  assert.equal(adminRoutes.messages('payment_received'), '/dashboard/admin/platform/messages?template=payment_received');
 });
 
 test('search params parse with fallbacks and serialise away defaults', () => {

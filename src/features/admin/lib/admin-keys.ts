@@ -39,6 +39,8 @@ export const adminKeys = {
   payoutBatchList: (filters: { statuses: string[]; page: number; size: number }) =>
     [...adminKeys.payoutBatches(), 'list', filters] as const,
   payoutBatch: (uuid: string) => [...adminKeys.payoutBatches(), 'detail', uuid] as const,
+  orderSplits: (orderId: string) => [...adminKeys.finance(), 'order-splits', orderId] as const,
+  saleSplit: (splitUuid: string) => [...adminKeys.finance(), 'sale-split', splitUuid] as const,
 
   platform: () => [...adminKeys.all, 'platform'] as const,
 } as const;

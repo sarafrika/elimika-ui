@@ -39,6 +39,7 @@ import { formatDateTime } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import { WaitingQueue } from '../components/batch-queue';
 import { SectionBoundary } from '../components/section-boundary';
+import { WalletFlagChips, WalletsCard, WalletsVerdict } from '../components/wallet-check';
 import { WithdrawalTable } from '../components/withdrawal-table';
 import { invalidatePayouts, payoutBatchActions, usePayoutBatch } from '../hooks/use-payout-batches';
 import { adminRoutes } from '../lib/admin-routes';
@@ -52,6 +53,11 @@ import {
   floatState,
   isBatchLive,
   type PayoutBatchDetail,
+  plural,
+  type WalletSummary,
+  walletFlagsOf,
+  walletSummary,
+  withdrawalPurseLabel,
 } from '../lib/payout-batches';
 
 type Dialogs = 'add' | 'approve' | 'reject' | 'submit' | 'return' | 'cancel' | null;
@@ -108,6 +114,7 @@ function BatchView({ batch, onChanged }: { batch: PayoutBatchDetail; onChanged: 
   const rows = batch.withdrawals ?? [];
   const progress = batchProgress(batch);
   const float = floatState(batch.total_amount, batch.payout_float);
+  const wallets = walletSummary(batch, rows);
   const blocked = approveBlockReason(batch, float, viewer?.uuid);
   const started =
     batch.status === 'RELEASED' || batch.status === 'COMPLETED' || batch.status === 'PARTLY_FAILED';
@@ -185,7 +192,7 @@ function BatchView({ batch, onChanged }: { batch: PayoutBatchDetail; onChanged: 
     <div className='space-y-5'>
       <PageHeader
         eyebrow='Payout batch'
-        title={`${formatMoney(batch.total_amount)} to ${progress.total} earner${progress.total === 1 ? '' : 's'}`}
+        title={`${formatMoney(batch.total_amount)} to ${plural(progress.total, 'earner')}`}
         description={
           <span className='inline-flex flex-wrap items-center gap-2'>
             <StatusBadge status={batch.status} tone={status?.tone} label={status?.label} />
@@ -216,6 +223,7 @@ function BatchView({ batch, onChanged }: { batch: PayoutBatchDetail; onChanged: 
 
       <div className='flex flex-wrap items-stretch gap-5'>
         <FloatCard batch={batch} float={float} />
+        <WalletsCard summary={wallets} />
         <Card className='min-w-0 flex-[1_1_320px]'>
           <CardHeader>
             <CardTitle className='text-base'>History</CardTitle>
@@ -272,8 +280,7 @@ function BatchView({ batch, onChanged }: { batch: PayoutBatchDetail; onChanged: 
             {finished && failedRows.length > 0 ? 'Every row' : 'Withdrawals in this batch'}
           </CardTitle>
           <CardDescription>
-            {progress.total} row{progress.total === 1 ? '' : 's'} ·{' '}
-            {formatMoney(batch.total_amount)}
+            {plural(progress.total, 'row')} · {formatMoney(batch.total_amount)}
           </CardDescription>
         </CardHeader>
         {rows.length === 0 ? (
@@ -334,10 +341,11 @@ function BatchView({ batch, onChanged }: { batch: PayoutBatchDetail; onChanged: 
         onOpenChange={open => setDialog(open ? 'approve' : null)}
         batch={batch}
         float={float}
+        wallets={wallets}
         busy={busy}
-        onApprove={override =>
+        onApprove={(override, acknowledged) =>
           void run(
-            () => payoutBatchActions.approve(batch.uuid, override),
+            () => payoutBatchActions.approve(batch.uuid, override, acknowledged),
             'Approved. The payouts are on their way.'
           )
         }
@@ -354,7 +362,7 @@ function BatchView({ batch, onChanged }: { batch: PayoutBatchDetail; onChanged: 
         open={dialog === 'submit'}
         onOpenChange={open => setDialog(open ? 'submit' : null)}
         title='Submit this batch for approval?'
-        body={`${progress.total} withdrawals, ${formatMoney(batch.total_amount)}. Another admin must approve it before anything is paid. You can’t change the rows while it waits.`}
+        body={`${plural(progress.total, 'withdrawal')}, ${formatMoney(batch.total_amount)}. Another admin must approve it before anything is paid. You can’t change the rows while it waits.`}
         confirmLabel='Submit for approval'
         busy={busy}
         onConfirm={() =>
@@ -496,6 +504,7 @@ function ApproveDialog({
   onOpenChange,
   batch,
   float,
+  wallets,
   busy,
   onApprove,
 }: {
@@ -503,15 +512,22 @@ function ApproveDialog({
   onOpenChange: (open: boolean) => void;
   batch: PayoutBatchDetail;
   float: FloatState;
+  wallets: WalletSummary;
   busy: boolean;
-  onApprove: (override: boolean) => void;
+  onApprove: (override: boolean, acknowledgedWallets: boolean) => void;
 }) {
   const overrideId = useId();
+  const walletsId = useId();
   const [override, setOverride] = useState(false);
+  const [acknowledged, setAcknowledged] = useState(false);
   useEffect(() => {
-    if (!open) setOverride(false);
+    if (open) return;
+    setOverride(false);
+    setAcknowledged(false);
   }, [open]);
   const rows = batchProgress(batch).total;
+  const walletIssues = wallets.kind === 'issues' ? wallets.issues : 0;
+  const flagged = (batch.withdrawals ?? []).filter(row => walletFlagsOf(row).length > 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -551,13 +567,56 @@ function ApproveDialog({
             </Label>
           </div>
         ) : null}
+        <WalletsVerdict summary={wallets} />
+        {walletIssues > 0 ? (
+          <>
+            {flagged.length > 0 ? (
+              <ul
+                aria-label='Wallet issues'
+                className='divide-border/60 max-h-48 divide-y overflow-y-auto rounded-md border text-sm'
+              >
+                {flagged.map(row => (
+                  <li
+                    key={row.uuid}
+                    className='flex flex-wrap items-center justify-between gap-2 px-4 py-2'
+                  >
+                    <span className='min-w-0'>
+                      <span className='font-semibold'>{row.requester_name ?? 'Earner'}</span>
+                      {withdrawalPurseLabel(row) ? (
+                        <span className='text-muted-foreground text-xs'> · {withdrawalPurseLabel(row)}</span>
+                      ) : null}
+                      <span className='text-muted-foreground font-mono text-xs'>
+                        {' '}
+                        {row.reference}
+                      </span>
+                    </span>
+                    <span className='flex flex-wrap gap-1'>
+                      <WalletFlagChips flags={walletFlagsOf(row)} />
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <div className='flex items-start gap-2'>
+              <Checkbox
+                id={walletsId}
+                checked={acknowledged}
+                onCheckedChange={value => setAcknowledged(value === true)}
+                className='mt-0.5'
+              />
+              <Label htmlFor={walletsId} className='text-sm leading-snug font-normal'>
+                I’ve checked these wallets and they are safe to pay.
+              </Label>
+            </div>
+          </>
+        ) : null}
         <DialogFooter>
           <Button variant='outline' onClick={() => onOpenChange(false)} disabled={busy}>
             Cancel
           </Button>
           <Button
-            disabled={busy || !canConfirmApproval(float, override)}
-            onClick={() => onApprove(override)}
+            disabled={busy || !canConfirmApproval(float, override, walletIssues, acknowledged)}
+            onClick={() => onApprove(override, walletIssues > 0 && acknowledged)}
           >
             {busy && <Spinner />}Approve and pay
           </Button>

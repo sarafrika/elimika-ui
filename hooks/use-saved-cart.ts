@@ -37,5 +37,13 @@ export function useSavedCart(options: { enabled?: boolean } = {}) {
     if (errorStatus !== undefined && DEAD_CART_STATUSES.has(errorStatus)) clearCart();
   }, [errorStatus, clearCart]);
 
+  // A checked-out cart is an order now; its payment lives in Wallet / Billing, not the cart.
+  // The server wraps the cart in its ApiResponse envelope; the generated type omits it.
+  const body = query.data as unknown as { data?: { status?: string } } | undefined;
+  const cartStatus = body?.data?.status?.toUpperCase();
+  useEffect(() => {
+    if (cartStatus === 'COMPLETED') clearCart();
+  }, [cartStatus, clearCart]);
+
   return query;
 }

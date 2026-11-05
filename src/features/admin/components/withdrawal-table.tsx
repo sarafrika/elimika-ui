@@ -10,7 +10,8 @@ import { REVIEW_FLAG_LABELS } from '@/components/wallet/withdrawal-api';
 import { WithdrawalStatusBadge } from '@/components/wallet/withdrawals-panel';
 import { formatDateTime } from '@/lib/date';
 import { adminRoutes } from '../lib/admin-routes';
-import type { BatchWithdrawal } from '../lib/payout-batches';
+import { type BatchWithdrawal, walletFlagsOf, withdrawalPurseLabel } from '../lib/payout-batches';
+import { WalletCell, WalletFlagChips } from './wallet-check';
 
 interface WithdrawalTableProps {
   rows: BatchWithdrawal[];
@@ -26,7 +27,7 @@ interface WithdrawalTableProps {
   actions?: (row: BatchWithdrawal) => ReactNode;
 }
 
-/** Withdrawals as admins read them: who, how much, where to, why it waits, and where it went. */
+/** Withdrawals as admins read them: who, how much, where to, the wallet behind it, why it waits, and where it went. */
 export function WithdrawalTable({
   rows,
   caption,
@@ -48,6 +49,7 @@ export function WithdrawalTable({
     'Arrives',
     'To M-Pesa',
     'Requested',
+    'Wallet',
     'Flags',
     'Status',
     ...(showOutcome ? ['Outcome'] : []),
@@ -56,7 +58,7 @@ export function WithdrawalTable({
 
   return (
     <div className='overflow-x-auto'>
-      <table className='w-full min-w-[1040px] text-sm'>
+      <table className='w-full min-w-[1160px] text-sm'>
         <caption className='sr-only'>{caption}</caption>
         <thead className='bg-muted/40 text-muted-foreground text-left text-xs'>
           <tr>
@@ -103,9 +105,16 @@ export function WithdrawalTable({
                 <td className='px-4 py-3'>
                   <div className='flex flex-col gap-1'>
                     <span className='font-semibold'>{w.requester_name ?? 'Earner'}</span>
-                    <Badge variant='outline' className='self-start text-[10px]'>
-                      {w.owner_type === 'ORGANISATION' ? 'Organisation' : 'Person'}
-                    </Badge>
+                    <div className='flex flex-wrap gap-1'>
+                      <Badge variant='outline' className='text-[10px]'>
+                        {w.owner_type === 'ORGANISATION' ? 'Organisation' : 'Person'}
+                      </Badge>
+                      {withdrawalPurseLabel(w) ? (
+                        <Badge variant='outline' className='text-[10px]'>
+                          {withdrawalPurseLabel(w)}
+                        </Badge>
+                      ) : null}
+                    </div>
                   </div>
                 </td>
                 <td className='px-4 py-3 font-mono text-xs whitespace-nowrap'>{w.reference}</td>
@@ -125,7 +134,11 @@ export function WithdrawalTable({
                   ) : null}
                 </td>
                 <td className='px-4 py-3'>
+                  <WalletCell row={w} />
+                </td>
+                <td className='px-4 py-3'>
                   <div className='flex flex-wrap gap-1'>
+                    <WalletFlagChips flags={walletFlagsOf(w)} />
                     {(w.review_flags ?? []).map(flag => (
                       <Badge
                         key={flag}

@@ -80,7 +80,11 @@ export function usePayoutBatch(batchUuid: string | undefined) {
       const detail = data?.data;
       // The API nests the batch beside its rows and float; screens read one flat object.
       return detail?.batch
-        ? { ...detail.batch, withdrawals: detail.withdrawals ?? [], payout_float: detail.payout_float ?? null }
+        ? {
+            ...detail.batch,
+            withdrawals: detail.withdrawals ?? [],
+            payout_float: detail.payout_float ?? null,
+          }
         : undefined;
     },
     enabled: Boolean(batchUuid),
@@ -151,12 +155,15 @@ export const payoutBatchActions = {
       undefined,
       'Could not submit the batch.'
     ),
-  approve: (batchUuid: string, overrideUnknownFloat: boolean) =>
+  approve: (batchUuid: string, overrideUnknownFloat: boolean, acknowledgeWalletIssues: boolean) =>
     send<PayoutBatch>(
       'post',
       `${BASE}/{batchUuid}/approve`,
       { batchUuid },
-      { override_unknown_float: overrideUnknownFloat },
+      {
+        override_unknown_float: overrideUnknownFloat,
+        acknowledge_wallet_issues: acknowledgeWalletIssues,
+      },
       'Could not approve the batch.'
     ),
   reject: (batchUuid: string, reason: string) =>

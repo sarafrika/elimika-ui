@@ -10,7 +10,13 @@ import {
   canConfirmApproval,
   floatState,
   isBatchLive,
+  ledgerGap,
+  plural,
   sumAmounts,
+  WALLET_FLAG_LABELS,
+  walletFlagsOf,
+  walletSummary,
+  withdrawalPurseLabel,
 } from './payout-batches';
 
 test('every batch status sits in exactly one list tab', () => {
@@ -119,4 +125,74 @@ test('batch links carry their id and tab', () => {
     adminRoutes.payouts('batches', { group: 'awaiting' }),
     '/dashboard/admin/payouts?tab=batches&group=awaiting'
   );
+});
+
+test('counts are worded in the singular and plural', () => {
+  assert.equal(plural(1, 'withdrawal'), '1 withdrawal');
+  assert.equal(plural(2, 'withdrawal'), '2 withdrawals');
+  assert.equal(plural(0, 'row'), '0 rows');
+  assert.equal(plural(1, 'earner'), '1 earner');
+});
+
+test('wallet flags come from the server and from what the check implies', () => {
+  assert.deepEqual(walletFlagsOf({ wallet_flags: ['WALLET_SHORT', 'LEDGER_MISMATCH'] }), [
+    'LEDGER_MISMATCH',
+    'WALLET_SHORT',
+  ]);
+  assert.deepEqual(
+    walletFlagsOf({ wallet_flags: [], wallet_check: { ledger_matches: false, covers: true } }),
+    ['LEDGER_MISMATCH']
+  );
+  assert.deepEqual(walletFlagsOf({ wallet_flags: ['SOMETHING_NEW'], wallet_check: null }), []);
+  assert.deepEqual(walletFlagsOf({}), []);
+  assert.equal(WALLET_FLAG_LABELS.LEDGER_MISMATCH, 'Ledger mismatch');
+  assert.equal(WALLET_FLAG_LABELS.WALLET_SHORT, 'Wallet short');
+});
+
+test('the ledger gap is the distance between balance and ledger', () => {
+  assert.equal(ledgerGap({ account_balance: 189_465.5, available_balance: 189_365.5, ledger_balance: 189_365.5 }), 0);
+  assert.equal(ledgerGap({ available_balance: '1000.10', ledger_balance: 1200 }), 199.9);
+  assert.equal(ledgerGap({ available_balance: 1000, ledger_balance: null }), null);
+  assert.equal(ledgerGap(null), null);
+});
+
+test('a batch’s wallets are clear, have issues, or were not checked', () => {
+  const good = { wallet_check: { covers: true, ledger_matches: true }, wallet_flags: [] };
+  const bad = {
+    wallet_check: { covers: true, ledger_matches: false },
+    wallet_flags: ['LEDGER_MISMATCH'],
+  };
+  assert.deepEqual(
+    walletSummary({ row_count: 2, wallet_issue_count: 0, wallets_checked: 2 }, [good, good]),
+    { kind: 'clear', checked: 2, unchecked: 0 }
+  );
+  assert.deepEqual(walletSummary({ row_count: 3 }, [good, good, { wallet_check: null }]), {
+    kind: 'clear',
+    checked: 2,
+    unchecked: 1,
+  });
+  assert.deepEqual(walletSummary({ row_count: 2, wallet_issue_count: 1 }, [good, bad]), {
+    kind: 'issues',
+    issues: 1,
+    total: 2,
+    flags: [{ flag: 'LEDGER_MISMATCH', count: 1 }],
+  });
+  assert.deepEqual(walletSummary({ row_count: 1 }, [{ wallet_check: null }]), {
+    kind: 'unchecked',
+  });
+});
+
+test('wallet issues need the approver’s acknowledgement to confirm', () => {
+  const enough = { kind: 'enough', float: 1, spare: 0 } as const;
+  assert.equal(canConfirmApproval(enough, false, 2, false), false);
+  assert.equal(canConfirmApproval(enough, false, 2, true), true);
+  assert.equal(canConfirmApproval(enough, false, 0, false), true);
+  assert.equal(canConfirmApproval({ kind: 'unknown' }, false, 1, true), false);
+  assert.equal(canConfirmApproval({ kind: 'unknown' }, true, 1, true), true);
+});
+
+test('a withdrawal is labelled with the purse it is paid from', () => {
+  assert.equal(withdrawalPurseLabel({ purse: 'INSTRUCTOR' }), 'Instructor purse');
+  assert.equal(withdrawalPurseLabel({ wallet_check: { purse: 'EARNINGS' } }), 'Earnings purse');
+  assert.equal(withdrawalPurseLabel({}), null);
 });

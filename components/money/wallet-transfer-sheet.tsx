@@ -4,15 +4,18 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { TransferFundsSheet } from '@/app/dashboard/_components/transfer-funds-sheet';
+import { apiMessage } from '@/components/wallet/payout-api';
 import { transferMutation } from '@/services/client/@tanstack/react-query.gen';
+import type { Purse } from '@/src/features/wallet/purses';
 
-/** Sends money from the signed-in user's wallet to another user. */
+/** Sends money from the signed-in user's wallet, out of the dashboard's purse, to another user. */
 export function WalletTransferSheet({
   open,
   onOpenChange,
   userUuid,
   balance,
   currency,
+  sourcePurse,
   onTransferred,
 }: {
   open: boolean;
@@ -20,6 +23,8 @@ export function WalletTransferSheet({
   userUuid: string;
   balance: number;
   currency: string;
+  /** The purse the money leaves; `source_purse` is not in the generated body yet. */
+  sourcePurse?: Purse;
   onTransferred: () => void;
 }) {
   const transfer = useMutation(transferMutation());
@@ -51,7 +56,8 @@ export function WalletTransferSheet({
           currency_code: transferCurrency,
           reference: reference || `TRANSFER-${Date.now()}`,
           description: description || 'Wallet transfer',
-        },
+          ...(sourcePurse ? { source_purse: sourcePurse } : {}),
+        } as never,
       },
       {
         onSuccess: () => {
@@ -60,7 +66,7 @@ export function WalletTransferSheet({
           onTransferred();
           onOpenChange(false);
         },
-        onError: () => toast.error('The transfer did not go through. Try again.'),
+        onError: error => toast.error(apiMessage(error, 'The transfer did not go through. Try again.')),
       }
     );
   };
