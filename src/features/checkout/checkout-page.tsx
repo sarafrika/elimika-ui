@@ -37,11 +37,20 @@ import { NotPaidResult, PaidResult, RefusedResult } from './payment-results';
 const POLL_INTERVAL_MS = 5000;
 /** The prompt lives about a minute; keep checking a little longer for a slow confirmation. */
 const GIVE_UP_AFTER_MS = 90_000;
+/** After the page gives up, keep checking this long: M-Pesa confirmations can land minutes late. */
+const LATE_CONFIRMATION_MS = 20 * 60_000;
 /** Eligibility is checked per class line; a cart never holds more than a handful. */
 const MAX_ELIGIBILITY_CHECKS = 10;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 type Stage = 'form' | 'sending' | 'waiting' | 'paid' | 'failed' | 'timeout' | 'refused';
+
+/** Waiting, or showing "not completed" soon after a prompt: a late M-Pesa confirmation still flips the page to paid. */
+function isPolling(stage: Stage, promptSentAt: number | null): boolean {
+  if (stage === 'waiting') return true;
+  if (stage !== 'failed' && stage !== 'timeout') return false;
+  return promptSentAt !== null && Date.now() - promptSentAt < LATE_CONFIRMATION_MS;
+}
 
 const classUuidOf = (item: CartItemResponse): string | null => {
   const value = item.metadata?.class_definition_uuid;
@@ -152,20 +161,20 @@ export function CheckoutPage() {
 
   const statusQuery = useQuery({
     ...getPaymentStatusOptions({ path: { orderId: order?.id ?? 'unset' } }),
-    enabled: stage === 'waiting' && Boolean(order?.id),
-    refetchInterval: stage === 'waiting' ? POLL_INTERVAL_MS : false,
+    enabled: isPolling(stage, promptSentAt) && Boolean(order?.id),
+    refetchInterval: isPolling(stage, promptSentAt) ? POLL_INTERVAL_MS : false,
     gcTime: 0,
     retry: false,
   });
 
   useEffect(() => {
-    if (stage !== 'waiting') return;
+    if (!isPolling(stage, promptSentAt)) return;
     // A resend reuses the order's query key: an answer from before this prompt is the last attempt's, not this one's.
     if (!promptSentAt || statusQuery.dataUpdatedAt < promptSentAt) return;
     const status = statusQuery.data?.data?.status?.toUpperCase();
     if (status === 'SUCCESS' || status === 'CAPTURED') setStage('paid');
     else if (status === 'REFUSED') setStage('refused');
-    else if (status === 'FAILED' || status === 'CANCELLED' || status === 'CANCELED') setStage('failed');
+    else if (stage === 'waiting' && (status === 'FAILED' || status === 'CANCELLED' || status === 'CANCELED')) setStage('failed');
   }, [statusQuery.data, statusQuery.dataUpdatedAt, stage, promptSentAt]);
 
   useEffect(() => {

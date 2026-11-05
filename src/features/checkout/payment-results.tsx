@@ -99,9 +99,11 @@ export function NotPaidResult({
           <Clock aria-hidden className='size-6' />
         </span>
         <div>
-          <h1 className='text-2xl font-bold tracking-tight'>{timedOut ? 'The prompt timed out' : 'Payment not completed'}</h1>
+          <h1 className='text-2xl font-bold tracking-tight'>{timedOut ? 'We haven’t seen your payment yet' : 'M-Pesa didn’t complete the prompt'}</h1>
           <p className='text-muted-foreground mt-0.5 text-sm'>
-            {timedOut ? 'No PIN was entered, so nothing left your M-Pesa.' : 'The prompt was cancelled or declined. Nothing was taken.'}
+            {timedOut
+              ? 'If you entered your PIN, keep this page open: it confirms on its own the moment M-Pesa tells us.'
+              : 'If money left your M-Pesa anyway, keep this page open: it confirms on its own. Otherwise send a new prompt.'}
           </p>
         </div>
       </div>
