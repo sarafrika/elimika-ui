@@ -7,6 +7,8 @@ export { BillingBasisCards } from './billing-basis-cards';
 export * from './class-form-shared';
 export { ClassMediaUpload, type MediaFile } from './class-media-upload';
 export { DeliveryCards, deliveryModeLabel } from './delivery-cards';
+export { InstructorDeliverycards } from './InstructorDeliverycards';
+export type { InstructorDeliveryRate } from './instructor-delivery-rates';
 export { LocationVenue } from './location-venue';
 export { type Offering, OfferingPicker } from './offering-picker';
 export { PickDatesPanel } from './pick-dates-panel';

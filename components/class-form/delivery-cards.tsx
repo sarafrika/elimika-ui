@@ -8,18 +8,18 @@ const DELIVERY_OPTIONS: readonly {
   label: string;
   description: string;
 }[] = [
-  { value: 'IN_PERSON', label: 'In person', description: 'Learners meet at a venue.' },
-  {
-    value: 'HYBRID',
-    label: 'Hybrid',
-    description: 'At a venue with an online link. Priced with in-person rates.',
-  },
-  {
-    value: 'ONLINE',
-    label: 'Online',
-    description: 'A meeting link only. Priced with online rates.',
-  },
-];
+    { value: 'IN_PERSON', label: 'In person', description: 'Learners meet at a venue.' },
+    {
+      value: 'HYBRID',
+      label: 'Hybrid',
+      description: 'At a venue with an online link. Priced with in-person rates.',
+    },
+    {
+      value: 'ONLINE',
+      label: 'Online',
+      description: 'A meeting link only. Priced with online rates.',
+    },
+  ];
 
 export const deliveryModeLabel = (delivery?: DeliveryMode | null) =>
   DELIVERY_OPTIONS.find(option => option.value === delivery)?.label ?? '';

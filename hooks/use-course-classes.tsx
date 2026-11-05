@@ -1,7 +1,7 @@
-import { useQueries, useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
 import { STALE_TIMES } from '@/lib/query-client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { useQueries, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import {
   getClassDefinitionsForCourseOptions,
   getClassRatingSummaryOptions,
@@ -21,8 +21,8 @@ const MAX_SCHEDULE_BATCHES = 5;
 
 type StudentLike =
   | {
-      uuid?: string | null;
-    }
+    uuid?: string | null;
+  }
   | null
   | undefined;
 
@@ -43,8 +43,8 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
       data?.error || data?.success === false
         ? []
         : (data?.data
-            ?.map(item => item?.class_definition)
-            .filter((item): item is ClassDefinition => item !== undefined) ?? []),
+          ?.map(item => item?.class_definition)
+          .filter((item): item is ClassDefinition => item !== undefined) ?? []),
     [data]
   );
   // The enrolment page summarises only its own class; listings summarise every class.
@@ -70,15 +70,16 @@ function useBundledClassInfo(courseUuid?: string, student?: StudentLike, onlyCla
       schedulesTooLarge
         ? []
         : Array.from(
-            { length: Math.ceil(undatedClassUuids.length / MAX_CLASSES_PER_CALL) },
-            (_, index) =>
-              undatedClassUuids.slice(
-                index * MAX_CLASSES_PER_CALL,
-                (index + 1) * MAX_CLASSES_PER_CALL
-              )
-          ),
+          { length: Math.ceil(undatedClassUuids.length / MAX_CLASSES_PER_CALL) },
+          (_, index) =>
+            undatedClassUuids.slice(
+              index * MAX_CLASSES_PER_CALL,
+              (index + 1) * MAX_CLASSES_PER_CALL
+            )
+        ),
     [undatedClassUuids, schedulesTooLarge]
   );
+
   const schedulesQuery = useQueries({
     queries: scheduleBatches.slice(0, MAX_SCHEDULE_BATCHES).map(ids => ({
       ...getClassSchedulesOptions({ query: { class_uuids: ids } }),
