@@ -1,18 +1,25 @@
 'use client';
 
+import { EmptyState } from '@/components/ui/empty-state';
+import { cn } from '@/lib/utils';
+import { useClassCatalogue } from '@/src/features/find-classes/use-class-catalogue';
+import {
+  AVAILABLE_CLASS_VIEWS,
+  type AvailableClassView,
+  availableClassCounts,
+  availableClassPage,
+  availableClassStatus,
+} from './available-class-views';
+import { SearchUnavailable } from '@/components/search/search-unavailable';
 import { useOrganisationsByIds } from '@/hooks/use-batched-lookups';
 import useBundledClassInfo from '@/hooks/use-course-classes';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
-import { SearchUnavailable } from '@/components/search/search-unavailable';
 import { isSearchUnavailable } from '@/lib/api-errors';
-import { STALE_TIMES } from '@/lib/query-client';
-import { getAllClassDefinitionsOptions } from '@/services/client/@tanstack/react-query.gen';
-import { useNearMe } from '@/src/features/near-me/near-me';
-import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import AvailabilityClassCard from '@/src/features/dashboard/courses/components/availability-listing-layout';
-import { useQuery } from '@tanstack/react-query';
-import { ArrowLeft, BookOpen } from 'lucide-react';
+import { useNearMe } from '@/src/features/near-me/near-me';
+import { DistanceBandBadge, NearMeControl } from '@/src/features/near-me/near-me-control';
+import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Button } from '../../../../../components/ui/button';
@@ -32,7 +39,6 @@ import { BundledClass } from '../types';
 
 export default function AvailableClassesPage({
   courseId,
-  instructorView = false,
 }: {
   courseId: string;
   instructorView?: boolean;
@@ -40,7 +46,6 @@ export default function AvailableClassesPage({
   const { activeDomain } = useUserDomain();
   const user = useUserProfile();
   const student = user?.student;
-  const instructor = user?.instructor;
 
   const [selected, setSelected] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
@@ -48,49 +53,75 @@ export default function AvailableClassesPage({
   const [courseDetailsOpen, setCourseDetailsOpen] = useState(false);
   const [classDetailsOpen, setClassDetailsOpen] = useState(false);
 
-  const { classes = [], loading } = useBundledClassInfo(courseId, student);
+  const [view, setView] = useState<AvailableClassView>('open');
+  const [pagination, setPagination] = useState({ scope: '', page: 0 });
+  const { classes = [], loading, isError } = useBundledClassInfo(courseId, student);
   // Same args as each card, so the cards join this wave-1 lesson request via one query key.
   useCourseLessonsWithContent({ courseUuid: courseId, contentEnabled: false });
 
   const course = classes[0]?.course;
 
   // Catalogue membership (scoped to this course by the hook) decides whether a class is listed.
-  const filteredClasses = classes.filter(cls => cls.is_active && cls.catalogue !== null);
+  const filteredClasses = useMemo(
+    () => classes.filter(cls => cls.is_active && cls.catalogue !== null),
+    [classes]
+  );
 
-  // Near me: one index query for classes around the chosen point (IN_PERSON and HYBRID
+  // Near me: course-scoped index pages around the chosen point (IN_PERSON and HYBRID
   // only, nearest first), intersected with this course's classes. `near` stays in
   // component state and is never put in the URL.
   const nearMe = useNearMe();
-  const nearQuery = useQuery({
-    ...getAllClassDefinitionsOptions({
-      query: { ...nearMe.params, pageable: { page: 0, size: 100 } },
-    }),
-    enabled: nearMe.active,
-    staleTime: STALE_TIMES.live,
-  });
+  const nearQuery = useClassCatalogue(
+    {
+      ...nearMe.params,
+      searchParams: { course_uuid: courseId },
+    },
+    { enabled: nearMe.active && Boolean(courseId), includeSchedules: false }
+  );
   const nearUnavailable = nearMe.active && isSearchUnavailable(nearQuery.error);
   const nearBands = useMemo(() => {
     const bands = new Map<string, { band: string | undefined; rank: number }>();
-    (nearQuery.data?.data?.content ?? []).forEach((item, index) => {
+    nearQuery.rows.forEach((item, index) => {
       const uuid = item.class_definition?.uuid;
       if (uuid) bands.set(uuid, { band: item.distance_band, rank: index });
     });
     return bands;
-  }, [nearQuery.data]);
-  const listedClasses = nearMe.active
-    ? filteredClasses
-        .filter(cls => cls.uuid && nearBands.has(cls.uuid))
-        .sort(
-          (left, right) =>
-            (nearBands.get(left.uuid as string)?.rank ?? 0) -
-            (nearBands.get(right.uuid as string)?.rank ?? 0)
-        )
-    : filteredClasses;
+  }, [nearQuery.rows]);
+  const listedClasses = useMemo(
+    () =>
+      nearMe.active
+        ? filteredClasses
+            .filter(cls => cls.uuid && nearBands.has(cls.uuid))
+            .sort(
+              (left, right) =>
+                (nearBands.get(left.uuid ?? '')?.rank ?? 0) -
+                (nearBands.get(right.uuid ?? '')?.rank ?? 0)
+            )
+        : filteredClasses,
+    [filteredClasses, nearMe.active, nearBands]
+  );
   const listLoading = loading || (nearMe.active && nearQuery.isLoading);
+  const listError = isError || (nearMe.active && nearQuery.isError);
+  const scope = `${courseId}:${nearMe.params.near ?? ''}:${nearMe.params.radius_km ?? ''}`;
+  const statusClasses = useMemo(() => {
+    const now = new Date();
+    return listedClasses.map(cls => ({ cls, ...availableClassStatus(cls, now) }));
+  }, [listedClasses]);
+  const viewCounts = useMemo(() => availableClassCounts(statusClasses), [statusClasses]);
+  const requestedPage = pagination.scope === scope ? pagination.page : 0;
+  const pageResult = useMemo(
+    () => availableClassPage(statusClasses, view, requestedPage, 20),
+    [statusClasses, view, requestedPage]
+  );
+  const visibleClasses = useMemo(() => pageResult.items.map(item => item.cls), [pageResult.items]);
 
   // One organisation lookup for every card on screen instead of one per card.
   const organisationKey = [
-    ...new Set(listedClasses.map(cls => cls.organisation_uuid).filter((id): id is string => !!id)),
+    ...new Set(
+      (listLoading || listError ? [] : visibleClasses)
+        .map(cls => cls.organisation_uuid)
+        .filter((id): id is string => !!id)
+    ),
   ]
     .sort()
     .join(',');
@@ -99,10 +130,6 @@ export default function AvailableClassesPage({
     [organisationKey]
   );
   const { organisationMap } = useOrganisationsByIds(organisationIds);
-
-  const instructorFilteredClasses = filteredClasses.filter(
-    cls => cls.default_instructor_uuid === instructor?.uuid
-  );
 
   function toggle(id: string) {
     setSelected(s => (s.includes(id) ? s.filter(x => x !== id) : [...s, id]));
@@ -121,9 +148,11 @@ export default function AvailableClassesPage({
         <div>
           <h2 className='text-xl font-semibold'>Available Classes</h2>
 
-          {loading ? <Spinner className='mt-1 h-4 w-4' /> :
+          {loading ? (
+            <Spinner className='mt-1 h-4 w-4' />
+          ) : (
             <p className='text-muted-foreground text-sm'>{course?.name || ''}</p>
-          }
+          )}
         </div>
 
         <div className='flex flex-wrap items-center gap-2'>
@@ -151,11 +180,53 @@ export default function AvailableClassesPage({
               )}
             </SheetContent>
           </Sheet>
-
         </div>
       </div>
 
-      <div className="space-y-4">
+      <nav
+        aria-label='Class views'
+        className='thin-scrollbar flex gap-6 overflow-x-auto shadow-[inset_0_-1px_0_0_var(--color-border)]'
+      >
+        {AVAILABLE_CLASS_VIEWS.map(option => {
+          const active = option.id === view;
+          return (
+            <button
+              key={option.id}
+              type='button'
+              aria-pressed={active}
+              onClick={() => {
+                setView(option.id);
+                setPagination({ scope, page: 0 });
+              }}
+              className={cn(
+                'text-muted-foreground hover:text-foreground flex h-11 flex-none items-center gap-2 border-b-2 border-transparent text-sm font-medium',
+                active && 'border-primary text-primary font-semibold'
+              )}
+            >
+              {option.label}
+              <span
+                className={cn(
+                  'inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 font-mono text-[11px] font-semibold tabular-nums',
+                  active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {listLoading ? '…' : listError ? '—' : viewCounts[option.id]}
+              </span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {!listLoading && !listError && (
+        <p className='text-muted-foreground text-sm' aria-live='polite'>
+          {pageResult.total} {pageResult.total === 1 ? 'class' : 'classes'}
+          {pageResult.total > 20
+            ? ` · Showing ${pageResult.page * 20 + 1}–${pageResult.page * 20 + visibleClasses.length}`
+            : ''}
+        </p>
+      )}
+
+      <div className='space-y-4'>
         {nearUnavailable ? (
           <SearchUnavailable
             variant='card'
@@ -165,9 +236,11 @@ export default function AvailableClassesPage({
           />
         ) : nearMe.active && nearQuery.isError ? (
           <div className='rounded-xl border border-dashed p-8 text-center' role='alert'>
-            <p className='text-sm font-medium text-foreground'>Could not search near you</p>
-            <p className='mt-1 text-sm text-muted-foreground'>
-              Try again, or clear the near-me search to see every class.
+            <p className='text-foreground text-sm font-medium'>Could not search near you</p>
+            <p className='text-muted-foreground mt-1 text-sm'>
+              {nearQuery.error instanceof Error
+                ? nearQuery.error.message
+                : 'Try again, or clear the near-me search to see every class.'}
             </p>
             <div className='mt-3 flex justify-center gap-2'>
               <Button variant='outline' size='sm' onClick={() => void nearQuery.refetch()}>
@@ -178,21 +251,23 @@ export default function AvailableClassesPage({
               </Button>
             </div>
           </div>
+        ) : isError ? (
+          <EmptyState title='Could not load classes' description='Please try again in a moment.' />
         ) : listLoading ? (
           Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="space-y-3 rounded-xl border p-4">
-              <Skeleton className="h-6 w-2/3" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-4 w-full" />
+            <div key={index} className='space-y-3 rounded-xl border p-4'>
+              <Skeleton className='h-6 w-2/3' />
+              <Skeleton className='h-4 w-1/2' />
+              <Skeleton className='h-4 w-full' />
 
-              <div className="flex items-center justify-between pt-2">
-                <Skeleton className="h-8 w-24" />
-                <Skeleton className="h-8 w-20" />
+              <div className='flex items-center justify-between pt-2'>
+                <Skeleton className='h-8 w-24' />
+                <Skeleton className='h-8 w-20' />
               </div>
             </div>
           ))
-        ) : listedClasses.length > 0 ? (
-          listedClasses.map((item, index) => (
+        ) : visibleClasses.length > 0 ? (
+          visibleClasses.map((item, index) => (
             <div key={item.uuid} className='space-y-2'>
               {nearMe.active ? (
                 <DistanceBandBadge band={nearBands.get(item.uuid as string)?.band} />
@@ -214,27 +289,51 @@ export default function AvailableClassesPage({
               />
             </div>
           ))
-        ) : nearMe.active ? (
-          <div className="rounded-xl border border-dashed p-8 text-center">
-            <p className="text-sm font-medium text-foreground">
+        ) : nearMe.active && listedClasses.length === 0 ? (
+          <div className='rounded-xl border border-dashed p-8 text-center'>
+            <p className='text-foreground text-sm font-medium'>
               No classes near {nearMe.point?.label} within {nearMe.radiusKm} km
             </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Only in-person and hybrid classes have a location. Try a wider radius, or clear
-              the near-me search to see online classes too.
+            <p className='text-muted-foreground mt-1 text-sm'>
+              Only in-person and hybrid classes have a location. Try a wider radius, or clear the
+              near-me search to see online classes too.
             </p>
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed p-8 text-center">
-            <p className="text-sm font-medium text-foreground">
-              No classes available
-            </p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              There are currently no active classes available for this course.
-            </p>
-          </div>
+          <EmptyState
+            title={view === 'enrolled' ? 'No enrolled classes' : 'No classes in this view'}
+            description={
+              view === 'enrolled'
+                ? 'You are not enrolled in any of the listed classes for this course.'
+                : 'Try another tab or change the near-me filter.'
+            }
+          />
         )}
       </div>
+
+      {!listLoading && !listError && pageResult.totalPages > 1 && (
+        <nav className='flex items-center justify-center gap-3 pt-2' aria-label='Pages'>
+          <Button
+            variant='outline'
+            size='sm'
+            disabled={pageResult.page <= 0}
+            onClick={() => setPagination({ scope, page: pageResult.page - 1 })}
+          >
+            <ChevronLeft className='size-4' /> Previous
+          </Button>
+          <span className='text-muted-foreground text-sm tabular-nums'>
+            Page {pageResult.page + 1} of {pageResult.totalPages}
+          </span>
+          <Button
+            variant='outline'
+            size='sm'
+            disabled={pageResult.page + 1 >= pageResult.totalPages}
+            onClick={() => setPagination({ scope, page: pageResult.page + 1 })}
+          >
+            Next <ChevronRight className='size-4' />
+          </Button>
+        </nav>
+      )}
 
       <CourseDetailsSheet
         key={courseId}
@@ -261,7 +360,7 @@ export function CompareTable({
   onRemove: (id: string) => void;
 }) {
   const rows: { key: string; label: string; get: (c: BundledClass) => string }[] = [
-    { key: 'institution_name', label: 'Institution', get: c => c.institution_name ?? '—' },
+    { key: 'institution_name', label: 'Institution', get: c => c?.institution_name ?? '—' },
     { key: 'instructor', label: 'Instructor', get: c => c.instructor?.name ?? '—' },
     { key: 'delivery_mode', label: 'Delivery mode', get: c => c.delivery_mode ?? '—' },
     { key: 'class_type', label: 'Class type', get: c => c.class_type ?? '—' },

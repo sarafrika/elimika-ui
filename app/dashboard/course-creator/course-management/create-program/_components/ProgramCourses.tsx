@@ -25,13 +25,21 @@ import type { Course } from '@/services/client/types.gen';
 import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query';
 import { ArrowDown, ArrowUp, BookOpen, Check, X } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import type { ProgramFormValues } from '../program-schema';
 
 const EMPTY_COURSES: Course[] = [];
 
-export default function ProgramCourses({ creatorUuid }: { creatorUuid: string }) {
+export default function ProgramCourses({
+  creatorUuid,
+  onRemoveCourse,
+}: {
+  creatorUuid: string;
+  onRemoveCourse: (courseUuid: string) => Promise<void>;
+}) {
+  const [removingUuid, setRemovingUuid] = useState<string>();
   const form = useFormContext<ProgramFormValues>();
   const { fields, append, remove, move } = useFieldArray({
     control: form.control,
@@ -90,22 +98,31 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
     return map;
   }, [loadedCourses, selectedLookup.courseMap]);
 
-  const removeCourse = (index: number) => {
+  const removeCourse = async (index: number) => {
     const removedUuid = fields[index]?.courseUuid;
-    if (!removedUuid) return;
-    remove(index);
-    form.getValues('courses').forEach((row, rowIndex) => {
-      if (row.prerequisiteCourseUuid === removedUuid)
-        form.setValue(`courses.${rowIndex}.prerequisiteCourseUuid`, '', {
-          shouldDirty: true,
-          shouldValidate: true,
-        });
-    });
+    if (!removedUuid || removingUuid) return;
+    setRemovingUuid(removedUuid);
+    try {
+      await onRemoveCourse(removedUuid);
+      const currentIndex = form.getValues('courses').findIndex(row => row.courseUuid === removedUuid);
+      if (currentIndex >= 0) remove(currentIndex);
+      form.getValues('courses').forEach((row, rowIndex) => {
+        if (row.prerequisiteCourseUuid === removedUuid)
+          form.setValue(`courses.${rowIndex}.prerequisiteCourseUuid`, '', {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+      });
+    } catch (cause) {
+      toast.error(cause instanceof Error ? cause.message : 'Unable to remove course. Try again.');
+    } finally {
+      setRemovingUuid(undefined);
+    }
   };
   const toggleCourse = (course: Course) => {
     if (!course.uuid) return;
     const index = fields.findIndex(row => row.courseUuid === course.uuid);
-    if (index >= 0) removeCourse(index);
+    if (index >= 0) void removeCourse(index);
     else append({ courseUuid: course.uuid, isRequired: true, prerequisiteCourseUuid: '', weightPercentage: '' });
   };
 
@@ -177,6 +194,7 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
                 course={course}
                 selected={selectedIds.has(course.uuid!)}
                 onToggle={() => toggleCourse(course)}
+                removing={removingUuid === course.uuid}
               />
             ))}
         </div>
@@ -218,6 +236,7 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
           }
         />
       )}
+
       {fields.length > 0 && (
         <section className='space-y-2' aria-label='Program curriculum'>
           <h3 className='text-sm font-medium'>Curriculum</h3>
@@ -335,9 +354,10 @@ export default function ProgramCourses({ creatorUuid }: { creatorUuid: string })
                           variant='ghost'
                           size='icon'
                           aria-label={`Remove course ${index + 1}`}
-                          onClick={() => removeCourse(index)}
+                          onClick={() => void removeCourse(index)}
+                          disabled={Boolean(removingUuid)}
                         >
-                          <X />
+                          {removingUuid === row.courseUuid ? <Spinner /> : <X />}
                         </Button>
                       </div>
                     </td>
@@ -356,10 +376,12 @@ function CourseTile({
   course,
   selected,
   onToggle,
+  removing,
 }: {
   course: Course;
   selected: boolean;
   onToggle: () => void;
+  removing: boolean;
 }) {
   return (
     <Button
@@ -367,6 +389,7 @@ function CourseTile({
       variant='outline'
       aria-pressed={selected}
       onClick={onToggle}
+      disabled={removing}
       className={`relative h-auto flex-col items-stretch justify-start gap-2 overflow-hidden rounded-sm p-0 text-left whitespace-normal hover:bg-primary/10 ${selected ? 'bg-primary/5 border-primary ring-primary ring-1' : 'bg-background border-primary/20 hover:border-primary/50'}`}
     >
       <span className='flex items-start gap-3 p-4'>
@@ -390,7 +413,7 @@ function CourseTile({
           aria-hidden
           className={`flex h-5 w-5 shrink-0 items-center justify-center border ${selected ? 'bg-primary text-primary-foreground border-transparent' : 'border-primary/30 text-transparent'}`}
         >
-          <Check className='size-3.5' />
+          {removing ? <Spinner /> : <Check className='size-3.5' />}
         </span>
       </span>
       <span className='border-primary/15 bg-primary/5 text-muted-foreground mt-auto flex items-center gap-2 border-t px-4 py-2 text-xs'>

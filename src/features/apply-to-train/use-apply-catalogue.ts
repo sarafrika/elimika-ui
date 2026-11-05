@@ -36,6 +36,7 @@ export function useApplyCatalogue(filters: CatalogueFilters, enabled = true) {
         ...(q ? { q } : {}),
         show: filters.show,
         fit: filters.fit,
+        sort: q ? 'relevance' : 'newest',
         ...(filters.category ? { category_uuid: [filters.category] } : {}),
         page: String(filters.page),
         size: String(CATALOGUE_PAGE_SIZE),

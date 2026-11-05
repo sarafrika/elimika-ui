@@ -24,6 +24,7 @@ const workflowQueryIds = {
     'searchCourses',
     'getPublishedCourses',
     'searchCatalogue',
+    'searchApplyToTrainCatalogue',
     'listPendingCourses',
     'listPendingCourseEdits',
     'getCourseEditDiff',

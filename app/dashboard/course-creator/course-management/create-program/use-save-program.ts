@@ -114,6 +114,46 @@ export function useSaveProgram(
   const uploadBanner = useMutation(uploadProgramBannerMutation());
   const uploadVideo = useMutation(uploadProgramIntroVideoMutation());
 
+  const immediateRemoval = useMutation({
+    mutationFn: async (courseUuid: string) => {
+      const uuid = savedProgram.current?.uuid ?? programUuid;
+      // Courses added locally do not have an association to delete yet.
+      if (!uuid || !savedCourses.current.has(courseUuid)) return;
+      // Clear persisted prerequisites before deleting the course they reference.
+      for (const [dependentUuid, payload] of savedCourses.current) {
+        if (payload.prerequisite_course_uuid !== courseUuid) continue;
+        const nextPayload = { ...payload, prerequisite_course_uuid: null };
+        const response = await updateCourse.mutateAsync({
+          path: { programUuid: uuid, courseUuid: dependentUuid },
+          body: { program_uuid: uuid, ...nextPayload },
+        });
+        assertProgramResponse(response, 'Unable to clear course prerequisite');
+        savedCourses.current.set(dependentUuid, nextPayload);
+      }
+      const response = await removeCourse.mutateAsync({
+        path: { programUuid: uuid, courseUuid },
+      });
+      assertProgramResponse(response, 'Unable to remove course');
+      savedCourses.current.delete(courseUuid);
+    },
+    onSettled: async () => {
+      const uuid = savedProgram.current?.uuid ?? programUuid;
+      if (!uuid) return;
+      const keys = [
+        getTrainingProgramByUuidQueryKey({ path: { uuid } }),
+        getProgramCoursesQueryKey({ path: { programUuid: uuid } }),
+        searchProgramCoursesQueryKey({ query: { searchParams: {}, pageable: {} } }),
+        searchTrainingProgramsQueryKey({ query: { searchParams: {}, pageable: {} } }),
+        getAllTrainingProgramsQueryKey({ query: { pageable: {} } }),
+      ];
+      await Promise.all(
+        keys.map(queryKey =>
+          queryClient.invalidateQueries({ queryKey: [{ _id: queryKey[0]._id }] })
+        )
+      );
+    },
+  });
+
   const mutation = useMutation({
     mutationFn: async ({
       values,
@@ -388,5 +428,12 @@ export function useSaveProgram(
       return true;
     return (step === 4 || step === 'all') && Object.values(media).some(Boolean);
   };
-  return { ...mutation, programUuid, hasChanges, progress };
+  return {
+    ...mutation,
+    isPending: mutation.isPending || immediateRemoval.isPending,
+    removeCourse: immediateRemoval.mutateAsync,
+    programUuid,
+    hasChanges,
+    progress,
+  };
 }

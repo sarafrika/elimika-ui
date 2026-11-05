@@ -55,7 +55,7 @@ import {
     type CourseFormRef,
 } from '../../_components/course-creation-form';
 import type { CourseCreationFormValues } from '../../_components/course-creation-types';
-import { CourseEvaluationSection } from '../../_components/course-evaluation-section';
+// import { CourseEvaluationSection } from '../../_components/course-evaluation-section';
 import CourseGradingSection from '../../_components/course-grading-section';
 import { CoursePricingForm } from '../../_components/course-pricing-form';
 import {
@@ -148,7 +148,7 @@ const getAssessmentStatusTone = (isActive?: boolean, isPublished?: boolean): Ass
     return 'secondary';
 };
 
-const COURSE_TABS = ['setup', 'lessons', 'practice', 'assignments', 'assessment', 'evaluation', 'branding', 'pricing'];
+const COURSE_TABS = ['setup', 'lessons', 'practice', 'assignments', 'assessment', /* 'evaluation', */ 'branding', 'pricing'];
 
 const mapCourseValues = (course?: Course | null): Partial<CourseCreationFormValues> | undefined => {
     if (!course) return undefined;
@@ -287,7 +287,7 @@ export default function CreateCoursePage() {
         try {
             const formRef = section === 'branding' ? brandingFormRef : pricingFormRef;
             const saved = await formRef.current?.submit();
-            if (saved && section === 'branding') setStep(7);
+            if (saved && section === 'branding') setStep(6);
             if (saved && section === 'pricing') setFinishedPricingCourseId(resolvedCourseId);
         } finally {
             setIsSavingSection(false);
@@ -300,7 +300,7 @@ export default function CreateCoursePage() {
             query: { pageable: { page: 0, size: 100 } },
         })
         : null;
-    const { data: lessonsResponse, isLoading: lessonsLoading, isError: lessonsError, error: lessonsQueryError, refetch: refetchLessons } = useQuery({
+    const { data: lessonsResponse, isLoading: lessonsLoading, isError: lessonsError, refetch: refetchLessons } = useQuery({
         ...(lessonsQuery ?? {
             queryKey: getCourseLessonsQueryKey({ path: { courseUuid: resolvedCourseId ?? '' }, query: { pageable: { page: 0, size: 100 } } }),
             queryFn: skipToken,
@@ -860,7 +860,7 @@ export default function CreateCoursePage() {
                     <TabsTrigger className='max-w-fit px-4' value='practice'>Practice</TabsTrigger>
                     <TabsTrigger className='max-w-fit px-4' value='assignments'>Assignments</TabsTrigger>
                     <TabsTrigger className='max-w-fit px-4' value='assessment'>Assessment</TabsTrigger>
-                    <TabsTrigger className='max-w-fit px-4' value='evaluation'>Evaluation</TabsTrigger>
+                    {/* <TabsTrigger className='max-w-fit px-4' value='evaluation'>Evaluation</TabsTrigger> */}
                     <TabsTrigger className='max-w-fit px-4' value='branding'>Branding</TabsTrigger>
                     <TabsTrigger className='max-w-fit px-4' value='pricing'>Pricing</TabsTrigger>
                 </TabsList>
@@ -1341,7 +1341,7 @@ export default function CreateCoursePage() {
                                 </SectionGuard>
                             </TabsContent>
 
-                            <TabsContent value='evaluation' className='m-0 flex flex-col gap-4'>
+                            {/* <TabsContent value='evaluation' className='m-0 flex flex-col gap-4'>
                                 <SectionGuard
                                     isReady={canRenderCourseSections}
                                     isLoading={Boolean(resolvedCourseId) && courseLoading}
@@ -1355,7 +1355,7 @@ export default function CreateCoursePage() {
                                             courseCreatorUuid={creator.profile.uuid}
                                             lessons={lessonsWithUuid}
                                             lessonsLoading={lessonsLoading}
-                                            lessonsError={lessonsQueryError ?? lessonsResponse?.error ?? (lessonsResponse?.success === false ? lessonsResponse : lessonsError)}
+                                            lessonsError={lessonsResponse?.error ?? (lessonsResponse?.success === false ? lessonsResponse : lessonsError)}
                                             onRetryLessons={() => void refetchLessons()}
                                         />
                                     )}
@@ -1366,7 +1366,7 @@ export default function CreateCoursePage() {
                                         onNext={() => setStep(6)}
                                     />
                                 </SectionGuard>
-                            </TabsContent>
+                            </TabsContent> */}
 
                             <TabsContent value='branding'>
                                 <SectionGuard
@@ -1382,13 +1382,13 @@ export default function CreateCoursePage() {
                                             courseId={resolvedCourseId || undefined}
                                             editingCourseId={resolvedCourseId || undefined}
                                             initialValues={courseInitialValues}
-                                            nextStepAfterSave={7}
+                                            nextStepAfterSave={6}
                                         />
                                     </Card>
                                     <StepNav
                                         previousLabel='Previous step'
                                         nextLabel='Save and continue'
-                                        onPrevious={() => setStep(5)}
+                                        onPrevious={() => setStep(4)}
                                         onNext={() => void handleSaveSection('branding')}
                                         nextDisabled={isSavingSection}
                                         nextLoading={isSavingSection}
@@ -1417,7 +1417,7 @@ export default function CreateCoursePage() {
                                     <StepNav
                                         previousLabel='Previous step'
                                         nextLabel={hasFinishedPricing ? (isPublished ? 'Unpublish' : 'Publish') : 'Save and finish'}
-                                        onPrevious={() => setStep(6)}
+                                        onPrevious={() => setStep(5)}
                                         onNext={hasFinishedPricing
                                             ? (isPublished ? handleUnpublishCourse : handlePublishCourse)
                                             : () => void handleSaveSection('pricing')}
