@@ -6,19 +6,19 @@ import { dayjs, formatTime, resolveDisplayZone } from '@/lib/date';
 import {
   findOverlappingWindow,
   JOB_HOLD_BLOCK_REASON,
-  type JobTimeKind,
   jobTimeHref,
+  type JobTimeKind,
 } from '@/lib/instructor-job-time';
 import { cn } from '@/lib/utils';
 import { Building2, CalendarDays, Lock, MapPin, Plus, Video, X } from 'lucide-react';
 import Link from 'next/link';
 import {
-  type ComponentProps,
   useEffect,
   useLayoutEffect,
   useMemo,
   useRef,
   useState,
+  type ComponentProps,
   type ReactElement,
 } from 'react';
 import { toast } from 'sonner';
@@ -855,7 +855,7 @@ function DayGrid({
                       }
                     >
                       {shouldShowCurrentTime &&
-                      inGridZone(currentTime, timeZone).hour() === hour ? (
+                        inGridZone(currentTime, timeZone).hour() === hour ? (
                         <CurrentTimeIndicator currentTime={currentTime} timeZone={timeZone} />
                       ) : null}
                     </div>
@@ -1045,6 +1045,8 @@ function WeekGrid({
 
     onEmptySlotClick?.(slot);
   }
+
+  // for the handlecreateclass here in the calendar, lets use the already existing InstructorClassCreationPage, to create a new InstructorClassCreationModal (to have a new flow to use on the calendar...it should have all the information and functionality on the InstructorClassCreationPage.),... when a user selects a time slot, the time slot should be automatically detected by the  schedular in the InstructorClassCreationModal, and the user should be able to create a new class for that time slot, and add more days in the scheduler.. The InstructorClassCreationModal should have all the information and functionality of the InstructorClassCreationPage, but it should be a modal that pops up when a user selects a time slot in the calendar. The user should be able to fill out all the necessary information for the class, and when they submit the form, the new class should be created and added to the calendar.
 
   function handleCreateClass() {
     if (!selectedSlot) return;

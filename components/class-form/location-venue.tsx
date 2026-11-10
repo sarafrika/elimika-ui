@@ -22,6 +22,8 @@ export function LocationVenue({
   onLocationLatitudeChange,
   locationLongitude,
   onLocationLongitudeChange,
+  classroom,
+  onClassroomChange,
 }: {
   delivery: Delivery | null;
   meetingLink: string;
@@ -32,6 +34,8 @@ export function LocationVenue({
   onLocationLatitudeChange: (value: string) => void;
   locationLongitude: string;
   onLocationLongitudeChange: (value: string) => void;
+  classroom?: string;
+  onClassroomChange?: (value: string) => void;
 }) {
   const fieldId = useId();
 
@@ -48,6 +52,17 @@ export function LocationVenue({
 
   return (
     <div className='grid gap-4 sm:grid-cols-2'>
+      {physical && onClassroomChange ? (
+        <div className='flex min-w-0 flex-col gap-2'>
+          <Label htmlFor={`${fieldId}-classroom`}>Classroom</Label>
+          <Input
+            id={`${fieldId}-classroom`}
+            value={classroom ?? ''}
+            onChange={event => onClassroomChange(event.target.value)}
+            placeholder='e.g. Room 2 or Science lab'
+          />
+        </div>
+      ) : null}
       {physical ? (
         <div className='flex min-w-0 flex-col gap-2'>
           <Label htmlFor={`${fieldId}-place`} className='flex items-center gap-1.5'>

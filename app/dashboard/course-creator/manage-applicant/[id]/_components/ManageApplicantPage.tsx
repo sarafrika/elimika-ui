@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { skipToken, useQuery } from '@tanstack/react-query';
 import {
   ArrowLeft,
   Award,
@@ -49,6 +49,7 @@ import {
   getInstructorSkillsOptions,
   getOrganisationByUuidOptions,
   getUserByUuidOptions,
+  getUserByUuidQueryKey,
 } from '@/services/client/@tanstack/react-query.gen';
 import { CreatorApplicationReview } from '@/src/features/rate-card/components/creator-application-review';
 import {
@@ -57,6 +58,8 @@ import {
 } from '@/src/features/rate-card/hooks';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { stripHtml } from '../../../../../../src/features/dashboard/courses/shared/_components/courses-data';
+
+import { instructorDisplayName, resolveInstructorProfile } from './instructor-profile';
 
 const DOSSIER_TABS = ['profile', 'background', 'documents', 'course', 'program'] as const;
 type DossierTab = (typeof DOSSIER_TABS)[number];
@@ -161,14 +164,21 @@ function InstructorProfile({
         <DetailGrid
           columns={3}
           items={[
-            { label: 'Full name', value: instructor?.full_name || '-' },
+            { label: 'Full name', value: instructorDisplayName(instructor, instructorUser) || '-' },
             { label: 'Email', value: contactUser?.email || '-' },
             { label: 'Phone', value: contactUser?.phone_number || '-' },
             {
               label: 'Location',
               value: instructor?.formatted_location || instructor?.location_name || '-',
             },
-            { label: 'Organisation', value: contactUser?.organisation_affiliations?.map(row => row.organisation_name).filter(Boolean).join(', ') || '-' },
+            {
+              label: 'Organisation',
+              value:
+                contactUser?.organisation_affiliations
+                  ?.map(row => row.organisation_name)
+                  .filter(Boolean)
+                  .join(', ') || '-',
+            },
             { label: 'Created', value: formatDate(instructor?.created_date) },
           ]}
         />
@@ -253,14 +263,39 @@ function InstructorBackground({
 function InstructorDocumentsAndReviews({
   documents,
   reviews,
+  documentsLoading,
+  reviewsLoading,
+  documentsError,
+  reviewsError,
+  onRetryDocuments,
+  onRetryReviews,
 }: {
   documents: InstructorDocument[];
   reviews: InstructorReview[];
+  documentsLoading: boolean;
+  reviewsLoading: boolean;
+  documentsError: boolean;
+  reviewsError: boolean;
+  onRetryDocuments: () => void;
+  onRetryReviews: () => void;
 }) {
   return (
     <div className='grid items-start gap-4 lg:grid-cols-2'>
       <SectionCard title='Documents' description='Uploaded supporting documents.'>
-        {documents.length ? (
+        {documentsLoading ? (
+          <Skeleton className='h-40 w-full rounded-md' />
+        ) : documentsError ? (
+          <EmptyState
+            icon={FileText}
+            title='Could not load documents'
+            variant='compact'
+            action={
+              <Button variant='outline' onClick={onRetryDocuments}>
+                Retry
+              </Button>
+            }
+          />
+        ) : documents.length ? (
           <div className='space-y-3'>
             {documents.map(document => (
               <div
@@ -282,16 +317,34 @@ function InstructorDocumentsAndReviews({
       </SectionCard>
 
       <SectionCard title='Reviews' description='Public reviews and ratings for this applicant.'>
-        {reviews.length ? (
+        {reviewsLoading ? (
+          <Skeleton className='h-40 w-full rounded-md' />
+        ) : reviewsError ? (
+          <EmptyState
+            icon={Star}
+            title='Could not load reviews'
+            variant='compact'
+            action={
+              <Button variant='outline' onClick={onRetryReviews}>
+                Retry
+              </Button>
+            }
+          />
+        ) : reviews.length ? (
           <div className='space-y-3'>
             {reviews.map(review => (
               <div key={review.uuid} className='border-border/60 bg-muted/20 rounded-md border p-3'>
                 <div className='flex items-center justify-between gap-3'>
                   <p className='text-foreground text-sm font-semibold'>{review.headline}</p>
-                  <div className='flex items-center gap-1'>
+                  <div
+                    className='flex items-center gap-1'
+                    role='img'
+                    aria-label={`${review.rating ?? 0} out of 5 stars`}
+                  >
                     {Array.from({ length: 5 }).map((_, index) => (
                       <Star
                         key={index}
+                        aria-hidden
                         className={
                           index < (review.rating ?? 0)
                             ? 'text-warning fill-warning size-3.5'
@@ -381,8 +434,11 @@ export default function ManageApplicantPage({
     staleTime: 30_000,
   });
   const isInstructorLoading = instructorQuery.isLoading;
-  const instructor = instructorQuery.isError ? undefined : instructorQuery.data;
-  const instructorMissed = typeHint === 'organisation' || (instructorQuery.isFetched && !instructor);
+  const instructor = instructorQuery.isError
+    ? undefined
+    : resolveInstructorProfile(instructorQuery.data);
+  const instructorMissed =
+    typeHint === 'organisation' || (!typeHint && instructorQuery.isFetched && !instructor);
   const { data: organisationData, isLoading: isOrganisationLoading } = useQuery({
     ...getOrganisationByUuidOptions({ path: { uuid } }),
     enabled: !!uuid && instructorMissed,
@@ -390,22 +446,32 @@ export default function ManageApplicantPage({
     staleTime: 30_000,
   });
 
-  const organisation = organisationData?.error || organisationData?.success === false
-    ? undefined : organisationData?.data;
+  const organisation =
+    organisationData?.error || organisationData?.success === false
+      ? undefined
+      : organisationData?.data;
   const applicantType: ApplicantType | null = instructor
     ? 'instructor'
     : organisation
       ? 'organisation'
       : null;
-  const displayApplicantType: ApplicantType = applicantType ?? 'instructor';
+  const displayApplicantType: ApplicantType = applicantType ?? typeHint ?? 'instructor';
 
+  const userUuid = instructor?.user_uuid;
   const instructorUserQuery = useQuery({
-    ...getUserByUuidOptions({ path: { uuid: instructor?.user_uuid as string } }),
-    enabled: !!instructor?.user_uuid,
+    ...(userUuid
+      ? getUserByUuidOptions({ path: { uuid: userUuid } })
+      : {
+          queryKey: getUserByUuidQueryKey({ path: { uuid: '' } }),
+          queryFn: skipToken,
+        }),
+    enabled: !!userUuid,
     staleTime: 30_000,
   });
-  const instructorUser = instructorUserQuery.isError || instructorUserQuery.data?.success === false
-    ? undefined : instructorUserQuery.data?.data;
+  const instructorUser =
+    instructorUserQuery.isError || instructorUserQuery.data?.success === false
+      ? undefined
+      : instructorUserQuery.data?.data;
 
   const applications = useTrainingApplicationList(
     { applicant_uuid_eq: uuid, course_creator_uuid: creatorUuid },
@@ -457,12 +523,27 @@ export default function ManageApplicantPage({
     staleTime: 30_000,
   });
 
-  const skills: InstructorSkill[] = skillsQuery.data?.data?.content ?? [];
-  const education: InstructorEducation[] = educationQuery.data?.data ?? [];
-  const documents: InstructorDocument[] = documentsQuery.data?.data ?? [];
-  const reviews: InstructorReview[] = reviewsQuery.data?.data ?? [];
+  const skills: InstructorSkill[] =
+    skillsQuery.data?.error || skillsQuery.data?.success === false
+      ? []
+      : (skillsQuery.data?.data?.content ?? []);
+  const education: InstructorEducation[] =
+    educationQuery.data?.error || educationQuery.data?.success === false
+      ? []
+      : (educationQuery.data?.data ?? []);
+  const documents: InstructorDocument[] =
+    documentsQuery.data?.error || documentsQuery.data?.success === false
+      ? []
+      : (documentsQuery.data?.data ?? []);
+  const reviews: InstructorReview[] =
+    reviewsQuery.data?.error || reviewsQuery.data?.success === false
+      ? []
+      : (reviewsQuery.data?.data ?? []);
 
-  const applicantName = applicantType === 'instructor' ? instructor?.full_name : organisation?.name;
+  const applicantName =
+    applicantType === 'instructor'
+      ? instructorDisplayName(instructor, instructorUser)
+      : organisation?.name;
   const applicantHeadline =
     applicantType === 'instructor'
       ? instructor?.professional_headline || 'Instructor applicant'
@@ -599,7 +680,7 @@ export default function ManageApplicantPage({
                   <ApplicantTypePill type={displayApplicantType} />
                 </div>
                 <h1 className='text-foreground text-2xl font-semibold tracking-tight sm:text-3xl'>
-                  {applicantName ?? 'Applicant'}
+                  {applicantName || 'Applicant'}
                 </h1>
                 <div className='text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-sm'>
                   <span className='inline-flex items-center gap-1.5'>
@@ -613,40 +694,42 @@ export default function ManageApplicantPage({
                 </div>
                 <p className='text-muted-foreground max-w-3xl text-sm'>{applicantHeadline}</p>
 
-                <div className='flex items-center gap-1'>
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    className='text-muted-foreground hover:text-primary hover:bg-primary/10 size-9'
-                    asChild
-                    title='Open public profile'
-                  >
-                    <Link
-                      href={`/profile-user/${instructor?.user_uuid}?domain=instructor`}
-                      target='_blank'
-                      rel='noopener noreferrer'
+                {applicantType === 'instructor' && userUuid ? (
+                  <div className='flex items-center gap-1'>
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='text-muted-foreground hover:text-primary hover:bg-primary/10 size-9'
+                      asChild
+                      title='Open public profile'
                     >
-                      <LinkIcon className='size-5 rotate-45' />
-                      <span className='sr-only'>Open public profile</span>
-                    </Link>
-                  </Button>
+                      <Link
+                        href={`/profile-user/${userUuid}?domain=instructor`}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      >
+                        <LinkIcon className='size-5 rotate-45' />
+                        <span className='sr-only'>Open public profile</span>
+                      </Link>
+                    </Button>
 
-                  <Button
-                    variant='ghost'
-                    size='icon'
-                    className='text-muted-foreground hover:text-primary hover:bg-primary/10 size-9'
-                    title='Copy profile link'
-                    onClick={() => {
-                      const url = `${window.location.origin}/profile-user/${instructor?.user_uuid}?domain=instructor`;
+                    <Button
+                      variant='ghost'
+                      size='icon'
+                      className='text-muted-foreground hover:text-primary hover:bg-primary/10 size-9'
+                      title='Copy profile link'
+                      onClick={() => {
+                        const url = `${window.location.origin}/profile-user/${userUuid}?domain=instructor`;
 
-                      navigator.clipboard.writeText(url);
-                      toast.success('Profile link copied');
-                    }}
-                  >
-                    <ClipboardList className='size-5' />
-                    <span className='sr-only'>Copy profile link</span>
-                  </Button>
-                </div>
+                        navigator.clipboard.writeText(url);
+                        toast.success('Profile link copied');
+                      }}
+                    >
+                      <ClipboardList className='size-5' />
+                      <span className='sr-only'>Copy profile link</span>
+                    </Button>
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>
@@ -675,11 +758,10 @@ export default function ManageApplicantPage({
               <SectionTabPanel value='profile'>
                 {isOrganisationApplicant && organisation ? (
                   <OrganisationProfile uuid={uuid} organisation={organisation} />
+                ) : isInstructorLoading || instructorUserQuery.isLoading ? (
+                  <Skeleton className='h-80 w-full rounded-md' />
                 ) : (
-                  <InstructorProfile
-                    instructor={instructor}
-                    instructorUser={instructorUser}
-                  />
+                  <InstructorProfile instructor={instructor} instructorUser={instructorUser} />
                 )}
               </SectionTabPanel>
 
@@ -689,7 +771,24 @@ export default function ManageApplicantPage({
                     <InstructorBackground skills={skills} education={education} />
                   </SectionTabPanel>
                   <SectionTabPanel value='documents'>
-                    <InstructorDocumentsAndReviews documents={documents} reviews={reviews} />
+                    <InstructorDocumentsAndReviews
+                      documents={documents}
+                      reviews={reviews}
+                      documentsLoading={isInstructorLoading || documentsQuery.isLoading}
+                      reviewsLoading={isInstructorLoading || reviewsQuery.isLoading}
+                      documentsError={Boolean(
+                        documentsQuery.isError ||
+                          documentsQuery.data?.error ||
+                          documentsQuery.data?.success === false
+                      )}
+                      reviewsError={Boolean(
+                        reviewsQuery.isError ||
+                          reviewsQuery.data?.error ||
+                          reviewsQuery.data?.success === false
+                      )}
+                      onRetryDocuments={() => void documentsQuery.refetch()}
+                      onRetryReviews={() => void reviewsQuery.refetch()}
+                    />
                   </SectionTabPanel>
                 </>
               )}

@@ -1,13 +1,11 @@
 'use client';
 
-import { useQueryClient } from '@tanstack/react-query';
-import { Bell } from 'lucide-react';
-import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { parseApiDate } from '@/lib/date';
 import {
   type UserNotification,
@@ -20,6 +18,12 @@ import {
 import { normalizeLegacyActionUrl } from '@/src/features/dashboard/lib/legacy-action-url';
 import { invalidateWorkflowQueriesForNotification } from '@/src/features/dashboard/workflow-query-invalidation';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { useQueryClient } from '@tanstack/react-query';
+import { Bell } from 'lucide-react';
+import dynamic from 'next/dynamic';
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef, useState } from 'react';
+import { toast } from 'sonner';
 
 // The dropdown body (rows, scroll area, date formatting) loads the first time the bell opens.
 const DashboardNotificationsPanel = dynamic(
@@ -135,16 +139,29 @@ export const getNotificationUrlPath = (
     case 'PROGRAM_TRAINING_APPLICATION_SUBMITTED':
     case 'PROGRAM_TRAINING_APPLICATION_APPROVED':
     case 'PROGRAM_TRAINING_APPLICATION_REJECTED':
-    case 'PROGRAM_TRAINING_APPLICATION_REVOKED':
+    case 'PROGRAM_TRAINING_APPLICATION_REVOKED': {
       if (activeDomain === 'instructor') {
-        return metadata?.application_uuid ? `${INSTRUCTOR_PATH}/courses` : '';
+        const tab = type.endsWith('_APPROVED')
+          ? 'approved'
+          : type.endsWith('_REJECTED')
+            ? 'rejected'
+            : type.endsWith('_SUBMITTED')
+              ? 'pending'
+              : 'all';
+        return `${INSTRUCTOR_PATH}/rate-card?tab=${tab}`;
       } else if (activeDomain === 'organisation') {
         return metadata?.application_uuid ? `${ORGANISATION_PATH}/courses` : '';
       } else if (activeDomain === 'course_creator') {
-        return metadata?.application_uuid
-          ? `${COURSE_CREATOR_PATH}/manage-applicant/${metadata?.applicant_uuid}${applicantTypeQuery(metadata?.applicant_type)}`
-          : '';
+        if (!metadata?.application_uuid) return '';
+
+        const tab = type.startsWith('PROGRAM_') ? 'program' : 'course';
+        const baseQuery = applicantTypeQuery(metadata?.applicant_type);
+        const separator = baseQuery ? '&' : '?';
+
+        return `${COURSE_CREATOR_PATH}/manage-applicant/${metadata?.applicant_uuid}${baseQuery}${separator}tab=${tab}`;
       }
+      return '';
+    }
 
     case 'COURSE_CONTENT_APPROVED':
     case 'COURSE_CONTENT_REJECTED':

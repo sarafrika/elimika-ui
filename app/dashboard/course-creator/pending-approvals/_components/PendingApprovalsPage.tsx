@@ -59,6 +59,10 @@ function ApplicantCard({
   applicant: ApplicantSummary;
   onReview: () => void;
 }) {
+  const profileHref = dashboardUrl(
+    'course_creator',
+    `manage-applicant/${encodeURIComponent(applicant.uuid)}?type=${applicant.type}&tab=profile`
+  );
   const initials = applicant.name
     .split(' ')
     .map(part => part[0])
@@ -67,7 +71,7 @@ function ApplicantCard({
     .slice(0, 2);
 
   return (
-    <div className='border-border/60 bg-muted/20 rounded-md border p-4 shadow-sm'>
+    <div className='border-border/60 bg-muted/20 relative rounded-md border p-4 shadow-sm'>
       <div className='flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between'>
         <div className='flex min-w-0 items-start gap-3'>
           <Avatar className='size-12 shrink-0'>
@@ -88,7 +92,12 @@ function ApplicantCard({
           </Avatar>
           <div className='min-w-0'>
             <div className='mb-1 flex flex-wrap items-center gap-2'>
-              <p className='text-foreground truncate text-sm font-semibold'>{applicant.name}</p>
+              <Link
+                href={profileHref}
+                className='text-foreground hover:text-primary truncate text-sm font-semibold after:absolute after:inset-0'
+              >
+                {applicant.name}
+              </Link>
               {/* <StatusBadge status={applicant.latestStatus} /> */}
               <StatusBadge
                 status={applicant.pendingCount > 0 ? 'pending' : applicant.latestStatus}
@@ -111,17 +120,10 @@ function ApplicantCard({
         </div>
 
         <div className='flex shrink-0 flex-wrap gap-2'>
-          <Button variant='outline' size='sm' onClick={onReview}>
+          <Button variant='outline' size='sm' onClick={onReview} className='relative z-10'>
             Review applicant
           </Button>
         </div>
-
-        {/* <Button variant='outline' size='sm' asChild>
-          <Link href={`/dashboard/course-creator/manage-applicant/${applicant.uuid}`}>
-            <ExternalLink className='size-4' />
-            Review applicant
-          </Link>
-        </Button> */}
       </div>
     </div>
   );
@@ -262,8 +264,8 @@ export default function PendingApprovalsPage() {
               instructor?.location_name ?? instructor?.formatted_location ?? 'Location not listed',
             avatarUrl:
               instructor &&
-                'profile_picture_url' in instructor &&
-                typeof instructor.profile_picture_url === 'string'
+              'profile_picture_url' in instructor &&
+              typeof instructor.profile_picture_url === 'string'
                 ? instructor.profile_picture_url
                 : undefined,
             latestStatus: latestStatus(applications),
@@ -429,11 +431,11 @@ export default function PendingApprovalsPage() {
           }
         >
           {courseApplicationsQuery.isError ||
-            programApplicationsQuery.isError ||
-            courseApplicationsQuery.data?.error ||
-            programApplicationsQuery.data?.error ||
-            courseApplicationsQuery.data?.success === false ||
-            programApplicationsQuery.data?.success === false ? (
+          programApplicationsQuery.isError ||
+          courseApplicationsQuery.data?.error ||
+          programApplicationsQuery.data?.error ||
+          courseApplicationsQuery.data?.success === false ||
+          programApplicationsQuery.data?.success === false ? (
             <EmptyState
               title='Could not load applications'
               description='Please retry before reviewing the queue.'

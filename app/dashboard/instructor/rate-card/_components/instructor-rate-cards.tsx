@@ -7,12 +7,14 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { PageHeader } from '@/components/dashboard/page-header';
 import { AsyncSection } from '@/components/data/async-section';
+import { useSectionTab } from '@/components/data-display/section-tabs';
 import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
 import { RateUpdateStatus } from '@/components/rate-card/rate-update-status';
 import { UpdateRatesDialog } from '@/components/rate-card/update-rates-dialog';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInstructor } from '@/context/instructor-context';
 import { useCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
 import { dayjs } from '@/lib/date';
@@ -30,6 +32,14 @@ import type { TrainingApplicationKind } from '@/src/features/rate-card/types';
 
 type DialogTarget = { entry: TrainingApplicationEntry; focusBasis?: SelectableRateBasis };
 
+const STATUS_TABS = [
+  { value: 'all', label: 'All' },
+  { value: 'approved', label: 'Approved' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'rejected', label: 'Rejected' },
+] as const;
+const STATUS_VALUES = STATUS_TABS.map(tab => tab.value);
+
 const STATUS_ORDER: Record<string, number> = { approved: 0, pending: 1, rejected: 2, revoked: 3 };
 
 const cardId = (kind: TrainingApplicationKind, parentUuid: string) =>
@@ -44,6 +54,11 @@ export function InstructorRateCards({ embedded = false }: { embedded?: boolean }
   const instructor = useInstructor();
   const instructorUuid = instructor?.uuid ?? '';
   const searchParams = useSearchParams();
+  const { value: statusFilter, setValue: setStatusFilter } = useSectionTab(
+    STATUS_VALUES,
+    'all',
+    embedded ? 'rateCardTab' : 'tab'
+  );
   const { entries, loading, error, refetch } = useTrainingApplicationList(
     { applicant_uuid_eq: instructorUuid, applicant_type_eq: 'instructor' },
     Boolean(instructorUuid)
@@ -57,6 +72,22 @@ export function InstructorRateCards({ embedded = false }: { embedded?: boolean }
           (STATUS_ORDER[b.application.status ?? ''] ?? 9)
       ),
     [entries]
+  );
+  const statusCounts = useMemo(
+    () => ({
+      all: sorted.length,
+      approved: sorted.filter(entry => entry.application.status === 'approved').length,
+      pending: sorted.filter(entry => entry.application.status === 'pending').length,
+      rejected: sorted.filter(entry => entry.application.status === 'rejected').length,
+    }),
+    [sorted]
+  );
+  const filtered = useMemo(
+    () =>
+      statusFilter === 'all'
+        ? sorted
+        : sorted.filter(entry => entry.application.status === statusFilter),
+    [sorted, statusFilter]
   );
   const creatorIds = useMemo(
     () => sorted.flatMap(entry => (entry.creatorUuid ? [entry.creatorUuid] : [])),
@@ -72,11 +103,11 @@ export function InstructorRateCards({ embedded = false }: { embedded?: boolean }
   const linkBasis = RATE_BASES.find(basis => basis.value === rawBasis)?.value;
   const linked = linkParent
     ? (sorted.find(
-      entry =>
-        entry.kind === linkKind &&
-        entry.parentUuid === linkParent &&
-        entry.application.status === 'approved'
-    ) ?? sorted.find(entry => entry.kind === linkKind && entry.parentUuid === linkParent))
+        entry =>
+          entry.kind === linkKind &&
+          entry.parentUuid === linkParent &&
+          entry.application.status === 'approved'
+      ) ?? sorted.find(entry => entry.kind === linkKind && entry.parentUuid === linkParent))
     : undefined;
 
   const [dialog, setDialog] = useState<DialogTarget | null>(null);
@@ -85,6 +116,10 @@ export function InstructorRateCards({ embedded = false }: { embedded?: boolean }
 
   useEffect(() => {
     if (!linkKey || !linked || handledLink.current === linkKey) return;
+    if (statusFilter !== 'all' && linked.application.status !== statusFilter) {
+      setStatusFilter('all');
+      return;
+    }
     handledLink.current = linkKey;
     document
       .getElementById(cardId(linked.kind, linked.parentUuid))
@@ -92,7 +127,7 @@ export function InstructorRateCards({ embedded = false }: { embedded?: boolean }
     const { application } = linked;
     if (application.status === 'approved' && !application.pending_rate_update_uuid)
       setDialog({ entry: linked, focusBasis: linkBasis });
-  }, [linkKey, linked, linkBasis]);
+  }, [linkKey, linked, linkBasis, statusFilter, setStatusFilter]);
 
   return (
     <div className='w-full max-w-7xl space-y-6 px-4 py-4 pb-10 sm:px-6'>
@@ -117,38 +152,67 @@ export function InstructorRateCards({ embedded = false }: { embedded?: boolean }
         />
       ) : null}
 
-      <AsyncSection
-        loading={loading}
-        error={error}
-        onRetry={refetch}
-        errorTitle='Couldn’t load your rate cards'
-        empty={sorted.length === 0}
-        skeleton={<RateCardsSkeleton />}
-        emptyState={
-          <EmptyState
-            icon={Layers}
-            title='No rate cards yet'
-            description='Apply to train a course; your rate card appears here once you send it.'
-            action={
-              <Button asChild variant='outline'>
-                <Link href={instructorApplyToTrainHref()}>Browse courses</Link>
-              </Button>
-            }
-          />
-        }
+      <Tabs
+        value={statusFilter}
+        onValueChange={value => {
+          const next = STATUS_TABS.find(tab => tab.value === value);
+          if (next) setStatusFilter(next.value);
+        }}
+        className='min-w-0 space-y-4'
       >
-        <div className='space-y-5'>
-          {sorted.map(entry => (
-            <RateCardEntry
-              key={`${entry.kind}-${entry.uuid}`}
-              entry={entry}
-              creatorName={creatorName(entry)}
-              highlightBasis={entry === linked ? linkBasis : undefined}
-              onUpdate={() => setDialog({ entry })}
-            />
+        <TabsList aria-label='Application status' className='h-auto flex-wrap justify-start'>
+          {STATUS_TABS.map(({ value, label }) => (
+            <TabsTrigger key={value} value={value}>
+              {label}
+              {!loading && !error ? ` (${statusCounts[value]})` : ''}
+            </TabsTrigger>
           ))}
-        </div>
-      </AsyncSection>
+        </TabsList>
+        <TabsContent value={statusFilter}>
+          <AsyncSection
+            loading={loading}
+            error={error}
+            onRetry={refetch}
+            errorTitle='Couldn’t load your rate cards'
+            empty={filtered.length === 0}
+            skeleton={<RateCardsSkeleton />}
+            emptyState={
+              <EmptyState
+                icon={Layers}
+                title={sorted.length ? `No ${statusFilter} applications` : 'No rate cards yet'}
+                description={
+                  sorted.length
+                    ? `You have no ${statusFilter} course or program applications.`
+                    : 'Apply to train a course; your rate card appears here once you send it.'
+                }
+                action={
+                  sorted.length ? (
+                    <Button variant='outline' onClick={() => setStatusFilter('all')}>
+                      View all applications
+                    </Button>
+                  ) : (
+                    <Button asChild variant='outline'>
+                      <Link href={instructorApplyToTrainHref()}>Browse courses</Link>
+                    </Button>
+                  )
+                }
+              />
+            }
+          >
+            <div className='space-y-5'>
+              {filtered.map(entry => (
+                <RateCardEntry
+                  key={`${entry.kind}-${entry.uuid}`}
+                  entry={entry}
+                  creatorName={creatorName(entry)}
+                  highlightBasis={entry === linked ? linkBasis : undefined}
+                  onUpdate={() => setDialog({ entry })}
+                />
+              ))}
+            </div>
+          </AsyncSection>
+        </TabsContent>
+      </Tabs>
 
       {dialog ? (
         <UpdateRatesDialog

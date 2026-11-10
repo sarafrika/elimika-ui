@@ -20,11 +20,11 @@ import {
 import { AsyncSection } from '@/components/data/async-section';
 import { SchedulingConflictAlert } from '@/components/scheduling/scheduling-conflict-alert';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
+import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
+import { Switch } from '@/components/ui/switch';
 import { useClassEditEligibility } from '@/hooks/use-class-edit-eligibility';
 import { useInstructorApprovedOfferings } from '@/hooks/use-instructor-approved-offerings';
 import {
@@ -41,6 +41,7 @@ import {
 } from '@/lib/rate-card';
 import { type RecurrenceValue, toClassRecurrence } from '@/lib/recurrence';
 import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
+import type { AgeGroup, TrainingRequirementAnswer } from '@/services/client';
 import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { format } from 'date-fns';
@@ -111,7 +112,11 @@ import {
   RecurrenceTypeEnum,
 } from '../../../../../services/client/types.gen';
 import { TOKEN } from '../../../_components/color-charts';
-import { ClassScheduleEditor, type ClassScheduleEditState } from './_components/ClassScheduleEditor';
+import {
+  ClassScheduleEditor,
+  type ClassScheduleEditState,
+} from './_components/ClassScheduleEditor';
+import { ClassApplicationResources } from './_components/class-application-resources';
 import type {
   ClassDetails,
   NotificationSettings,
@@ -138,6 +143,8 @@ type CatalogRateCard = {
 };
 
 type CatalogItem = {
+  requirementAnswers?: TrainingRequirementAnswer[] | null;
+  ageGroups?: AgeGroup[] | null;
   applicationUuid?: string;
   pendingRateUpdateUuid?: string | null;
   classLimit: number;
@@ -703,7 +710,9 @@ const InstructorClassCreationPage = () => {
     setRequestedOffering(
       programUuid
         ? { source: 'program', uuid: programUuid }
-        : courseUuid ? { source: 'course', uuid: courseUuid } : null
+        : courseUuid
+          ? { source: 'course', uuid: courseUuid }
+          : null
     );
     setIsClientReady(true);
   }, []);
@@ -779,7 +788,11 @@ const InstructorClassCreationPage = () => {
   const editEligibility = useClassEditEligibility(resolvedId);
   const [checkingEnrollments, setCheckingEnrollments] = useState(false);
   const [scheduleEditState, setScheduleEditState] = useState<ClassScheduleEditState>({
-    saving: false, dirty: false, sessions: 0, minutes: 0, days: 0,
+    saving: false,
+    dirty: false,
+    sessions: 0,
+    minutes: 0,
+    days: 0,
   });
   const {
     data: combinedClass,
@@ -816,7 +829,8 @@ const InstructorClassCreationPage = () => {
   // 409 with the windows it refused and why. Keep them on screen, not in a vanishing toast.
   const [refusedWindows, setRefusedWindows] = useState<SchedulingConflict[]>([]);
   const isSubmitting =
-    checkingEnrollments || scheduleEditState.saving ||
+    checkingEnrollments ||
+    scheduleEditState.saving ||
     createClassDefinition.isPending ||
     updateClassDefinition.isPending ||
     uploadThumbnail.isPending ||
@@ -856,6 +870,8 @@ const InstructorClassCreationPage = () => {
       thumbnailUrl: course?.thumbnail_url || 'NF',
       rateCard: course?.application?.rate_card as CatalogRateCard | undefined,
       applicationUuid: course?.application?.uuid,
+      requirementAnswers: course?.application?.requirement_answers,
+      ageGroups: course?.application?.age_groups,
       pendingRateUpdateUuid: course?.application?.pending_rate_update_uuid,
     }));
     const programItems: CatalogItem[] = approvedPrograms.map(program => ({
@@ -865,6 +881,8 @@ const InstructorClassCreationPage = () => {
       classLimit: program?.class_limit ?? 0,
       rateCard: program?.application?.rate_card as CatalogRateCard | undefined,
       applicationUuid: program?.application?.uuid,
+      requirementAnswers: program?.application?.requirement_answers,
+      ageGroups: program?.application?.age_groups,
       pendingRateUpdateUuid: program?.application?.pending_rate_update_uuid,
       thumbnailUrl: '',
     }));
@@ -902,6 +920,11 @@ const InstructorClassCreationPage = () => {
     [catalogItems, classDetails.course_uuid, classDetails.program_uuid]
   );
 
+  const offeringParticipantLimit = Number(selectedCatalogItem?.classLimit);
+  const maxParticipants =
+    Number.isFinite(offeringParticipantLimit) && offeringParticipantLimit > 0
+      ? Math.floor(offeringParticipantLimit)
+      : undefined;
   const rateCard = selectedCatalogItem?.rateCard;
   const deliveryMode = normalizeLocationType(classDetails.location_type) || null;
   const approvedRate = useMemo(() => {
@@ -953,7 +976,10 @@ const InstructorClassCreationPage = () => {
 
   /** Distinct calendar days holding a session — two sessions in one day bill once on a daily rate. */
   const totalDays = useMemo(
-    () => resolvedId ? scheduleEditState.days : new Set(sessionsForConflictCheck.map(session => session.date)).size,
+    () =>
+      resolvedId
+        ? scheduleEditState.days
+        : new Set(sessionsForConflictCheck.map(session => session.date)).size,
     [sessionsForConflictCheck, resolvedId, scheduleEditState.days]
   );
 
@@ -1472,13 +1498,21 @@ const InstructorClassCreationPage = () => {
       toast.error('Please select a valid course or program');
       return false;
     }
+    if (maxParticipants !== undefined && classDetails.class_limit > maxParticipants) {
+      toast.error(
+        `This ${selectedCatalogItem.source} allows at most ${maxParticipants} participants.`
+      );
+      return false;
+    }
     const locationType = normalizeLocationType(classDetails.location_type);
     if (!locationType) {
       toast.error(resolvedId ? 'Pick how the class is delivered.' : 'Pick an approved service.');
       return false;
     }
     if (!rateBasis) {
-      toast.error(resolvedId ? 'Pick a billing basis on your rate card.' : 'Pick an approved service.');
+      toast.error(
+        resolvedId ? 'Pick a billing basis on your rate card.' : 'Pick an approved service.'
+      );
       return false;
     }
     if (!service) {
@@ -1504,7 +1538,8 @@ const InstructorClassCreationPage = () => {
       toast.error('Please select at least one date');
       return false;
     }
-    const missingStartTime = !resolvedId && findMissingStartTime(schedulePreset, scheduleSettings, pickedDates);
+    const missingStartTime =
+      !resolvedId && findMissingStartTime(schedulePreset, scheduleSettings, pickedDates);
     if (missingStartTime) {
       toast.error(missingStartTime.message, { description: missingStartTime.description });
       return false;
@@ -1576,9 +1611,11 @@ const InstructorClassCreationPage = () => {
     if (isSubmitting) return;
     if (resolvedId) {
       if (!editEligibility.canEdit || scheduleEditState.dirty) {
-        toast.error(scheduleEditState.dirty
-          ? 'Save your schedule changes before saving class details.'
-          : 'This class can only be edited before learners enroll.');
+        toast.error(
+          scheduleEditState.dirty
+            ? 'Save your schedule changes before saving class details.'
+            : 'This class can only be edited before learners enroll.'
+        );
         return;
       }
       setCheckingEnrollments(true);
@@ -1600,16 +1637,16 @@ const InstructorClassCreationPage = () => {
     }
     const priceIssue = resolvedId
       ? priceAndPayIssue({
-          salePrice,
-          instructorPay,
-          approvedRate,
-          basis: rateBasis,
-          currency: rateCard?.currency,
-          payAtLeastRate: true,
-        })
+        salePrice,
+        instructorPay,
+        approvedRate,
+        basis: rateBasis,
+        currency: rateCard?.currency,
+        payAtLeastRate: true,
+      })
       : null;
     if (priceIssue) return toast.error(priceIssue.message);
-    const saleValue = resolvedId ? num(salePrice) ?? 0 : approvedRate;
+    const saleValue = resolvedId ? (num(salePrice) ?? 0) : approvedRate;
     const payValue = num(instructorPay) ?? 0;
     setRefusedWindows([]);
 
@@ -1684,9 +1721,8 @@ const InstructorClassCreationPage = () => {
       return;
     }
 
-    const invalidSession = !resolvedId && sessionsForConflictCheck.find(
-      session => !hasValidSessionTimeRange(session)
-    );
+    const invalidSession =
+      !resolvedId && sessionsForConflictCheck.find(session => !hasValidSessionTimeRange(session));
     if (invalidSession) {
       toast.error('Each session end time must be after its start time', {
         description: `${invalidSession.date} ${invalidSession.startTime} - ${invalidSession.endTime}`,
@@ -1746,9 +1782,7 @@ const InstructorClassCreationPage = () => {
               ? 'MONTHLY'
               : 'WEEKLY',
         interval: scheduleSettings.repeat.interval || 1,
-        daysOfWeek: (scheduleSettings.repeat.days || [])
-          .map(day => DAY_NAMES[day])
-          .filter(Boolean),
+        daysOfWeek: (scheduleSettings.repeat.days || []).map(day => DAY_NAMES[day]).filter(Boolean),
         end: scheduleSettings.endRepeat
           ? { mode: 'on', date: scheduleSettings.endRepeat }
           : { mode: 'never' },
@@ -1985,15 +2019,21 @@ const InstructorClassCreationPage = () => {
     if (resolvedId) {
       // Existing instances are edited through the timetable API above. The class
       // update endpoint does not accept session templates or generated counts.
-      const { session_templates: _templates, scheduled_session_count: _count, rate_basis: _basis, ...updatePayload } = payload;
+      const {
+        session_templates: _templates,
+        scheduled_session_count: _count,
+        rate_basis: _basis,
+        ...updatePayload
+      } = payload;
       updateClassDefinition.mutate(
         {
-          path: { uuid: resolvedId }, body: {
+          path: { uuid: resolvedId },
+          body: {
             ...updatePayload,
             default_start_time: classData.default_start_time,
             default_end_time: classData.default_end_time,
             is_active: classData.is_active,
-          }
+          },
         },
         {
           onSuccess: async response => {
@@ -2093,7 +2133,9 @@ const InstructorClassCreationPage = () => {
 
   const handleOfferingChange = (value: string) => {
     const [source, uuid] = value.split(':');
-    const item = catalogItems.find(candidate => candidate.source === source && candidate.uuid === uuid);
+    const item = catalogItems.find(
+      candidate => candidate.source === source && candidate.uuid === uuid
+    );
     if (!item || value === selectedOfferingValue) return;
 
     // Each offering has its own rate card, so billing starts over.
@@ -2221,7 +2263,12 @@ const InstructorClassCreationPage = () => {
     });
   };
 
-  const scheduleMode = schedulePreset === 'pick-dates' ? 'pick' : schedulePreset === 'academic-period' ? 'academic' : 'standard';
+  const scheduleMode =
+    schedulePreset === 'pick-dates'
+      ? 'pick'
+      : schedulePreset === 'academic-period'
+        ? 'academic'
+        : 'standard';
   const sharedPickedDates = useMemo(
     () => pickedDates.map(item => buildDateFromInput(item.date)).filter(Boolean) as Date[],
     [pickedDates]
@@ -2230,8 +2277,10 @@ const InstructorClassCreationPage = () => {
     () => [...sharedPickedDates].sort((a, b) => a.getTime() - b.getTime()),
     [sharedPickedDates]
   );
-  const sharedSessionStart = pickedDates[0]?.startTime || scheduleSettings.startClass.startTime || '10:00';
-  const sharedSessionEnd = pickedDates[0]?.endTime || scheduleSettings.startClass.endTime || '12:00';
+  const sharedSessionStart =
+    pickedDates[0]?.startTime || scheduleSettings.startClass.startTime || '10:00';
+  const sharedSessionEnd =
+    pickedDates[0]?.endTime || scheduleSettings.startClass.endTime || '12:00';
 
   const updatePickedDates = (dates: Date[]) => {
     setPickedDates(
@@ -2283,8 +2332,14 @@ const InstructorClassCreationPage = () => {
       },
       {}
     );
-    const starts = periods.map(period => period.startDate).filter(Boolean).sort();
-    const ends = periods.map(period => period.endDate).filter(Boolean).sort();
+    const starts = periods
+      .map(period => period.startDate)
+      .filter(Boolean)
+      .sort();
+    const ends = periods
+      .map(period => period.endDate)
+      .filter(Boolean)
+      .sort();
     setScheduleSettings(prev => ({
       ...prev,
       academicPeriod: {
@@ -2415,9 +2470,11 @@ const InstructorClassCreationPage = () => {
       <form onSubmit={handleSubmit} className='space-y-6'>
         <PageHeader
           title={resolvedId ? 'Edit class' : 'Create a class'}
-          description={resolvedId
-            ? 'Update class details and scheduled sessions before any learners enroll.'
-            : 'For an approved offering you can deliver. The class is scheduled immediately on your calendar and can be published for learners to join.'}
+          description={
+            resolvedId
+              ? 'Update class details and scheduled sessions before any learners enroll.'
+              : 'For an approved offering you can deliver. The class is scheduled immediately on your calendar and can be published for learners to join.'
+          }
         />
 
         {/* Editing hydrates every field below from the class record, so they wait on it. */}
@@ -2425,11 +2482,21 @@ const InstructorClassCreationPage = () => {
           loading={isLoading || editEligibility.isLoading}
           error={classLoadFailed || editEligibility.error}
           empty={Boolean(resolvedId && editEligibility.hasEnrollments)}
-          emptyState={<EmptyState
-            title='This class has enrollments'
-            description='Class details and schedules can only be edited before learners enroll.'
-            action={<Button type='button' variant='outline' onClick={() => router.push('/dashboard/instructor/training-hub?tab=classes')}>Back to classes</Button>}
-          />}
+          emptyState={
+            <EmptyState
+              title='This class has enrollments'
+              description='Class details and schedules can only be edited before learners enroll.'
+              action={
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={() => router.push('/dashboard/instructor/training-hub?tab=classes')}
+                >
+                  Back to classes
+                </Button>
+              }
+            />
+          }
           errorTitle='Couldn’t load this class'
           onRetry={() => {
             void refetchClass();
@@ -2561,21 +2628,36 @@ const InstructorClassCreationPage = () => {
                       Filled from your selected approved service rate.
                     </p>
                   </div>
+
                   <div className='space-y-2'>
-                    <Label htmlFor='instructor-class-max-participants'>Max participants</Label>
+                    <Label htmlFor='instructor-class-max-participants'>Max participants ({maxParticipants})</Label>
                     <Input
                       id='instructor-class-max-participants'
                       type='number'
                       inputMode='numeric'
                       min={1}
+                      max={maxParticipants}
+                      step={1}
+                      aria-describedby='instructor-class-max-participants-hint'
                       value={classDetails.class_limit || ''}
                       onChange={event =>
                         setClassDetails(prev => ({
                           ...prev,
-                          class_limit: Number(event.target.value) || 0,
+                          class_limit: Math.min(
+                            Math.max(0, Math.trunc(Number(event.target.value) || 0)),
+                            maxParticipants ?? Number.POSITIVE_INFINITY
+                          ),
                         }))
                       }
                     />
+                    <p
+                      id='instructor-class-max-participants-hint'
+                      className='text-muted-foreground text-xs'
+                    >
+                      {maxParticipants !== undefined
+                        ? `Maximum allowed for this ${selectedCatalogItem?.source}: ${maxParticipants} students.`
+                        : 'No participant limit is specified for this offering.'}
+                    </p>
                     <div className='flex items-center gap-2'>
                       <Switch
                         id='instructor-class-waitlist'
@@ -2593,6 +2675,8 @@ const InstructorClassCreationPage = () => {
           )}
 
           <LocationVenue
+            classroom={classDetails.classroom}
+            onClassroomChange={value => setClassDetails(prev => ({ ...prev, classroom: value }))}
             delivery={deliveryMode}
             meetingLink={classDetails.meeting_link}
             onMeetingLinkChange={value =>
@@ -2608,6 +2692,13 @@ const InstructorClassCreationPage = () => {
             onLocationLongitudeChange={setLocationLongitude}
           />
 
+          <ClassApplicationResources
+            equipment={selectedCatalogItem?.requirementAnswers}
+            groups={selectedCatalogItem?.ageGroups}
+            selected={Boolean(selectedCatalogItem)}
+            loading={offeringsLoading}
+          />
+
           {resolvedId ? (
             <ClassScheduleEditor
               key={resolvedId}
@@ -2616,7 +2707,12 @@ const InstructorClassCreationPage = () => {
               timezone={scheduleSettings.timezone}
               assertCanEdit={editEligibility.assertCanEdit}
               onStateChange={setScheduleEditState}
-              disabled={checkingEnrollments || updateClassDefinition.isPending || uploadThumbnail.isPending || uploadPromotionalVideo.isPending}
+              disabled={
+                checkingEnrollments ||
+                updateClassDefinition.isPending ||
+                uploadThumbnail.isPending ||
+                uploadPromotionalVideo.isPending
+              }
             />
           ) : (
             <>
@@ -2624,7 +2720,11 @@ const InstructorClassCreationPage = () => {
                 value={scheduleMode}
                 onChange={value =>
                   setSchedulePreset(
-                    value === 'pick' ? 'pick-dates' : value === 'academic' ? 'academic-period' : 'standard'
+                    value === 'pick'
+                      ? 'pick-dates'
+                      : value === 'academic'
+                        ? 'academic-period'
+                        : 'standard'
                   )
                 }
               />
@@ -2644,7 +2744,10 @@ const InstructorClassCreationPage = () => {
                   onTimezoneChange={handleScheduleTimeZoneChange}
                 />
               ) : scheduleMode === 'academic' ? (
-                <AcademicPeriodsPanel periods={academicPeriods} onChange={handleAcademicPeriodsChange} />
+                <AcademicPeriodsPanel
+                  periods={academicPeriods}
+                  onChange={handleAcademicPeriodsChange}
+                />
               ) : (
                 <StandardSchedule
                   days={sharedDays}
@@ -2682,7 +2785,9 @@ const InstructorClassCreationPage = () => {
                     }))
                   }
                   endDate={scheduleSettings.endRepeat}
-                  onEndDateChange={value => setScheduleSettings(prev => ({ ...prev, endRepeat: value }))}
+                  onEndDateChange={value =>
+                    setScheduleSettings(prev => ({ ...prev, endRepeat: value }))
+                  }
                   timezone={scheduleSettings.timezone}
                   onTimezoneChange={handleScheduleTimeZoneChange}
                   totalSessions={sessionsForConflictCheck.length}
@@ -2740,9 +2845,22 @@ const InstructorClassCreationPage = () => {
             Cancel
           </Button>
           {resolvedId && scheduleEditState.dirty && (
-            <p className='self-center text-xs text-muted-foreground'>Save schedule changes before saving class details.</p>
+            <p className='text-muted-foreground self-center text-xs'>
+              Save schedule changes before saving class details.
+            </p>
           )}
-          <Button type='submit' disabled={isSubmitting || isLoading || classLoadFailed || Boolean(resolvedId && (!editEligibility.canEdit || !isEditHydrated || scheduleEditState.dirty))}>
+          <Button
+            type='submit'
+            disabled={
+              isSubmitting ||
+              isLoading ||
+              classLoadFailed ||
+              Boolean(
+                resolvedId &&
+                (!editEligibility.canEdit || !isEditHydrated || scheduleEditState.dirty)
+              )
+            }
+          >
             {isSubmitting ? <Spinner /> : null}
             {isSubmitting ? 'Saving…' : resolvedId ? 'Save changes' : 'Publish Class'}
           </Button>
@@ -2787,7 +2905,7 @@ const FieldGroup = ({ label, children }: { label: string; children: React.ReactN
 
 const SummaryFact = ({ label, value }: { label: string; value: string }) => (
   <div className='bg-muted/50 rounded-md px-2.5 py-2'>
-    <div className='text-muted-foreground text-[11px] uppercase tracking-wide'>{label}</div>
+    <div className='text-muted-foreground text-[11px] tracking-wide uppercase'>{label}</div>
     <div className='text-foreground mt-0.5 text-sm font-medium'>{value}</div>
   </div>
 );
