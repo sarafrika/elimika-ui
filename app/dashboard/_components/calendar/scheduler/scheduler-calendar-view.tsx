@@ -313,7 +313,7 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
   // Note: SchedulerGrid only calls this when `canCreateClass` is false for the
   // active profile (e.g. students never reach the branch below, and it stays
   // a no-op for them). For instructor/organisation profiles the grid opens
-  // its own CreateClassDialog directly and skips this callback entirely.
+  // its own class-creation modal directly and skips this callback entirely.
   const handleEmptySlotClick = (slot: { date: Date; startTime: Date; endTime: Date }) => {
     if (profile === 'student') return;
     handleCreateSession(slot);
@@ -583,7 +583,6 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
                 canCreateClass={
                   activeDomain === 'instructor' || activeDomain === 'organisation_user'
                 }
-                onClassCreated={() => { }}
                 onSelectDate={handleSelectDate}
               />
             )}
