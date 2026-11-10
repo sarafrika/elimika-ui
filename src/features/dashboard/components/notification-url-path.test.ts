@@ -6,6 +6,34 @@ import { getNotificationUrlPath } from './dashboard-notifications';
 const note = (type: string, action_url: string, metadata: Record<string, string> = {}) =>
   ({ type, action_url, metadata }) as unknown as UserNotification;
 
+test('instructor training notifications open the matching application status tab', () => {
+  for (const kind of ['COURSE', 'PROGRAM']) {
+    for (const [event, tab] of [
+      ['APPROVED', 'approved'],
+      ['SUBMITTED', 'pending'],
+      ['REJECTED', 'rejected'],
+      ['REVOKED', 'all'],
+    ]) {
+      assert.equal(
+        getNotificationUrlPath(
+          note(`${kind}_TRAINING_APPLICATION_${event}`, '/dashboard/rate-card', {
+            application_uuid: 'application-1',
+          }),
+          'instructor'
+        ),
+        `/dashboard/instructor/rate-card?tab=${tab}`
+      );
+    }
+  }
+});
+
+test('instructor training notifications can open the status list without an application id', () => {
+  assert.equal(
+    getNotificationUrlPath(note('COURSE_TRAINING_APPLICATION_APPROVED', ''), 'instructor'),
+    '/dashboard/instructor/rate-card?tab=approved'
+  );
+});
+
 test('creator moderation notifications open the matching editor under My Courses', () => {
   for (const type of ['COURSE_CONTENT_APPROVED', 'COURSE_CONTENT_REJECTED']) {
     assert.equal(
