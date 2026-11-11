@@ -54,7 +54,6 @@ import {
   isBatchLive,
   type PayoutBatchDetail,
   plural,
-  toAmount,
   type WalletSummary,
   walletFlagsOf,
   walletSummary,
@@ -399,21 +398,20 @@ function BatchView({ batch, onChanged }: { batch: PayoutBatchDetail; onChanged: 
 function FloatCard({ batch, float }: { batch: PayoutBatchDetail; float: FloatState }) {
   const atApproval = batch.float_at_approval;
   const decided = batch.status !== 'DRAFT' && batch.status !== 'AWAITING_APPROVAL';
-  const utility = toAmount(batch.payout_float?.utility_funds);
   return (
     <Card className='min-w-0 flex-[1_1_320px]'>
       <CardHeader>
         <CardTitle className='text-base'>Payout float</CardTitle>
         <CardDescription>
           {batch.payout_float?.reported_at
-            ? `Working pays B2C withdrawals · balances reported ${formatDateTime(batch.payout_float.reported_at)}`
-            : 'M-Pesa has not reported the payout paybill’s balances yet'}
+            ? `As M-Pesa reported it ${formatDateTime(batch.payout_float.reported_at)}`
+            : 'M-Pesa has not reported the payout paybill’s balance yet'}
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-3 text-sm'>
         <div className='grid grid-cols-2 gap-3'>
           <div>
-            <p className='text-muted-foreground text-xs'>Working available to pay out</p>
+            <p className='text-muted-foreground text-xs'>Available to pay out</p>
             <p className='text-lg font-bold tabular-nums'>
               {float.kind === 'unknown' ? 'Unknown' : formatMoney(float.float)}
             </p>
@@ -430,9 +428,6 @@ function FloatCard({ batch, float }: { batch: PayoutBatchDetail; float: FloatSta
         ) : (
           <FloatVerdict float={float} />
         )}
-        {utility !== null ? (
-          <p className='text-muted-foreground text-xs'>Utility account: {formatMoney(utility)}</p>
-        ) : null}
       </CardContent>
     </Card>
   );
@@ -588,10 +583,7 @@ function ApproveDialog({
                     <span className='min-w-0'>
                       <span className='font-semibold'>{row.requester_name ?? 'Earner'}</span>
                       {withdrawalPurseLabel(row) ? (
-                        <span className='text-muted-foreground text-xs'>
-                          {' '}
-                          · {withdrawalPurseLabel(row)}
-                        </span>
+                        <span className='text-muted-foreground text-xs'> · {withdrawalPurseLabel(row)}</span>
                       ) : null}
                       <span className='text-muted-foreground font-mono text-xs'>
                         {' '}

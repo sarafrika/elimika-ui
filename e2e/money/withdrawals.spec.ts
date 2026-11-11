@@ -184,7 +184,7 @@ test.describe('Admin payouts', () => {
 });
 
 test.describe('Admin payout batches', () => {
-  const FLOAT = { utility_funds: 0, working_funds: 98500, reported_at: '2026-10-23T09:00:00Z' };
+  const FLOAT = { utility_funds: 98500, working_funds: 0, reported_at: '2026-10-23T09:00:00Z' };
   const batch = (extra: Record<string, unknown> = {}) => ({
     uuid: 'b-1', status: 'AWAITING_APPROVAL', created_by: 'other-admin', created_by_name: 'Kevin Otieno',
     submitted_by: 'other-admin', submitted_by_name: 'Kevin Otieno', submitted_at: '2026-10-23T09:00:00Z', row_count: 1,
@@ -231,22 +231,6 @@ test.describe('Admin payout batches', () => {
     await page.goto('/dashboard/admin/payouts/batches/b-1');
     await expect(page.getByRole('button', { name: 'Approve and pay' })).toBeDisabled();
     await expect(page.getByText('You made this batch — another admin must approve it.')).toBeVisible();
-  });
-
-  test('uses Working funds for B2C even when Utility is empty', async ({ page, baseURL }) => {
-    const api = await admin(page, baseURL ?? '');
-    api.get(
-      /\/api\/v1\/admin\/payouts\/batches\/b-1$/,
-      detail({ total_amount: 200 }, { ...FLOAT, working_funds: 500 })
-    );
-    await api.install(page);
-
-    await page.goto('/dashboard/admin/payouts/batches/b-1');
-
-    await expect(page.getByText('Working available to pay out')).toBeVisible();
-    await expect(page.getByText('Utility account: KES 0')).toBeVisible();
-    await expect(page.getByText(/Enough float/).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Approve and pay' })).toBeEnabled();
   });
 
   test('an unknown float needs the approver to vouch for it', async ({ page, baseURL }) => {
