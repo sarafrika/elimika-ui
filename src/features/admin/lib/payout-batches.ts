@@ -170,14 +170,14 @@ export type FloatState =
   | { kind: 'unknown' };
 
 /**
- * Whether the payout paybill can cover a batch. B2C pays from the utility account, so
+ * Whether the payout paybill can cover a batch. B2C pays from the Working account, so
  * that is the float; when M-Pesa has not reported it yet the state is unknown.
  */
 export function floatState(
   total: number | string | null | undefined,
   float: PayoutFloat | null | undefined
 ): FloatState {
-  const available = toAmount(float?.utility_funds);
+  const available = toAmount(float?.working_funds);
   if (available === null) return { kind: 'unknown' };
   const need = toAmount(total) ?? 0;
   const gap = sumAmounts([available, -need]);
@@ -326,6 +326,8 @@ export function canConfirmApproval(
 }
 
 /** "Instructor purse" for the purse a withdrawal is paid from, or null before purses existed. */
-export function withdrawalPurseLabel(row: Pick<BatchWithdrawal, 'purse' | 'wallet_check'>): string | null {
+export function withdrawalPurseLabel(
+  row: Pick<BatchWithdrawal, 'purse' | 'wallet_check'>
+): string | null {
   return purseLabel(row.purse ?? row.wallet_check?.purse);
 }

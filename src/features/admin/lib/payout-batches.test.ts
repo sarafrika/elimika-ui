@@ -40,23 +40,28 @@ test('selection totals add up in cents', () => {
 });
 
 test('the float covers, falls short of, or cannot be judged against a batch', () => {
-  assert.deepEqual(floatState(10_000, { utility_funds: 12_500 }), {
+  assert.deepEqual(floatState(10_000, { utility_funds: 0, working_funds: 12_500 }), {
     kind: 'enough',
     float: 12_500,
     spare: 2_500,
   });
-  assert.deepEqual(floatState('10000', { utility_funds: '10000' }), {
+  assert.deepEqual(floatState('10000', { utility_funds: '25000', working_funds: '10000' }), {
     kind: 'enough',
     float: 10_000,
     spare: 0,
   });
-  assert.deepEqual(floatState(10_000, { utility_funds: 9_999.5 }), {
+  assert.deepEqual(floatState(10_000, { utility_funds: 50_000, working_funds: 9_999.5 }), {
     kind: 'short',
     float: 9_999.5,
     shortBy: 0.5,
   });
-  assert.deepEqual(floatState(10_000, { utility_funds: null, working_funds: 50_000 }), {
+  assert.deepEqual(floatState(10_000, { utility_funds: 50_000, working_funds: null }), {
     kind: 'unknown',
+  });
+  assert.deepEqual(floatState(200, { utility_funds: 0, working_funds: 500 }), {
+    kind: 'enough',
+    float: 500,
+    spare: 300,
   });
   assert.deepEqual(floatState(10_000, null), { kind: 'unknown' });
 });
@@ -83,7 +88,7 @@ test('a released batch or one with rows in flight keeps polling', () => {
 });
 
 test('approval is explained when it is off', () => {
-  const enough = floatState(100, { utility_funds: 500 });
+  const enough = floatState(100, { working_funds: 500 });
   const waiting = {
     status: 'AWAITING_APPROVAL' as const,
     created_by: 'maker',
@@ -101,7 +106,7 @@ test('approval is explained when it is off', () => {
   assert.match(
     approveBlockReason(
       { ...waiting, can_approve: true },
-      floatState(900, { utility_funds: 500 })
+      floatState(900, { working_funds: 500 })
     ) ?? '',
     /too low/
   );
@@ -150,7 +155,14 @@ test('wallet flags come from the server and from what the check implies', () => 
 });
 
 test('the ledger gap is the distance between balance and ledger', () => {
-  assert.equal(ledgerGap({ account_balance: 189_465.5, available_balance: 189_365.5, ledger_balance: 189_365.5 }), 0);
+  assert.equal(
+    ledgerGap({
+      account_balance: 189_465.5,
+      available_balance: 189_365.5,
+      ledger_balance: 189_365.5,
+    }),
+    0
+  );
   assert.equal(ledgerGap({ available_balance: '1000.10', ledger_balance: 1200 }), 199.9);
   assert.equal(ledgerGap({ available_balance: 1000, ledger_balance: null }), null);
   assert.equal(ledgerGap(null), null);
