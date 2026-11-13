@@ -190,7 +190,7 @@ type RateCardErrors = {
   valid: boolean;
 };
 
-/** Mirrors the backend: offered methods price every basis above zero and at least the minimum. */
+/** Offered methods need at least one rate; every supplied rate must meet the minimum. */
 export function validateRateCard(
   card: RateCardInput | null | undefined,
   minimum?: number | null
@@ -207,8 +207,8 @@ export function validateRateCard(
     for (const basis of RATE_BASES) {
       const key = cellKey(method, basis);
       const value = parseRate(card?.[key]);
-      if (value === null) cells[key] = `Enter a rate ${basis.phrase}.`;
-      else if (value < 0) cells[key] = 'Must be above zero.';
+      if (value === null) continue;
+      if (value < 0) cells[key] = 'Must be above zero.';
       else if (floor !== null && value < floor)
         cells[key] = `At least ${formatRateAmount(floor, currency)}, the minimum training fee.`;
     }

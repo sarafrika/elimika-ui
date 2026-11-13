@@ -51,7 +51,7 @@ const TIPS: Record<ApplyStepId, string> = {
   groups:
     'Groups can leave gaps but can’t overlap, and every group must sit inside the age range. Lesson titles come from the course.',
   delivery:
-    'Rates are per hour and per day. The cost table multiplies the hourly rate by each group’s lesson plan so you can sanity-check what a learner or class pays.',
+    'Enter a per-hour rate, a per-day rate, or both for each method. When an hourly rate is provided, the cost table multiplies it by each group’s lesson plan so you can sanity-check what a learner or class pays.',
   requirements:
     'Answers go to the creator with your application. Leasing or hiring is fine; it just tells them how you’ll cover it.',
   review:

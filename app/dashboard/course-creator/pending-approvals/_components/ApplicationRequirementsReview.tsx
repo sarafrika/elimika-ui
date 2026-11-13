@@ -19,8 +19,8 @@ import { useEffect, useState } from 'react';
 import {
   emptyReviewDraft,
   parseReviewDraft,
-  REVIEW_ITEMS,
   reviewDecisionNotes,
+  reviewItemsForApplicant,
   reviewSummary,
 } from './requirement-review';
 import { RequirementReviewCard } from './RequirementReviewCard';
@@ -71,13 +71,14 @@ export function ApplicationRequirementsReview({
     }
   }, [draft, storageKey]);
 
-  const { reviewed, allApproved, hasDeclined, hasInfoRequest } = reviewSummary(draft);
+  const reviewItems = reviewItemsForApplicant(applicantType);
+  const { reviewed, allApproved, hasDeclined, hasInfoRequest } = reviewSummary(draft, applicantType);
   const disabled = pending || !canDecide;
   const methods = offeredMethods(application.rate_card);
   const submit = (decision: 'approve' | 'reject') => {
     if (disabled || (decision === 'approve' ? !allApproved : !hasDeclined || !draft.note.trim()))
       return;
-    decide(decision, reviewDecisionNotes(draft), () => {
+    decide(decision, reviewDecisionNotes(draft, applicantType), () => {
       try {
         sessionStorage.removeItem(storageKey);
       } catch {
@@ -100,10 +101,10 @@ export function ApplicationRequirementsReview({
             </p>
           </div>
           <span className='shrink-0 text-sm font-medium' aria-live='polite'>
-            {reviewed}/{REVIEW_ITEMS.length} reviewed
+            {reviewed}/{reviewItems.length} reviewed
           </span>
         </div>
-        {REVIEW_ITEMS.map((item, index) => (
+        {reviewItems.map((item, index) => (
           <RequirementReviewCard
             key={item.id}
             title={item.title}
@@ -121,15 +122,9 @@ export function ApplicationRequirementsReview({
               }))
             }
           >
-            {item.id === 'skills-wallet' &&
-              (applicantType === 'instructor' ? (
-                <SkillsWalletReview instructorUuid={applicantUuid} />
-              ) : (
-                <p className='text-muted-foreground text-sm'>
-                  No skills wallet is included in this organisation’s application. Review the
-                  organisation details above and request any supporting qualifications you need.
-                </p>
-              ))}
+            {item.id === 'skills-wallet' && applicantType === 'instructor' && (
+              <SkillsWalletReview instructorUuid={applicantUuid} />
+            )}
             {item.id === 'training-method' && (
               <div className='space-y-4'>
                 {methods.length ? (
@@ -175,14 +170,6 @@ export function ApplicationRequirementsReview({
                     ? 'Each age group’s hours per lesson are listed under Age groups.'
                     : 'No lesson plan was included in this application.'}
                 </p>
-                {application.application_notes && (
-                  <div className='bg-card rounded-md border p-3 text-sm'>
-                    <p className='font-medium'>Applicant’s supporting note</p>
-                    <p className='text-muted-foreground mt-1 whitespace-pre-wrap'>
-                      {application.application_notes}
-                    </p>
-                  </div>
-                )}
               </div>
             )}
             {item.id === 'rate-card' && (
@@ -209,12 +196,18 @@ export function ApplicationRequirementsReview({
                     ? 'One or more requirements were declined. Add a decision note before declining the application.'
                     : hasInfoRequest
                       ? 'More information is needed before this application can be approved.'
-                      : `${REVIEW_ITEMS.length - reviewed} requirements still need review.`}
+                      : `${reviewItems.length - reviewed} requirements still need review.`}
               </p>
             </div>
             <Badge variant='outline'>
-              {reviewed}/{REVIEW_ITEMS.length} reviewed
+              {reviewed}/{reviewItems.length} reviewed
             </Badge>
+          </div>
+          <div className='bg-muted/30 rounded-md border p-3 text-sm'>
+            <h4 className='font-medium'>Applicant’s supporting note</h4>
+            <p className='text-muted-foreground mt-1 whitespace-pre-wrap break-words'>
+              {application.application_notes?.trim() || 'No supporting note provided.'}
+            </p>
           </div>
           <p className='text-muted-foreground text-xs'>
             {saved

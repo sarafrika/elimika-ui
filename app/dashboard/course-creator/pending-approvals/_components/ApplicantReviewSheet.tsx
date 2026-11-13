@@ -16,6 +16,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import type { Instructor, Organisation } from '@/services/client';
 import { stripHtml } from '@/src/features/dashboard/courses/shared/_components/courses-data';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import {
   RequirementAnswersTable,
   formatApplicationDate,
@@ -24,6 +25,7 @@ import { useTrainingApplication } from '@/src/features/rate-card/hooks/use-train
 import type { TrainingApplicationEntry } from '@/src/features/rate-card/hooks/use-training-application-list';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { CheckCheck, MapPin } from 'lucide-react';
+import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { ApplicationRequirementsReview } from './ApplicationRequirementsReview';
 import { applicationKey, pendingForApplicant, type ReviewApplication } from './approval-queue';
@@ -191,8 +193,15 @@ function ApplicationReview({
   };
 
   return (
-    <div className='space-y-5'>
-      <div className='flex items-start gap-3'>
+    <div className='space-y-4'>
+      <Link
+        href={dashboardUrl(
+          'course_creator',
+          `manage-applicant/${encodeURIComponent(applicant.uuid)}?type=${applicant.type}&tab=profile`
+        )}
+        aria-label={`View ${applicant.name}'s profile`}
+        className='group focus-visible:ring-ring flex items-start gap-3 rounded-md outline-none focus-visible:ring-2 bg-primary/5 p-3'
+      >
         <Avatar className='size-12'>
           <AvatarImage
             src={toAuthenticatedMediaUrl(applicant.avatarUrl) || undefined}
@@ -201,14 +210,16 @@ function ApplicationReview({
           <AvatarFallback>{applicant.name.slice(0, 2).toUpperCase()}</AvatarFallback>
         </Avatar>
         <div className='min-w-0'>
-          <h2 className='text-lg font-semibold'>{applicant.name}</h2>
+          <h2 className='group-hover:text-primary text-lg font-semibold group-hover:underline'>
+            {applicant.name}
+          </h2>
           <p className='text-muted-foreground text-sm'>{stripHtml(applicant.headline)}</p>
           <p className='text-muted-foreground mt-1 flex items-center gap-1 text-xs'>
             <MapPin className='size-3' />
             {applicant.location}
           </p>
         </div>
-      </div>
+      </Link>
 
       <Card>
         <CardContent className='space-y-2 p-4'>
