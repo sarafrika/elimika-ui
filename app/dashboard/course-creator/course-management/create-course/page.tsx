@@ -857,9 +857,9 @@ export default function CreateCoursePage() {
                 <TabsList className='flex h-auto w-full flex-wrap justify-start'>
                     <TabsTrigger className='max-w-fit px-4' value='setup'>Course set-up</TabsTrigger>
                     <TabsTrigger className='max-w-fit px-4' value='lessons'>Lesson content</TabsTrigger>
-                    <TabsTrigger className='max-w-fit px-4' value='practice'>Practice</TabsTrigger>
-                    <TabsTrigger className='max-w-fit px-4' value='assignments'>Assignments</TabsTrigger>
-                    <TabsTrigger className='max-w-fit px-4' value='assessment'>Assessment</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='practice'>Practice Activities</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='assignments'>Assessment Tasks</TabsTrigger>
+                    <TabsTrigger className='max-w-fit px-4' value='assessment'>Assessment Structure</TabsTrigger>
                     {/* <TabsTrigger className='max-w-fit px-4' value='evaluation'>Evaluation</TabsTrigger> */}
                     <TabsTrigger className='max-w-fit px-4' value='branding'>Branding</TabsTrigger>
                     <TabsTrigger className='max-w-fit px-4' value='pricing'>Pricing</TabsTrigger>

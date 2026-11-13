@@ -30,17 +30,22 @@ export type DeliveryValidation = {
   count: number;
 };
 
-/** Every switched-on method needs both rates, each at least the minimum training fee. */
+/** Every switched-on method needs at least one rate; supplied rates must meet the minimum. */
 export function validateDelivery(draft: DeliveryDraft, minimum: number | null): DeliveryValidation {
   const cells: DeliveryValidation['cells'] = {};
   const general: string[] = [];
   const floor = minimum !== null && minimum > 0 ? minimum : null;
   if (draft.methods.length === 0) general.push('Switch on at least one way to deliver this.');
   for (const prefix of draft.methods) {
+    const hasRate = RATE_BASES.some(basis => parseRate(draft.card[cellKey(prefix, basis)]) !== null);
     for (const basis of RATE_BASES) {
       const key = cellKey(prefix, basis);
       const value = parseRate(draft.card[key]);
-      if (value === null || value <= 0) cells[key] = `Enter a rate ${basis.phrase}.`;
+      if (value === null) {
+        if (!hasRate) cells[key] = 'Enter at least one rate: per hour or per day.';
+        continue;
+      }
+      if (value <= 0) cells[key] = 'Must be above zero.';
       else if (floor !== null && value < floor)
         cells[key] = `At least ${formatRateAmount(floor, draft.card.currency)}, the minimum training fee.`;
     }

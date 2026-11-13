@@ -22,6 +22,14 @@ export const REVIEW_ITEMS = [
   { id: 'rate-card', title: 'Rate card', summary: 'Proposed training rates per learner.' },
 ] as const;
 
+type ApplicantType = 'instructor' | 'organisation';
+
+export function reviewItemsForApplicant(applicantType: ApplicantType) {
+  return REVIEW_ITEMS.filter(
+    item => applicantType === 'instructor' || (item.id !== 'skills-wallet' && item.id !== 'lesson-plan')
+  );
+}
+
 type ReviewItemId = (typeof REVIEW_ITEMS)[number]['id'];
 export type RequirementStatus = 'under_review' | 'approved' | 'declined' | 'information_requested';
 export type RequirementReview = { status: RequirementStatus; comment: string };
@@ -76,8 +84,8 @@ export function parseReviewDraft(value: unknown): ReviewDraft {
   return draft;
 }
 
-export function reviewSummary(draft: ReviewDraft) {
-  const items = REVIEW_ITEMS.map(({ id }) => draft.requirements[id]);
+export function reviewSummary(draft: ReviewDraft, applicantType: ApplicantType) {
+  const items = reviewItemsForApplicant(applicantType).map(({ id }) => draft.requirements[id]);
   return {
     reviewed: items.filter(item => item.status !== 'under_review').length,
     allApproved: items.every(item => item.status === 'approved'),
@@ -87,10 +95,10 @@ export function reviewSummary(draft: ReviewDraft) {
 }
 
 /** Persist the item verdicts and comments alongside the server's final decision. */
-export function reviewDecisionNotes(draft: ReviewDraft) {
+export function reviewDecisionNotes(draft: ReviewDraft, applicantType: ApplicantType) {
   return [
     draft.note.trim(),
-    ...REVIEW_ITEMS.map(({ id, title }) => {
+    ...reviewItemsForApplicant(applicantType).map(({ id, title }) => {
       const item = draft.requirements[id];
       return `${title}: ${REVIEW_STATUS[item.status].label}${item.comment.trim() ? `\n${item.comment.trim()}` : ''}`;
     }),

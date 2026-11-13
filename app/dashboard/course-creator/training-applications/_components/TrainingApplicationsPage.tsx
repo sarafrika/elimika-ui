@@ -312,7 +312,7 @@ function ApplicationsTab({
                     <Link
                       href={dashboardUrl(
                         'course_creator',
-                        `manage-applicant/${applicantUuid}?type=${isOrganisation ? 'organisation' : 'instructor'}`
+                        `manage-applicant/${encodeURIComponent(applicantUuid)}?type=${isOrganisation ? 'organisation' : 'instructor'}&tab=profile`
                       )}
                       className='hover:underline'
                     >

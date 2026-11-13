@@ -146,20 +146,7 @@ export function validateAnswers(answers: RequirementAnswer[]): string[] {
 /** The rate card's blocking problems as one list, for the step's "complete the following". */
 export function validatePricing(card: RateCard, minimumFee?: number | null): string[] {
   const { cells, card: cardErrors } = validateRateCard(card, minimumFee);
-  const messages = Object.values(cells);
-  const empty = messages.filter(message => message.startsWith('Enter a rate')).length;
-  const tooLow = messages.length - empty;
-  return [
-    ...cardErrors,
-    ...(empty > 0
-      ? [
-        `${empty} ${empty === 1 ? 'rate is' : 'rates are'} still empty. Every method you offer needs a price per hour and per day.`,
-      ]
-      : []),
-    ...(tooLow > 0
-      ? [`${tooLow} ${tooLow === 1 ? 'rate is' : 'rates are'} below the minimum training fee.`]
-      : []),
-  ];
+  return [...cardErrors, ...new Set(Object.values(cells))];
 }
 
 /** True when the card offers a method taught in a room. */

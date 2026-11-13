@@ -78,7 +78,7 @@ export function StepDelivery({
         <div>
           <h2 className='text-foreground font-semibold'>How will you deliver it?</h2>
           <p className='text-muted-foreground mt-0.5 text-sm'>
-            Switch on every method you offer and price it per hour and per day in {currency}.
+            Switch on every method you offer and enter a per-hour rate, a per-day rate, or both in {currency}. At least one rate is required for each method.
             {minimumFee ? (
               <>
                 {' '}

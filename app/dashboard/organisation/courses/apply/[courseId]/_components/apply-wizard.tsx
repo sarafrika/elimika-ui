@@ -64,7 +64,7 @@ const STEP_DESCRIPTIONS: Record<StepId, (isProgram: boolean) => string> = {
     isProgram
       ? 'Review the published requirements for this program.'
       : 'Tell the course creator what you already have.',
-  pricing: () => 'Choose your training methods and price each one per hour and per day.',
+  pricing: () => 'Choose your training methods and enter at least one rate per method: per hour or per day.',
   review: () => 'Check your application, then send it for approval.',
 };
 
