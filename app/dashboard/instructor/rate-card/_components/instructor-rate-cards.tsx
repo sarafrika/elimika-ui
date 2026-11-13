@@ -6,9 +6,9 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { PageHeader } from '@/components/dashboard/page-header';
-import { AsyncSection } from '@/components/data/async-section';
 import { useSectionTab } from '@/components/data-display/section-tabs';
-import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
+import { AsyncSection } from '@/components/data/async-section';
+import { RateCardGrid, RateCardReviewNotes } from '@/components/rate-card/rate-card-grid';
 import { RateUpdateStatus } from '@/components/rate-card/rate-update-status';
 import { UpdateRatesDialog } from '@/components/rate-card/update-rates-dialog';
 import { Button } from '@/components/ui/button';
@@ -311,6 +311,7 @@ function RateCardEntry({
               mode='view'
               value={application.rate_card}
               highlightBasis={highlightBasis}
+              reviewNotes={application.review_notes}
             />
           </>
         ) : status === 'pending' ? (
@@ -330,15 +331,13 @@ function RateCardEntry({
                 {status === 'revoked' ? 'revoked this approval' : 'rejected this application'}, so
                 jobs can’t hire you for this {kind}.
               </p>
-              {application.review_notes ? (
-                <p className='text-foreground'>“{application.review_notes}”</p>
-              ) : null}
             </div>
             <Button asChild size='sm'>
               <Link href={applyHref(kind, entry.parentUuid)}>Apply again with changes</Link>
             </Button>
           </div>
         )}
+        {status !== 'approved' ? <RateCardReviewNotes notes={application.review_notes} /> : null}
       </div>
     </article>
   );

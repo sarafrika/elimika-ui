@@ -51,6 +51,8 @@ type RateCardGridProps = {
   methods?: readonly MethodPrefix[];
   /** Defaults to the card's currency, then KES. */
   currency?: string | null;
+  /** Notes from the application's reviewer, shown below the card. */
+  reviewNotes?: string | null;
   className?: string;
 };
 
@@ -68,6 +70,7 @@ export function RateCardGrid({
   highlightBasis,
   methods,
   currency,
+  reviewNotes,
   className,
 }: RateCardGridProps) {
   const card = value ?? {};
@@ -150,7 +153,21 @@ export function RateCardGrid({
           </p>
         ) : null}
       </div>
+      <RateCardReviewNotes notes={reviewNotes} />
     </div>
+  );
+}
+
+export function RateCardReviewNotes({ notes }: { notes?: string | null }) {
+  if (!notes?.trim()) return null;
+  // Replaces hard line breaks/newlines with a clean space separator
+  const singleLineNotes = notes.replace(/\r?\n|\r/g, ' ');
+
+  return (
+    <section aria-label='Review notes' className='border-border bg-muted/30 rounded-lg border p-3'>
+      <h3 className='text-muted-foreground text-xs font-medium inline mr-1.5'>Review notes:</h3>
+      <span className='text-foreground text-sm break-words'>{singleLineNotes}</span>
+    </section>
   );
 }
 

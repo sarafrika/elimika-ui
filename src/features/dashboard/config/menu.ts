@@ -1,3 +1,4 @@
+import type { UserDomain } from '@/lib/types';
 import {
   BadgeCheck,
   BarChart3,
@@ -44,7 +45,6 @@ import {
   Wrench
 } from 'lucide-react';
 import type { ComponentType } from 'react';
-import type { UserDomain } from '@/lib/types';
 
 export type MenuItem = {
   title: string;
@@ -199,24 +199,29 @@ export default {
           icon: LayoutDashboard,
         },
         {
-          title: 'Skills Wallet',
-          url: '/dashboard/skills-wallet',
-          icon: BadgeCheck,
-        },
-        {
           title: 'Start a course',
           url: '/dashboard/courses',
           icon: Rocket,
         },
         {
-          title: 'Find classes',
-          url: '/dashboard/find-classes',
-          icon: MapPin,
+          title: 'My Bookings',
+          url: '/dashboard/my-bookings',
+          icon: CalendarClock,
         },
+        // {
+        //   title: 'Find classes',
+        //   url: '/dashboard/find-classes',
+        //   icon: MapPin,
+        // },
         {
           title: 'Learning Hub',
           url: '/dashboard/learning-hub',
           icon: BookOpen,
+        },
+        {
+          title: 'Calendar',
+          url: '/dashboard/calendar',
+          icon: Calendar,
         },
         {
           title: 'My grades',
@@ -224,14 +229,9 @@ export default {
           icon: GraduationCap,
         },
         {
-          title: 'My Bookings',
-          url: '/dashboard/my-bookings',
-          icon: CalendarClock,
-        },
-        {
-          title: 'Calendar',
-          url: '/dashboard/calendar',
-          icon: Calendar,
+          title: 'Skills Wallet',
+          url: '/dashboard/skills-wallet',
+          icon: BadgeCheck,
         },
         {
           title: 'Wallet',
