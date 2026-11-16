@@ -6,7 +6,6 @@ import {
   apiCalendarDay,
   getService,
   isPhysicalDelivery,
-  num,
   type Offering,
   REMINDER_MINUTES,
   type ReminderState,
@@ -44,13 +43,6 @@ export type Hiring = { description: string; requirements: string; membership: Me
 const EMPTY_PLACE: Place = { branchUuid: '', meetingLink: '', venueUuid: '', equipmentUuids: [] };
 const BASES: SelectableRateBasis[] = ['per_hour', 'per_day'];
 
-/** Seats a service starts with; online courses are open-ended. */
-export const DEFAULT_SEATS: Record<ServiceKey, string> = {
-  '1on1': '1',
-  'private-online': '1',
-  group: '5',
-  online: '',
-};
 
 export const deliveryForService = (service: ServiceKey | null): DeliveryMode =>
   getService(service)?.online ? 'ONLINE' : 'IN_PERSON';
@@ -86,7 +78,8 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
   // Only a saved hybrid job keeps HYBRID; otherwise the service decides.
   const [savedDelivery, setSavedDelivery] = useState<DeliveryMode | null>(null);
   const [place, setPlace] = useState<Place>(EMPTY_PLACE);
-  const [maxParticipants, setMaxParticipants] = useState('');
+  // A saved job's own seat count; otherwise the seats are prescribed, never defaulted.
+  const [savedSeats, setSavedSeats] = useState<number | null>(null);
   const [allowWaitlist, setAllowWaitlist] = useState(true);
   const [savedSalePrice, setSavedSalePrice] = useState<number | null>(null);
   const [targetGroupUuids, setTargetGroupUuids] = useState<string[]>([]);
@@ -141,18 +134,33 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
   const changeOffering = (value: string) => {
     setOffering(value);
     setSavedSalePrice(null);
+    setSavedSeats(null);
   };
   const changeService = (next: ServiceKey) => {
     setService(next);
     setSavedSalePrice(null);
     setSavedDelivery(null);
-    setMaxParticipants(DEFAULT_SEATS[next]);
+    setSavedSeats(null);
     if (getService(next)?.online) {
       setPlace(current => ({ ...current, venueUuid: '', equipmentUuids: [] }));
     }
   };
 
-  const maxValue = num(maxParticipants);
+  // One-to-one services seat one learner; otherwise the course's limit, else the venue's seats.
+  const individual = service ? serviceFormat(service) === 'INDIVIDUAL' : false;
+  const prescribedSeats = individual
+    ? 1
+    : (selectedOffering?.classLimit ?? (physical ? selectedVenue?.seat_capacity : null) ?? undefined);
+  const maxValue = individual ? 1 : (savedSeats ?? prescribedSeats ?? undefined);
+  const seatsLabel = individual
+    ? '1 seat, set by the service'
+    : savedSeats != null
+      ? `${savedSeats} seats, from the job`
+      : selectedOffering?.classLimit != null
+        ? `${selectedOffering.classLimit} seats, set by the course`
+        : physical && selectedVenue?.seat_capacity != null
+          ? `${selectedVenue.seat_capacity} seats, the venue's capacity`
+          : 'No seat limit set by the course or venue';
   const whereValue: WhereItHappensValue = { ...place, delivery };
   const blockers = [
     !categoryUuid ? 'Category is required' : null,
@@ -211,7 +219,7 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
         venueUuid: ofType(ResourceTypeEnum.VENUE)[0] ?? '',
         equipmentUuids: ofType(ResourceTypeEnum.EQUIPMENT_POOL),
       });
-      setMaxParticipants(job.max_participants != null ? String(job.max_participants) : '');
+      setSavedSeats(job.max_participants != null ? Number(job.max_participants) : null);
       if (job.allow_waitlist != null) setAllowWaitlist(job.allow_waitlist);
       setTargetGroupUuids(job.target_group_uuids ?? []);
 
@@ -367,8 +375,8 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
     setPlace,
     whereValue,
     selectedResources,
-    maxParticipants,
     maxValue,
+    seatsLabel,
     allowWaitlist,
     targetGroupUuids,
     setTargetGroupUuids,
@@ -377,7 +385,6 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
     blockers,
     hydrateFromJob,
     prefillOffering,
-    setMaxParticipants,
     buildJobRequest,
     buildClassRequest,
   };

@@ -168,6 +168,9 @@ export function ServiceSection({ builder }: { builder: ClassBuilder }) {
           );
         })}
       </div>
+      {builder.service ? (
+        <p className='text-muted-foreground text-xs'>Seats: {builder.seatsLabel}</p>
+      ) : null}
     </Section>
   );
 }

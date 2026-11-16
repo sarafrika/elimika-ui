@@ -32,7 +32,7 @@ function mockBuilder(api: MockApi) {
       { uuid: PIANO, name: 'Piano', parent_uuid: MUSIC },
     ]))
     .get(/^\/api\/v1\/courses\/search$/, paged([
-      { uuid: COURSE, name: 'Piano Foundations', category_names: ['Piano'] },
+      { uuid: COURSE, name: 'Piano Foundations', category_names: ['Piano'], class_limit: 12 },
     ]))
     .get(/^\/api\/v1\/programs\/training-applications\/search$/, paged([]))
     .get(/^\/api\/v1\/courses\/training-applications\/search$/, (request: { url: () => string }) => {
@@ -92,6 +92,7 @@ test('an organisation creates a class directly for its own instructor', async ({
   await expect(page.getByRole('radio', { name: /Group session/ })).toContainText('1,200');
   await fillPlaceAndRegistration(page);
 
+  await expect(dialog.getByText('Seats: 12 seats, set by the course')).toBeVisible();
   const publish = page.getByRole('button', { name: 'Publish Class' });
   await expect(publish).toBeEnabled();
   await publish.click();
@@ -109,7 +110,7 @@ test('an organisation creates a class directly for its own instructor', async ({
     sale_price: 1200,
     instructor_pay: 800,
     rate_basis: 'per_hour',
-    max_participants: 5,
+    max_participants: 12,
     resources: [{ resource_uuid: STUDIO, quantity: 1 }],
   });
   expect(api.callsTo('POST', /^\/api\/v1\/classes\/jobs/)).toHaveLength(0);

@@ -17,6 +17,9 @@ import {
 
 const APPLICATIONS_PAGE = { page: 0, size: 100 };
 
+/** An approved offering with the seat limit its creator prescribed (courses only). */
+export type ApprovedOffering = Offering & { classLimit?: number | null };
+
 /** The organisation's own approved courses and programs, each with its approved rate card. */
 export function useApprovedOfferings(organisationUuid: string) {
   const searchParams = {
@@ -65,7 +68,7 @@ export function useApprovedOfferings(organisationUuid: string) {
   const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseUuids);
   const { programMap, isLoading: programsLoading } = useProgramsByIds(programUuids);
 
-  const offerings: Offering[] = useMemo(
+  const offerings: ApprovedOffering[] = useMemo(
     () => [
       ...courseApplications.map(row => {
         const course = courseMap[row.course_uuid];
@@ -78,6 +81,7 @@ export function useApprovedOfferings(organisationUuid: string) {
           applicationUuid: row.uuid,
           pendingRateUpdateUuid: row.pending_rate_update_uuid,
           minimumFee: course?.minimum_training_fee,
+          classLimit: course?.class_limit ?? null,
           creatorUuid: course?.course_creator_uuid,
         };
       }),
@@ -107,7 +111,7 @@ export function useApprovedOfferings(organisationUuid: string) {
 
   return {
     offerings,
-    creatorNameFor: (offering?: Offering) =>
+    creatorNameFor: (offering?: ApprovedOffering) =>
       offering?.creatorUuid ? courseCreatorMap[offering.creatorUuid]?.full_name : undefined,
     // Course and program details carry the categories the pickers place offerings under.
     loading: coursesQuery.isLoading || programsQuery.isLoading || coursesLoading || programsLoading,
