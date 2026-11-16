@@ -206,25 +206,18 @@ export function LogisticsSections({
         />
       </Section>
 
-      <Section title='Schedule Options'>
-        <ScheduleSection
-          schedule={schedule}
-          organisationUuid={builder.organisationUuid}
-          resources={builder.selectedResources}
-          excludeJobUuid={excludeJobUuid}
-        />
-      </Section>
-
-      <Section title='Reminder Options'>
-        <ReminderOptions
-          value={builder.reminder}
-          onChange={patch => builder.setReminder(current => ({ ...current, ...patch }))}
-        />
-      </Section>
-
-      <Section title={`Upcoming Sessions (${schedule.sessions.length})`}>
-        <UpcomingSessions sessions={schedule.sessions} />
-      </Section>
+      {/* These three carry their own headings. */}
+      <ScheduleSection
+        schedule={schedule}
+        organisationUuid={builder.organisationUuid}
+        resources={builder.selectedResources}
+        excludeJobUuid={excludeJobUuid}
+      />
+      <ReminderOptions
+        value={builder.reminder}
+        onChange={patch => builder.setReminder(current => ({ ...current, ...patch }))}
+      />
+      <UpcomingSessions sessions={schedule.sessions} />
     </>
   );
 }
