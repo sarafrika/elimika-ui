@@ -13,9 +13,9 @@ import {
 } from '@/components/class-form';
 import { Badge } from '@/components/ui/badge';
 import type { OrganisationResource } from '@/services/client';
-import type { JobSchedule } from './use-job-schedule';
+import type { ClassSchedule } from './use-class-schedule';
 
-function SessionsSummary({ schedule }: { schedule: JobSchedule }) {
+function SessionsSummary({ schedule }: { schedule: ClassSchedule }) {
   const { sessions, totals } = schedule;
   const first = sessions[0];
   const last = sessions[sessions.length - 1];
@@ -46,13 +46,13 @@ function SessionsSummary({ schedule }: { schedule: JobSchedule }) {
   );
 }
 
-export function ScheduleStep({
+export function ScheduleSection({
   schedule,
   organisationUuid,
   resources,
   excludeJobUuid,
 }: {
-  schedule: JobSchedule;
+  schedule: ClassSchedule;
   organisationUuid: string;
   resources: OrganisationResource[];
   excludeJobUuid?: string;

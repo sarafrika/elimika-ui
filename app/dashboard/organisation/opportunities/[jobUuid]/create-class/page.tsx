@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
+import { createClassHref } from '@/src/features/organisation/class-builder/routes';
 
 export default async function OrganisationCreateClassRedirect({
   params,
@@ -8,5 +8,5 @@ export default async function OrganisationCreateClassRedirect({
   params: Promise<{ jobUuid: string }>;
 }) {
   const { jobUuid } = await params;
-  redirect(dashboardUrl('organisation', `classes/new?job=${encodeURIComponent(jobUuid)}`));
+  redirect(createClassHref({ job: jobUuid }));
 }

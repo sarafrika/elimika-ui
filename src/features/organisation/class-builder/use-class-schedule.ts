@@ -44,7 +44,7 @@ function templateMinutes(template: ClassSessionTemplate) {
 }
 
 /** Schedule answers for a job: how sessions repeat, their windows and the registration window. */
-export function useJobSchedule({ requireOpenRegistration }: { requireOpenRegistration: boolean }) {
+export function useClassSchedule({ requireOpenRegistration }: { requireOpenRegistration: boolean }) {
   const { zone: preferredZone, source: preferredZoneSource } = useTimeZone();
   const activeZone = normalizeScheduleTimeZone(
     preferredZoneSource === 'default' ? undefined : preferredZone
@@ -282,7 +282,17 @@ export function useJobSchedule({ requireOpenRegistration }: { requireOpenRegistr
     setRegEnd(calendarDayInput(job.registration_period_end_date));
   }, []);
 
+  // A calendar click or drag: that one day and time, as picked dates.
+  const prefillSlot = useCallback((date: Date, start: string, end: string) => {
+    setMode('pick');
+    setPickedDates([date]);
+    setPickMonth(date);
+    setSessionStart(start);
+    setSessionEnd(end);
+  }, []);
+
   return {
+    prefillSlot,
     mode,
     setMode,
     days,
@@ -323,4 +333,4 @@ export function useJobSchedule({ requireOpenRegistration }: { requireOpenRegistr
   };
 }
 
-export type JobSchedule = ReturnType<typeof useJobSchedule>;
+export type ClassSchedule = ReturnType<typeof useClassSchedule>;

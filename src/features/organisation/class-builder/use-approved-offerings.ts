@@ -62,8 +62,8 @@ export function useApprovedOfferings(organisationUuid: string) {
     () => programApplications.map(row => row.program_uuid),
     [programApplications]
   );
-  const { courseMap } = useCoursesByIds(courseUuids);
-  const { programMap } = useProgramsByIds(programUuids);
+  const { courseMap, isLoading: coursesLoading } = useCoursesByIds(courseUuids);
+  const { programMap, isLoading: programsLoading } = useProgramsByIds(programUuids);
 
   const offerings: Offering[] = useMemo(
     () => [
@@ -109,7 +109,8 @@ export function useApprovedOfferings(organisationUuid: string) {
     offerings,
     creatorNameFor: (offering?: Offering) =>
       offering?.creatorUuid ? courseCreatorMap[offering.creatorUuid]?.full_name : undefined,
-    loading: coursesQuery.isLoading || programsQuery.isLoading,
+    // Course and program details carry the categories the pickers place offerings under.
+    loading: coursesQuery.isLoading || programsQuery.isLoading || coursesLoading || programsLoading,
     error: coursesQuery.error ?? programsQuery.error,
     refetch: () => Promise.all([coursesQuery.refetch(), programsQuery.refetch()]),
   };

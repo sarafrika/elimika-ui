@@ -542,7 +542,7 @@ export const SystemRuleRequestSchema = {
   type: 'object',
   properties: {
     category: {
-      $ref: '#/components/schemas/SchemaEnum',
+      $ref: '#/components/schemas/SchemaEnum2',
     },
     key: {
       type: 'string',
@@ -567,7 +567,7 @@ export const SystemRuleRequestSchema = {
       description: 'Priority used when multiple rules match',
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum2',
+      $ref: '#/components/schemas/SchemaEnum3',
     },
     valueType: {
       $ref: '#/components/schemas/ValueTypeEnum',
@@ -618,7 +618,7 @@ export const SystemRuleResponseSchema = {
       format: 'uuid',
     },
     category: {
-      $ref: '#/components/schemas/SchemaEnum',
+      $ref: '#/components/schemas/SchemaEnum2',
     },
     key: {
       type: 'string',
@@ -634,7 +634,7 @@ export const SystemRuleResponseSchema = {
       format: 'int32',
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum2',
+      $ref: '#/components/schemas/SchemaEnum3',
     },
     valueType: {
       $ref: '#/components/schemas/ValueTypeEnum',
@@ -2622,7 +2622,7 @@ export const TrainingProgramSchema = {
       minLength: 0,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum6',
+      $ref: '#/components/schemas/SchemaEnum7',
     },
     prerequisites: {
       type: 'string',
@@ -5435,23 +5435,6 @@ export const InstructorProfessionalMembershipSchema = {
       example: true,
       readOnly: true,
     },
-    membership_duration_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
-      example: 51,
-      readOnly: true,
-    },
-    membership_status: {
-      $ref: '#/components/schemas/MembershipStatusEnum',
-    },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
-      example: '4 years, 3 months',
-      readOnly: true,
-    },
     summary: {
       type: 'string',
       description: '**[READ-ONLY]** Brief summary of the membership for display in listings.',
@@ -5464,6 +5447,15 @@ export const InstructorProfessionalMembershipSchema = {
         '**[READ-ONLY]** Indicates if the membership record has all essential information.',
       example: true,
       readOnly: true,
+    },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of membership.',
+      example: '4 years, 3 months',
+      readOnly: true,
+    },
+    membership_status: {
+      $ref: '#/components/schemas/MembershipStatusEnum',
     },
     membership_period: {
       type: ['string', 'null'],
@@ -5500,6 +5492,14 @@ export const InstructorProfessionalMembershipSchema = {
       description:
         '**[READ-ONLY]** Indicates if this membership was started within the last 3 years.',
       example: true,
+      readOnly: true,
+    },
+    membership_duration_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of membership calculated from start and end dates, in months.',
+      example: 51,
       readOnly: true,
     },
   },
@@ -5647,6 +5647,33 @@ export const InstructorExperienceSchema = {
       example: 'instructor@example.com',
       readOnly: true,
     },
+    summary: {
+      type: 'string',
+      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
+      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
+      readOnly: true,
+    },
+    is_complete: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
+      example: true,
+      readOnly: true,
+    },
+    duration_in_months: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description:
+        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
+      example: 66,
+      readOnly: true,
+    },
+    formatted_duration: {
+      type: ['string', 'null'],
+      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
+      example: '5 years, 5 months',
+      readOnly: true,
+    },
     employment_period: {
       type: ['string', 'null'],
       description: '**[READ-ONLY]** Formatted employment period showing start and end dates.',
@@ -5680,33 +5707,6 @@ export const InstructorExperienceSchema = {
       format: 'double',
       description: '**[READ-ONLY]** Calculated years of experience based on start and end dates.',
       example: 5.46,
-      readOnly: true,
-    },
-    duration_in_months: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description:
-        '**[READ-ONLY]** Duration of employment calculated from start and end dates, in months.',
-      example: 66,
-      readOnly: true,
-    },
-    formatted_duration: {
-      type: ['string', 'null'],
-      description: '**[READ-ONLY]** Human-readable formatted duration of employment.',
-      example: '5 years, 5 months',
-      readOnly: true,
-    },
-    summary: {
-      type: 'string',
-      description: '**[READ-ONLY]** Brief summary of the experience for display in listings.',
-      example: 'Senior Software Developer at Safaricom PLC (5 years, 5 months)',
-      readOnly: true,
-    },
-    is_complete: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the experience record has all essential information.',
-      example: true,
       readOnly: true,
     },
   },
@@ -5855,23 +5855,6 @@ export const InstructorEducationSchema = {
       example: 'Master of Science in Computer Science from University of Nairobi (2020)',
       readOnly: true,
     },
-    years_since_completion: {
-      type: ['integer', 'null'],
-      format: 'int32',
-      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
-      example: 4,
-      readOnly: true,
-    },
-    education_level: {
-      $ref: '#/components/schemas/EducationLevelEnum',
-    },
-    has_certificate_number: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
-      example: true,
-      readOnly: true,
-    },
     is_complete: {
       type: 'boolean',
       description:
@@ -5890,6 +5873,23 @@ export const InstructorEducationSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Formatted string showing year of completion and school name.',
       example: '2020 - University of Nairobi',
+      readOnly: true,
+    },
+    years_since_completion: {
+      type: ['integer', 'null'],
+      format: 'int32',
+      description: '**[READ-ONLY]** Number of years since the qualification was completed.',
+      example: 4,
+      readOnly: true,
+    },
+    education_level: {
+      $ref: '#/components/schemas/EducationLevelEnum',
+    },
+    has_certificate_number: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the education record has a certificate number provided.',
+      example: true,
       readOnly: true,
     },
   },
@@ -6679,7 +6679,7 @@ export const CourseSchema = {
       minLength: 0,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum6',
+      $ref: '#/components/schemas/SchemaEnum7',
     },
     active: {
       type: 'boolean',
@@ -7812,7 +7812,7 @@ export const LessonPracticeActivitySchema = {
       minimum: 1,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum6',
+      $ref: '#/components/schemas/SchemaEnum7',
     },
     active: {
       type: 'boolean',
@@ -11398,6 +11398,16 @@ export const ClassMarketplaceJobRequestSchema = {
       description:
         "**[REQUIRED]** Training branch the class is delivered at. Its location pin becomes the job's location for IN_PERSON and HYBRID delivery.",
     },
+    requirements: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Minimum qualifications, experience or certifications asked of applicants.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    membership_preference: {
+      $ref: '#/components/schemas/MembershipPreferenceEnum',
+    },
   },
   required: [
     'branch_uuid',
@@ -11489,6 +11499,12 @@ export const ClassMarketplaceJobSchema = {
       items: {
         $ref: '#/components/schemas/ClassMarketplaceJobResource',
       },
+      readOnly: true,
+    },
+    requirements: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Minimum qualifications, experience or certifications asked of applicants.',
       readOnly: true,
     },
     organisation_uuid: {
@@ -11732,6 +11748,9 @@ export const ClassMarketplaceJobSchema = {
     },
     distance_band: {
       $ref: '#/components/schemas/DistanceBandEnum',
+    },
+    membership_preference: {
+      $ref: '#/components/schemas/MembershipPreferenceEnum',
     },
     duration_minutes: {
       type: 'integer',
@@ -12435,6 +12454,102 @@ export const SavedAgeGroupSchema = {
   },
 } as const;
 
+export const UpdateRequestSchema = {
+  type: 'object',
+  properties: {
+    body: {
+      type: 'string',
+    },
+    enabled: {
+      type: 'boolean',
+    },
+  },
+} as const;
+
+export const ApiResponseSmsTemplateResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SmsTemplateResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PlaceholderResponseSchema = {
+  type: 'object',
+  properties: {
+    name: {
+      type: 'string',
+    },
+    label: {
+      type: 'string',
+    },
+    sample: {
+      type: 'string',
+    },
+    max_length: {
+      type: 'integer',
+      format: 'int32',
+    },
+    required: {
+      type: 'boolean',
+    },
+  },
+} as const;
+
+export const SmsTemplateResponseSchema = {
+  type: 'object',
+  properties: {
+    key: {
+      type: 'string',
+    },
+    name: {
+      type: 'string',
+    },
+    group: {
+      type: 'string',
+    },
+    trigger: {
+      type: 'string',
+    },
+    security: {
+      type: 'boolean',
+    },
+    enabled: {
+      type: 'boolean',
+    },
+    body: {
+      type: 'string',
+    },
+    default_body: {
+      type: 'string',
+    },
+    edited: {
+      type: 'boolean',
+    },
+    updated_by_name: {
+      type: 'string',
+    },
+    updated_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    placeholders: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/PlaceholderResponse',
+      },
+    },
+  },
+} as const;
+
 export const SkillRequestSchema = {
   type: 'object',
   description: 'Creates or replaces a skills taxonomy entry',
@@ -12612,6 +12727,11 @@ export const PayoutSettingsSchema = {
       type: 'number',
       description: 'Charged per withdrawal when the earner pays the M-Pesa charge',
     },
+    require_admin_approval: {
+      type: 'boolean',
+      description:
+        'When true every withdrawal waits for an admin and is paid only through an approved payout batch; review flags are then shown for information. Left unchanged when omitted.',
+    },
     updated_date: {
       type: 'string',
       format: 'date-time',
@@ -12759,6 +12879,9 @@ export const WithdrawalRequestSchema = {
       maxLength: 80,
       minLength: 0,
     },
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
   },
   required: ['amount', 'idempotency_key', 'payout_method_uuid'],
 } as const;
@@ -12803,6 +12926,72 @@ export const VerificationCodeSchema = {
   },
 } as const;
 
+export const WalletCheckSchema = {
+  type: 'object',
+  description:
+    "The earner's wallet read when the admin view was loaded, so a reviewer sees what the withdrawal is paid from. Only on admin views.",
+  properties: {
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
+    account_balance: {
+      type: 'number',
+      description: 'Account balance now: the available balance plus everything held',
+      example: 189465.5,
+    },
+    held_amount: {
+      type: 'number',
+      description:
+        "Gross amount (incl. any earner M-Pesa charge) of all this owner's held withdrawals from this purse (AWAITING_SECOND_APPROVAL, NEEDS_REVIEW, SENDING, PROCESSING), this one included when held",
+      example: 100,
+    },
+    held_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'How many withdrawals make up held_amount',
+      example: 1,
+    },
+    held_debited_amount: {
+      type: 'number',
+      description:
+        'Withdrawal and charge debits the wallet actually recorded for those held withdrawals, less reversals; below held_amount means something is held that never left the wallet',
+      example: 100,
+    },
+    available_balance: {
+      type: 'number',
+      description:
+        "What the earner could still withdraw now; the wallet balance, which held withdrawals have already left. Same figure as the earner's own Available.",
+      example: 189365.5,
+    },
+    balance_after: {
+      type: 'number',
+      description:
+        "account_balance less this withdrawal's gross amount: what remains once it pays. Null when the withdrawal is finished (paid, failed, rejected, cancelled, expired)",
+      example: 189365.5,
+    },
+    ledger_balance: {
+      type: 'number',
+      description:
+        "Posted balance of the purse's ledger account, which mirrors available_balance; null when the wallet has no ledger account",
+      example: 189365.5,
+    },
+    ledger_matches: {
+      type: 'boolean',
+      description:
+        'ledger_balance equals available_balance; null when there is no ledger account. False raises LEDGER_MISMATCH',
+    },
+    covers: {
+      type: 'boolean',
+      description:
+        'The wallet backs everything held: held_debited_amount is at least held_amount. False raises WALLET_SHORT',
+    },
+    checked_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+  },
+} as const;
+
 export const WithdrawalSchema = {
   type: 'object',
   description: 'Money leaving a wallet for an M-Pesa number',
@@ -12824,6 +13013,9 @@ export const WithdrawalSchema = {
     },
     status: {
       $ref: '#/components/schemas/ItemsEnum',
+    },
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
     },
     amount: {
       type: 'number',
@@ -12896,6 +13088,23 @@ export const WithdrawalSchema = {
     completed_at: {
       type: 'string',
       format: 'date-time',
+    },
+    payout_batch_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: 'The payout batch this withdrawal is in, or was paid in; null when in none',
+    },
+    wallet_check: {
+      $ref: '#/components/schemas/WalletCheck',
+      description: "The earner's wallet read now; only on admin views, null elsewhere",
+    },
+    wallet_flags: {
+      type: 'array',
+      description:
+        'Derived from wallet_check, never stored: LEDGER_MISMATCH when ledger_matches is false, WALLET_SHORT when covers is false. Empty when the wallet checks out; null off admin views',
+      items: {
+        type: 'string',
+      },
     },
   },
 } as const;
@@ -12993,6 +13202,9 @@ export const WalletTransferRequestSchema = {
       description: '**[OPTIONAL]** Description for the transfer.',
       example: 'Reward payout',
     },
+    source_purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
   },
   required: ['amount', 'target_user_uuid'],
 } as const;
@@ -13020,7 +13232,8 @@ export const WalletSchema = {
     uuid: {
       type: 'string',
       format: 'uuid',
-      description: '**[READ-ONLY]** Unique identifier for the wallet.',
+      description:
+        "**[READ-ONLY]** Unique identifier for the wallet row. On the owner's wallet, which sums every purse, the owner's oldest purse row (the row the wallet had before purses); each purse's own row is purses[].wallet_uuid. Null while the owner has no row.",
       readOnly: true,
     },
     user_uuid: {
@@ -13047,7 +13260,7 @@ export const WalletSchema = {
     },
     balance_amount: {
       type: 'number',
-      description: '**[READ-ONLY]** Current wallet balance.',
+      description: "**[READ-ONLY]** Current balance: the purse's, or the sum of every purse.",
       example: 1500,
       readOnly: true,
     },
@@ -13100,6 +13313,81 @@ export const WalletSchema = {
       type: 'boolean',
       description: '**[READ-ONLY]** Whether the caller may withdraw from this wallet.',
       readOnly: true,
+    },
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
+    account_balance: {
+      type: 'number',
+      description: '**[READ-ONLY]** available_amount plus held_amount. Null where not computed.',
+      readOnly: true,
+    },
+    purses: {
+      type: 'array',
+      description:
+        '**[READ-ONLY]** Each purse with its own balance, in the order COURSE_CREATOR, INSTRUCTOR, STUDENT (EARNINGS for an organisation). The top-level figures are their sums. Null where not computed.',
+      items: {
+        $ref: '#/components/schemas/WalletPurse',
+      },
+      readOnly: true,
+    },
+  },
+} as const;
+
+export const WalletPurseSchema = {
+  type: 'object',
+  description:
+    'One purse of a wallet, with its own balance. A person has COURSE_CREATOR, INSTRUCTOR and STUDENT purses; an organisation has EARNINGS.',
+  properties: {
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
+    wallet_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: "The purse's wallet row; null until money first lands in it",
+    },
+    currency_code: {
+      type: 'string',
+    },
+    balance_amount: {
+      type: 'number',
+      description:
+        "The purse's balance, which confirmed withdrawals have already left; same as available_amount",
+      example: 1500,
+    },
+    held_amount: {
+      type: 'number',
+      description: 'Held for withdrawals from this purse still being paid out',
+      example: 0,
+    },
+    available_amount: {
+      type: 'number',
+      description: 'What can be withdrawn or moved from this purse now',
+      example: 1500,
+    },
+    account_balance: {
+      type: 'number',
+      description: 'available_amount plus held_amount',
+      example: 1500,
+    },
+    shares_total: {
+      type: 'number',
+      description: 'Lifetime sale shares credited to this purse, net of reversals',
+    },
+    platform_fees_total: {
+      type: 'number',
+      description: 'Lifetime platform fees charged on those shares',
+    },
+    sales_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Sales credited to this purse, net of reversals',
+    },
+    transferred_out_total: {
+      type: 'number',
+      description:
+        "Lifetime transfers out of this purse, moves to the owner's other purses included",
     },
   },
 } as const;
@@ -13167,6 +13455,9 @@ export const WalletCreditRequestSchema = {
       description: '**[OPTIONAL]** Description for the credit entry.',
       example: 'Wallet deposit via M-Pesa',
     },
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
   },
   required: ['amount'],
 } as const;
@@ -13184,6 +13475,86 @@ export const ApiResponseWalletSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const PurseTransferRequestSchema = {
+  type: 'object',
+  description: "Move money between two of one person's own purses; no fee",
+  properties: {
+    from_purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
+    to_purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
+    amount: {
+      type: 'number',
+      example: 500,
+    },
+    currency_code: {
+      type: 'string',
+      description: 'ISO currency code; the platform currency when left out',
+      example: 'KES',
+      maxLength: 3,
+      minLength: 0,
+    },
+    reference: {
+      type: 'string',
+      description: 'Your reference for the move; one is made up when left out',
+      maxLength: 128,
+      minLength: 0,
+    },
+    description: {
+      type: 'string',
+      description: 'Shown on both purse statements; says which purses when left out',
+      maxLength: 500,
+      minLength: 0,
+    },
+  },
+  required: ['amount', 'from_purse', 'to_purse'],
+} as const;
+
+export const ApiResponsePurseTransferResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PurseTransferResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PurseTransferResponseSchema = {
+  type: 'object',
+  description: "Money moved between two of one person's purses",
+  properties: {
+    transfer_reference: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        'Shared by the TRANSFER_OUT row of the source purse and the TRANSFER_IN row of the target purse',
+    },
+    amount: {
+      type: 'number',
+    },
+    currency_code: {
+      type: 'string',
+    },
+    from_wallet: {
+      $ref: '#/components/schemas/Wallet',
+      description: "The source purse's row after the move",
+    },
+    to_wallet: {
+      $ref: '#/components/schemas/Wallet',
+      description: "The target purse's row after the move",
+    },
   },
 } as const;
 
@@ -13493,25 +13864,6 @@ export const ScheduledInstanceSchema = {
       example: 90,
       readOnly: true,
     },
-    can_be_ended: {
-      type: 'boolean',
-      description:
-        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
-      example: false,
-      readOnly: true,
-    },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
-    can_be_started: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
-      example: true,
-      readOnly: true,
-    },
     duration_formatted: {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable formatted duration.',
@@ -13528,6 +13880,25 @@ export const ScheduledInstanceSchema = {
       type: 'boolean',
       description:
         '**[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).',
+      example: false,
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be cancelled.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_started: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.',
+      example: true,
+      readOnly: true,
+    },
+    can_be_ended: {
+      type: 'boolean',
+      description:
+        '**[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.',
       example: false,
       readOnly: true,
     },
@@ -14341,7 +14712,7 @@ export const DomainApplicationSchema = {
       example: 'course_creator',
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum13',
+      $ref: '#/components/schemas/SchemaEnum14',
     },
     requested_at: {
       type: 'string',
@@ -15787,7 +16158,7 @@ export const InstructorObligationSchema = {
       description: 'Currency the obligation was accrued in',
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum8',
+      $ref: '#/components/schemas/SchemaEnum9',
     },
     accrued_at: {
       type: 'string',
@@ -16789,12 +17160,6 @@ export const EnrollmentSchema = {
       example: true,
       readOnly: true,
     },
-    can_be_cancelled: {
-      type: 'boolean',
-      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
-      example: true,
-      readOnly: true,
-    },
     did_attend: {
       type: 'boolean',
       description: '**[READ-ONLY]** Indicates if the student attended the class.',
@@ -16811,6 +17176,12 @@ export const EnrollmentSchema = {
       type: 'string',
       description: '**[READ-ONLY]** Human-readable description of the enrollment status.',
       example: 'Student is enrolled in the class',
+      readOnly: true,
+    },
+    can_be_cancelled: {
+      type: 'boolean',
+      description: '**[READ-ONLY]** Indicates if the enrollment can be cancelled.',
+      example: true,
       readOnly: true,
     },
   },
@@ -17741,6 +18112,14 @@ export const ClassDefinitionCreateRequestSchema = {
       },
       maxItems: 2147483647,
       minItems: 1,
+    },
+    resources: {
+      type: ['array', 'null'],
+      description:
+        "**[OPTIONAL]** Branch venue (at most one) and equipment to book for every session. Resources must be active and at the class's branch; a clash is refused with 409.",
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobResource',
+      },
     },
   },
   required: [
@@ -19263,7 +19642,7 @@ export const AdminDomainAssignmentRequestSchema = {
   description: 'Admin domain assignment request containing domain type, reason, and effective date',
   properties: {
     domain_name: {
-      $ref: '#/components/schemas/SchemaEnum14',
+      $ref: '#/components/schemas/SchemaEnum15',
     },
     assignment_type: {
       $ref: '#/components/schemas/AssignmentTypeEnum',
@@ -19343,6 +19722,34 @@ export const AdminCreateUserRequestDTOSchema = {
   required: ['email', 'first_name', 'last_name'],
 } as const;
 
+export const ApiResponseTestResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/TestResponse',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const TestResponseSchema = {
+  type: 'object',
+  properties: {
+    sent: {
+      type: 'boolean',
+    },
+    to_masked: {
+      type: 'string',
+    },
+  },
+} as const;
+
 export const ApiResponseSearchRebuildResponseSchema = {
   type: 'object',
   properties: {
@@ -19411,6 +19818,183 @@ export const RejectWithdrawalRequestSchema = {
     },
   },
   required: ['reason'],
+} as const;
+
+export const PayoutBatchWithdrawalsRequestSchema = {
+  type: 'object',
+  description: 'Withdrawals waiting for review to put in a draft batch',
+  properties: {
+    withdrawal_uuids: {
+      type: 'array',
+      items: {
+        type: 'string',
+        format: 'uuid',
+      },
+      maxItems: 500,
+      minItems: 0,
+    },
+  },
+} as const;
+
+export const ApiResponsePayoutBatchSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PayoutBatch',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PayoutBatchSchema = {
+  type: 'object',
+  description: 'Withdrawals paid together once a second admin approves them',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    status: {
+      $ref: '#/components/schemas/ItemsEnum3',
+    },
+    created_by: {
+      type: 'string',
+      format: 'uuid',
+      description: 'User who built the batch',
+    },
+    created_by_name: {
+      type: 'string',
+    },
+    submitted_by: {
+      type: 'string',
+      format: 'uuid',
+    },
+    submitted_by_name: {
+      type: 'string',
+    },
+    submitted_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    approved_by: {
+      type: 'string',
+      format: 'uuid',
+    },
+    approved_by_name: {
+      type: 'string',
+    },
+    approved_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    rejected_by: {
+      type: 'string',
+      format: 'uuid',
+    },
+    rejected_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    rejection_reason: {
+      type: 'string',
+    },
+    row_count: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        'Rows in the batch; for a rejected or cancelled batch, the rows it had when it let them go',
+    },
+    total_amount: {
+      type: 'number',
+      description: "Sum of the rows' net amounts: what M-Pesa pays out",
+    },
+    paid_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    failed_count: {
+      type: 'integer',
+      format: 'int64',
+    },
+    in_flight_count: {
+      type: 'integer',
+      format: 'int64',
+      description: 'Rows being handed to or waiting on M-Pesa (SENDING or PROCESSING)',
+    },
+    float_at_approval: {
+      type: 'number',
+      description:
+        'Utility account funds M-Pesa reported at approval; null when unknown and overridden',
+    },
+    released_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    completed_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+    created_date: {
+      type: 'string',
+      format: 'date-time',
+    },
+    updated_date: {
+      type: 'string',
+      format: 'date-time',
+    },
+    can_approve: {
+      type: 'boolean',
+      description:
+        'True when the signed-in admin may approve the batch now: it waits for approval and they neither built nor submitted it',
+    },
+    wallet_issue_count: {
+      type: 'integer',
+      format: 'int32',
+      description:
+        'Rows whose earner wallet has a wallet flag (LEDGER_MISMATCH or WALLET_SHORT) now; approval is refused while above zero unless acknowledge_wallet_issues is true',
+    },
+    wallets_checked: {
+      type: 'integer',
+      format: 'int32',
+      description: 'Rows whose wallet was checked for this response',
+    },
+  },
+} as const;
+
+export const RejectPayoutBatchRequestSchema = {
+  type: 'object',
+  description: 'Why a payout batch is not approved',
+  properties: {
+    reason: {
+      type: 'string',
+      maxLength: 500,
+      minLength: 0,
+    },
+  },
+  required: ['reason'],
+} as const;
+
+export const ApprovePayoutBatchRequestSchema = {
+  type: 'object',
+  description: 'Approval of a payout batch',
+  properties: {
+    override_unknown_float: {
+      type: 'boolean',
+      description:
+        'Release the batch even though the payout float is unknown; recorded in the audit trail',
+    },
+    acknowledge_wallet_issues: {
+      type: 'boolean',
+      description:
+        'Release the batch even though rows carry wallet flags (wallet_issue_count above zero); recorded in the approval audit event',
+    },
+  },
 } as const;
 
 export const OrganisationUserCreateRequestDTOSchema = {
@@ -19814,7 +20398,7 @@ export const WalletTransactionSchema = {
       readOnly: true,
     },
     transaction_type: {
-      $ref: '#/components/schemas/ItemsEnum3',
+      $ref: '#/components/schemas/ItemsEnum4',
     },
     amount: {
       type: 'number',
@@ -19871,6 +20455,16 @@ export const WalletTransactionSchema = {
       format: 'date-time',
       description: '**[READ-ONLY]** Timestamp when the transaction was recorded.',
       readOnly: true,
+    },
+    sale_split_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        '**[READ-ONLY]** On SALE and PLATFORM_FEE rows of a class sale: the sale split that explains the row, for GET .../sales/{split_uuid}. Null on other rows.',
+      readOnly: true,
+    },
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
     },
   },
 } as const;
@@ -19936,6 +20530,272 @@ export const WalletStatementSchema = {
       description: '**[READ-ONLY]** Number of transactions in the month.',
       readOnly: true,
     },
+  },
+} as const;
+
+export const ApiResponsePagedDTOSaleSplitSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOSaleSplit',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOSaleSplitSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SaleSplit',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const SaleFeeRuleSchema = {
+  type: 'object',
+  description: 'The platform fee rule in force when the order was placed',
+  properties: {
+    description: {
+      type: 'string',
+      description: 'Human-readable rule',
+      example: '10% of each share',
+    },
+    recorded: {
+      type: 'boolean',
+      description: 'False for lines settled before splits were recorded, whose rule is unknown',
+    },
+    rule_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    rule_key: {
+      type: 'string',
+    },
+    mode: {
+      $ref: '#/components/schemas/ModeEnum',
+    },
+    rate: {
+      type: 'number',
+      description: 'The percentage, or the flat amount',
+      example: 10,
+    },
+    rate_currency: {
+      type: 'string',
+    },
+    waived: {
+      type: 'boolean',
+    },
+    discount_percentage: {
+      type: 'number',
+    },
+    discount_amount: {
+      type: 'number',
+    },
+    evaluated_at: {
+      type: 'string',
+      format: 'date-time',
+    },
+  },
+} as const;
+
+export const SaleSplitSchema = {
+  type: 'object',
+  description:
+    'How a captured purchase line was split between the course creator, the delivery party (instructor or hiring organisation) and the platform, recorded at the point of purchase. creator.net + delivery.net + platform_fee_total + retained = line_gross.',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: "The split's id, which is the purchase line's uuid",
+    },
+    order_id: {
+      type: 'string',
+    },
+    order_number: {
+      type: 'string',
+      description: "The order's display number, when it has one",
+    },
+    line_item_id: {
+      type: 'string',
+    },
+    title: {
+      type: 'string',
+    },
+    course_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    class_definition_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    captured_at: {
+      type: 'string',
+      format: 'date-time',
+      description: 'When the line was settled into wallets (UTC); the order time on older lines',
+    },
+    currency_code: {
+      type: 'string',
+    },
+    line_gross: {
+      type: 'number',
+      description: 'What the buyer paid for the line',
+      example: 50000,
+    },
+    creator_percentage: {
+      type: 'number',
+      description: "The course creator's percentage of the line; null on backfilled splits",
+      example: 30,
+    },
+    your_role: {
+      $ref: '#/components/schemas/YourRoleEnum',
+    },
+    your_purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
+    your_gross: {
+      type: 'number',
+    },
+    your_fee: {
+      type: 'number',
+    },
+    your_net: {
+      type: 'number',
+    },
+    creator: {
+      $ref: '#/components/schemas/SaleSplitParty',
+    },
+    delivery: {
+      $ref: '#/components/schemas/SaleSplitParty',
+    },
+    platform_fee_total: {
+      type: 'number',
+    },
+    retained: {
+      type: 'number',
+      description: 'Collected, not fee, and paid to nobody, e.g. a leg with no earner',
+    },
+    reconciles: {
+      type: 'boolean',
+      description: 'False when the figures did not add up at settlement; flagged for review',
+    },
+    backfilled: {
+      type: 'boolean',
+      description: 'Rebuilt from wallet rows for a line settled before splits were recorded',
+    },
+    fee_rule: {
+      $ref: '#/components/schemas/SaleFeeRule',
+    },
+    transactions: {
+      type: 'array',
+      description:
+        "The viewer's SALE and PLATFORM_FEE rows for this line; every party's rows for admins",
+      items: {
+        $ref: '#/components/schemas/SaleSplitTransaction',
+      },
+    },
+  },
+} as const;
+
+export const SaleSplitPartySchema = {
+  type: 'object',
+  description: "One party's leg of a sale split; named, never with contact details",
+  properties: {
+    role: {
+      $ref: '#/components/schemas/YourRoleEnum',
+    },
+    name: {
+      type: 'string',
+      description: 'Display name of the person or organisation; null when nobody was resolved',
+    },
+    owner_type: {
+      $ref: '#/components/schemas/OwnerTypeEnum',
+    },
+    owner_uuid: {
+      type: 'string',
+      format: 'uuid',
+      description: "Set for the viewer's own leg and for admins; null for the other party",
+    },
+    status: {
+      $ref: '#/components/schemas/StatusEnum23',
+    },
+    gross: {
+      type: 'number',
+      description: "This party's share of the line before the platform fee",
+      example: 15000,
+    },
+    fee: {
+      type: 'number',
+      description: 'Platform fee charged on this share',
+      example: 1500,
+    },
+    net: {
+      type: 'number',
+      description: 'What this party received',
+      example: 13500,
+    },
+  },
+} as const;
+
+export const SaleSplitTransactionSchema = {
+  type: 'object',
+  description: 'A wallet SALE or PLATFORM_FEE row written for a sale split',
+  properties: {
+    uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    wallet_uuid: {
+      type: 'string',
+      format: 'uuid',
+    },
+    transaction_type: {
+      $ref: '#/components/schemas/ItemsEnum4',
+    },
+    role: {
+      $ref: '#/components/schemas/YourRoleEnum',
+    },
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
+    reference: {
+      type: 'string',
+    },
+    amount: {
+      type: 'number',
+    },
+  },
+} as const;
+
+export const ApiResponseSaleSplitSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/SaleSplit',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
   },
 } as const;
 
@@ -20758,12 +21618,6 @@ export const PageSessionReportSummarySchema = {
       type: 'integer',
       format: 'int32',
     },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
-    },
     numberOfElements: {
       type: 'integer',
       format: 'int32',
@@ -20773,6 +21627,12 @@ export const PageSessionReportSummarySchema = {
     },
     pageable: {
       $ref: '#/components/schemas/PageableObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
     },
     empty: {
       type: 'boolean',
@@ -21068,7 +21928,7 @@ export const InstructorTimeHoldSchema = {
       example: 'UTC',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum23',
+      $ref: '#/components/schemas/StatusEnum24',
     },
     class_definition_uuid: {
       type: ['string', 'null'],
@@ -21391,12 +22251,6 @@ export const PageSchema = {
       type: 'integer',
       format: 'int32',
     },
-    first: {
-      type: 'boolean',
-    },
-    last: {
-      type: 'boolean',
-    },
     numberOfElements: {
       type: 'integer',
       format: 'int32',
@@ -21406,6 +22260,12 @@ export const PageSchema = {
     },
     pageable: {
       $ref: '#/components/schemas/PageableObject',
+    },
+    first: {
+      type: 'boolean',
+    },
+    last: {
+      type: 'boolean',
     },
     empty: {
       type: 'boolean',
@@ -22710,7 +23570,7 @@ export const StudentQuizReviewSchema = {
       format: 'uuid',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum24',
+      $ref: '#/components/schemas/StatusEnum25',
     },
     score: {
       type: 'number',
@@ -23414,7 +24274,7 @@ export const ProgramEnrollmentSchema = {
       example: '2024-06-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum25',
+      $ref: '#/components/schemas/StatusEnum26',
     },
     progress_percentage: {
       type: 'number',
@@ -23829,6 +24689,16 @@ export const WalletBalanceSummarySchema = {
     can_withdraw: {
       type: 'boolean',
     },
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
+    purses: {
+      type: 'array',
+      description: 'Each purse with its own balance; on the wallet screens only',
+      items: {
+        $ref: '#/components/schemas/WalletPurse',
+      },
+    },
   },
 } as const;
 
@@ -24204,7 +25074,7 @@ export const ResourceBookingSchema = {
       description: 'Organisation owning the resource',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum26',
+      $ref: '#/components/schemas/StatusEnum27',
     },
     quantity: {
       type: 'integer',
@@ -26806,7 +27676,7 @@ export const ApiResponseListContentStatusSchema = {
     data: {
       type: 'array',
       items: {
-        $ref: '#/components/schemas/SchemaEnum6',
+        $ref: '#/components/schemas/SchemaEnum7',
       },
     },
     message: {
@@ -28409,7 +29279,7 @@ export const CourseEnrollmentSchema = {
       example: '2024-04-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum25',
+      $ref: '#/components/schemas/StatusEnum26',
     },
     progress_percentage: {
       type: 'number',
@@ -29707,7 +30577,7 @@ export const ClassProgrammeProgressSchema = {
   description: 'Programme marks and skill levels for the learners of one programme class',
   properties: {
     status: {
-      $ref: '#/components/schemas/StatusEnum27',
+      $ref: '#/components/schemas/StatusEnum28',
     },
     class_definition_uuid: {
       type: 'string',
@@ -30258,6 +31128,12 @@ export const JobMatchSchema = {
       },
       readOnly: true,
     },
+    requirements: {
+      type: ['string', 'null'],
+      description:
+        '**[READ-ONLY]** Minimum qualifications, experience or certifications asked of applicants.',
+      readOnly: true,
+    },
     organisation_uuid: {
       type: 'string',
       format: 'uuid',
@@ -30499,6 +31375,9 @@ export const JobMatchSchema = {
     },
     distance_band: {
       $ref: '#/components/schemas/DistanceBandEnum',
+    },
+    membership_preference: {
+      $ref: '#/components/schemas/MembershipPreferenceEnum',
     },
     duration_minutes: {
       type: 'integer',
@@ -31525,6 +32404,25 @@ export const PagedDTOAdminUserActivityEventSchema = {
   },
 } as const;
 
+export const ApiResponseListSmsTemplateResponseSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SmsTemplateResponse',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const ApiResponseListSearchIndexStatusResponseSchema = {
   type: 'object',
   properties: {
@@ -31606,6 +32504,25 @@ export const SearchIndexStatusResponseSchema = {
   },
 } as const;
 
+export const ApiResponseListSaleSplitSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/SaleSplit',
+      },
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
 export const AdminDomainApplicationSchema = {
   type: 'object',
   description: 'A domain request in the platform admin approval queue',
@@ -31624,7 +32541,7 @@ export const AdminDomainApplicationSchema = {
       type: 'string',
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum13',
+      $ref: '#/components/schemas/SchemaEnum14',
     },
     requested_at: {
       type: 'string',
@@ -31952,6 +32869,96 @@ export const PayoutSummarySchema = {
     payouts_configured: {
       type: 'boolean',
       description: 'False while payouts are not configured (no gateway or payout shortcode)',
+    },
+  },
+} as const;
+
+export const ApiResponsePagedDTOPayoutBatchSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PagedDTOPayoutBatch',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PagedDTOPayoutBatchSchema = {
+  type: 'object',
+  properties: {
+    content: {
+      type: 'array',
+      items: {
+        $ref: '#/components/schemas/PayoutBatch',
+      },
+    },
+    metadata: {
+      $ref: '#/components/schemas/PageMetadata',
+    },
+    links: {
+      $ref: '#/components/schemas/PageLinks',
+    },
+  },
+} as const;
+
+export const ApiResponsePayoutBatchDetailSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PayoutBatchDetail',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PayoutBatchDetailSchema = {
+  type: 'object',
+  description: 'A payout batch with its withdrawals and the live payout float',
+  properties: {
+    batch: {
+      $ref: '#/components/schemas/PayoutBatch',
+    },
+    withdrawals: {
+      type: 'array',
+      description:
+        "The batch's withdrawals, oldest first, with their review flags, wallet check and wallet flags",
+      items: {
+        $ref: '#/components/schemas/Withdrawal',
+      },
+    },
+    payout_float: {
+      $ref: '#/components/schemas/PayoutFloat',
+      description: 'Read from M-Pesa now; null when unknown or unavailable',
+    },
+  },
+} as const;
+
+export const PayoutFloatSchema = {
+  type: 'object',
+  description: "The payout shortcode's balance as M-Pesa last reported it",
+  properties: {
+    utility_funds: {
+      type: 'number',
+      description: 'Funds payouts are drawn from',
+    },
+    working_funds: {
+      type: 'number',
+    },
+    reported_at: {
+      type: 'string',
+      format: 'date-time',
     },
   },
 } as const;
@@ -32854,10 +33861,15 @@ export const ItemsEnumSchema = {
 
 export const SchemaEnumSchema = {
   type: 'string',
-  enum: ['PLATFORM_FEE', 'AGE_GATE', 'ENROLLMENT_GUARD', 'CUSTOM'],
+  enum: ['COURSE_CREATOR', 'INSTRUCTOR', 'STUDENT', 'EARNINGS'],
 } as const;
 
 export const SchemaEnum2Schema = {
+  type: 'string',
+  enum: ['PLATFORM_FEE', 'AGE_GATE', 'ENROLLMENT_GUARD', 'CUSTOM'],
+} as const;
+
+export const SchemaEnum3Schema = {
   type: 'string',
   enum: ['DRAFT', 'ACTIVE', 'INACTIVE'],
 } as const;
@@ -32867,22 +33879,35 @@ export const ItemsEnum2Schema = {
   enum: ['PENDING', 'AWAITING_GUARDIAN_CONSENT', 'ACCEPTED', 'DECLINED', 'EXPIRED', 'REVOKED'],
 } as const;
 
-export const SchemaEnum3Schema = {
+export const SchemaEnum4Schema = {
   type: 'string',
   enum: ['skills', 'certifications', 'competencies', 'documents'],
 } as const;
 
-export const SchemaEnum4Schema = {
+export const SchemaEnum5Schema = {
   type: 'string',
   enum: ['approve', 'reject', 'revoke'],
 } as const;
 
-export const SchemaEnum5Schema = {
+export const ItemsEnum3Schema = {
+  type: 'string',
+  enum: [
+    'DRAFT',
+    'AWAITING_APPROVAL',
+    'RELEASED',
+    'COMPLETED',
+    'PARTLY_FAILED',
+    'REJECTED',
+    'CANCELLED',
+  ],
+} as const;
+
+export const SchemaEnum6Schema = {
   type: 'string',
   enum: ['skills', 'competencies', 'certifications'],
 } as const;
 
-export const ItemsEnum3Schema = {
+export const ItemsEnum4Schema = {
   type: 'string',
   enum: [
     'DEPOSIT',
@@ -32897,60 +33922,60 @@ export const ItemsEnum3Schema = {
   ],
 } as const;
 
-export const SchemaEnum6Schema = {
+export const SchemaEnum7Schema = {
   type: 'string',
   enum: ['draft', 'in_review', 'published', 'archived'],
 } as const;
 
-export const SchemaEnum7Schema = {
+export const SchemaEnum8Schema = {
   type: 'string',
   enum: ['student', 'instructor', 'admin', 'parent', 'organisation_user', 'course_creator'],
 } as const;
 
-export const SchemaEnum8Schema = {
+export const SchemaEnum9Schema = {
   type: 'string',
   enum: ['ACCRUED', 'SETTLED', 'CANCELLED', 'DISPUTED'],
 } as const;
 
-export const SchemaEnum9Schema = {
+export const SchemaEnum10Schema = {
   type: 'string',
   default: 'all',
   enum: ['all', 'courses', 'programmes'],
 } as const;
 
-export const ItemsEnum4Schema = {
+export const ItemsEnum5Schema = {
   type: 'string',
   enum: ['beginner', 'intermediate', 'advanced'],
 } as const;
 
-export const ItemsEnum5Schema = {
+export const ItemsEnum6Schema = {
   type: 'string',
   enum: ['free', 'paid'],
 } as const;
 
-export const SchemaEnum10Schema = {
+export const SchemaEnum11Schema = {
   type: 'string',
   enum: ['relevance', 'newest', 'rating', 'popular'],
 } as const;
 
-export const SchemaEnum11Schema = {
+export const SchemaEnum12Schema = {
   type: 'string',
   default: 'open',
   enum: ['open', 'skills', 'applied'],
 } as const;
 
-export const SchemaEnum12Schema = {
+export const SchemaEnum13Schema = {
   type: 'string',
   enum: ['actor', 'target', 'all'],
 } as const;
 
-export const SchemaEnum13Schema = {
+export const SchemaEnum14Schema = {
   type: 'string',
   default: 'PENDING',
   enum: ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'],
 } as const;
 
-export const SchemaEnum14Schema = {
+export const SchemaEnum15Schema = {
   type: 'string',
   enum: ['admin', 'organisation_user'],
 } as const;
@@ -33356,6 +34381,13 @@ export const ServiceTypeEnumSchema = {
   enum: ['ONE_ON_ONE', 'GROUP', 'ONLINE', 'PRIVATE_ONLINE'],
 } as const;
 
+export const MembershipPreferenceEnumSchema = {
+  type: ['string', 'null'],
+  description:
+    "**[OPTIONAL]** Who may be hired: any instructor, or only the organisation's own. Defaults to ANY.",
+  enum: ['ANY', 'ORGANISATION_ONLY'],
+} as const;
+
 export const ResourceTypeEnum2Schema = {
   type: ['string', 'null'],
   description: '**[READ-ONLY]** Kind of the reserved resource.',
@@ -33719,6 +34751,19 @@ export const DomainNameEnum2Schema = {
   minLength: 1,
 } as const;
 
+export const YourRoleEnumSchema = {
+  type: 'string',
+  description:
+    "The viewer's part in the sale; null for admins. Asked for one purse, the role of that purse's leg, and your_* covers that leg only. Otherwise a creator who also delivered is COURSE_CREATOR, with both legs summed into your_gross, your_fee and your_net",
+  enum: ['COURSE_CREATOR', 'INSTRUCTOR', 'ORGANISATION'],
+} as const;
+
+export const StatusEnum23Schema = {
+  type: 'string',
+  description: 'PAID, or why the leg was not paid: NO_EARNER, NO_SHARE or NOT_SPLIT',
+  enum: ['PAID', 'NO_EARNER', 'NO_SHARE', 'NOT_SPLIT'],
+} as const;
+
 export const EventTypeEnum2Schema = {
   type: 'string',
   description: '**[READ-ONLY]** What happened.',
@@ -33747,6 +34792,14 @@ export const EventTypeEnum2Schema = {
     'WITHDRAWAL_CANCELLED',
     'PAYOUT_FEE_CHARGED',
     'PAYOUT_SETTINGS_CHANGED',
+    'PAYOUT_BATCH_ROW_ADDED',
+    'PAYOUT_BATCH_ROW_REMOVED',
+    'PAYOUT_BATCH_SUBMITTED',
+    'PAYOUT_BATCH_RETURNED_TO_DRAFT',
+    'PAYOUT_BATCH_APPROVED',
+    'PAYOUT_BATCH_REJECTED',
+    'PAYOUT_BATCH_CANCELLED',
+    'PAYOUT_BATCH_COMPLETED',
   ],
   example: 'SALE_SHARE_CREDITED',
   readOnly: true,
@@ -33775,7 +34828,7 @@ export const EnrollmentStatusEnumSchema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum23Schema = {
+export const StatusEnum24Schema = {
   type: 'string',
   description: 'Hold lifecycle state; only FIRM counts as a scheduling clash',
   enum: ['TENTATIVE', 'FIRM', 'CONFIRMED', 'RELEASED'],
@@ -33787,7 +34840,7 @@ export const QuestionTypeEnum2Schema = {
   enum: ['multiple_choice', 'true_false', 'short_answer', 'essay'],
 } as const;
 
-export const StatusEnum24Schema = {
+export const StatusEnum25Schema = {
   type: 'string',
   enum: ['in_progress', 'submitted', 'graded'],
 } as const;
@@ -33811,7 +34864,7 @@ export const EventTypeEnum3Schema = {
   readOnly: true,
 } as const;
 
-export const StatusEnum25Schema = {
+export const StatusEnum26Schema = {
   type: 'string',
   description: "**[REQUIRED]** Current status of the student's enrollment in the program.",
   enum: ['ACTIVE', 'COMPLETED', 'DROPPED', 'SUSPENDED'],
@@ -33825,7 +34878,7 @@ export const EntryTypeEnumSchema = {
   example: 'HOLD',
 } as const;
 
-export const StatusEnum26Schema = {
+export const StatusEnum27Schema = {
   type: 'string',
   description: 'Booking lifecycle state',
   enum: ['HOLD', 'CONFIRMED', 'RELEASED', 'CANCELLED'],
@@ -33900,7 +34953,7 @@ export const ResultStatusEnumSchema = {
   enum: ['IN_PROGRESS', 'PASSED', 'FAILED'],
 } as const;
 
-export const StatusEnum27Schema = {
+export const StatusEnum28Schema = {
   type: 'string',
   description:
     'READY with data; NO_PROGRAMME or PROGRAMME_CHOICE_REQUIRED with empty skills and learners',
@@ -35349,7 +36402,7 @@ export const TrainingProgramWritableSchema = {
       minLength: 0,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum6',
+      $ref: '#/components/schemas/SchemaEnum7',
     },
     prerequisites: {
       type: 'string',
@@ -37463,7 +38516,7 @@ export const CourseWritableSchema = {
       minLength: 0,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum6',
+      $ref: '#/components/schemas/SchemaEnum7',
     },
     active: {
       type: 'boolean',
@@ -37969,7 +39022,7 @@ export const LessonPracticeActivityWritableSchema = {
       minimum: 1,
     },
     status: {
-      $ref: '#/components/schemas/SchemaEnum6',
+      $ref: '#/components/schemas/SchemaEnum7',
     },
     active: {
       type: 'boolean',
@@ -39975,6 +41028,16 @@ export const ClassMarketplaceJobRequestWritableSchema = {
       description:
         "**[REQUIRED]** Training branch the class is delivered at. Its location pin becomes the job's location for IN_PERSON and HYBRID delivery.",
     },
+    requirements: {
+      type: ['string', 'null'],
+      description:
+        '**[OPTIONAL]** Minimum qualifications, experience or certifications asked of applicants.',
+      maxLength: 500,
+      minLength: 0,
+    },
+    membership_preference: {
+      $ref: '#/components/schemas/MembershipPreferenceEnum',
+    },
   },
   required: [
     'branch_uuid',
@@ -40045,6 +41108,9 @@ export const ClassMarketplaceJobWritableSchema = {
     },
     location_type: {
       $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    membership_preference: {
+      $ref: '#/components/schemas/MembershipPreferenceEnum',
     },
   },
 } as const;
@@ -40462,6 +41528,11 @@ export const PayoutSettingsWritableSchema = {
       type: 'number',
       description: 'Charged per withdrawal when the earner pays the M-Pesa charge',
     },
+    require_admin_approval: {
+      type: 'boolean',
+      description:
+        'When true every withdrawal waits for an admin and is paid only through an approved payout batch; review flags are then shown for information. Left unchanged when omitted.',
+    },
   },
   required: [
     'daily_limit',
@@ -40551,6 +41622,9 @@ export const WalletWritableSchema = {
     owner_type: {
       $ref: '#/components/schemas/OwnerTypeEnum',
     },
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
+    },
   },
 } as const;
 
@@ -40572,6 +41646,49 @@ export const ApiResponseWalletWritableSchema = {
       type: 'string',
     },
     error: {},
+  },
+} as const;
+
+export const ApiResponsePurseTransferResponseWritableSchema = {
+  type: 'object',
+  properties: {
+    success: {
+      type: 'boolean',
+    },
+    data: {
+      $ref: '#/components/schemas/PurseTransferResponseWritable',
+    },
+    message: {
+      type: 'string',
+    },
+    error: {},
+  },
+} as const;
+
+export const PurseTransferResponseWritableSchema = {
+  type: 'object',
+  description: "Money moved between two of one person's purses",
+  properties: {
+    transfer_reference: {
+      type: 'string',
+      format: 'uuid',
+      description:
+        'Shared by the TRANSFER_OUT row of the source purse and the TRANSFER_IN row of the target purse',
+    },
+    amount: {
+      type: 'number',
+    },
+    currency_code: {
+      type: 'string',
+    },
+    from_wallet: {
+      $ref: '#/components/schemas/WalletWritable',
+      description: "The source purse's row after the move",
+    },
+    to_wallet: {
+      $ref: '#/components/schemas/WalletWritable',
+      description: "The target purse's row after the move",
+    },
   },
 } as const;
 
@@ -41818,6 +42935,14 @@ export const ClassDefinitionCreateRequestWritableSchema = {
       maxItems: 2147483647,
       minItems: 1,
     },
+    resources: {
+      type: ['array', 'null'],
+      description:
+        "**[OPTIONAL]** Branch venue (at most one) and equipment to book for every session. Resources must be active and at the class's branch; a clash is refused with 409.",
+      items: {
+        $ref: '#/components/schemas/ClassMarketplaceJobResourceWritable',
+      },
+    },
   },
   required: [
     'class_visibility',
@@ -42462,7 +43587,10 @@ export const WalletTransactionWritableSchema = {
   description: 'Wallet ledger entry capturing balance changes',
   properties: {
     transaction_type: {
-      $ref: '#/components/schemas/ItemsEnum3',
+      $ref: '#/components/schemas/ItemsEnum4',
+    },
+    purse: {
+      $ref: '#/components/schemas/SchemaEnum',
     },
   },
 } as const;
@@ -43029,7 +44157,7 @@ export const InstructorTimeHoldWritableSchema = {
       example: 'UTC',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum23',
+      $ref: '#/components/schemas/StatusEnum24',
     },
     class_definition_uuid: {
       type: ['string', 'null'],
@@ -43769,7 +44897,7 @@ export const ProgramEnrollmentWritableSchema = {
       example: '2024-06-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum25',
+      $ref: '#/components/schemas/StatusEnum26',
     },
     progress_percentage: {
       type: 'number',
@@ -44104,7 +45232,7 @@ export const ResourceBookingWritableSchema = {
       description: 'Organisation owning the resource',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum26',
+      $ref: '#/components/schemas/StatusEnum27',
     },
     quantity: {
       type: 'integer',
@@ -45680,7 +46808,7 @@ export const CourseEnrollmentWritableSchema = {
       example: '2024-04-30T16:45:00Z',
     },
     status: {
-      $ref: '#/components/schemas/StatusEnum25',
+      $ref: '#/components/schemas/StatusEnum26',
     },
     progress_percentage: {
       type: 'number',
@@ -46612,6 +47740,9 @@ export const JobMatchWritableSchema = {
     },
     location_type: {
       $ref: '#/components/schemas/LocationTypeEnum',
+    },
+    membership_preference: {
+      $ref: '#/components/schemas/MembershipPreferenceEnum',
     },
   },
 } as const;

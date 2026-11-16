@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
 import { ImageWithFallback } from '@/components/data/image-with-fallback';
+import { surfaceTheme } from '@/components/data-display';
 import { EmptyState } from '@/components/empty-state';
 import { PageHeader } from '@/components/page-header';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -41,6 +42,8 @@ import {
 import { useOrganisation } from '@/context/organisation-context';
 import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { extractEntity } from '@/lib/api-helpers';
+import { APPROVAL_QUERY_FRESHNESS, STALE_TIMES } from '@/lib/query-client';
+import { offeredMethods, type TrainingMethod } from '@/lib/rate-card';
 import type {
   ClassDefinition,
   Course,
@@ -54,11 +57,9 @@ import {
   getUsersByOrganisationAndDomainOptions,
   searchTrainingApplicationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { APPROVAL_QUERY_FRESHNESS, STALE_TIMES } from '@/lib/query-client';
-import { offeredMethods, type TrainingMethod } from '@/lib/rate-card';
+import { createClassHref, postJobHref } from '@/src/features/organisation/class-builder/routes';
 import { lowestRatesLabel } from '@/src/features/rate-card/application-display';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-import { surfaceTheme } from '@/components/data-display';
 
 const PROGRAM_TYPES = [
   'Short courses',
@@ -167,8 +168,8 @@ export default function CoursesPage() {
     uuid && router.push(`/dashboard/organisation/courses/${uuid}`);
   const postJobForCourse = (uuid?: string) =>
     uuid &&
-    router.push(`/dashboard/organisation/jobs/new?courseUuid=${uuid}`);
-  const goToNewClass = () => router.push('/dashboard/organisation/classes/new');
+    router.push(postJobHref({ courseUuid: uuid }));
+  const goToNewClass = (uuid?: string) => router.push(createClassHref({ courseUuid: uuid }));
 
   // Approved/engaged courses the org is running come from its training applications (which carry the rate card).
   const applicationsQuery = useQuery({
@@ -440,7 +441,7 @@ export default function CoursesPage() {
                               status={row.status}
                               onView={() => goToCourse(row.courseUuid)}
                               onPostJob={() => postJobForCourse(row.courseUuid)}
-                              onCreateClass={goToNewClass}
+                              onCreateClass={() => goToNewClass(row.courseUuid)}
                               onArchive={() =>
                                 handleArchive(row.rowKey, row.displayName)
                               }
@@ -534,7 +535,7 @@ export default function CoursesPage() {
                               status={row.status}
                               onView={() => goToCourse(row.courseUuid)}
                               onPostJob={() => postJobForCourse(row.courseUuid)}
-                              onCreateClass={goToNewClass}
+                              onCreateClass={() => goToNewClass(row.courseUuid)}
                               onArchive={() =>
                                 handleArchive(row.rowKey, row.displayName)
                               }

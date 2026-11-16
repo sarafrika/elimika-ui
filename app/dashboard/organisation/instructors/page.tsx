@@ -20,17 +20,18 @@ import { toast } from 'sonner';
 
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
 import { PageHeader } from '@/components/dashboard/page-header';
+import { surfaceTheme } from '@/components/data-display';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { EmptyState } from '@/components/ui/empty-state';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -49,7 +50,7 @@ import {
   getOrganisationInstructorSummariesOptions,
   listOrganisationInvitationsOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { surfaceTheme } from '@/components/data-display';
+import { createClassHref, postJobHref } from '@/src/features/organisation/class-builder/routes';
 
 const initials = (name?: string) =>
   (name ?? '?')
@@ -167,7 +168,7 @@ export default function InstructorsPage() {
         title='Instructors & Staff'
         description='Onboard instructors, assign courses, and track performance.'
         actions={
-          <Button onClick={() => router.push('/dashboard/organisation/jobs/new')}>
+          <Button onClick={() => router.push(postJobHref())}>
             <Briefcase className='mr-2 h-4 w-4' /> Post a job
           </Button>
         }
@@ -360,11 +361,7 @@ export default function InstructorsPage() {
                           <DropdownMenuItem
                             onClick={e => {
                               e.stopPropagation();
-                              router.push(
-                                `/dashboard/organisation/classes/new?instructorUuid=${encodeURIComponent(
-                                  i.instructor_uuid ?? i.id
-                                )}`
-                              );
+                              router.push(createClassHref({ instructorUuid: i.instructor_uuid ?? i.id }));
                             }}
                           >
                             <Plus className='mr-2 h-4 w-4' /> Assign class

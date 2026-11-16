@@ -77,8 +77,8 @@ import {
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { stripHtml } from '@/src/features/dashboard/courses/shared/_components/courses-data';
+import { createClassHref } from '@/src/features/organisation/class-builder/routes';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
-
 import { InstructorStudentsPanel } from './instructor-students-panel';
 
 /**
@@ -985,9 +985,7 @@ export function InstructorDetailPage({ role }: { role: InstructorDetailRole }) {
               isOrganisation ? (
                 <Button asChild size='sm'>
                   <Link
-                    href={`/dashboard/organisation/classes/new?instructorUuid=${encodeURIComponent(
-                      instructorUuid
-                    )}`}
+                    href={createClassHref({ instructorUuid })}
                   >
                     <BookOpen className='size-4' />
                     Assign class

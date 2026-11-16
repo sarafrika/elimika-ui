@@ -1,5 +1,8 @@
 'use client';
 
+import { CalendarDays, ChevronLeft, ChevronRight, Info, Settings } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { JobTimeLegend } from '@/components/instructor/job-time';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -20,14 +23,10 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useTimeZone } from '@/context/timezone-context';
 import { normalizeTimeZone, scheduleTimeZoneLabel, scheduleTimeZoneOptions } from '@/lib/date';
-import { CalendarDays, ChevronLeft, ChevronRight, Info, Settings } from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
 import { useUserDomain } from '../../../../../context/user-domain-context';
 import { roleScopedDashboardPath } from '../../../../../src/features/dashboard/lib/active-domain-storage';
 import type { SchedulePreferences, SchedulerCalendarData } from './calendar-utils';
 import {
-  TIME_OPTIONS,
   createDefaultPreferences,
   disambiguateSharedTitles,
   findClosestDate,
@@ -38,6 +37,7 @@ import {
   isSameCalendarDay,
   persistSchedulerPreferences,
   readSchedulerPreferences,
+  TIME_OPTIONS,
 } from './calendar-utils';
 import { SchedulerFilters } from './scheduler-filters';
 import { SchedulerGrid } from './scheduler-grid';
@@ -580,9 +580,7 @@ export function SchedulerCalendarView({ profile, data, onVisibleRangeChange }: P
                 showWeekends={preferences.showWeekends}
                 onEventClick={handleEventClick}
                 onEmptySlotClick={handleEmptySlotClick}
-                canCreateClass={
-                  activeDomain === 'instructor' || activeDomain === 'organisation_user'
-                }
+                canCreateClass={activeDomain === 'instructor'}
                 onSelectDate={handleSelectDate}
               />
             )}

@@ -10,7 +10,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { ALL_CATEGORIES, CategoryTabs, filterByCategoryTabs } from '@/components/category-tabs';
+import { surfaceTheme } from '@/components/data-display';
 import { PageHeader } from '@/components/page-header';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,12 +36,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { SearchQueryInput } from '@/components/search/search-input';
-import { SearchNotice } from '@/components/search/search-notice';
 import { useOrganisation } from '@/context/organisation-context';
+import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { useSearchIssue } from '@/hooks/use-search-query';
 import { useUrlSearchQuery } from '@/hooks/use-url-search-query';
-import { useInstructorsByIds } from '@/hooks/use-batched-lookups';
 import { extractList, extractPage } from '@/lib/api-helpers';
 import { cn } from '@/lib/utils';
 import type {
@@ -58,10 +59,9 @@ import {
   getUsersByOrganisationAndDomainOptions,
   listResourcesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
-import { surfaceTheme } from '@/components/data-display';
+import { createClassHref } from '@/src/features/organisation/class-builder/routes';
 
-const NEW_CLASS_HREF = dashboardUrl('organisation', 'classes/new');
+const NEW_CLASS_HREF = createClassHref();
 
 const categoryLabel = (cd: ClassDefinition) =>
   cd.location_type === 'ONLINE'
@@ -362,7 +362,7 @@ export default function ClassesPage() {
           <LayoutList className='text-muted-foreground mx-auto h-8 w-8' />
           <div className='mt-2 font-medium'>No classes yet</div>
           <p className='text-muted-foreground text-sm'>
-            Classes start from a job. Post a job, hire an instructor, then create the class from it.
+            Create a class for one of your instructors, or start from a job once someone is hired.
           </p>
           <Button asChild className='mt-4 gap-1.5'>
             <Link href={NEW_CLASS_HREF}>
