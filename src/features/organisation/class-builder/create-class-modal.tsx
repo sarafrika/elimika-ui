@@ -42,7 +42,7 @@ import {
   ServiceSection,
 } from './class-builder-sections';
 import { viewClassHref } from './routes';
-import { useClassBuilder } from './use-class-builder';
+import { type HiringJob, useClassBuilder } from './use-class-builder';
 import { useClassInstructors } from './use-class-instructors';
 
 export type CreateClassPrefill = {
@@ -76,7 +76,7 @@ export function CreateClassModal({
     ...getJobOptions({ path: { jobUuid } }),
     enabled: Boolean(jobUuid),
   });
-  const job = jobUuid ? (jobQuery.data?.data ?? null) : null;
+  const job: HiringJob | null = jobUuid ? (jobQuery.data?.data ?? null) : null;
   const jobIsHired = job ? jobStage(job) === 'awaiting_class' : false;
   const [scope, setScope] = useState<JobScope>(prefill.job ? 'all' : 'schedule');
   const fromJob = Boolean(job && jobIsHired && scope === 'all');
@@ -211,11 +211,12 @@ export function CreateClassModal({
     if (fromJob && job?.uuid) {
       createFromJob.mutate({
         path: { jobUuid: job.uuid },
-        body: builder.buildJobRequest(Number(job.instructor_pay ?? 0), {
+        // The generated client predates this endpoint's optional body.
+        ...({ body: builder.buildJobRequest(Number(job.instructor_pay ?? 0), {
           description: job.description ?? '',
           requirements: job.requirements ?? '',
           membership: job.membership_preference ?? 'ANY',
-        }),
+        }) } as object),
       });
       return;
     }

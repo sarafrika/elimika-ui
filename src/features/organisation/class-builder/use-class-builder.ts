@@ -40,6 +40,14 @@ export type Place = Omit<WhereItHappensValue, 'delivery'>;
 export type MembershipPreference = 'ANY' | 'ORGANISATION_ONLY';
 export type Hiring = { description: string; requirements: string; membership: MembershipPreference };
 
+// Fields the API has that the checked-in generated client predates; drop once it is regenerated.
+type HiringFields = { requirements?: string | null; membership_preference?: MembershipPreference | null };
+export type HiringJob = ClassMarketplaceJob & HiringFields;
+export type HiringJobRequest = ClassMarketplaceJobRequest & HiringFields;
+export type ClassCreateRequest = ClassDefinitionCreateRequestWritable & {
+  resources?: ClassMarketplaceJobResource[];
+};
+
 const EMPTY_PLACE: Place = { branchUuid: '', meetingLink: '', venueUuid: '', equipmentUuids: [] };
 const BASES: SelectableRateBasis[] = ['per_hour', 'per_day'];
 
@@ -277,7 +285,7 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
   };
 
   /** The job request; pay and hiring details come from the Post job modal. */
-  const buildJobRequest = (instructorPay: number, hiring: Hiring): ClassMarketplaceJobRequest => {
+  const buildJobRequest = (instructorPay: number, hiring: Hiring): HiringJobRequest => {
     const { sessionTemplates, earliest, offeringFields } = common();
     const picked = resources();
     return {
@@ -312,14 +320,14 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
       ...schedule.academicBounds(),
       session_templates: sessionTemplates,
       ...(picked.length > 0 ? { resources: picked } : {}),
-    } as ClassMarketplaceJobRequest;
+    } as HiringJobRequest;
   };
 
   /** A class taught by the picked instructor at their approved rate. */
   const buildClassRequest = (
     instructorUuid: string,
     instructorPay: number | null
-  ): ClassDefinitionCreateRequestWritable => {
+  ): ClassCreateRequest => {
     const { sessionTemplates, earliest, learningContext } = common();
     const picked = resources();
     return {
@@ -345,7 +353,7 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
       default_end_time: earliest.end_time,
       session_templates: sessionTemplates,
       ...(picked.length > 0 ? { resources: picked } : {}),
-    } as ClassDefinitionCreateRequestWritable;
+    } as ClassCreateRequest;
   };
 
   return {

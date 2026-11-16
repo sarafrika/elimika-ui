@@ -43,7 +43,6 @@ import {
   addMembersResponseTransformer,
   addOrganisationPayoutMethodResponseTransformer,
   addPayoutApproverResponseTransformer,
-  addPayoutBatchWithdrawalsResponseTransformer,
   addPayoutMethodResponseTransformer,
   addPortfolioItemResponseTransformer,
   addProgramCourseResponseTransformer,
@@ -66,7 +65,6 @@ import {
   applyToJobResponseTransformer,
   approveAdminWithdrawalResponseTransformer,
   approveOrganisationWithdrawalResponseTransformer,
-  approvePayoutBatchResponseTransformer,
   archiveCourseResponseTransformer,
   archiveProgramResponseTransformer,
   assignAdminDomainResponseTransformer,
@@ -76,7 +74,6 @@ import {
   cancelJobResponseTransformer,
   cancelObligationResponseTransformer,
   cancelOrganisationWithdrawalResponseTransformer,
-  cancelPayoutBatchResponseTransformer,
   cancelWithdrawalResponseTransformer,
   certificationsResponseTransformer,
   checkAdminWithdrawalResponseTransformer,
@@ -113,7 +110,6 @@ import {
   createLinkResponseTransformer,
   createOrganisationResponseTransformer,
   createOrganisationUserResponseTransformer,
-  createPayoutBatchResponseTransformer,
   createPracticeActivityResponseTransformer,
   createQuizResponseTransformer,
   createQuizScheduleResponseTransformer,
@@ -146,7 +142,6 @@ import {
   getActiveProgramsResponseTransformer,
   getActivityFeedResponseTransformer,
   getAdminEligibleUsersResponseTransformer,
-  getAdminSaleSplitResponseTransformer,
   getAdminUsersResponseTransformer,
   getAllActiveClassDefinitionsResponseTransformer,
   getAllAssessmentRubricsResponseTransformer,
@@ -294,11 +289,9 @@ import {
   getOrganisationStatisticsResponseTransformer,
   getOrganisationTimetableResponseTransformer,
   getOrganisationWalletResponseTransformer,
-  getOrganisationWalletSaleResponseTransformer,
   getOrganisationWithdrawalResponseTransformer,
   getOrganizationAdminUsersResponseTransformer,
   getPassingScoringLevelsResponseTransformer,
-  getPayoutBatchResponseTransformer,
   getPayoutRulesResponseTransformer,
   getPayoutSettingsResponseTransformer,
   getPayoutSummaryResponseTransformer,
@@ -387,7 +380,6 @@ import {
   getUsersByOrganisationResponseTransformer,
   getVerifiedCourseCreatorsResponseTransformer,
   getWalletResponseTransformer,
-  getWalletSaleResponseTransformer,
   getWeeklyGrowthResponseTransformer,
   getWithdrawalResponseTransformer,
   globalSearchResponseTransformer,
@@ -395,7 +387,6 @@ import {
   gradeSubmissionResponseTransformer,
   joinWaitlistResponseTransformer,
   listAchievementsResponseTransformer,
-  listAdminOrderSaleSplitsResponseTransformer,
   listAdminWithdrawalsResponseTransformer,
   listAuditResponseTransformer,
   listAvailabilityRulesResponseTransformer,
@@ -427,13 +418,11 @@ import {
   listOrganisationInvitationsResponseTransformer,
   listOrganisationPayoutMethodsResponseTransformer,
   listOrganisationWalletAuditResponseTransformer,
-  listOrganisationWalletSalesResponseTransformer,
   listOrganisationWalletStatementsResponseTransformer,
   listOrganisationWalletTransactionsResponseTransformer,
   listOrganisationWithdrawalsResponseTransformer,
   listPaymentsResponseTransformer,
   listPayoutApproversResponseTransformer,
-  listPayoutBatchesResponseTransformer,
   listPayoutMethodsResponseTransformer,
   listPendingCourseEditsResponseTransformer,
   listPendingCoursesResponseTransformer,
@@ -443,7 +432,6 @@ import {
   listProgramTrainingApplicationsResponseTransformer,
   listProgramTrainingRateUpdatesResponseTransformer,
   listResourcesResponseTransformer,
-  listResponseTransformer,
   listRosterResponseTransformer,
   listRulesResponseTransformer,
   listSalesResponseTransformer,
@@ -457,7 +445,6 @@ import {
   listTrainingRateUpdatesResponseTransformer,
   listTransactions1ResponseTransformer,
   listTransactionsResponseTransformer,
-  listWalletSalesResponseTransformer,
   listWithdrawalsResponseTransformer,
   makeOrganisationPayoutMethodDefaultResponseTransformer,
   makePayoutMethodDefaultResponseTransformer,
@@ -475,10 +462,8 @@ import {
   recordSessionResponseTransformer,
   registerAndAcceptResponseTransformer,
   rejectAdminWithdrawalResponseTransformer,
-  rejectPayoutBatchResponseTransformer,
   removeAdminDomainResponseTransformer,
   removeItemResponseTransformer,
-  removePayoutBatchWithdrawalResponseTransformer,
   reopenSessionReportResponseTransformer,
   replaceLearnerSkillGoalsResponseTransformer,
   requestOrganisationVerificationResponseTransformer,
@@ -492,15 +477,12 @@ import {
   resendOrganisationWithdrawalCodeResponseTransformer,
   resendPayoutMethodCodeResponseTransformer,
   resendWithdrawalCodeResponseTransformer,
-  resetResponseTransformer,
   resolveByCourseOrClassResponseTransformer,
   restoreCourseVersionResponseTransformer,
-  returnPayoutBatchToDraftResponseTransformer,
   returnSubmissionResponseTransformer,
   reviewApplicationResponseTransformer,
   revokeOrganisationInvitationResponseTransformer,
   saveQuizResponsesResponseTransformer,
-  saveResponseTransformer,
   scheduleClassResponseTransformer,
   search1ResponseTransformer,
   search2ResponseTransformer,
@@ -558,7 +540,6 @@ import {
   submitDomainOnboardingResponseTransformer,
   submitGuardianDetailsResponseTransformer,
   submitInstructorReviewResponseTransformer,
-  submitPayoutBatchResponseTransformer,
   submitProgramReviewResponseTransformer,
   submitProgramTrainingApplicationResponseTransformer,
   submitProgramTrainingRateUpdateResponseTransformer,
@@ -567,7 +548,6 @@ import {
   submitTrainingApplicationResponseTransformer,
   submitTrainingRateUpdateResponseTransformer,
   summaryResponseTransformer,
-  transferBetweenPursesResponseTransformer,
   transferResponseTransformer,
   unpublishCourseResponseTransformer,
   unpublishProgramResponseTransformer,
@@ -792,9 +772,6 @@ import type {
   AddPayoutApproverData,
   AddPayoutApproverErrors,
   AddPayoutApproverResponses,
-  AddPayoutBatchWithdrawalsData,
-  AddPayoutBatchWithdrawalsErrors,
-  AddPayoutBatchWithdrawalsResponses,
   AddPayoutMethodData,
   AddPayoutMethodErrors,
   AddPayoutMethodResponses,
@@ -870,9 +847,6 @@ import type {
   ApproveOrganisationWithdrawalData,
   ApproveOrganisationWithdrawalErrors,
   ApproveOrganisationWithdrawalResponses,
-  ApprovePayoutBatchData,
-  ApprovePayoutBatchErrors,
-  ApprovePayoutBatchResponses,
   ArchiveCourseData,
   ArchiveCourseErrors,
   ArchiveCourseResponses,
@@ -912,9 +886,6 @@ import type {
   CancelOrganisationWithdrawalData,
   CancelOrganisationWithdrawalErrors,
   CancelOrganisationWithdrawalResponses,
-  CancelPayoutBatchData,
-  CancelPayoutBatchErrors,
-  CancelPayoutBatchResponses,
   CancelScheduledClassData,
   CancelScheduledClassErrors,
   CancelScheduledClassResponses,
@@ -1056,9 +1027,6 @@ import type {
   CreateOrganisationUserData,
   CreateOrganisationUserErrors,
   CreateOrganisationUserResponses,
-  CreatePayoutBatchData,
-  CreatePayoutBatchErrors,
-  CreatePayoutBatchResponses,
   CreatePracticeActivityData,
   CreatePracticeActivityErrors,
   CreatePracticeActivityResponses,
@@ -1350,12 +1318,6 @@ import type {
   DocumentsData,
   DocumentsErrors,
   DocumentsResponses,
-  DownloadData,
-  DownloadErrors,
-  DownloadReceiptData,
-  DownloadReceiptErrors,
-  DownloadReceiptResponses,
-  DownloadResponses,
   EducationData,
   EducationErrors,
   EducationResponses,
@@ -1398,9 +1360,6 @@ import type {
   GetAdminEligibleUsersData,
   GetAdminEligibleUsersErrors,
   GetAdminEligibleUsersResponses,
-  GetAdminSaleSplitData,
-  GetAdminSaleSplitErrors,
-  GetAdminSaleSplitResponses,
   GetAdminUsersData,
   GetAdminUsersErrors,
   GetAdminUsersResponses,
@@ -1922,9 +1881,6 @@ import type {
   GetOrganisationWalletData,
   GetOrganisationWalletErrors,
   GetOrganisationWalletResponses,
-  GetOrganisationWalletSaleData,
-  GetOrganisationWalletSaleErrors,
-  GetOrganisationWalletSaleResponses,
   GetOrganisationWithdrawalData,
   GetOrganisationWithdrawalErrors,
   GetOrganisationWithdrawalResponses,
@@ -1940,9 +1896,6 @@ import type {
   GetPaymentStatusData,
   GetPaymentStatusErrors,
   GetPaymentStatusResponses,
-  GetPayoutBatchData,
-  GetPayoutBatchErrors,
-  GetPayoutBatchResponses,
   GetPayoutRulesData,
   GetPayoutRulesErrors,
   GetPayoutRulesResponses,
@@ -2250,9 +2203,6 @@ import type {
   GetWalletData,
   GetWalletErrors,
   GetWalletResponses,
-  GetWalletSaleData,
-  GetWalletSaleErrors,
-  GetWalletSaleResponses,
   GetWeeklyGrowthData,
   GetWeeklyGrowthErrors,
   GetWeeklyGrowthResponses,
@@ -2298,9 +2248,6 @@ import type {
   ListAchievementsData,
   ListAchievementsErrors,
   ListAchievementsResponses,
-  ListAdminOrderSaleSplitsData,
-  ListAdminOrderSaleSplitsErrors,
-  ListAdminOrderSaleSplitsResponses,
   ListAdminWithdrawalsData,
   ListAdminWithdrawalsErrors,
   ListAdminWithdrawalsResponses,
@@ -2334,7 +2281,6 @@ import type {
   ListCurrenciesData,
   ListCurrenciesErrors,
   ListCurrenciesResponses,
-  ListData,
   ListDocumentsData,
   ListDocumentsErrors,
   ListDocumentsResponses,
@@ -2344,7 +2290,6 @@ import type {
   ListEducationData,
   ListEducationErrors,
   ListEducationResponses,
-  ListErrors,
   ListExperienceData,
   ListExperienceErrors,
   ListExperienceResponses,
@@ -2411,9 +2356,6 @@ import type {
   ListOrganisationWalletAuditData,
   ListOrganisationWalletAuditErrors,
   ListOrganisationWalletAuditResponses,
-  ListOrganisationWalletSalesData,
-  ListOrganisationWalletSalesErrors,
-  ListOrganisationWalletSalesResponses,
   ListOrganisationWalletStatementsData,
   ListOrganisationWalletStatementsErrors,
   ListOrganisationWalletStatementsResponses,
@@ -2429,9 +2371,6 @@ import type {
   ListPayoutApproversData,
   ListPayoutApproversErrors,
   ListPayoutApproversResponses,
-  ListPayoutBatchesData,
-  ListPayoutBatchesErrors,
-  ListPayoutBatchesResponses,
   ListPayoutMethodsData,
   ListPayoutMethodsErrors,
   ListPayoutMethodsResponses,
@@ -2459,7 +2398,6 @@ import type {
   ListResourcesData,
   ListResourcesErrors,
   ListResourcesResponses,
-  ListResponses,
   ListRosterData,
   ListRosterErrors,
   ListRosterResponses,
@@ -2511,9 +2449,6 @@ import type {
   ListTransactionsData,
   ListTransactionsErrors,
   ListTransactionsResponses,
-  ListWalletSalesData,
-  ListWalletSalesErrors,
-  ListWalletSalesResponses,
   ListWithdrawalsData,
   ListWithdrawalsErrors,
   ListWithdrawalsResponses,
@@ -2598,9 +2533,6 @@ import type {
   RejectAdminWithdrawalData,
   RejectAdminWithdrawalErrors,
   RejectAdminWithdrawalResponses,
-  RejectPayoutBatchData,
-  RejectPayoutBatchErrors,
-  RejectPayoutBatchResponses,
   RemoveAdminDomainData,
   RemoveAdminDomainErrors,
   RemoveAdminDomainResponses,
@@ -2622,9 +2554,6 @@ import type {
   RemovePayoutApproverData,
   RemovePayoutApproverErrors,
   RemovePayoutApproverResponses,
-  RemovePayoutBatchWithdrawalData,
-  RemovePayoutBatchWithdrawalErrors,
-  RemovePayoutBatchWithdrawalResponses,
   RemovePayoutMethodData,
   RemovePayoutMethodErrors,
   RemovePayoutMethodResponses,
@@ -2715,18 +2644,12 @@ import type {
   ResendWithdrawalCodeData,
   ResendWithdrawalCodeErrors,
   ResendWithdrawalCodeResponses,
-  ResetData,
-  ResetErrors,
-  ResetResponses,
   ResolveByCourseOrClassData,
   ResolveByCourseOrClassErrors,
   ResolveByCourseOrClassResponses,
   RestoreCourseVersionData,
   RestoreCourseVersionErrors,
   RestoreCourseVersionResponses,
-  ReturnPayoutBatchToDraftData,
-  ReturnPayoutBatchToDraftErrors,
-  ReturnPayoutBatchToDraftResponses,
   ReturnSubmissionData,
   ReturnSubmissionErrors,
   ReturnSubmissionResponses,
@@ -2742,12 +2665,9 @@ import type {
   RevokeOrganisationInvitationData,
   RevokeOrganisationInvitationErrors,
   RevokeOrganisationInvitationResponses,
-  SaveData,
-  SaveErrors,
   SaveQuizResponsesData,
   SaveQuizResponsesErrors,
   SaveQuizResponsesResponses,
-  SaveResponses,
   ScheduleClassData,
   ScheduleClassErrors,
   ScheduleClassResponses,
@@ -2924,9 +2844,6 @@ import type {
   SubmitInstructorReviewData,
   SubmitInstructorReviewErrors,
   SubmitInstructorReviewResponses,
-  SubmitPayoutBatchData,
-  SubmitPayoutBatchErrors,
-  SubmitPayoutBatchResponses,
   SubmitProgramReviewData,
   SubmitProgramReviewErrors,
   SubmitProgramReviewResponses,
@@ -2957,12 +2874,6 @@ import type {
   SyncDocumentData,
   SyncDocumentErrors,
   SyncDocumentResponses,
-  TestData,
-  TestErrors,
-  TestResponses,
-  TransferBetweenPursesData,
-  TransferBetweenPursesErrors,
-  TransferBetweenPursesResponses,
   TransferData,
   TransferErrors,
   TransferResponses,
@@ -7518,42 +7429,6 @@ export const updateAgeGroup = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Go back to the built-in wording
- */
-export const reset = <ThrowOnError extends boolean = false>(
-  options: Options<ResetData, ThrowOnError>
-) =>
-  (options.client ?? client).delete<ResetResponses, ResetErrors, ThrowOnError>({
-    responseTransformer: resetResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/sms-templates/{key}',
-    ...options,
-  });
-
-/**
- * Save new wording; rejected unless it passes the placeholder and length checks
- */
-export const save = <ThrowOnError extends boolean = false>(
-  options: Options<SaveData, ThrowOnError>
-) =>
-  (options.client ?? client).put<SaveResponses, SaveErrors, ThrowOnError>({
-    responseTransformer: saveResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/sms-templates/{key}',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
  * Delete a skill
  *
  * Removes it from every course and job tag list and unlinks instructor skills (their free text stays). Prefer retiring it with active=false.
@@ -7810,8 +7685,6 @@ export const cancelWithdrawal = <ThrowOnError extends boolean = false>(
 
 /**
  * Transfer funds between wallets
- *
- * From the sender's source_purse (or their only funded purse) into the receiver's STUDENT purse.
  */
 export const transfer = <ThrowOnError extends boolean = false>(
   options: Options<TransferData, ThrowOnError>
@@ -7831,27 +7704,7 @@ export const transfer = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * List the sales that paid this user, with each split
- *
- * Newest first. Each captured class sale line this user was paid on as course creator or instructor, with the creator's and the delivery party's gross, fee and net, the platform fee, anything retained and the fee rule in force at purchase. The other party is named only. With purse=COURSE_CREATOR only creator legs, with purse=INSTRUCTOR only delivery legs; your_role, your_purse and your_* then describe that leg.
- */
-export const listWalletSales = <ThrowOnError extends boolean = false>(
-  options: Options<ListWalletSalesData, ThrowOnError>
-) =>
-  (options.client ?? client).get<ListWalletSalesResponses, ListWalletSalesErrors, ThrowOnError>({
-    responseTransformer: listWalletSalesResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/wallets/{userUuid}/sales',
-    ...options,
-  });
-
-/**
  * Record a wallet sale credit
- *
- * purse is required: COURSE_CREATOR or INSTRUCTOR.
  */
 export const creditSale = <ThrowOnError extends boolean = false>(
   options: Options<CreditSaleData, ThrowOnError>
@@ -7863,32 +7716,6 @@ export const creditSale = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/wallets/{userUuid}/sales',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Move money between two of your own purses
- *
- * A TRANSFER_OUT row on from_purse and a TRANSFER_IN row on to_purse with one transfer_reference, balanced in the ledger, no fee. Refused when from_purse holds less.
- */
-export const transferBetweenPurses = <ThrowOnError extends boolean = false>(
-  options: Options<TransferBetweenPursesData, ThrowOnError>
-) =>
-  (options.client ?? client).post<
-    TransferBetweenPursesResponses,
-    TransferBetweenPursesErrors,
-    ThrowOnError
-  >({
-    responseTransformer: transferBetweenPursesResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/wallets/{userUuid}/purse-transfers',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -7986,8 +7813,6 @@ export const resendPayoutMethodCode = <ThrowOnError extends boolean = false>(
 
 /**
  * Record a wallet deposit
- *
- * Into the STUDENT purse unless purse says otherwise.
  */
 export const deposit = <ThrowOnError extends boolean = false>(
   options: Options<DepositData, ThrowOnError>
@@ -14043,8 +13868,7 @@ export const uploadJobThumbnail = <ThrowOnError extends boolean = false>(
 /**
  * Create the class for a job whose applicant has been hired
  *
- * Assigns the hired instructor, converts holds and fills the job. An optional body edits the job first; holds are re-checked.
- * Refused with 409 on schedule or resource clashes, or when the instructor's approved rate no longer covers the pay.
+ * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call. Refused with 409 when the hired instructor no longer has an approved rate for the job's rate basis that its pay covers.
  */
 export const createClassForJob = <ThrowOnError extends boolean = false>(
   options: Options<CreateClassForJobData, ThrowOnError>
@@ -14061,10 +13885,6 @@ export const createClassForJob = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/classes/jobs/{jobUuid}/class',
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
   });
 
 /**
@@ -14802,21 +14622,6 @@ export const createAdminUser = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Send the saved wording with sample values to the admin's own phone
- */
-export const test = <ThrowOnError extends boolean = false>(
-  options: Options<TestData, ThrowOnError>
-) =>
-  (options.client ?? client).post<TestResponses, TestErrors, ThrowOnError>({
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/sms-templates/{key}/test',
-    ...options,
-  });
-
-/**
  * List every skill
  *
  * The whole taxonomy in name order, retired skills included unless active is given. q matches names, slugs and aliases in memory (no database text search).
@@ -14930,7 +14735,7 @@ export const moderateProgram = <ThrowOnError extends boolean = false>(
 /**
  * Reject a withdrawal and return its money
  *
- * The reason is shown to the earner. A withdrawal in a draft payout batch leaves the batch; one in a batch waiting for approval or released cannot be rejected on its own (409).
+ * The reason is shown to the earner.
  */
 export const rejectAdminWithdrawal = <ThrowOnError extends boolean = false>(
   options: Options<RejectAdminWithdrawalData, ThrowOnError>
@@ -14956,7 +14761,7 @@ export const rejectAdminWithdrawal = <ThrowOnError extends boolean = false>(
 /**
  * Ask M-Pesa about a withdrawal now
  *
- * Sends a cleared withdrawal outside a payout batch, or reads the result of one in flight. Batch rows are sent only by the batch sender, which paces them.
+ * Sends a cleared withdrawal, or reads the result of one in flight.
  */
 export const checkAdminWithdrawal = <ThrowOnError extends boolean = false>(
   options: Options<CheckAdminWithdrawalData, ThrowOnError>
@@ -14976,9 +14781,7 @@ export const checkAdminWithdrawal = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Put one withdrawal up for approval on its own
- *
- * Does not send money. Creates a one-row payout batch holding this withdrawal, submitted by the caller and waiting for approval (AWAITING_APPROVAL), so a different admin must still approve that batch before M-Pesa pays it. The withdrawal stays NEEDS_REVIEW and comes back with its payout_batch_uuid set. Refused when the withdrawal is already in a batch.
+ * Approve a flagged withdrawal and send it
  */
 export const approveAdminWithdrawal = <ThrowOnError extends boolean = false>(
   options: Options<ApproveAdminWithdrawalData, ThrowOnError>
@@ -14995,196 +14798,6 @@ export const approveAdminWithdrawal = <ThrowOnError extends boolean = false>(
     ],
     url: '/api/v1/admin/payouts/withdrawals/{withdrawalUuid}/approve',
     ...options,
-  });
-
-/**
- * List payout batches
- *
- * Newest first; filter by status, e.g. AWAITING_APPROVAL.
- */
-export const listPayoutBatches = <ThrowOnError extends boolean = false>(
-  options: Options<ListPayoutBatchesData, ThrowOnError>
-) =>
-  (options.client ?? client).get<ListPayoutBatchesResponses, ListPayoutBatchesErrors, ThrowOnError>(
-    {
-      responseTransformer: listPayoutBatchesResponseTransformer,
-      security: [
-        { scheme: 'bearer', type: 'http' },
-        { scheme: 'bearer', type: 'http' },
-      ],
-      url: '/api/v1/admin/payouts/batches',
-      ...options,
-    }
-  );
-
-/**
- * Start a draft payout batch
- *
- * Optionally with withdrawals waiting for review (NEEDS_REVIEW) that are in no other batch.
- */
-export const createPayoutBatch = <ThrowOnError extends boolean = false>(
-  options?: Options<CreatePayoutBatchData, ThrowOnError>
-) =>
-  (options?.client ?? client).post<
-    CreatePayoutBatchResponses,
-    CreatePayoutBatchErrors,
-    ThrowOnError
-  >({
-    responseTransformer: createPayoutBatchResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/payouts/batches',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
-  });
-
-/**
- * Add withdrawals to a draft batch
- *
- * Each must be waiting for review (NEEDS_REVIEW) and in no other batch.
- */
-export const addPayoutBatchWithdrawals = <ThrowOnError extends boolean = false>(
-  options: Options<AddPayoutBatchWithdrawalsData, ThrowOnError>
-) =>
-  (options.client ?? client).post<
-    AddPayoutBatchWithdrawalsResponses,
-    AddPayoutBatchWithdrawalsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: addPayoutBatchWithdrawalsResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/payouts/batches/{batchUuid}/withdrawals',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Submit a draft batch for approval
- *
- * A different admin from whoever built or submitted it must then approve it.
- */
-export const submitPayoutBatch = <ThrowOnError extends boolean = false>(
-  options: Options<SubmitPayoutBatchData, ThrowOnError>
-) =>
-  (options.client ?? client).post<
-    SubmitPayoutBatchResponses,
-    SubmitPayoutBatchErrors,
-    ThrowOnError
-  >({
-    responseTransformer: submitPayoutBatchResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/payouts/batches/{batchUuid}/submit',
-    ...options,
-  });
-
-/**
- * Send a batch waiting for approval back to draft
- *
- * Any admin may; it must be submitted again before it can be approved.
- */
-export const returnPayoutBatchToDraft = <ThrowOnError extends boolean = false>(
-  options: Options<ReturnPayoutBatchToDraftData, ThrowOnError>
-) =>
-  (options.client ?? client).post<
-    ReturnPayoutBatchToDraftResponses,
-    ReturnPayoutBatchToDraftErrors,
-    ThrowOnError
-  >({
-    responseTransformer: returnPayoutBatchToDraftResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/payouts/batches/{batchUuid}/return-to-draft',
-    ...options,
-  });
-
-/**
- * Reject a batch waiting for approval
- *
- * Its withdrawals go back to the review queue, still held; reject them one by one to return the money.
- */
-export const rejectPayoutBatch = <ThrowOnError extends boolean = false>(
-  options: Options<RejectPayoutBatchData, ThrowOnError>
-) =>
-  (options.client ?? client).post<
-    RejectPayoutBatchResponses,
-    RejectPayoutBatchErrors,
-    ThrowOnError
-  >({
-    responseTransformer: rejectPayoutBatchResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/payouts/batches/{batchUuid}/reject',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
-  });
-
-/**
- * Cancel a draft batch
- *
- * Its withdrawals go back to the review queue, still held.
- */
-export const cancelPayoutBatch = <ThrowOnError extends boolean = false>(
-  options: Options<CancelPayoutBatchData, ThrowOnError>
-) =>
-  (options.client ?? client).post<
-    CancelPayoutBatchResponses,
-    CancelPayoutBatchErrors,
-    ThrowOnError
-  >({
-    responseTransformer: cancelPayoutBatchResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/payouts/batches/{batchUuid}/cancel',
-    ...options,
-  });
-
-/**
- * Approve a batch and release it to M-Pesa
- *
- * Refused (409) for whoever built or submitted the batch, when the batch total exceeds the payout float's utility funds, when the float is unknown unless override_unknown_float is true, and when any row carries a wallet flag (wallet_issue_count above zero) unless acknowledge_wallet_issues is true, which the approval audit records. On approval every row moves to SENDING and is paid a few at a time.
- */
-export const approvePayoutBatch = <ThrowOnError extends boolean = false>(
-  options: Options<ApprovePayoutBatchData, ThrowOnError>
-) =>
-  (options.client ?? client).post<
-    ApprovePayoutBatchResponses,
-    ApprovePayoutBatchErrors,
-    ThrowOnError
-  >({
-    responseTransformer: approvePayoutBatchResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/payouts/batches/{batchUuid}/approve',
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
   });
 
 /**
@@ -15674,8 +15287,6 @@ export const updateAssignmentSchedule = <ThrowOnError extends boolean = false>(
 
 /**
  * Get a user's wallet balance
- *
- * One balance per purse (COURSE_CREATOR, INSTRUCTOR, STUDENT) in purses[], each with what is held and available; the top-level figures are their sums. Creates nothing.
  */
 export const getWallet = <ThrowOnError extends boolean = false>(
   options: Options<GetWalletData, ThrowOnError>
@@ -15708,8 +15319,6 @@ export const getWithdrawal = <ThrowOnError extends boolean = false>(
 
 /**
  * List wallet transactions
- *
- * Newest first, every purse unless purse is given; each row says which purse it moved.
  */
 export const listTransactions1 = <ThrowOnError extends boolean = false>(
   options: Options<ListTransactions1Data, ThrowOnError>
@@ -15729,7 +15338,7 @@ export const listTransactions1 = <ThrowOnError extends boolean = false>(
 /**
  * Download wallet transactions as CSV
  *
- * Every matching row, newest first; dates are UTC and inclusive. Every purse unless purse is given.
+ * Every matching row, newest first; dates are UTC and inclusive.
  */
 export const exportTransactions = <ThrowOnError extends boolean = false>(
   options: Options<ExportTransactionsData, ThrowOnError>
@@ -15750,7 +15359,7 @@ export const exportTransactions = <ThrowOnError extends boolean = false>(
 /**
  * List a user's monthly wallet statements
  *
- * Newest month first, UTC months; quiet months carry the balance over. One purse when purse is given, otherwise every purse summed, leaving out money moved between the user's own purses.
+ * Newest month first, UTC months; quiet months carry the balance over.
  */
 export const listStatements = <ThrowOnError extends boolean = false>(
   options: Options<ListStatementsData, ThrowOnError>
@@ -15762,22 +15371,6 @@ export const listStatements = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/wallets/{userUuid}/statements',
-    ...options,
-  });
-
-/**
- * Get one sale split this user was paid on
- */
-export const getWalletSale = <ThrowOnError extends boolean = false>(
-  options: Options<GetWalletSaleData, ThrowOnError>
-) =>
-  (options.client ?? client).get<GetWalletSaleResponses, GetWalletSaleErrors, ThrowOnError>({
-    responseTransformer: getWalletSaleResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/wallets/{userUuid}/sales/{splitUuid}',
     ...options,
   });
 
@@ -17169,23 +16762,6 @@ export const searchAttempts = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Download a receipt PDF from a signed link
- *
- * 404 unless the link's token matches the order and the order is paid
- */
-export const download = <ThrowOnError extends boolean = false>(
-  options: Options<DownloadData, ThrowOnError>
-) =>
-  (options.client ?? client).get<DownloadResponses, DownloadErrors, ThrowOnError>({
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/public/receipts/{orderId}.pdf',
-    ...options,
-  });
-
-/**
  * List rate updates to review on a program
  *
  * The program creator's queue of rate updates across the program's applications. Filter with `status=pending|approved|rejected|withdrawn`.
@@ -17905,48 +17481,6 @@ export const listOrganisationWalletStatements = <ThrowOnError extends boolean = 
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/organisations/{organisationUuid}/wallet/statements',
-    ...options,
-  });
-
-/**
- * List the sales that paid an organisation, with each split
- *
- * Newest first. Each captured class sale line the organisation was paid on as the hiring organisation, with the creator's and the organisation's gross, fee and net, the platform fee, anything retained and the fee rule in force at purchase. The course creator is named only.
- */
-export const listOrganisationWalletSales = <ThrowOnError extends boolean = false>(
-  options: Options<ListOrganisationWalletSalesData, ThrowOnError>
-) =>
-  (options.client ?? client).get<
-    ListOrganisationWalletSalesResponses,
-    ListOrganisationWalletSalesErrors,
-    ThrowOnError
-  >({
-    responseTransformer: listOrganisationWalletSalesResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/organisations/{organisationUuid}/wallet/sales',
-    ...options,
-  });
-
-/**
- * Get one sale split an organisation was paid on
- */
-export const getOrganisationWalletSale = <ThrowOnError extends boolean = false>(
-  options: Options<GetOrganisationWalletSaleData, ThrowOnError>
-) =>
-  (options.client ?? client).get<
-    GetOrganisationWalletSaleResponses,
-    GetOrganisationWalletSaleErrors,
-    ThrowOnError
-  >({
-    responseTransformer: getOrganisationWalletSaleResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/organisations/{organisationUuid}/wallet/sales/{splitUuid}',
     ...options,
   });
 
@@ -20704,23 +20238,6 @@ export const getOrder = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * Download the payment receipt PDF
- *
- * The buyer's (or a platform admin's) branded receipt for a paid order; 404 for anyone else or an unpaid order
- */
-export const downloadReceipt = <ThrowOnError extends boolean = false>(
-  options: Options<DownloadReceiptData, ThrowOnError>
-) =>
-  (options.client ?? client).get<DownloadReceiptResponses, DownloadReceiptErrors, ThrowOnError>({
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/commerce/orders/{orderId}/receipt.pdf',
-    ...options,
-  });
-
-/**
  * Get order payment status
  *
  * Polls the M-Pesa gateway and captures the order on confirmed payment
@@ -21895,22 +21412,6 @@ export const getAdminEligibleUsers = <ThrowOnError extends boolean = false>(
   });
 
 /**
- * List every system SMS with its wording and allowed placeholders
- */
-export const list = <ThrowOnError extends boolean = false>(
-  options?: Options<ListData, ThrowOnError>
-) =>
-  (options?.client ?? client).get<ListResponses, ListErrors, ThrowOnError>({
-    responseTransformer: listResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/sms-templates',
-    ...options,
-  });
-
-/**
  * List search indexes
  *
  * Definition, recorded sync state and live engine stats of every index
@@ -21925,46 +21426,6 @@ export const listIndexes = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/admin/search/indexes',
-    ...options,
-  });
-
-/**
- * Get one sale split
- */
-export const getAdminSaleSplit = <ThrowOnError extends boolean = false>(
-  options: Options<GetAdminSaleSplitData, ThrowOnError>
-) =>
-  (options.client ?? client).get<GetAdminSaleSplitResponses, GetAdminSaleSplitErrors, ThrowOnError>(
-    {
-      responseTransformer: getAdminSaleSplitResponseTransformer,
-      security: [
-        { scheme: 'bearer', type: 'http' },
-        { scheme: 'bearer', type: 'http' },
-      ],
-      url: '/api/v1/admin/sales/splits/{splitUuid}',
-      ...options,
-    }
-  );
-
-/**
- * List the split of each settled line of an order
- *
- * In line order. Both parties are named, with their owner uuids and wallet rows.
- */
-export const listAdminOrderSaleSplits = <ThrowOnError extends boolean = false>(
-  options: Options<ListAdminOrderSaleSplitsData, ThrowOnError>
-) =>
-  (options.client ?? client).get<
-    ListAdminOrderSaleSplitsResponses,
-    ListAdminOrderSaleSplitsErrors,
-    ThrowOnError
-  >({
-    responseTransformer: listAdminOrderSaleSplitsResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/sales/orders/{orderId}/splits',
     ...options,
   });
 
@@ -22100,7 +21561,7 @@ export const summary = <ThrowOnError extends boolean = false>(
 /**
  * List withdrawals across all wallets
  *
- * Newest first; filter by status, e.g. NEEDS_REVIEW. With unbatched=true, withdrawals already in a payout batch are left out, which gives the queue a new batch is built from. Each row carries wallet_check, its earner's wallet read now, and wallet_flags derived from it.
+ * Newest first; filter by status, e.g. NEEDS_REVIEW.
  */
 export const listAdminWithdrawals = <ThrowOnError extends boolean = false>(
   options: Options<ListAdminWithdrawalsData, ThrowOnError>
@@ -22132,24 +21593,6 @@ export const getPayoutSummary = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/admin/payouts/summary',
-    ...options,
-  });
-
-/**
- * Get a payout batch with its withdrawals and the payout float
- *
- * payout_float is read from M-Pesa on each call and is null when unknown. Each row carries wallet_check, its earner's wallet read now, and wallet_flags derived from it; the batch's wallet_issue_count counts the rows with a wallet flag.
- */
-export const getPayoutBatch = <ThrowOnError extends boolean = false>(
-  options: Options<GetPayoutBatchData, ThrowOnError>
-) =>
-  (options.client ?? client).get<GetPayoutBatchResponses, GetPayoutBatchErrors, ThrowOnError>({
-    responseTransformer: getPayoutBatchResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/payouts/batches/{batchUuid}',
     ...options,
   });
 
@@ -22772,27 +22215,5 @@ export const removeAdminDomain = <ThrowOnError extends boolean = false>(
       { scheme: 'bearer', type: 'http' },
     ],
     url: '/api/v1/admin/users/{uuid}/domains/{domain}',
-    ...options,
-  });
-
-/**
- * Take a withdrawal out of a draft batch
- *
- * It goes back to the review queue, still held.
- */
-export const removePayoutBatchWithdrawal = <ThrowOnError extends boolean = false>(
-  options: Options<RemovePayoutBatchWithdrawalData, ThrowOnError>
-) =>
-  (options.client ?? client).delete<
-    RemovePayoutBatchWithdrawalResponses,
-    RemovePayoutBatchWithdrawalErrors,
-    ThrowOnError
-  >({
-    responseTransformer: removePayoutBatchWithdrawalResponseTransformer,
-    security: [
-      { scheme: 'bearer', type: 'http' },
-      { scheme: 'bearer', type: 'http' },
-    ],
-    url: '/api/v1/admin/payouts/batches/{batchUuid}/withdrawals/{withdrawalUuid}',
     ...options,
   });

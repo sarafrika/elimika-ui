@@ -48,7 +48,6 @@ import {
   addMembership,
   addOrganisationPayoutMethod,
   addPayoutApprover,
-  addPayoutBatchWithdrawals,
   addPayoutMethod,
   addPortfolioItem,
   addProgramCourse,
@@ -74,7 +73,6 @@ import {
   applyToJob,
   approveAdminWithdrawal,
   approveOrganisationWithdrawal,
-  approvePayoutBatch,
   archiveCourse,
   archiveProgram,
   assignAdminDomain,
@@ -88,7 +86,6 @@ import {
   cancelJob,
   cancelObligation,
   cancelOrganisationWithdrawal,
-  cancelPayoutBatch,
   cancelScheduledClass,
   cancelWithdrawal,
   certifications,
@@ -136,7 +133,6 @@ import {
   createOrganisation,
   createOrganisationAgeGroup,
   createOrganisationUser,
-  createPayoutBatch,
   createPracticeActivity,
   createQuiz,
   createQuizSchedule,
@@ -234,8 +230,6 @@ import {
   dissociateRubricByContext,
   documentFile,
   documents,
-  download,
-  downloadReceipt,
   education,
   endScheduledInstance,
   enrollStudent,
@@ -251,7 +245,6 @@ import {
   getActivePrograms,
   getActivityFeed,
   getAdminEligibleUsers,
-  getAdminSaleSplit,
   getAdminUsers,
   getAllActiveClassDefinitions,
   getAllAssessmentRubrics,
@@ -425,13 +418,11 @@ import {
   getOrganisationSupportedDomains,
   getOrganisationTimetable,
   getOrganisationWallet,
-  getOrganisationWalletSale,
   getOrganisationWithdrawal,
   getOrganizationAdminUsers,
   getPassingScoringLevels,
   getPaymentMode,
   getPaymentStatus,
-  getPayoutBatch,
   getPayoutRules,
   getPayoutSettings,
   getPayoutSummary,
@@ -534,7 +525,6 @@ import {
   getUsersByOrganisationAndDomain,
   getVerifiedCourseCreators,
   getWallet,
-  getWalletSale,
   getWeeklyGrowth,
   getWithdrawal,
   globalSearch,
@@ -549,9 +539,7 @@ import {
   isUserAdmin,
   isUserSystemAdmin,
   joinWaitlist,
-  list,
   listAchievements,
-  listAdminOrderSaleSplits,
   listAdminWithdrawals,
   listAll,
   listAudit,
@@ -588,13 +576,11 @@ import {
   listOrganisationInvitations,
   listOrganisationPayoutMethods,
   listOrganisationWalletAudit,
-  listOrganisationWalletSales,
   listOrganisationWalletStatements,
   listOrganisationWalletTransactions,
   listOrganisationWithdrawals,
   listPayments,
   listPayoutApprovers,
-  listPayoutBatches,
   listPayoutMethods,
   listPendingCourseEdits,
   listPendingCourses,
@@ -621,7 +607,6 @@ import {
   listTrainingRateUpdates,
   listTransactions,
   listTransactions1,
-  listWalletSales,
   listWithdrawals,
   lookupUserByUserNo,
   makeDefault,
@@ -651,7 +636,6 @@ import {
   register,
   registerAndAccept,
   rejectAdminWithdrawal,
-  rejectPayoutBatch,
   removeAdminDomain,
   removeAllCategoriesFromCourse,
   removeCategoryFromCourse,
@@ -659,7 +643,6 @@ import {
   removeMember,
   removeOrganisationPayoutMethod,
   removePayoutApprover,
-  removePayoutBatchWithdrawal,
   removePayoutMethod,
   removeProgramCourse,
   removeTeam,
@@ -690,16 +673,13 @@ import {
   resendPayoutMethodCode,
   resendRegistrationEmail,
   resendWithdrawalCode,
-  reset,
   resolveByCourseOrClass,
   restoreCourseVersion,
-  returnPayoutBatchToDraft,
   returnSubmission,
   reviewApplication,
   revokeCertificate,
   revokeLink,
   revokeOrganisationInvitation,
-  save,
   saveQuizResponses,
   scheduleClass,
   search,
@@ -760,7 +740,6 @@ import {
   submitDomainOnboarding,
   submitGuardianDetails,
   submitInstructorReview,
-  submitPayoutBatch,
   submitProgramReview,
   submitProgramTrainingApplication,
   submitProgramTrainingRateUpdate,
@@ -771,9 +750,7 @@ import {
   summary,
   sweep,
   syncDocument,
-  test,
   transfer,
-  transferBetweenPurses,
   unpublishCourse,
   unpublishProgram,
   unverifyCourseCreator,
@@ -1010,9 +987,6 @@ import type {
   AddPayoutApproverData,
   AddPayoutApproverError,
   AddPayoutApproverResponse,
-  AddPayoutBatchWithdrawalsData,
-  AddPayoutBatchWithdrawalsError,
-  AddPayoutBatchWithdrawalsResponse,
   AddPayoutMethodData,
   AddPayoutMethodError,
   AddPayoutMethodResponse,
@@ -1087,9 +1061,6 @@ import type {
   ApproveOrganisationWithdrawalData,
   ApproveOrganisationWithdrawalError,
   ApproveOrganisationWithdrawalResponse,
-  ApprovePayoutBatchData,
-  ApprovePayoutBatchError,
-  ApprovePayoutBatchResponse,
   ArchiveCourseData,
   ArchiveCourseError,
   ArchiveCourseResponse,
@@ -1129,9 +1100,6 @@ import type {
   CancelOrganisationWithdrawalData,
   CancelOrganisationWithdrawalError,
   CancelOrganisationWithdrawalResponse,
-  CancelPayoutBatchData,
-  CancelPayoutBatchError,
-  CancelPayoutBatchResponse,
   CancelScheduledClassData,
   CancelScheduledClassError,
   CancelScheduledClassResponse,
@@ -1273,9 +1241,6 @@ import type {
   CreateOrganisationUserData,
   CreateOrganisationUserError,
   CreateOrganisationUserResponse,
-  CreatePayoutBatchData,
-  CreatePayoutBatchError,
-  CreatePayoutBatchResponse,
   CreatePracticeActivityData,
   CreatePracticeActivityError,
   CreatePracticeActivityResponse,
@@ -1525,12 +1490,6 @@ import type {
   DocumentsData,
   DocumentsError,
   DocumentsResponse,
-  DownloadData,
-  DownloadError,
-  DownloadReceiptData,
-  DownloadReceiptError,
-  DownloadReceiptResponse,
-  DownloadResponse,
   EducationData,
   EducationError,
   EducationResponse,
@@ -1573,9 +1532,6 @@ import type {
   GetAdminEligibleUsersData,
   GetAdminEligibleUsersError,
   GetAdminEligibleUsersResponse,
-  GetAdminSaleSplitData,
-  GetAdminSaleSplitError,
-  GetAdminSaleSplitResponse,
   GetAdminUsersData,
   GetAdminUsersError,
   GetAdminUsersResponse,
@@ -2097,9 +2053,6 @@ import type {
   GetOrganisationWalletData,
   GetOrganisationWalletError,
   GetOrganisationWalletResponse,
-  GetOrganisationWalletSaleData,
-  GetOrganisationWalletSaleError,
-  GetOrganisationWalletSaleResponse,
   GetOrganisationWithdrawalData,
   GetOrganisationWithdrawalError,
   GetOrganisationWithdrawalResponse,
@@ -2115,9 +2068,6 @@ import type {
   GetPaymentStatusData,
   GetPaymentStatusError,
   GetPaymentStatusResponse,
-  GetPayoutBatchData,
-  GetPayoutBatchError,
-  GetPayoutBatchResponse,
   GetPayoutRulesData,
   GetPayoutRulesError,
   GetPayoutRulesResponse,
@@ -2425,9 +2375,6 @@ import type {
   GetWalletData,
   GetWalletError,
   GetWalletResponse,
-  GetWalletSaleData,
-  GetWalletSaleError,
-  GetWalletSaleResponse,
   GetWeeklyGrowthData,
   GetWeeklyGrowthError,
   GetWeeklyGrowthResponse,
@@ -2473,9 +2420,6 @@ import type {
   ListAchievementsData,
   ListAchievementsError,
   ListAchievementsResponse,
-  ListAdminOrderSaleSplitsData,
-  ListAdminOrderSaleSplitsError,
-  ListAdminOrderSaleSplitsResponse,
   ListAdminWithdrawalsData,
   ListAdminWithdrawalsError,
   ListAdminWithdrawalsResponse,
@@ -2509,7 +2453,6 @@ import type {
   ListCurrenciesData,
   ListCurrenciesError,
   ListCurrenciesResponse,
-  ListData,
   ListDocumentsData,
   ListDocumentsError,
   ListDocumentsResponse,
@@ -2519,7 +2462,6 @@ import type {
   ListEducationData,
   ListEducationError,
   ListEducationResponse,
-  ListError,
   ListExperienceData,
   ListExperienceError,
   ListExperienceResponse,
@@ -2586,9 +2528,6 @@ import type {
   ListOrganisationWalletAuditData,
   ListOrganisationWalletAuditError,
   ListOrganisationWalletAuditResponse,
-  ListOrganisationWalletSalesData,
-  ListOrganisationWalletSalesError,
-  ListOrganisationWalletSalesResponse,
   ListOrganisationWalletStatementsData,
   ListOrganisationWalletStatementsError,
   ListOrganisationWalletStatementsResponse,
@@ -2604,9 +2543,6 @@ import type {
   ListPayoutApproversData,
   ListPayoutApproversError,
   ListPayoutApproversResponse,
-  ListPayoutBatchesData,
-  ListPayoutBatchesError,
-  ListPayoutBatchesResponse,
   ListPayoutMethodsData,
   ListPayoutMethodsError,
   ListPayoutMethodsResponse,
@@ -2634,7 +2570,6 @@ import type {
   ListResourcesData,
   ListResourcesError,
   ListResourcesResponse,
-  ListResponse,
   ListRosterData,
   ListRosterError,
   ListRosterResponse,
@@ -2686,9 +2621,6 @@ import type {
   ListTransactionsData,
   ListTransactionsError,
   ListTransactionsResponse,
-  ListWalletSalesData,
-  ListWalletSalesError,
-  ListWalletSalesResponse,
   ListWithdrawalsData,
   ListWithdrawalsError,
   ListWithdrawalsResponse,
@@ -2772,9 +2704,6 @@ import type {
   RejectAdminWithdrawalData,
   RejectAdminWithdrawalError,
   RejectAdminWithdrawalResponse,
-  RejectPayoutBatchData,
-  RejectPayoutBatchError,
-  RejectPayoutBatchResponse,
   RemoveAdminDomainData,
   RemoveAdminDomainError,
   RemoveAdminDomainResponse,
@@ -2796,9 +2725,6 @@ import type {
   RemovePayoutApproverData,
   RemovePayoutApproverError,
   RemovePayoutApproverResponse,
-  RemovePayoutBatchWithdrawalData,
-  RemovePayoutBatchWithdrawalError,
-  RemovePayoutBatchWithdrawalResponse,
   RemovePayoutMethodData,
   RemovePayoutMethodError,
   RemovePayoutMethodResponse,
@@ -2889,18 +2815,12 @@ import type {
   ResendWithdrawalCodeData,
   ResendWithdrawalCodeError,
   ResendWithdrawalCodeResponse,
-  ResetData,
-  ResetError,
-  ResetResponse,
   ResolveByCourseOrClassData,
   ResolveByCourseOrClassError,
   ResolveByCourseOrClassResponse,
   RestoreCourseVersionData,
   RestoreCourseVersionError,
   RestoreCourseVersionResponse,
-  ReturnPayoutBatchToDraftData,
-  ReturnPayoutBatchToDraftError,
-  ReturnPayoutBatchToDraftResponse,
   ReturnSubmissionData,
   ReturnSubmissionError,
   ReturnSubmissionResponse,
@@ -2916,12 +2836,9 @@ import type {
   RevokeOrganisationInvitationData,
   RevokeOrganisationInvitationError,
   RevokeOrganisationInvitationResponse,
-  SaveData,
-  SaveError,
   SaveQuizResponsesData,
   SaveQuizResponsesError,
   SaveQuizResponsesResponse,
-  SaveResponse,
   ScheduleClassData,
   ScheduleClassError,
   ScheduleClassResponse,
@@ -3098,9 +3015,6 @@ import type {
   SubmitInstructorReviewData,
   SubmitInstructorReviewError,
   SubmitInstructorReviewResponse,
-  SubmitPayoutBatchData,
-  SubmitPayoutBatchError,
-  SubmitPayoutBatchResponse,
   SubmitProgramReviewData,
   SubmitProgramReviewError,
   SubmitProgramReviewResponse,
@@ -3131,12 +3045,6 @@ import type {
   SyncDocumentData,
   SyncDocumentError,
   SyncDocumentResponse,
-  TestData,
-  TestError,
-  TestResponse2,
-  TransferBetweenPursesData,
-  TransferBetweenPursesError,
-  TransferBetweenPursesResponse,
   TransferData,
   TransferError,
   TransferResponse,
@@ -8740,44 +8648,6 @@ export const updateAgeGroupMutation = (
 };
 
 /**
- * Go back to the built-in wording
- */
-export const resetMutation = (
-  options?: Partial<Options<ResetData>>
-): UseMutationOptions<ResetResponse, ResetError, Options<ResetData>> => {
-  const mutationOptions: UseMutationOptions<ResetResponse, ResetError, Options<ResetData>> = {
-    mutationFn: async fnOptions => {
-      const { data } = await reset({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Save new wording; rejected unless it passes the placeholder and length checks
- */
-export const saveMutation = (
-  options?: Partial<Options<SaveData>>
-): UseMutationOptions<SaveResponse, SaveError, Options<SaveData>> => {
-  const mutationOptions: UseMutationOptions<SaveResponse, SaveError, Options<SaveData>> = {
-    mutationFn: async fnOptions => {
-      const { data } = await save({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
  * Delete a skill
  *
  * Removes it from every course and job tag list and unlinks instructor skills (their free text stays). Prefer retiring it with active=false.
@@ -9193,8 +9063,6 @@ export const cancelWithdrawalMutation = (
 
 /**
  * Transfer funds between wallets
- *
- * From the sender's source_purse (or their only funded purse) into the receiver's STUDENT purse.
  */
 export const transferMutation = (
   options?: Partial<Options<TransferData>>
@@ -9216,80 +9084,8 @@ export const transferMutation = (
   return mutationOptions;
 };
 
-export const listWalletSalesQueryKey = (options: Options<ListWalletSalesData>) =>
-  createQueryKey('listWalletSales', options);
-
-/**
- * List the sales that paid this user, with each split
- *
- * Newest first. Each captured class sale line this user was paid on as course creator or instructor, with the creator's and the delivery party's gross, fee and net, the platform fee, anything retained and the fee rule in force at purchase. The other party is named only. With purse=COURSE_CREATOR only creator legs, with purse=INSTRUCTOR only delivery legs; your_role, your_purse and your_* then describe that leg.
- */
-export const listWalletSalesOptions = (options: Options<ListWalletSalesData>) =>
-  queryOptions<
-    ListWalletSalesResponse,
-    ListWalletSalesError,
-    ListWalletSalesResponse,
-    ReturnType<typeof listWalletSalesQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listWalletSales({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listWalletSalesQueryKey(options),
-  });
-
-export const listWalletSalesInfiniteQueryKey = (
-  options: Options<ListWalletSalesData>
-): QueryKey<Options<ListWalletSalesData>> => createQueryKey('listWalletSales', options, true);
-
-/**
- * List the sales that paid this user, with each split
- *
- * Newest first. Each captured class sale line this user was paid on as course creator or instructor, with the creator's and the delivery party's gross, fee and net, the platform fee, anything retained and the fee rule in force at purchase. The other party is named only. With purse=COURSE_CREATOR only creator legs, with purse=INSTRUCTOR only delivery legs; your_role, your_purse and your_* then describe that leg.
- */
-export const listWalletSalesInfiniteOptions = (options: Options<ListWalletSalesData>) =>
-  infiniteQueryOptions<
-    ListWalletSalesResponse,
-    ListWalletSalesError,
-    InfiniteData<ListWalletSalesResponse>,
-    QueryKey<Options<ListWalletSalesData>>,
-    number | Pick<QueryKey<Options<ListWalletSalesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        const page: Pick<
-          QueryKey<Options<ListWalletSalesData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  pageable: { page: pageParam },
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await listWalletSales({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: listWalletSalesInfiniteQueryKey(options),
-    }
-  );
-
 /**
  * Record a wallet sale credit
- *
- * purse is required: COURSE_CREATOR or INSTRUCTOR.
  */
 export const creditSaleMutation = (
   options?: Partial<Options<CreditSaleData>>
@@ -9301,35 +9097,6 @@ export const creditSaleMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await creditSale({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Move money between two of your own purses
- *
- * A TRANSFER_OUT row on from_purse and a TRANSFER_IN row on to_purse with one transfer_reference, balanced in the ledger, no fee. Refused when from_purse holds less.
- */
-export const transferBetweenPursesMutation = (
-  options?: Partial<Options<TransferBetweenPursesData>>
-): UseMutationOptions<
-  TransferBetweenPursesResponse,
-  TransferBetweenPursesError,
-  Options<TransferBetweenPursesData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    TransferBetweenPursesResponse,
-    TransferBetweenPursesError,
-    Options<TransferBetweenPursesData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await transferBetweenPurses({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -9454,8 +9221,6 @@ export const resendPayoutMethodCodeMutation = (
 
 /**
  * Record a wallet deposit
- *
- * Into the STUDENT purse unless purse says otherwise.
  */
 export const depositMutation = (
   options?: Partial<Options<DepositData>>
@@ -18938,8 +18703,7 @@ export const uploadJobThumbnailMutation = (
 /**
  * Create the class for a job whose applicant has been hired
  *
- * Assigns the hired instructor, converts holds and fills the job. An optional body edits the job first; holds are re-checked.
- * Refused with 409 on schedule or resource clashes, or when the instructor's approved rate no longer covers the pay.
+ * Creating the class is what assigns the hired instructor: it stamps their application assigned, converts their time holds and fills the job. There is no separate assign call. Refused with 409 when the hired instructor no longer has an approved rate for the job's rate basis that its pay covers.
  */
 export const createClassForJobMutation = (
   options?: Partial<Options<CreateClassForJobData>>
@@ -20100,25 +19864,6 @@ export const createAdminUserMutation = (
   return mutationOptions;
 };
 
-/**
- * Send the saved wording with sample values to the admin's own phone
- */
-export const testMutation = (
-  options?: Partial<Options<TestData>>
-): UseMutationOptions<TestResponse2, TestError, Options<TestData>> => {
-  const mutationOptions: UseMutationOptions<TestResponse2, TestError, Options<TestData>> = {
-    mutationFn: async fnOptions => {
-      const { data } = await test({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
 export const adminListSkillsQueryKey = (options?: Options<AdminListSkillsData>) =>
   createQueryKey('adminListSkills', options);
 
@@ -20276,7 +20021,7 @@ export const moderateProgramMutation = (
 /**
  * Reject a withdrawal and return its money
  *
- * The reason is shown to the earner. A withdrawal in a draft payout batch leaves the batch; one in a batch waiting for approval or released cannot be rejected on its own (409).
+ * The reason is shown to the earner.
  */
 export const rejectAdminWithdrawalMutation = (
   options?: Partial<Options<RejectAdminWithdrawalData>>
@@ -20305,7 +20050,7 @@ export const rejectAdminWithdrawalMutation = (
 /**
  * Ask M-Pesa about a withdrawal now
  *
- * Sends a cleared withdrawal outside a payout batch, or reads the result of one in flight. Batch rows are sent only by the batch sender, which paces them.
+ * Sends a cleared withdrawal, or reads the result of one in flight.
  */
 export const checkAdminWithdrawalMutation = (
   options?: Partial<Options<CheckAdminWithdrawalData>>
@@ -20332,9 +20077,7 @@ export const checkAdminWithdrawalMutation = (
 };
 
 /**
- * Put one withdrawal up for approval on its own
- *
- * Does not send money. Creates a one-row payout batch holding this withdrawal, submitted by the caller and waiting for approval (AWAITING_APPROVAL), so a different admin must still approve that batch before M-Pesa pays it. The withdrawal stays NEEDS_REVIEW and comes back with its payout_batch_uuid set. Refused when the withdrawal is already in a batch.
+ * Approve a flagged withdrawal and send it
  */
 export const approveAdminWithdrawalMutation = (
   options?: Partial<Options<ApproveAdminWithdrawalData>>
@@ -20350,280 +20093,6 @@ export const approveAdminWithdrawalMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await approveAdminWithdrawal({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-export const listPayoutBatchesQueryKey = (options: Options<ListPayoutBatchesData>) =>
-  createQueryKey('listPayoutBatches', options);
-
-/**
- * List payout batches
- *
- * Newest first; filter by status, e.g. AWAITING_APPROVAL.
- */
-export const listPayoutBatchesOptions = (options: Options<ListPayoutBatchesData>) =>
-  queryOptions<
-    ListPayoutBatchesResponse,
-    ListPayoutBatchesError,
-    ListPayoutBatchesResponse,
-    ReturnType<typeof listPayoutBatchesQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listPayoutBatches({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listPayoutBatchesQueryKey(options),
-  });
-
-export const listPayoutBatchesInfiniteQueryKey = (
-  options: Options<ListPayoutBatchesData>
-): QueryKey<Options<ListPayoutBatchesData>> => createQueryKey('listPayoutBatches', options, true);
-
-/**
- * List payout batches
- *
- * Newest first; filter by status, e.g. AWAITING_APPROVAL.
- */
-export const listPayoutBatchesInfiniteOptions = (options: Options<ListPayoutBatchesData>) =>
-  infiniteQueryOptions<
-    ListPayoutBatchesResponse,
-    ListPayoutBatchesError,
-    InfiniteData<ListPayoutBatchesResponse>,
-    QueryKey<Options<ListPayoutBatchesData>>,
-    | number
-    | Pick<QueryKey<Options<ListPayoutBatchesData>>[0], 'body' | 'headers' | 'path' | 'query'>
-  >(
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        const page: Pick<
-          QueryKey<Options<ListPayoutBatchesData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  pageable: { page: pageParam },
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await listPayoutBatches({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: listPayoutBatchesInfiniteQueryKey(options),
-    }
-  );
-
-/**
- * Start a draft payout batch
- *
- * Optionally with withdrawals waiting for review (NEEDS_REVIEW) that are in no other batch.
- */
-export const createPayoutBatchMutation = (
-  options?: Partial<Options<CreatePayoutBatchData>>
-): UseMutationOptions<
-  CreatePayoutBatchResponse,
-  CreatePayoutBatchError,
-  Options<CreatePayoutBatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CreatePayoutBatchResponse,
-    CreatePayoutBatchError,
-    Options<CreatePayoutBatchData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await createPayoutBatch({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Add withdrawals to a draft batch
- *
- * Each must be waiting for review (NEEDS_REVIEW) and in no other batch.
- */
-export const addPayoutBatchWithdrawalsMutation = (
-  options?: Partial<Options<AddPayoutBatchWithdrawalsData>>
-): UseMutationOptions<
-  AddPayoutBatchWithdrawalsResponse,
-  AddPayoutBatchWithdrawalsError,
-  Options<AddPayoutBatchWithdrawalsData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    AddPayoutBatchWithdrawalsResponse,
-    AddPayoutBatchWithdrawalsError,
-    Options<AddPayoutBatchWithdrawalsData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await addPayoutBatchWithdrawals({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Submit a draft batch for approval
- *
- * A different admin from whoever built or submitted it must then approve it.
- */
-export const submitPayoutBatchMutation = (
-  options?: Partial<Options<SubmitPayoutBatchData>>
-): UseMutationOptions<
-  SubmitPayoutBatchResponse,
-  SubmitPayoutBatchError,
-  Options<SubmitPayoutBatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    SubmitPayoutBatchResponse,
-    SubmitPayoutBatchError,
-    Options<SubmitPayoutBatchData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await submitPayoutBatch({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Send a batch waiting for approval back to draft
- *
- * Any admin may; it must be submitted again before it can be approved.
- */
-export const returnPayoutBatchToDraftMutation = (
-  options?: Partial<Options<ReturnPayoutBatchToDraftData>>
-): UseMutationOptions<
-  ReturnPayoutBatchToDraftResponse,
-  ReturnPayoutBatchToDraftError,
-  Options<ReturnPayoutBatchToDraftData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ReturnPayoutBatchToDraftResponse,
-    ReturnPayoutBatchToDraftError,
-    Options<ReturnPayoutBatchToDraftData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await returnPayoutBatchToDraft({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Reject a batch waiting for approval
- *
- * Its withdrawals go back to the review queue, still held; reject them one by one to return the money.
- */
-export const rejectPayoutBatchMutation = (
-  options?: Partial<Options<RejectPayoutBatchData>>
-): UseMutationOptions<
-  RejectPayoutBatchResponse,
-  RejectPayoutBatchError,
-  Options<RejectPayoutBatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    RejectPayoutBatchResponse,
-    RejectPayoutBatchError,
-    Options<RejectPayoutBatchData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await rejectPayoutBatch({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Cancel a draft batch
- *
- * Its withdrawals go back to the review queue, still held.
- */
-export const cancelPayoutBatchMutation = (
-  options?: Partial<Options<CancelPayoutBatchData>>
-): UseMutationOptions<
-  CancelPayoutBatchResponse,
-  CancelPayoutBatchError,
-  Options<CancelPayoutBatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    CancelPayoutBatchResponse,
-    CancelPayoutBatchError,
-    Options<CancelPayoutBatchData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await cancelPayoutBatch({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Approve a batch and release it to M-Pesa
- *
- * Refused (409) for whoever built or submitted the batch, when the batch total exceeds the payout float's utility funds, when the float is unknown unless override_unknown_float is true, and when any row carries a wallet flag (wallet_issue_count above zero) unless acknowledge_wallet_issues is true, which the approval audit records. On approval every row moves to SENDING and is paid a few at a time.
- */
-export const approvePayoutBatchMutation = (
-  options?: Partial<Options<ApprovePayoutBatchData>>
-): UseMutationOptions<
-  ApprovePayoutBatchResponse,
-  ApprovePayoutBatchError,
-  Options<ApprovePayoutBatchData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    ApprovePayoutBatchResponse,
-    ApprovePayoutBatchError,
-    Options<ApprovePayoutBatchData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await approvePayoutBatch({
         ...options,
         ...fnOptions,
         throwOnError: true,
@@ -21251,8 +20720,6 @@ export const getWalletQueryKey = (options: Options<GetWalletData>) =>
 
 /**
  * Get a user's wallet balance
- *
- * One balance per purse (COURSE_CREATOR, INSTRUCTOR, STUDENT) in purses[], each with what is held and available; the top-level figures are their sums. Creates nothing.
  */
 export const getWalletOptions = (options: Options<GetWalletData>) =>
   queryOptions<
@@ -21303,8 +20770,6 @@ export const listTransactions1QueryKey = (options: Options<ListTransactions1Data
 
 /**
  * List wallet transactions
- *
- * Newest first, every purse unless purse is given; each row says which purse it moved.
  */
 export const listTransactions1Options = (options: Options<ListTransactions1Data>) =>
   queryOptions<
@@ -21331,8 +20796,6 @@ export const listTransactions1InfiniteQueryKey = (
 
 /**
  * List wallet transactions
- *
- * Newest first, every purse unless purse is given; each row says which purse it moved.
  */
 export const listTransactions1InfiniteOptions = (options: Options<ListTransactions1Data>) =>
   infiniteQueryOptions<
@@ -21375,7 +20838,7 @@ export const exportTransactionsQueryKey = (options: Options<ExportTransactionsDa
 /**
  * Download wallet transactions as CSV
  *
- * Every matching row, newest first; dates are UTC and inclusive. Every purse unless purse is given.
+ * Every matching row, newest first; dates are UTC and inclusive.
  */
 export const exportTransactionsOptions = (options: Options<ExportTransactionsData>) =>
   queryOptions<
@@ -21402,7 +20865,7 @@ export const listStatementsQueryKey = (options: Options<ListStatementsData>) =>
 /**
  * List a user's monthly wallet statements
  *
- * Newest month first, UTC months; quiet months carry the balance over. One purse when purse is given, otherwise every purse summed, leaving out money moved between the user's own purses.
+ * Newest month first, UTC months; quiet months carry the balance over.
  */
 export const listStatementsOptions = (options: Options<ListStatementsData>) =>
   queryOptions<
@@ -21421,31 +20884,6 @@ export const listStatementsOptions = (options: Options<ListStatementsData>) =>
       return data;
     },
     queryKey: listStatementsQueryKey(options),
-  });
-
-export const getWalletSaleQueryKey = (options: Options<GetWalletSaleData>) =>
-  createQueryKey('getWalletSale', options);
-
-/**
- * Get one sale split this user was paid on
- */
-export const getWalletSaleOptions = (options: Options<GetWalletSaleData>) =>
-  queryOptions<
-    GetWalletSaleResponse,
-    GetWalletSaleError,
-    GetWalletSaleResponse,
-    ReturnType<typeof getWalletSaleQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getWalletSale({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getWalletSaleQueryKey(options),
   });
 
 export const listAuditQueryKey = (options: Options<ListAuditData>) =>
@@ -24596,33 +24034,6 @@ export const searchAttemptsInfiniteOptions = (options: Options<SearchAttemptsDat
     }
   );
 
-export const downloadQueryKey = (options: Options<DownloadData>) =>
-  createQueryKey('download', options);
-
-/**
- * Download a receipt PDF from a signed link
- *
- * 404 unless the link's token matches the order and the order is paid
- */
-export const downloadOptions = (options: Options<DownloadData>) =>
-  queryOptions<
-    DownloadResponse,
-    DownloadError,
-    DownloadResponse,
-    ReturnType<typeof downloadQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await download({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: downloadQueryKey(options),
-  });
-
 export const listProgramTrainingRateUpdatesQueryKey = (
   options: Options<ListProgramTrainingRateUpdatesData>
 ) => createQueryKey('listProgramTrainingRateUpdates', options);
@@ -26314,112 +25725,6 @@ export const listOrganisationWalletStatementsOptions = (
       return data;
     },
     queryKey: listOrganisationWalletStatementsQueryKey(options),
-  });
-
-export const listOrganisationWalletSalesQueryKey = (
-  options: Options<ListOrganisationWalletSalesData>
-) => createQueryKey('listOrganisationWalletSales', options);
-
-/**
- * List the sales that paid an organisation, with each split
- *
- * Newest first. Each captured class sale line the organisation was paid on as the hiring organisation, with the creator's and the organisation's gross, fee and net, the platform fee, anything retained and the fee rule in force at purchase. The course creator is named only.
- */
-export const listOrganisationWalletSalesOptions = (
-  options: Options<ListOrganisationWalletSalesData>
-) =>
-  queryOptions<
-    ListOrganisationWalletSalesResponse,
-    ListOrganisationWalletSalesError,
-    ListOrganisationWalletSalesResponse,
-    ReturnType<typeof listOrganisationWalletSalesQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listOrganisationWalletSales({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listOrganisationWalletSalesQueryKey(options),
-  });
-
-export const listOrganisationWalletSalesInfiniteQueryKey = (
-  options: Options<ListOrganisationWalletSalesData>
-): QueryKey<Options<ListOrganisationWalletSalesData>> =>
-  createQueryKey('listOrganisationWalletSales', options, true);
-
-/**
- * List the sales that paid an organisation, with each split
- *
- * Newest first. Each captured class sale line the organisation was paid on as the hiring organisation, with the creator's and the organisation's gross, fee and net, the platform fee, anything retained and the fee rule in force at purchase. The course creator is named only.
- */
-export const listOrganisationWalletSalesInfiniteOptions = (
-  options: Options<ListOrganisationWalletSalesData>
-) =>
-  infiniteQueryOptions<
-    ListOrganisationWalletSalesResponse,
-    ListOrganisationWalletSalesError,
-    InfiniteData<ListOrganisationWalletSalesResponse>,
-    QueryKey<Options<ListOrganisationWalletSalesData>>,
-    | number
-    | Pick<
-        QueryKey<Options<ListOrganisationWalletSalesData>>[0],
-        'body' | 'headers' | 'path' | 'query'
-      >
-  >(
-    {
-      queryFn: async ({ pageParam, queryKey, signal }) => {
-        const page: Pick<
-          QueryKey<Options<ListOrganisationWalletSalesData>>[0],
-          'body' | 'headers' | 'path' | 'query'
-        > =
-          typeof pageParam === 'object'
-            ? pageParam
-            : {
-                query: {
-                  pageable: { page: pageParam },
-                },
-              };
-        const params = createInfiniteParams(queryKey, page);
-        const { data } = await listOrganisationWalletSales({
-          ...options,
-          ...params,
-          signal,
-          throwOnError: true,
-        });
-        return data;
-      },
-      queryKey: listOrganisationWalletSalesInfiniteQueryKey(options),
-    }
-  );
-
-export const getOrganisationWalletSaleQueryKey = (
-  options: Options<GetOrganisationWalletSaleData>
-) => createQueryKey('getOrganisationWalletSale', options);
-
-/**
- * Get one sale split an organisation was paid on
- */
-export const getOrganisationWalletSaleOptions = (options: Options<GetOrganisationWalletSaleData>) =>
-  queryOptions<
-    GetOrganisationWalletSaleResponse,
-    GetOrganisationWalletSaleError,
-    GetOrganisationWalletSaleResponse,
-    ReturnType<typeof getOrganisationWalletSaleQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getOrganisationWalletSale({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getOrganisationWalletSaleQueryKey(options),
   });
 
 export const listOrganisationWalletAuditQueryKey = (
@@ -32422,33 +31727,6 @@ export const getOrderOptions = (options: Options<GetOrderData>) =>
     queryKey: getOrderQueryKey(options),
   });
 
-export const downloadReceiptQueryKey = (options: Options<DownloadReceiptData>) =>
-  createQueryKey('downloadReceipt', options);
-
-/**
- * Download the payment receipt PDF
- *
- * The buyer's (or a platform admin's) branded receipt for a paid order; 404 for anyone else or an unpaid order
- */
-export const downloadReceiptOptions = (options: Options<DownloadReceiptData>) =>
-  queryOptions<
-    DownloadReceiptResponse,
-    DownloadReceiptError,
-    DownloadReceiptResponse,
-    ReturnType<typeof downloadReceiptQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await downloadReceipt({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: downloadReceiptQueryKey(options),
-  });
-
 export const getPaymentStatusQueryKey = (options: Options<GetPaymentStatusData>) =>
   createQueryKey('getPaymentStatus', options);
 
@@ -34792,25 +34070,6 @@ export const getAdminEligibleUsersInfiniteOptions = (options: Options<GetAdminEl
     }
   );
 
-export const listQueryKey = (options?: Options<ListData>) => createQueryKey('list', options);
-
-/**
- * List every system SMS with its wording and allowed placeholders
- */
-export const listOptions = (options?: Options<ListData>) =>
-  queryOptions<ListResponse, ListError, ListResponse, ReturnType<typeof listQueryKey>>({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await list({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listQueryKey(options),
-  });
-
 export const listIndexesQueryKey = (options?: Options<ListIndexesData>) =>
   createQueryKey('listIndexes', options);
 
@@ -34836,58 +34095,6 @@ export const listIndexesOptions = (options?: Options<ListIndexesData>) =>
       return data;
     },
     queryKey: listIndexesQueryKey(options),
-  });
-
-export const getAdminSaleSplitQueryKey = (options: Options<GetAdminSaleSplitData>) =>
-  createQueryKey('getAdminSaleSplit', options);
-
-/**
- * Get one sale split
- */
-export const getAdminSaleSplitOptions = (options: Options<GetAdminSaleSplitData>) =>
-  queryOptions<
-    GetAdminSaleSplitResponse,
-    GetAdminSaleSplitError,
-    GetAdminSaleSplitResponse,
-    ReturnType<typeof getAdminSaleSplitQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getAdminSaleSplit({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getAdminSaleSplitQueryKey(options),
-  });
-
-export const listAdminOrderSaleSplitsQueryKey = (options: Options<ListAdminOrderSaleSplitsData>) =>
-  createQueryKey('listAdminOrderSaleSplits', options);
-
-/**
- * List the split of each settled line of an order
- *
- * In line order. Both parties are named, with their owner uuids and wallet rows.
- */
-export const listAdminOrderSaleSplitsOptions = (options: Options<ListAdminOrderSaleSplitsData>) =>
-  queryOptions<
-    ListAdminOrderSaleSplitsResponse,
-    ListAdminOrderSaleSplitsError,
-    ListAdminOrderSaleSplitsResponse,
-    ReturnType<typeof listAdminOrderSaleSplitsQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await listAdminOrderSaleSplits({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: listAdminOrderSaleSplitsQueryKey(options),
   });
 
 export const getRegistrationQueueQueryKey = (options?: Options<GetRegistrationQueueData>) =>
@@ -35160,7 +34367,7 @@ export const listAdminWithdrawalsQueryKey = (options: Options<ListAdminWithdrawa
 /**
  * List withdrawals across all wallets
  *
- * Newest first; filter by status, e.g. NEEDS_REVIEW. With unbatched=true, withdrawals already in a payout batch are left out, which gives the queue a new batch is built from. Each row carries wallet_check, its earner's wallet read now, and wallet_flags derived from it.
+ * Newest first; filter by status, e.g. NEEDS_REVIEW.
  */
 export const listAdminWithdrawalsOptions = (options: Options<ListAdminWithdrawalsData>) =>
   queryOptions<
@@ -35189,7 +34396,7 @@ export const listAdminWithdrawalsInfiniteQueryKey = (
 /**
  * List withdrawals across all wallets
  *
- * Newest first; filter by status, e.g. NEEDS_REVIEW. With unbatched=true, withdrawals already in a payout batch are left out, which gives the queue a new batch is built from. Each row carries wallet_check, its earner's wallet read now, and wallet_flags derived from it.
+ * Newest first; filter by status, e.g. NEEDS_REVIEW.
  */
 export const listAdminWithdrawalsInfiniteOptions = (options: Options<ListAdminWithdrawalsData>) =>
   infiniteQueryOptions<
@@ -35249,33 +34456,6 @@ export const getPayoutSummaryOptions = (options?: Options<GetPayoutSummaryData>)
       return data;
     },
     queryKey: getPayoutSummaryQueryKey(options),
-  });
-
-export const getPayoutBatchQueryKey = (options: Options<GetPayoutBatchData>) =>
-  createQueryKey('getPayoutBatch', options);
-
-/**
- * Get a payout batch with its withdrawals and the payout float
- *
- * payout_float is read from M-Pesa on each call and is null when unknown. Each row carries wallet_check, its earner's wallet read now, and wallet_flags derived from it; the batch's wallet_issue_count counts the rows with a wallet flag.
- */
-export const getPayoutBatchOptions = (options: Options<GetPayoutBatchData>) =>
-  queryOptions<
-    GetPayoutBatchResponse,
-    GetPayoutBatchError,
-    GetPayoutBatchResponse,
-    ReturnType<typeof getPayoutBatchQueryKey>
-  >({
-    queryFn: async ({ queryKey, signal }) => {
-      const { data } = await getPayoutBatch({
-        ...options,
-        ...queryKey[0],
-        signal,
-        throwOnError: true,
-      });
-      return data;
-    },
-    queryKey: getPayoutBatchQueryKey(options),
   });
 
 export const isOrganisationVerifiedQueryKey = (options: Options<IsOrganisationVerifiedData>) =>
@@ -36358,35 +35538,6 @@ export const removeAdminDomainMutation = (
   > = {
     mutationFn: async fnOptions => {
       const { data } = await removeAdminDomain({
-        ...options,
-        ...fnOptions,
-        throwOnError: true,
-      });
-      return data;
-    },
-  };
-  return mutationOptions;
-};
-
-/**
- * Take a withdrawal out of a draft batch
- *
- * It goes back to the review queue, still held.
- */
-export const removePayoutBatchWithdrawalMutation = (
-  options?: Partial<Options<RemovePayoutBatchWithdrawalData>>
-): UseMutationOptions<
-  RemovePayoutBatchWithdrawalResponse,
-  RemovePayoutBatchWithdrawalError,
-  Options<RemovePayoutBatchWithdrawalData>
-> => {
-  const mutationOptions: UseMutationOptions<
-    RemovePayoutBatchWithdrawalResponse,
-    RemovePayoutBatchWithdrawalError,
-    Options<RemovePayoutBatchWithdrawalData>
-  > = {
-    mutationFn: async fnOptions => {
-      const { data } = await removePayoutBatchWithdrawal({
         ...options,
         ...fnOptions,
         throwOnError: true,

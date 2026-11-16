@@ -1,12 +1,11 @@
-import type { ClassMarketplaceJobRequest } from '@/services/client';
-import type { Hiring, Place } from './use-class-builder';
+import type { Hiring, HiringJobRequest, Place } from './use-class-builder';
 
 /** Unposted job forms, kept in this browser only; the API has no draft jobs. */
 export type JobDraft = {
   id: string;
   savedAt: number;
   title: string;
-  request: ClassMarketplaceJobRequest;
+  request: HiringJobRequest;
   place: Place;
   hiring: Hiring;
   instructorPay: string;

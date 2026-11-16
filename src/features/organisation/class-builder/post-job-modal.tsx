@@ -40,7 +40,7 @@ import {
   ServiceSection,
 } from './class-builder-sections';
 import { deleteJobDraft, type JobDraft, listJobDrafts, saveJobDraft, timeAgo } from './job-drafts';
-import { type Hiring, type MembershipPreference, useClassBuilder } from './use-class-builder';
+import { type Hiring, type HiringJob, type MembershipPreference, useClassBuilder } from './use-class-builder';
 
 export type PostJobPrefill = {
   jobUuid?: string;
@@ -74,7 +74,7 @@ export function PostJobModal({ prefill, onClose }: { prefill: PostJobPrefill; on
     ...getJobOptions({ path: { jobUuid: sourceJobUuid } }),
     enabled: Boolean(sourceJobUuid),
   });
-  const sourceJob = sourceQuery.data?.data ?? null;
+  const sourceJob: HiringJob | null = sourceQuery.data?.data ?? null;
   const taxonomyReady = !builder.taxonomy.loading && !builder.approved.loading;
   const [hydrated, setHydrated] = useState(false);
   const hydrateFromJob = builder.hydrateFromJob;

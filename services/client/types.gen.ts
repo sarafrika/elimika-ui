@@ -252,7 +252,7 @@ export type ApiResponseSessionRecord = {
 export type JsonNode = unknown;
 
 export type SystemRuleRequest = {
-  category: SchemaEnum2;
+  category: SchemaEnum;
   /**
    * Unique key within the category
    */
@@ -266,7 +266,7 @@ export type SystemRuleRequest = {
    * Priority used when multiple rules match
    */
   priority?: number;
-  status?: SchemaEnum3;
+  status?: SchemaEnum2;
   valueType?: ValueTypeEnum;
   /**
    * Rule payload describing configuration
@@ -295,12 +295,12 @@ export type ApiResponseSystemRuleResponse = {
 
 export type SystemRuleResponse = {
   uuid?: string;
-  category?: SchemaEnum2;
+  category?: SchemaEnum;
   key?: string;
   scope?: ScopeEnum;
   scopeReference?: string;
   priority?: number;
-  status?: SchemaEnum3;
+  status?: SchemaEnum2;
   valueType?: ValueTypeEnum;
   valuePayload?: JsonNode;
   conditions?: JsonNode;
@@ -1312,7 +1312,7 @@ export type TrainingProgram = {
    * **[OPTIONAL]** Learning objectives and goals students will achieve upon program completion.
    */
   objectives?: string;
-  status: SchemaEnum7;
+  status: SchemaEnum6;
   /**
    * **[OPTIONAL]** Required knowledge and skills students should have before starting this program.
    */
@@ -2624,6 +2624,15 @@ export type InstructorProfessionalMembership = {
    */
   readonly is_valid?: boolean;
   /**
+   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
+   */
+  readonly membership_duration_months?: number | null;
+  membership_status?: MembershipStatusEnum;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of membership.
+   */
+  readonly formatted_duration?: string | null;
+  /**
    * **[READ-ONLY]** Brief summary of the membership for display in listings.
    */
   readonly summary?: string;
@@ -2631,11 +2640,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if the membership record has all essential information.
    */
   readonly is_complete?: boolean;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of membership.
-   */
-  readonly formatted_duration?: string | null;
-  membership_status?: MembershipStatusEnum;
   /**
    * **[READ-ONLY]** Formatted membership period showing start and end dates.
    */
@@ -2657,10 +2661,6 @@ export type InstructorProfessionalMembership = {
    * **[READ-ONLY]** Indicates if this membership was started within the last 3 years.
    */
   readonly is_recent_membership?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of membership calculated from start and end dates, in months.
-   */
-  readonly membership_duration_months?: number | null;
 };
 
 export type ApiResponseInstructorProfessionalMembership = {
@@ -2727,22 +2727,6 @@ export type InstructorExperience = {
    */
   readonly updated_by?: string;
   /**
-   * **[READ-ONLY]** Brief summary of the experience for display in listings.
-   */
-  readonly summary?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the experience record has all essential information.
-   */
-  readonly is_complete?: boolean;
-  /**
-   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
-   */
-  readonly duration_in_months?: number | null;
-  /**
-   * **[READ-ONLY]** Human-readable formatted duration of employment.
-   */
-  readonly formatted_duration?: string | null;
-  /**
    * **[READ-ONLY]** Formatted employment period showing start and end dates.
    */
   readonly employment_period?: string | null;
@@ -2763,6 +2747,22 @@ export type InstructorExperience = {
    * **[READ-ONLY]** Calculated years of experience based on start and end dates.
    */
   readonly calculated_years?: number | null;
+  /**
+   * **[READ-ONLY]** Duration of employment calculated from start and end dates, in months.
+   */
+  readonly duration_in_months?: number | null;
+  /**
+   * **[READ-ONLY]** Human-readable formatted duration of employment.
+   */
+  readonly formatted_duration?: string | null;
+  /**
+   * **[READ-ONLY]** Brief summary of the experience for display in listings.
+   */
+  readonly summary?: string;
+  /**
+   * **[READ-ONLY]** Indicates if the experience record has all essential information.
+   */
+  readonly is_complete?: boolean;
 };
 
 export type ApiResponseInstructorExperience = {
@@ -2829,6 +2829,15 @@ export type InstructorEducation = {
    */
   readonly full_description?: string;
   /**
+   * **[READ-ONLY]** Number of years since the qualification was completed.
+   */
+  readonly years_since_completion?: number | null;
+  education_level?: EducationLevelEnum;
+  /**
+   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
+   */
+  readonly has_certificate_number?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the education record has all essential information.
    */
   readonly is_complete?: boolean;
@@ -2840,15 +2849,6 @@ export type InstructorEducation = {
    * **[READ-ONLY]** Formatted string showing year of completion and school name.
    */
   readonly formatted_completion?: string;
-  /**
-   * **[READ-ONLY]** Number of years since the qualification was completed.
-   */
-  readonly years_since_completion?: number | null;
-  education_level?: EducationLevelEnum;
-  /**
-   * **[READ-ONLY]** Indicates if the education record has a certificate number provided.
-   */
-  readonly has_certificate_number?: boolean;
 };
 
 export type ApiResponseInstructorEducation = {
@@ -3221,7 +3221,7 @@ export type Course = {
    * **[OPTIONAL]** URL to course banner image for detailed course pages.
    */
   banner_url?: string | null;
-  status: SchemaEnum7;
+  status: SchemaEnum6;
   /**
    * **[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.
    */
@@ -3795,7 +3795,7 @@ export type LessonPracticeActivity = {
    * **[OPTIONAL]** Display order within the lesson. If omitted, the system appends the activity.
    */
   display_order?: number;
-  status?: SchemaEnum7;
+  status?: SchemaEnum6;
   /**
    * **[OPTIONAL]** Whether the practice activity is visible for use. Can only be true when status is published.
    */
@@ -5429,11 +5429,6 @@ export type ClassMarketplaceJobRequest = {
    * **[REQUIRED]** Training branch the class is delivered at. Its location pin becomes the job's location for IN_PERSON and HYBRID delivery.
    */
   branch_uuid: string;
-  /**
-   * **[OPTIONAL]** Minimum qualifications, experience or certifications asked of applicants.
-   */
-  requirements?: string | null;
-  membership_preference?: MembershipPreferenceEnum;
 };
 
 /**
@@ -5472,10 +5467,6 @@ export type ClassMarketplaceJob = {
   readonly description?: string;
   status?: StatusEnum9;
   readonly resources?: Array<ClassMarketplaceJobResource>;
-  /**
-   * **[READ-ONLY]** Minimum qualifications, experience or certifications asked of applicants.
-   */
-  readonly requirements?: string | null;
   readonly organisation_uuid?: string;
   readonly course_uuid?: string;
   readonly program_uuid?: string;
@@ -5554,7 +5545,6 @@ export type ClassMarketplaceJob = {
    */
   readonly contact_email?: string | null;
   distance_band?: DistanceBandEnum;
-  membership_preference?: MembershipPreferenceEnum;
   readonly duration_minutes?: bigint;
 };
 
@@ -5900,41 +5890,6 @@ export type SavedAgeGroup = {
   owner_name?: string | null;
 };
 
-export type UpdateRequest = {
-  body?: string;
-  enabled?: boolean;
-};
-
-export type ApiResponseSmsTemplateResponse = {
-  success?: boolean;
-  data?: SmsTemplateResponse;
-  message?: string;
-  error?: unknown;
-};
-
-export type PlaceholderResponse = {
-  name?: string;
-  label?: string;
-  sample?: string;
-  max_length?: number;
-  required?: boolean;
-};
-
-export type SmsTemplateResponse = {
-  key?: string;
-  name?: string;
-  group?: string;
-  trigger?: string;
-  security?: boolean;
-  enabled?: boolean;
-  body?: string;
-  default_body?: string;
-  edited?: boolean;
-  updated_by_name?: string;
-  updated_at?: Date;
-  placeholders?: Array<PlaceholderResponse>;
-};
-
 /**
  * Creates or replaces a skills taxonomy entry
  */
@@ -6034,10 +5989,6 @@ export type PayoutSettings = {
    * Charged per withdrawal when the earner pays the M-Pesa charge
    */
   earner_fee?: number;
-  /**
-   * When true every withdrawal waits for an admin and is paid only through an approved payout batch; review flags are then shown for information. Left unchanged when omitted.
-   */
-  require_admin_approval?: boolean;
   readonly updated_date?: Date;
 };
 
@@ -6125,7 +6076,6 @@ export type WithdrawalRequest = {
    * Generated by the client per attempt; repeating it returns the first withdrawal
    */
   idempotency_key: string;
-  purse?: SchemaEnum;
 };
 
 export type ApiResponseWithdrawalCreated = {
@@ -6154,50 +6104,6 @@ export type VerificationCode = {
 };
 
 /**
- * The earner's wallet read when the admin view was loaded, so a reviewer sees what the withdrawal is paid from. Only on admin views.
- */
-export type WalletCheck = {
-  purse?: SchemaEnum;
-  /**
-   * Account balance now: the available balance plus everything held
-   */
-  account_balance?: number;
-  /**
-   * Gross amount (incl. any earner M-Pesa charge) of all this owner's held withdrawals from this purse (AWAITING_SECOND_APPROVAL, NEEDS_REVIEW, SENDING, PROCESSING), this one included when held
-   */
-  held_amount?: number;
-  /**
-   * How many withdrawals make up held_amount
-   */
-  held_count?: bigint;
-  /**
-   * Withdrawal and charge debits the wallet actually recorded for those held withdrawals, less reversals; below held_amount means something is held that never left the wallet
-   */
-  held_debited_amount?: number;
-  /**
-   * What the earner could still withdraw now; the wallet balance, which held withdrawals have already left. Same figure as the earner's own Available.
-   */
-  available_balance?: number;
-  /**
-   * account_balance less this withdrawal's gross amount: what remains once it pays. Null when the withdrawal is finished (paid, failed, rejected, cancelled, expired)
-   */
-  balance_after?: number;
-  /**
-   * Posted balance of the purse's ledger account, which mirrors available_balance; null when the wallet has no ledger account
-   */
-  ledger_balance?: number;
-  /**
-   * ledger_balance equals available_balance; null when there is no ledger account. False raises LEDGER_MISMATCH
-   */
-  ledger_matches?: boolean;
-  /**
-   * The wallet backs everything held: held_debited_amount is at least held_amount. False raises WALLET_SHORT
-   */
-  covers?: boolean;
-  checked_at?: Date;
-};
-
-/**
  * Money leaving a wallet for an M-Pesa number
  */
 export type Withdrawal = {
@@ -6206,7 +6112,6 @@ export type Withdrawal = {
   owner_uuid?: string;
   reference?: string;
   status?: ItemsEnum;
-  purse?: SchemaEnum;
   /**
    * Taken from the wallet
    */
@@ -6243,18 +6148,6 @@ export type Withdrawal = {
   confirmed_at?: Date;
   sent_at?: Date;
   completed_at?: Date;
-  /**
-   * The payout batch this withdrawal is in, or was paid in; null when in none
-   */
-  payout_batch_uuid?: string;
-  /**
-   * The earner's wallet read now; only on admin views, null elsewhere
-   */
-  wallet_check?: WalletCheck;
-  /**
-   * Derived from wallet_check, never stored: LEDGER_MISMATCH when ledger_matches is false, WALLET_SHORT when covers is false. Empty when the wallet checks out; null off admin views
-   */
-  wallet_flags?: Array<string>;
 };
 
 /**
@@ -6316,7 +6209,6 @@ export type WalletTransferRequest = {
    * **[OPTIONAL]** Description for the transfer.
    */
   description?: string;
-  source_purse?: SchemaEnum;
 };
 
 export type ApiResponseWalletTransferResponse = {
@@ -6331,7 +6223,7 @@ export type ApiResponseWalletTransferResponse = {
  */
 export type Wallet = {
   /**
-   * **[READ-ONLY]** Unique identifier for the wallet row. On the owner's wallet, which sums every purse, the owner's oldest purse row (the row the wallet had before purses); each purse's own row is purses[].wallet_uuid. Null while the owner has no row.
+   * **[READ-ONLY]** Unique identifier for the wallet.
    */
   readonly uuid?: string;
   /**
@@ -6348,7 +6240,7 @@ export type Wallet = {
    */
   readonly currency_code?: string;
   /**
-   * **[READ-ONLY]** Current balance: the purse's, or the sum of every purse.
+   * **[READ-ONLY]** Current wallet balance.
    */
   readonly balance_amount?: number;
   /**
@@ -6387,59 +6279,6 @@ export type Wallet = {
    * **[READ-ONLY]** Whether the caller may withdraw from this wallet.
    */
   readonly can_withdraw?: boolean;
-  purse?: SchemaEnum;
-  /**
-   * **[READ-ONLY]** available_amount plus held_amount. Null where not computed.
-   */
-  readonly account_balance?: number;
-  /**
-   * **[READ-ONLY]** Each purse with its own balance, in the order COURSE_CREATOR, INSTRUCTOR, STUDENT (EARNINGS for an organisation). The top-level figures are their sums. Null where not computed.
-   */
-  readonly purses?: Array<WalletPurse>;
-};
-
-/**
- * One purse of a wallet, with its own balance. A person has COURSE_CREATOR, INSTRUCTOR and STUDENT purses; an organisation has EARNINGS.
- */
-export type WalletPurse = {
-  purse?: SchemaEnum;
-  /**
-   * The purse's wallet row; null until money first lands in it
-   */
-  wallet_uuid?: string;
-  currency_code?: string;
-  /**
-   * The purse's balance, which confirmed withdrawals have already left; same as available_amount
-   */
-  balance_amount?: number;
-  /**
-   * Held for withdrawals from this purse still being paid out
-   */
-  held_amount?: number;
-  /**
-   * What can be withdrawn or moved from this purse now
-   */
-  available_amount?: number;
-  /**
-   * available_amount plus held_amount
-   */
-  account_balance?: number;
-  /**
-   * Lifetime sale shares credited to this purse, net of reversals
-   */
-  shares_total?: number;
-  /**
-   * Lifetime platform fees charged on those shares
-   */
-  platform_fees_total?: number;
-  /**
-   * Sales credited to this purse, net of reversals
-   */
-  sales_count?: bigint;
-  /**
-   * Lifetime transfers out of this purse, moves to the owner's other purses included
-   */
-  transferred_out_total?: number;
 };
 
 /**
@@ -6488,7 +6327,6 @@ export type WalletCreditRequest = {
    * **[OPTIONAL]** Description for the credit entry.
    */
   description?: string;
-  purse?: SchemaEnum;
 };
 
 export type ApiResponseWallet = {
@@ -6496,54 +6334,6 @@ export type ApiResponseWallet = {
   data?: Wallet;
   message?: string;
   error?: unknown;
-};
-
-/**
- * Move money between two of one person's own purses; no fee
- */
-export type PurseTransferRequest = {
-  from_purse: SchemaEnum;
-  to_purse: SchemaEnum;
-  amount: number;
-  /**
-   * ISO currency code; the platform currency when left out
-   */
-  currency_code?: string;
-  /**
-   * Your reference for the move; one is made up when left out
-   */
-  reference?: string;
-  /**
-   * Shown on both purse statements; says which purses when left out
-   */
-  description?: string;
-};
-
-export type ApiResponsePurseTransferResponse = {
-  success?: boolean;
-  data?: PurseTransferResponse;
-  message?: string;
-  error?: unknown;
-};
-
-/**
- * Money moved between two of one person's purses
- */
-export type PurseTransferResponse = {
-  /**
-   * Shared by the TRANSFER_OUT row of the source purse and the TRANSFER_IN row of the target purse
-   */
-  transfer_reference?: string;
-  amount?: number;
-  currency_code?: string;
-  /**
-   * The source purse's row after the move
-   */
-  from_wallet?: Wallet;
-  /**
-   * The target purse's row after the move
-   */
-  to_wallet?: Wallet;
 };
 
 /**
@@ -6710,6 +6500,18 @@ export type ScheduledInstance = {
    */
   readonly duration_minutes?: bigint;
   /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
+   */
+  readonly can_be_ended?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
+   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
+   */
+  readonly can_be_started?: boolean;
+  /**
    * **[READ-ONLY]** Human-readable formatted duration.
    */
   readonly duration_formatted?: string;
@@ -6721,18 +6523,6 @@ export type ScheduledInstance = {
    * **[READ-ONLY]** Indicates if the scheduled instance is currently active (ongoing).
    */
   readonly is_currently_active?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly started.
-   */
-  readonly can_be_started?: boolean;
-  /**
-   * **[READ-ONLY]** Indicates if the scheduled instance can be explicitly concluded.
-   */
-  readonly can_be_ended?: boolean;
 };
 
 export type AggregatesDto = {
@@ -7104,7 +6894,7 @@ export type ApiResponseDomainApplication = {
 export type DomainApplication = {
   user_uuid?: string;
   domain?: string;
-  status?: SchemaEnum14;
+  status?: SchemaEnum13;
   requested_at?: Date;
   submitted_at?: Date;
   reviewed_at?: Date;
@@ -7983,7 +7773,7 @@ export type InstructorObligation = {
    * Currency the obligation was accrued in
    */
   currency_code?: string;
-  status?: SchemaEnum9;
+  status?: SchemaEnum8;
   /**
    * When the session completed and the obligation arose (UTC)
    */
@@ -8550,6 +8340,10 @@ export type Enrollment = {
    */
   readonly is_active?: boolean;
   /**
+   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
+   */
+  readonly can_be_cancelled?: boolean;
+  /**
    * **[READ-ONLY]** Indicates if the student attended the class.
    */
   readonly did_attend?: boolean;
@@ -8561,10 +8355,6 @@ export type Enrollment = {
    * **[READ-ONLY]** Human-readable description of the enrollment status.
    */
   readonly status_description?: string;
-  /**
-   * **[READ-ONLY]** Indicates if the enrollment can be cancelled.
-   */
-  readonly can_be_cancelled?: boolean;
 };
 
 /**
@@ -9155,10 +8945,6 @@ export type ClassDefinitionCreateRequest = {
    * **[REQUIRED]** Schedule templates used to generate initial scheduled sessions.
    */
   session_templates: Array<ClassSessionTemplate>;
-  /**
-   * **[OPTIONAL]** Branch venue (at most one) and equipment to book for every session. Resources must be active and at the class's branch; a clash is refused with 409.
-   */
-  resources?: Array<ClassMarketplaceJobResource> | null;
 };
 
 export type ApiResponseClassSessionTemplateScheduleResponse = {
@@ -10014,7 +9800,7 @@ export type AssignmentAttachment = {
  * Admin domain assignment request containing domain type, reason, and effective date
  */
 export type AdminDomainAssignmentRequest = {
-  domain_name: SchemaEnum15;
+  domain_name: SchemaEnum14;
   assignment_type: AssignmentTypeEnum;
   /**
    * Reason for assigning admin privileges
@@ -10057,18 +9843,6 @@ export type AdminCreateUserRequestDto = {
   phone_number?: string;
 };
 
-export type ApiResponseTestResponse = {
-  success?: boolean;
-  data?: TestResponse;
-  message?: string;
-  error?: unknown;
-};
-
-export type TestResponse = {
-  sent?: boolean;
-  to_masked?: string;
-};
-
 export type ApiResponseSearchRebuildResponse = {
   success?: boolean;
   data?: SearchRebuildResponse;
@@ -10102,97 +9876,6 @@ export type ContentModerationDecisionRequest = {
  */
 export type RejectWithdrawalRequest = {
   reason: string;
-};
-
-/**
- * Withdrawals waiting for review to put in a draft batch
- */
-export type PayoutBatchWithdrawalsRequest = {
-  withdrawal_uuids?: Array<string>;
-};
-
-export type ApiResponsePayoutBatch = {
-  success?: boolean;
-  data?: PayoutBatch;
-  message?: string;
-  error?: unknown;
-};
-
-/**
- * Withdrawals paid together once a second admin approves them
- */
-export type PayoutBatch = {
-  uuid?: string;
-  status?: ItemsEnum3;
-  /**
-   * User who built the batch
-   */
-  created_by?: string;
-  created_by_name?: string;
-  submitted_by?: string;
-  submitted_by_name?: string;
-  submitted_at?: Date;
-  approved_by?: string;
-  approved_by_name?: string;
-  approved_at?: Date;
-  rejected_by?: string;
-  rejected_at?: Date;
-  rejection_reason?: string;
-  /**
-   * Rows in the batch; for a rejected or cancelled batch, the rows it had when it let them go
-   */
-  row_count?: number;
-  /**
-   * Sum of the rows' net amounts: what M-Pesa pays out
-   */
-  total_amount?: number;
-  paid_count?: bigint;
-  failed_count?: bigint;
-  /**
-   * Rows being handed to or waiting on M-Pesa (SENDING or PROCESSING)
-   */
-  in_flight_count?: bigint;
-  /**
-   * Utility account funds M-Pesa reported at approval; null when unknown and overridden
-   */
-  float_at_approval?: number;
-  released_at?: Date;
-  completed_at?: Date;
-  created_date?: Date;
-  updated_date?: Date;
-  /**
-   * True when the signed-in admin may approve the batch now: it waits for approval and they neither built nor submitted it
-   */
-  can_approve?: boolean;
-  /**
-   * Rows whose earner wallet has a wallet flag (LEDGER_MISMATCH or WALLET_SHORT) now; approval is refused while above zero unless acknowledge_wallet_issues is true
-   */
-  wallet_issue_count?: number;
-  /**
-   * Rows whose wallet was checked for this response
-   */
-  wallets_checked?: number;
-};
-
-/**
- * Why a payout batch is not approved
- */
-export type RejectPayoutBatchRequest = {
-  reason: string;
-};
-
-/**
- * Approval of a payout batch
- */
-export type ApprovePayoutBatchRequest = {
-  /**
-   * Release the batch even though the payout float is unknown; recorded in the audit trail
-   */
-  override_unknown_float?: boolean;
-  /**
-   * Release the batch even though rows carry wallet flags (wallet_issue_count above zero); recorded in the approval audit event
-   */
-  acknowledge_wallet_issues?: boolean;
 };
 
 export type OrganisationUserCreateRequestDto = {
@@ -10391,7 +10074,7 @@ export type WalletTransaction = {
    * **[READ-ONLY]** Wallet UUID linked to this transaction.
    */
   readonly wallet_uuid?: string;
-  transaction_type?: ItemsEnum4;
+  transaction_type?: ItemsEnum3;
   /**
    * **[READ-ONLY]** Transaction amount.
    */
@@ -10428,11 +10111,6 @@ export type WalletTransaction = {
    * **[READ-ONLY]** Timestamp when the transaction was recorded.
    */
   readonly created_date?: Date;
-  /**
-   * **[READ-ONLY]** On SALE and PLATFORM_FEE rows of a class sale: the sale split that explains the row, for GET .../sales/{split_uuid}. Null on other rows.
-   */
-  readonly sale_split_uuid?: string;
-  purse?: SchemaEnum;
 };
 
 export type ApiResponseListWalletStatement = {
@@ -10474,151 +10152,6 @@ export type WalletStatement = {
    * **[READ-ONLY]** Number of transactions in the month.
    */
   readonly transaction_count?: bigint;
-};
-
-export type ApiResponsePagedDtoSaleSplit = {
-  success?: boolean;
-  data?: PagedDtoSaleSplit;
-  message?: string;
-  error?: unknown;
-};
-
-export type PagedDtoSaleSplit = {
-  content?: Array<SaleSplit>;
-  metadata?: PageMetadata;
-  links?: PageLinks;
-};
-
-/**
- * The platform fee rule in force when the order was placed
- */
-export type SaleFeeRule = {
-  /**
-   * Human-readable rule
-   */
-  description?: string;
-  /**
-   * False for lines settled before splits were recorded, whose rule is unknown
-   */
-  recorded?: boolean;
-  rule_uuid?: string;
-  rule_key?: string;
-  mode?: ModeEnum;
-  /**
-   * The percentage, or the flat amount
-   */
-  rate?: number;
-  rate_currency?: string;
-  waived?: boolean;
-  discount_percentage?: number;
-  discount_amount?: number;
-  evaluated_at?: Date;
-};
-
-/**
- * How a captured purchase line was split between the course creator, the delivery party (instructor or hiring organisation) and the platform, recorded at the point of purchase. creator.net + delivery.net + platform_fee_total + retained = line_gross.
- */
-export type SaleSplit = {
-  /**
-   * The split's id, which is the purchase line's uuid
-   */
-  uuid?: string;
-  order_id?: string;
-  /**
-   * The order's display number, when it has one
-   */
-  order_number?: string;
-  line_item_id?: string;
-  title?: string;
-  course_uuid?: string;
-  class_definition_uuid?: string;
-  /**
-   * When the line was settled into wallets (UTC); the order time on older lines
-   */
-  captured_at?: Date;
-  currency_code?: string;
-  /**
-   * What the buyer paid for the line
-   */
-  line_gross?: number;
-  /**
-   * The course creator's percentage of the line; null on backfilled splits
-   */
-  creator_percentage?: number;
-  your_role?: YourRoleEnum;
-  your_purse?: SchemaEnum;
-  your_gross?: number;
-  your_fee?: number;
-  your_net?: number;
-  creator?: SaleSplitParty;
-  delivery?: SaleSplitParty;
-  platform_fee_total?: number;
-  /**
-   * Collected, not fee, and paid to nobody, e.g. a leg with no earner
-   */
-  retained?: number;
-  /**
-   * False when the figures did not add up at settlement; flagged for review
-   */
-  reconciles?: boolean;
-  /**
-   * Rebuilt from wallet rows for a line settled before splits were recorded
-   */
-  backfilled?: boolean;
-  fee_rule?: SaleFeeRule;
-  /**
-   * The viewer's SALE and PLATFORM_FEE rows for this line; every party's rows for admins
-   */
-  transactions?: Array<SaleSplitTransaction>;
-};
-
-/**
- * One party's leg of a sale split; named, never with contact details
- */
-export type SaleSplitParty = {
-  role?: YourRoleEnum;
-  /**
-   * Display name of the person or organisation; null when nobody was resolved
-   */
-  name?: string;
-  owner_type?: OwnerTypeEnum;
-  /**
-   * Set for the viewer's own leg and for admins; null for the other party
-   */
-  owner_uuid?: string;
-  status?: StatusEnum23;
-  /**
-   * This party's share of the line before the platform fee
-   */
-  gross?: number;
-  /**
-   * Platform fee charged on this share
-   */
-  fee?: number;
-  /**
-   * What this party received
-   */
-  net?: number;
-};
-
-/**
- * A wallet SALE or PLATFORM_FEE row written for a sale split
- */
-export type SaleSplitTransaction = {
-  uuid?: string;
-  wallet_uuid?: string;
-  transaction_type?: ItemsEnum4;
-  role?: YourRoleEnum;
-  purse?: SchemaEnum;
-  reference?: string;
-  amount?: number;
-};
-
-export type ApiResponseSaleSplit = {
-  success?: boolean;
-  data?: SaleSplit;
-  message?: string;
-  error?: unknown;
 };
 
 export type ApiResponseListPayoutMethod = {
@@ -11007,11 +10540,11 @@ export type PageSessionReportSummary = {
   size?: number;
   content?: Array<SessionReportSummary>;
   number?: number;
+  first?: boolean;
+  last?: boolean;
   numberOfElements?: number;
   sort?: SortObject;
   pageable?: PageableObject;
-  first?: boolean;
-  last?: boolean;
   empty?: boolean;
 };
 
@@ -11161,7 +10694,7 @@ export type InstructorTimeHold = {
    * Timezone the window was authored in
    */
   timezone?: string;
-  status?: StatusEnum24;
+  status?: StatusEnum23;
   /**
    * Class definition the hold became, once confirmed
    */
@@ -11286,11 +10819,11 @@ export type Page = {
   size?: number;
   content?: Array<unknown>;
   number?: number;
+  first?: boolean;
+  last?: boolean;
   numberOfElements?: number;
   sort?: SortObject;
   pageable?: PageableObject;
-  first?: boolean;
-  last?: boolean;
   empty?: boolean;
 };
 
@@ -11798,7 +11331,7 @@ export type StudentQuizReview = {
   quiz_uuid?: string;
   attempt_uuid?: string;
   enrollment_uuid?: string;
-  status?: StatusEnum25;
+  status?: StatusEnum24;
   score?: number;
   max_score?: number;
   percentage?: number;
@@ -12117,7 +11650,7 @@ export type ProgramEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum26;
+  status: StatusEnum25;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -12315,11 +11848,6 @@ export type WalletBalanceSummary = {
   held_amount?: number;
   available_amount?: number;
   can_withdraw?: boolean;
-  purse?: SchemaEnum;
-  /**
-   * Each purse with its own balance; on the wallet screens only
-   */
-  purses?: Array<WalletPurse>;
 };
 
 export type ApiResponseListPayoutApprover = {
@@ -12538,7 +12066,7 @@ export type ResourceBooking = {
    * Organisation owning the resource
    */
   organisation_uuid?: string;
-  status?: StatusEnum27;
+  status?: StatusEnum26;
   /**
    * Units reserved (1 for venues)
    */
@@ -13982,7 +13510,7 @@ export type PagedDtoCourseVersionSnapshot = {
 
 export type ApiResponseListContentStatus = {
   success?: boolean;
-  data?: Array<SchemaEnum7>;
+  data?: Array<SchemaEnum6>;
   message?: string;
   error?: unknown;
 };
@@ -14876,7 +14404,7 @@ export type CourseEnrollment = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum26;
+  status: StatusEnum25;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -15412,7 +14940,7 @@ export type ClassProgrammeOption = {
  * Programme marks and skill levels for the learners of one programme class
  */
 export type ClassProgrammeProgress = {
-  status?: StatusEnum28;
+  status?: StatusEnum27;
   class_definition_uuid?: string;
   /**
    * Null unless status is READY
@@ -15697,10 +15225,6 @@ export type JobMatch = {
   readonly description?: string;
   status?: StatusEnum9;
   readonly resources?: Array<ClassMarketplaceJobResource>;
-  /**
-   * **[READ-ONLY]** Minimum qualifications, experience or certifications asked of applicants.
-   */
-  readonly requirements?: string | null;
   readonly organisation_uuid?: string;
   readonly course_uuid?: string;
   readonly program_uuid?: string;
@@ -15779,7 +15303,6 @@ export type JobMatch = {
    */
   readonly contact_email?: string | null;
   distance_band?: DistanceBandEnum;
-  membership_preference?: MembershipPreferenceEnum;
   readonly duration_minutes?: bigint;
   /**
    * Why and how well the job fits
@@ -16373,13 +15896,6 @@ export type PagedDtoAdminUserActivityEvent = {
   links?: PageLinks;
 };
 
-export type ApiResponseListSmsTemplateResponse = {
-  success?: boolean;
-  data?: Array<SmsTemplateResponse>;
-  message?: string;
-  error?: unknown;
-};
-
 export type ApiResponseListSearchIndexStatusResponse = {
   success?: boolean;
   data?: Array<SearchIndexStatusResponse>;
@@ -16406,13 +15922,6 @@ export type SearchIndexStatusResponse = {
   engine_error?: string;
 };
 
-export type ApiResponseListSaleSplit = {
-  success?: boolean;
-  data?: Array<SaleSplit>;
-  message?: string;
-  error?: unknown;
-};
-
 /**
  * A domain request in the platform admin approval queue
  */
@@ -16421,7 +15930,7 @@ export type AdminDomainApplication = {
   full_name?: string;
   email?: string;
   domain?: string;
-  status?: SchemaEnum14;
+  status?: SchemaEnum13;
   requested_at?: Date;
   /**
    * When the user submitted their onboarding for review; null while they are still filling it in
@@ -16585,53 +16094,6 @@ export type PayoutSummary = {
    * False while payouts are not configured (no gateway or payout shortcode)
    */
   payouts_configured?: boolean;
-};
-
-export type ApiResponsePagedDtoPayoutBatch = {
-  success?: boolean;
-  data?: PagedDtoPayoutBatch;
-  message?: string;
-  error?: unknown;
-};
-
-export type PagedDtoPayoutBatch = {
-  content?: Array<PayoutBatch>;
-  metadata?: PageMetadata;
-  links?: PageLinks;
-};
-
-export type ApiResponsePayoutBatchDetail = {
-  success?: boolean;
-  data?: PayoutBatchDetail;
-  message?: string;
-  error?: unknown;
-};
-
-/**
- * A payout batch with its withdrawals and the live payout float
- */
-export type PayoutBatchDetail = {
-  batch?: PayoutBatch;
-  /**
-   * The batch's withdrawals, oldest first, with their review flags, wallet check and wallet flags
-   */
-  withdrawals?: Array<Withdrawal>;
-  /**
-   * Read from M-Pesa now; null when unknown or unavailable
-   */
-  payout_float?: PayoutFloat;
-};
-
-/**
- * The payout shortcode's balance as M-Pesa last reported it
- */
-export type PayoutFloat = {
-  /**
-   * Funds payouts are drawn from
-   */
-  utility_funds?: number;
-  working_funds?: number;
-  reported_at?: Date;
 };
 
 export type ApiResponseListString = {
@@ -17126,30 +16588,21 @@ export const ItemsEnum = {
 export type ItemsEnum = (typeof ItemsEnum)[keyof typeof ItemsEnum];
 
 export const SchemaEnum = {
-  COURSE_CREATOR: 'COURSE_CREATOR',
-  INSTRUCTOR: 'INSTRUCTOR',
-  STUDENT: 'STUDENT',
-  EARNINGS: 'EARNINGS',
-} as const;
-
-export type SchemaEnum = (typeof SchemaEnum)[keyof typeof SchemaEnum];
-
-export const SchemaEnum2 = {
   PLATFORM_FEE: 'PLATFORM_FEE',
   AGE_GATE: 'AGE_GATE',
   ENROLLMENT_GUARD: 'ENROLLMENT_GUARD',
   CUSTOM: 'CUSTOM',
 } as const;
 
-export type SchemaEnum2 = (typeof SchemaEnum2)[keyof typeof SchemaEnum2];
+export type SchemaEnum = (typeof SchemaEnum)[keyof typeof SchemaEnum];
 
-export const SchemaEnum3 = {
+export const SchemaEnum2 = {
   DRAFT: 'DRAFT',
   ACTIVE: 'ACTIVE',
   INACTIVE: 'INACTIVE',
 } as const;
 
-export type SchemaEnum3 = (typeof SchemaEnum3)[keyof typeof SchemaEnum3];
+export type SchemaEnum2 = (typeof SchemaEnum2)[keyof typeof SchemaEnum2];
 
 export const ItemsEnum2 = {
   PENDING: 'PENDING',
@@ -17162,44 +16615,32 @@ export const ItemsEnum2 = {
 
 export type ItemsEnum2 = (typeof ItemsEnum2)[keyof typeof ItemsEnum2];
 
-export const SchemaEnum4 = {
+export const SchemaEnum3 = {
   SKILLS: 'skills',
   CERTIFICATIONS: 'certifications',
   COMPETENCIES: 'competencies',
   DOCUMENTS: 'documents',
 } as const;
 
-export type SchemaEnum4 = (typeof SchemaEnum4)[keyof typeof SchemaEnum4];
+export type SchemaEnum3 = (typeof SchemaEnum3)[keyof typeof SchemaEnum3];
 
-export const SchemaEnum5 = {
+export const SchemaEnum4 = {
   APPROVE: 'approve',
   REJECT: 'reject',
   REVOKE: 'revoke',
 } as const;
 
-export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
+export type SchemaEnum4 = (typeof SchemaEnum4)[keyof typeof SchemaEnum4];
 
-export const ItemsEnum3 = {
-  DRAFT: 'DRAFT',
-  AWAITING_APPROVAL: 'AWAITING_APPROVAL',
-  RELEASED: 'RELEASED',
-  COMPLETED: 'COMPLETED',
-  PARTLY_FAILED: 'PARTLY_FAILED',
-  REJECTED: 'REJECTED',
-  CANCELLED: 'CANCELLED',
-} as const;
-
-export type ItemsEnum3 = (typeof ItemsEnum3)[keyof typeof ItemsEnum3];
-
-export const SchemaEnum6 = {
+export const SchemaEnum5 = {
   SKILLS: 'skills',
   COMPETENCIES: 'competencies',
   CERTIFICATIONS: 'certifications',
 } as const;
 
-export type SchemaEnum6 = (typeof SchemaEnum6)[keyof typeof SchemaEnum6];
+export type SchemaEnum5 = (typeof SchemaEnum5)[keyof typeof SchemaEnum5];
 
-export const ItemsEnum4 = {
+export const ItemsEnum3 = {
   DEPOSIT: 'DEPOSIT',
   SALE: 'SALE',
   TRANSFER_IN: 'TRANSFER_IN',
@@ -17211,18 +16652,18 @@ export const ItemsEnum4 = {
   PAYOUT_FEE: 'PAYOUT_FEE',
 } as const;
 
-export type ItemsEnum4 = (typeof ItemsEnum4)[keyof typeof ItemsEnum4];
+export type ItemsEnum3 = (typeof ItemsEnum3)[keyof typeof ItemsEnum3];
 
-export const SchemaEnum7 = {
+export const SchemaEnum6 = {
   DRAFT: 'draft',
   IN_REVIEW: 'in_review',
   PUBLISHED: 'published',
   ARCHIVED: 'archived',
 } as const;
 
-export type SchemaEnum7 = (typeof SchemaEnum7)[keyof typeof SchemaEnum7];
+export type SchemaEnum6 = (typeof SchemaEnum6)[keyof typeof SchemaEnum6];
 
-export const SchemaEnum8 = {
+export const SchemaEnum7 = {
   STUDENT: 'student',
   INSTRUCTOR: 'instructor',
   ADMIN: 'admin',
@@ -17231,74 +16672,74 @@ export const SchemaEnum8 = {
   COURSE_CREATOR: 'course_creator',
 } as const;
 
-export type SchemaEnum8 = (typeof SchemaEnum8)[keyof typeof SchemaEnum8];
+export type SchemaEnum7 = (typeof SchemaEnum7)[keyof typeof SchemaEnum7];
 
-export const SchemaEnum9 = {
+export const SchemaEnum8 = {
   ACCRUED: 'ACCRUED',
   SETTLED: 'SETTLED',
   CANCELLED: 'CANCELLED',
   DISPUTED: 'DISPUTED',
 } as const;
 
-export type SchemaEnum9 = (typeof SchemaEnum9)[keyof typeof SchemaEnum9];
+export type SchemaEnum8 = (typeof SchemaEnum8)[keyof typeof SchemaEnum8];
 
-export const SchemaEnum10 = {
+export const SchemaEnum9 = {
   ALL: 'all',
   COURSES: 'courses',
   PROGRAMMES: 'programmes',
 } as const;
 
-export type SchemaEnum10 = (typeof SchemaEnum10)[keyof typeof SchemaEnum10];
+export type SchemaEnum9 = (typeof SchemaEnum9)[keyof typeof SchemaEnum9];
 
-export const ItemsEnum5 = {
+export const ItemsEnum4 = {
   BEGINNER: 'beginner',
   INTERMEDIATE: 'intermediate',
   ADVANCED: 'advanced',
 } as const;
 
+export type ItemsEnum4 = (typeof ItemsEnum4)[keyof typeof ItemsEnum4];
+
+export const ItemsEnum5 = { FREE: 'free', PAID: 'paid' } as const;
+
 export type ItemsEnum5 = (typeof ItemsEnum5)[keyof typeof ItemsEnum5];
 
-export const ItemsEnum6 = { FREE: 'free', PAID: 'paid' } as const;
-
-export type ItemsEnum6 = (typeof ItemsEnum6)[keyof typeof ItemsEnum6];
-
-export const SchemaEnum11 = {
+export const SchemaEnum10 = {
   RELEVANCE: 'relevance',
   NEWEST: 'newest',
   RATING: 'rating',
   POPULAR: 'popular',
 } as const;
 
-export type SchemaEnum11 = (typeof SchemaEnum11)[keyof typeof SchemaEnum11];
+export type SchemaEnum10 = (typeof SchemaEnum10)[keyof typeof SchemaEnum10];
 
-export const SchemaEnum12 = {
+export const SchemaEnum11 = {
   OPEN: 'open',
   SKILLS: 'skills',
   APPLIED: 'applied',
 } as const;
 
-export type SchemaEnum12 = (typeof SchemaEnum12)[keyof typeof SchemaEnum12];
+export type SchemaEnum11 = (typeof SchemaEnum11)[keyof typeof SchemaEnum11];
 
-export const SchemaEnum13 = {
+export const SchemaEnum12 = {
   ACTOR: 'actor',
   TARGET: 'target',
   ALL: 'all',
 } as const;
 
-export type SchemaEnum13 = (typeof SchemaEnum13)[keyof typeof SchemaEnum13];
+export type SchemaEnum12 = (typeof SchemaEnum12)[keyof typeof SchemaEnum12];
 
-export const SchemaEnum14 = {
+export const SchemaEnum13 = {
   PENDING: 'PENDING',
   APPROVED: 'APPROVED',
   REJECTED: 'REJECTED',
   SUSPENDED: 'SUSPENDED',
 } as const;
 
+export type SchemaEnum13 = (typeof SchemaEnum13)[keyof typeof SchemaEnum13];
+
+export const SchemaEnum14 = { ADMIN: 'admin', ORGANISATION_USER: 'organisation_user' } as const;
+
 export type SchemaEnum14 = (typeof SchemaEnum14)[keyof typeof SchemaEnum14];
-
-export const SchemaEnum15 = { ADMIN: 'admin', ORGANISATION_USER: 'organisation_user' } as const;
-
-export type SchemaEnum15 = (typeof SchemaEnum15)[keyof typeof SchemaEnum15];
 
 /**
  * **[READ-ONLY]** Payout rail.
@@ -18025,20 +17466,6 @@ export const ServiceTypeEnum = {
 export type ServiceTypeEnum = (typeof ServiceTypeEnum)[keyof typeof ServiceTypeEnum];
 
 /**
- * **[OPTIONAL]** Who may be hired: any instructor, or only the organisation's own. Defaults to ANY.
- */
-export const MembershipPreferenceEnum = {
-  ANY: 'ANY',
-  ORGANISATION_ONLY: 'ORGANISATION_ONLY',
-} as const;
-
-/**
- * **[OPTIONAL]** Who may be hired: any instructor, or only the organisation's own. Defaults to ANY.
- */
-export type MembershipPreferenceEnum =
-  (typeof MembershipPreferenceEnum)[keyof typeof MembershipPreferenceEnum];
-
-/**
  * **[READ-ONLY]** Kind of the reserved resource.
  */
 export const ResourceTypeEnum2 = { VENUE: 'VENUE', EQUIPMENT_POOL: 'EQUIPMENT_POOL' } as const;
@@ -18578,35 +18005,6 @@ export const DomainNameEnum2 = {
 export type DomainNameEnum2 = (typeof DomainNameEnum2)[keyof typeof DomainNameEnum2];
 
 /**
- * The viewer's part in the sale; null for admins. Asked for one purse, the role of that purse's leg, and your_* covers that leg only. Otherwise a creator who also delivered is COURSE_CREATOR, with both legs summed into your_gross, your_fee and your_net
- */
-export const YourRoleEnum = {
-  COURSE_CREATOR: 'COURSE_CREATOR',
-  INSTRUCTOR: 'INSTRUCTOR',
-  ORGANISATION: 'ORGANISATION',
-} as const;
-
-/**
- * The viewer's part in the sale; null for admins. Asked for one purse, the role of that purse's leg, and your_* covers that leg only. Otherwise a creator who also delivered is COURSE_CREATOR, with both legs summed into your_gross, your_fee and your_net
- */
-export type YourRoleEnum = (typeof YourRoleEnum)[keyof typeof YourRoleEnum];
-
-/**
- * PAID, or why the leg was not paid: NO_EARNER, NO_SHARE or NOT_SPLIT
- */
-export const StatusEnum23 = {
-  PAID: 'PAID',
-  NO_EARNER: 'NO_EARNER',
-  NO_SHARE: 'NO_SHARE',
-  NOT_SPLIT: 'NOT_SPLIT',
-} as const;
-
-/**
- * PAID, or why the leg was not paid: NO_EARNER, NO_SHARE or NOT_SPLIT
- */
-export type StatusEnum23 = (typeof StatusEnum23)[keyof typeof StatusEnum23];
-
-/**
  * **[READ-ONLY]** What happened.
  */
 export const EventTypeEnum2 = {
@@ -18634,14 +18032,6 @@ export const EventTypeEnum2 = {
   WITHDRAWAL_CANCELLED: 'WITHDRAWAL_CANCELLED',
   PAYOUT_FEE_CHARGED: 'PAYOUT_FEE_CHARGED',
   PAYOUT_SETTINGS_CHANGED: 'PAYOUT_SETTINGS_CHANGED',
-  PAYOUT_BATCH_ROW_ADDED: 'PAYOUT_BATCH_ROW_ADDED',
-  PAYOUT_BATCH_ROW_REMOVED: 'PAYOUT_BATCH_ROW_REMOVED',
-  PAYOUT_BATCH_SUBMITTED: 'PAYOUT_BATCH_SUBMITTED',
-  PAYOUT_BATCH_RETURNED_TO_DRAFT: 'PAYOUT_BATCH_RETURNED_TO_DRAFT',
-  PAYOUT_BATCH_APPROVED: 'PAYOUT_BATCH_APPROVED',
-  PAYOUT_BATCH_REJECTED: 'PAYOUT_BATCH_REJECTED',
-  PAYOUT_BATCH_CANCELLED: 'PAYOUT_BATCH_CANCELLED',
-  PAYOUT_BATCH_COMPLETED: 'PAYOUT_BATCH_COMPLETED',
 } as const;
 
 /**
@@ -18698,7 +18088,7 @@ export type EnrollmentStatusEnum = (typeof EnrollmentStatusEnum)[keyof typeof En
 /**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
-export const StatusEnum24 = {
+export const StatusEnum23 = {
   TENTATIVE: 'TENTATIVE',
   FIRM: 'FIRM',
   CONFIRMED: 'CONFIRMED',
@@ -18708,7 +18098,7 @@ export const StatusEnum24 = {
 /**
  * Hold lifecycle state; only FIRM counts as a scheduling clash
  */
-export type StatusEnum24 = (typeof StatusEnum24)[keyof typeof StatusEnum24];
+export type StatusEnum23 = (typeof StatusEnum23)[keyof typeof StatusEnum23];
 
 export const QuestionTypeEnum2 = {
   MULTIPLE_CHOICE: 'multiple_choice',
@@ -18719,13 +18109,13 @@ export const QuestionTypeEnum2 = {
 
 export type QuestionTypeEnum2 = (typeof QuestionTypeEnum2)[keyof typeof QuestionTypeEnum2];
 
-export const StatusEnum25 = {
+export const StatusEnum24 = {
   IN_PROGRESS: 'in_progress',
   SUBMITTED: 'submitted',
   GRADED: 'graded',
 } as const;
 
-export type StatusEnum25 = (typeof StatusEnum25)[keyof typeof StatusEnum25];
+export type StatusEnum24 = (typeof StatusEnum24)[keyof typeof StatusEnum24];
 
 /**
  * **[READ-ONLY]** What happened.
@@ -18752,7 +18142,7 @@ export type EventTypeEnum3 = (typeof EventTypeEnum3)[keyof typeof EventTypeEnum3
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export const StatusEnum26 = {
+export const StatusEnum25 = {
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED',
   DROPPED: 'DROPPED',
@@ -18762,7 +18152,7 @@ export const StatusEnum26 = {
 /**
  * **[REQUIRED]** Current status of the student's enrollment in the program.
  */
-export type StatusEnum26 = (typeof StatusEnum26)[keyof typeof StatusEnum26];
+export type StatusEnum25 = (typeof StatusEnum25)[keyof typeof StatusEnum25];
 
 /**
  * Entry kind
@@ -18782,7 +18172,7 @@ export type EntryTypeEnum = (typeof EntryTypeEnum)[keyof typeof EntryTypeEnum];
 /**
  * Booking lifecycle state
  */
-export const StatusEnum27 = {
+export const StatusEnum26 = {
   HOLD: 'HOLD',
   CONFIRMED: 'CONFIRMED',
   RELEASED: 'RELEASED',
@@ -18792,7 +18182,7 @@ export const StatusEnum27 = {
 /**
  * Booking lifecycle state
  */
-export type StatusEnum27 = (typeof StatusEnum27)[keyof typeof StatusEnum27];
+export type StatusEnum26 = (typeof StatusEnum26)[keyof typeof StatusEnum26];
 
 /**
  * What created the booking
@@ -18917,7 +18307,7 @@ export type ResultStatusEnum = (typeof ResultStatusEnum)[keyof typeof ResultStat
 /**
  * READY with data; NO_PROGRAMME or PROGRAMME_CHOICE_REQUIRED with empty skills and learners
  */
-export const StatusEnum28 = {
+export const StatusEnum27 = {
   READY: 'READY',
   NO_PROGRAMME: 'NO_PROGRAMME',
   PROGRAMME_CHOICE_REQUIRED: 'PROGRAMME_CHOICE_REQUIRED',
@@ -18926,7 +18316,7 @@ export const StatusEnum28 = {
 /**
  * READY with data; NO_PROGRAMME or PROGRAMME_CHOICE_REQUIRED with empty skills and learners
  */
-export type StatusEnum28 = (typeof StatusEnum28)[keyof typeof StatusEnum28];
+export type StatusEnum27 = (typeof StatusEnum27)[keyof typeof StatusEnum27];
 
 /**
  * Status of the instructor's existing application, when they have one
@@ -19612,7 +19002,7 @@ export type TrainingProgramWritable = {
    * **[OPTIONAL]** Learning objectives and goals students will achieve upon program completion.
    */
   objectives?: string;
-  status: SchemaEnum7;
+  status: SchemaEnum6;
   /**
    * **[OPTIONAL]** Required knowledge and skills students should have before starting this program.
    */
@@ -20547,7 +19937,7 @@ export type CourseWritable = {
    * **[OPTIONAL]** URL to course banner image for detailed course pages.
    */
   banner_url?: string | null;
-  status: SchemaEnum7;
+  status: SchemaEnum6;
   /**
    * **[OPTIONAL]** Indicates if the course is actively available to students. Can only be true for published courses.
    */
@@ -20777,7 +20167,7 @@ export type LessonPracticeActivityWritable = {
    * **[OPTIONAL]** Display order within the lesson. If omitted, the system appends the activity.
    */
   display_order?: number;
-  status?: SchemaEnum7;
+  status?: SchemaEnum6;
   /**
    * **[OPTIONAL]** Whether the practice activity is visible for use. Can only be true when status is published.
    */
@@ -21628,11 +21018,6 @@ export type ClassMarketplaceJobRequestWritable = {
    * **[REQUIRED]** Training branch the class is delivered at. Its location pin becomes the job's location for IN_PERSON and HYBRID delivery.
    */
   branch_uuid: string;
-  /**
-   * **[OPTIONAL]** Minimum qualifications, experience or certifications asked of applicants.
-   */
-  requirements?: string | null;
-  membership_preference?: MembershipPreferenceEnum;
 };
 
 /**
@@ -21664,7 +21049,6 @@ export type ClassMarketplaceJobWritable = {
   class_visibility?: ClassVisibilityEnum;
   session_format?: SessionFormatEnum;
   location_type?: LocationTypeEnum;
-  membership_preference?: MembershipPreferenceEnum;
 };
 
 /**
@@ -21860,10 +21244,6 @@ export type PayoutSettingsWritable = {
    * Charged per withdrawal when the earner pays the M-Pesa charge
    */
   earner_fee?: number;
-  /**
-   * When true every withdrawal waits for an admin and is paid only through an approved payout batch; review flags are then shown for information. Left unchanged when omitted.
-   */
-  require_admin_approval?: boolean;
 };
 
 export type ApiResponsePayoutSettingsWritable = {
@@ -21905,7 +21285,6 @@ export type ApiResponseWalletTransferResponseWritable = {
  */
 export type WalletWritable = {
   owner_type?: OwnerTypeEnum;
-  purse?: SchemaEnum;
 };
 
 /**
@@ -21920,33 +21299,6 @@ export type ApiResponseWalletWritable = {
   data?: WalletWritable;
   message?: string;
   error?: unknown;
-};
-
-export type ApiResponsePurseTransferResponseWritable = {
-  success?: boolean;
-  data?: PurseTransferResponseWritable;
-  message?: string;
-  error?: unknown;
-};
-
-/**
- * Money moved between two of one person's purses
- */
-export type PurseTransferResponseWritable = {
-  /**
-   * Shared by the TRANSFER_OUT row of the source purse and the TRANSFER_IN row of the target purse
-   */
-  transfer_reference?: string;
-  amount?: number;
-  currency_code?: string;
-  /**
-   * The source purse's row after the move
-   */
-  from_wallet?: WalletWritable;
-  /**
-   * The target purse's row after the move
-   */
-  to_wallet?: WalletWritable;
 };
 
 export type ApiResponsePayoutMethodCreatedWritable = {
@@ -22661,10 +22013,6 @@ export type ClassDefinitionCreateRequestWritable = {
    * **[REQUIRED]** Schedule templates used to generate initial scheduled sessions.
    */
   session_templates: Array<ClassSessionTemplateWritable>;
-  /**
-   * **[OPTIONAL]** Branch venue (at most one) and equipment to book for every session. Resources must be active and at the class's branch; a clash is refused with 409.
-   */
-  resources?: Array<ClassMarketplaceJobResourceWritable> | null;
 };
 
 export type ApiResponseClassSessionTemplateScheduleResponseWritable = {
@@ -22976,8 +22324,7 @@ export type PagedDtoWalletTransactionWritable = {
  * Wallet ledger entry capturing balance changes
  */
 export type WalletTransactionWritable = {
-  transaction_type?: ItemsEnum4;
-  purse?: SchemaEnum;
+  transaction_type?: ItemsEnum3;
 };
 
 export type ApiResponseListWalletStatementWritable = {
@@ -23213,7 +22560,7 @@ export type InstructorTimeHoldWritable = {
    * Timezone the window was authored in
    */
   timezone?: string;
-  status?: StatusEnum24;
+  status?: StatusEnum23;
   /**
    * Class definition the hold became, once confirmed
    */
@@ -23517,7 +22864,7 @@ export type ProgramEnrollmentWritable = {
    * **[OPTIONAL]** Timestamp when the student completed the program. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum26;
+  status: StatusEnum25;
   /**
    * **[OPTIONAL]** Percentage of program content completed by the student.
    */
@@ -23654,7 +23001,7 @@ export type ResourceBookingWritable = {
    * Organisation owning the resource
    */
   organisation_uuid?: string;
-  status?: StatusEnum27;
+  status?: StatusEnum26;
   /**
    * Units reserved (1 for venues)
    */
@@ -24445,7 +23792,7 @@ export type CourseEnrollmentWritable = {
    * **[OPTIONAL]** Timestamp when the student completed the course. Null if not yet completed.
    */
   completion_date?: Date | null;
-  status: StatusEnum26;
+  status: StatusEnum25;
   /**
    * **[OPTIONAL]** Percentage of course content completed by the student.
    */
@@ -24818,7 +24165,6 @@ export type JobMatchWritable = {
   class_visibility?: ClassVisibilityEnum;
   session_format?: SessionFormatEnum;
   location_type?: LocationTypeEnum;
-  membership_preference?: MembershipPreferenceEnum;
 };
 
 export type JobMatchDetailsWritable = {
@@ -31526,68 +30872,6 @@ export type UpdateAgeGroupResponses = {
 
 export type UpdateAgeGroupResponse = UpdateAgeGroupResponses[keyof UpdateAgeGroupResponses];
 
-export type ResetData = {
-  body?: never;
-  path: {
-    key: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/sms-templates/{key}';
-};
-
-export type ResetErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ResetError = ResetErrors[keyof ResetErrors];
-
-export type ResetResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseSmsTemplateResponse;
-};
-
-export type ResetResponse = ResetResponses[keyof ResetResponses];
-
-export type SaveData = {
-  body: UpdateRequest;
-  path: {
-    key: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/sms-templates/{key}';
-};
-
-export type SaveErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SaveError = SaveErrors[keyof SaveErrors];
-
-export type SaveResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseSmsTemplateResponse;
-};
-
-export type SaveResponse = SaveResponses[keyof SaveResponses];
-
 export type AdminDeleteSkillData = {
   body?: never;
   path: {
@@ -31997,40 +31281,6 @@ export type TransferResponses = {
 
 export type TransferResponse = TransferResponses[keyof TransferResponses];
 
-export type ListWalletSalesData = {
-  body?: never;
-  path: {
-    userUuid: string;
-  };
-  query: {
-    purse?: SchemaEnum;
-    pageable: Pageable;
-  };
-  url: '/api/v1/wallets/{userUuid}/sales';
-};
-
-export type ListWalletSalesErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ListWalletSalesError = ListWalletSalesErrors[keyof ListWalletSalesErrors];
-
-export type ListWalletSalesResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoSaleSplit;
-};
-
-export type ListWalletSalesResponse = ListWalletSalesResponses[keyof ListWalletSalesResponses];
-
 export type CreditSaleData = {
   body: WalletCreditRequest;
   path: {
@@ -32061,39 +31311,6 @@ export type CreditSaleResponses = {
 };
 
 export type CreditSaleResponse = CreditSaleResponses[keyof CreditSaleResponses];
-
-export type TransferBetweenPursesData = {
-  body: PurseTransferRequest;
-  path: {
-    userUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/wallets/{userUuid}/purse-transfers';
-};
-
-export type TransferBetweenPursesErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type TransferBetweenPursesError =
-  TransferBetweenPursesErrors[keyof TransferBetweenPursesErrors];
-
-export type TransferBetweenPursesResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePurseTransferResponse;
-};
-
-export type TransferBetweenPursesResponse =
-  TransferBetweenPursesResponses[keyof TransferBetweenPursesResponses];
 
 export type ListPayoutMethodsData = {
   body?: never;
@@ -32660,8 +31877,8 @@ export type ListRulesData = {
   body?: never;
   path?: never;
   query: {
-    category?: SchemaEnum2;
-    status?: SchemaEnum3;
+    category?: SchemaEnum;
+    status?: SchemaEnum2;
     pageable: Pageable;
   };
   url: '/api/v1/system-rules';
@@ -41460,7 +40677,7 @@ export type UploadJobThumbnailResponse =
   UploadJobThumbnailResponses[keyof UploadJobThumbnailResponses];
 
 export type CreateClassForJobData = {
-  body?: ClassMarketplaceJobRequestWritable;
+  body?: never;
   path: {
     jobUuid: string;
   };
@@ -42495,7 +41712,7 @@ export type VerifyData = {
   body: ProfileVerificationRequest;
   path: {
     userUuid: string;
-    section: SchemaEnum4;
+    section: SchemaEnum3;
     itemUuid: string;
   };
   query?: never;
@@ -42531,7 +41748,7 @@ export type ModerateUserDomainData = {
     domain: string;
   };
   query: {
-    action: SchemaEnum5;
+    action: SchemaEnum4;
     reason?: string;
   };
   url: '/api/v1/admin/users/{userUuid}/domains/{domain}/moderate';
@@ -42633,37 +41850,6 @@ export type CreateAdminUserResponses = {
 };
 
 export type CreateAdminUserResponse = CreateAdminUserResponses[keyof CreateAdminUserResponses];
-
-export type TestData = {
-  body?: never;
-  path: {
-    key: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/sms-templates/{key}/test';
-};
-
-export type TestErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type TestError = TestErrors[keyof TestErrors];
-
-export type TestResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseTestResponse;
-};
-
-export type TestResponse2 = TestResponses[keyof TestResponses];
 
 export type AdminListSkillsData = {
   body?: never;
@@ -42956,263 +42142,6 @@ export type ApproveAdminWithdrawalResponses = {
 export type ApproveAdminWithdrawalResponse =
   ApproveAdminWithdrawalResponses[keyof ApproveAdminWithdrawalResponses];
 
-export type ListPayoutBatchesData = {
-  body?: never;
-  path?: never;
-  query: {
-    status?: Array<ItemsEnum3>;
-    pageable: Pageable;
-  };
-  url: '/api/v1/admin/payouts/batches';
-};
-
-export type ListPayoutBatchesErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ListPayoutBatchesError = ListPayoutBatchesErrors[keyof ListPayoutBatchesErrors];
-
-export type ListPayoutBatchesResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoPayoutBatch;
-};
-
-export type ListPayoutBatchesResponse =
-  ListPayoutBatchesResponses[keyof ListPayoutBatchesResponses];
-
-export type CreatePayoutBatchData = {
-  body?: PayoutBatchWithdrawalsRequest;
-  path?: never;
-  query?: never;
-  url: '/api/v1/admin/payouts/batches';
-};
-
-export type CreatePayoutBatchErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type CreatePayoutBatchError = CreatePayoutBatchErrors[keyof CreatePayoutBatchErrors];
-
-export type CreatePayoutBatchResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePayoutBatch;
-};
-
-export type CreatePayoutBatchResponse =
-  CreatePayoutBatchResponses[keyof CreatePayoutBatchResponses];
-
-export type AddPayoutBatchWithdrawalsData = {
-  body: PayoutBatchWithdrawalsRequest;
-  path: {
-    batchUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/payouts/batches/{batchUuid}/withdrawals';
-};
-
-export type AddPayoutBatchWithdrawalsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type AddPayoutBatchWithdrawalsError =
-  AddPayoutBatchWithdrawalsErrors[keyof AddPayoutBatchWithdrawalsErrors];
-
-export type AddPayoutBatchWithdrawalsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePayoutBatch;
-};
-
-export type AddPayoutBatchWithdrawalsResponse =
-  AddPayoutBatchWithdrawalsResponses[keyof AddPayoutBatchWithdrawalsResponses];
-
-export type SubmitPayoutBatchData = {
-  body?: never;
-  path: {
-    batchUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/payouts/batches/{batchUuid}/submit';
-};
-
-export type SubmitPayoutBatchErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type SubmitPayoutBatchError = SubmitPayoutBatchErrors[keyof SubmitPayoutBatchErrors];
-
-export type SubmitPayoutBatchResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePayoutBatch;
-};
-
-export type SubmitPayoutBatchResponse =
-  SubmitPayoutBatchResponses[keyof SubmitPayoutBatchResponses];
-
-export type ReturnPayoutBatchToDraftData = {
-  body?: never;
-  path: {
-    batchUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/payouts/batches/{batchUuid}/return-to-draft';
-};
-
-export type ReturnPayoutBatchToDraftErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ReturnPayoutBatchToDraftError =
-  ReturnPayoutBatchToDraftErrors[keyof ReturnPayoutBatchToDraftErrors];
-
-export type ReturnPayoutBatchToDraftResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePayoutBatch;
-};
-
-export type ReturnPayoutBatchToDraftResponse =
-  ReturnPayoutBatchToDraftResponses[keyof ReturnPayoutBatchToDraftResponses];
-
-export type RejectPayoutBatchData = {
-  body: RejectPayoutBatchRequest;
-  path: {
-    batchUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/payouts/batches/{batchUuid}/reject';
-};
-
-export type RejectPayoutBatchErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type RejectPayoutBatchError = RejectPayoutBatchErrors[keyof RejectPayoutBatchErrors];
-
-export type RejectPayoutBatchResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePayoutBatch;
-};
-
-export type RejectPayoutBatchResponse =
-  RejectPayoutBatchResponses[keyof RejectPayoutBatchResponses];
-
-export type CancelPayoutBatchData = {
-  body?: never;
-  path: {
-    batchUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/payouts/batches/{batchUuid}/cancel';
-};
-
-export type CancelPayoutBatchErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type CancelPayoutBatchError = CancelPayoutBatchErrors[keyof CancelPayoutBatchErrors];
-
-export type CancelPayoutBatchResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePayoutBatch;
-};
-
-export type CancelPayoutBatchResponse =
-  CancelPayoutBatchResponses[keyof CancelPayoutBatchResponses];
-
-export type ApprovePayoutBatchData = {
-  body?: ApprovePayoutBatchRequest;
-  path: {
-    batchUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/payouts/batches/{batchUuid}/approve';
-};
-
-export type ApprovePayoutBatchErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ApprovePayoutBatchError = ApprovePayoutBatchErrors[keyof ApprovePayoutBatchErrors];
-
-export type ApprovePayoutBatchResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePayoutBatch;
-};
-
-export type ApprovePayoutBatchResponse =
-  ApprovePayoutBatchResponses[keyof ApprovePayoutBatchResponses];
-
 export type CreateOrganisationUserData = {
   body: OrganisationUserCreateRequestDto;
   path: {
@@ -43265,7 +42194,7 @@ export type ModerateOrganisationData = {
     /**
      * Moderation action to perform
      */
-    action: SchemaEnum5;
+    action: SchemaEnum4;
     /**
      * Optional reason for the chosen moderation action
      */
@@ -43615,7 +42544,7 @@ export type VerifyWalletItemData = {
   body: WalletVerificationRequest;
   path: {
     uuid: string;
-    section: SchemaEnum6;
+    section: SchemaEnum5;
     itemUuid: string;
   };
   query?: never;
@@ -43656,7 +42585,7 @@ export type ModerateCourseCreatorData = {
     /**
      * Moderation action
      */
-    action: SchemaEnum5;
+    action: SchemaEnum4;
   };
   url: '/api/v1/admin/course-creators/{uuid}/moderate';
 };
@@ -44142,8 +43071,7 @@ export type ListTransactions1Data = {
   };
   query: {
     currency_code?: string;
-    purse?: SchemaEnum;
-    type?: Array<ItemsEnum4>;
+    type?: Array<ItemsEnum3>;
     from?: Date;
     to?: Date;
     pageable: Pageable;
@@ -44181,8 +43109,7 @@ export type ExportTransactionsData = {
   };
   query?: {
     currency_code?: string;
-    purse?: SchemaEnum;
-    type?: Array<ItemsEnum4>;
+    type?: Array<ItemsEnum3>;
     from?: Date;
     to?: Date;
   };
@@ -44219,7 +43146,6 @@ export type ListStatementsData = {
   };
   query?: {
     currency_code?: string;
-    purse?: SchemaEnum;
     months?: number;
   };
   url: '/api/v1/wallets/{userUuid}/statements';
@@ -44246,40 +43172,6 @@ export type ListStatementsResponses = {
 };
 
 export type ListStatementsResponse = ListStatementsResponses[keyof ListStatementsResponses];
-
-export type GetWalletSaleData = {
-  body?: never;
-  path: {
-    userUuid: string;
-    splitUuid: string;
-  };
-  query?: {
-    purse?: SchemaEnum;
-  };
-  url: '/api/v1/wallets/{userUuid}/sales/{splitUuid}';
-};
-
-export type GetWalletSaleErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetWalletSaleError = GetWalletSaleErrors[keyof GetWalletSaleErrors];
-
-export type GetWalletSaleResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseSaleSplit;
-};
-
-export type GetWalletSaleResponse = GetWalletSaleResponses[keyof GetWalletSaleResponses];
 
 export type ListAuditData = {
   body?: never;
@@ -46101,7 +44993,7 @@ export type GetRubricsByStatusData = {
     /**
      * Content status to filter by
      */
-    status: SchemaEnum7;
+    status: SchemaEnum6;
   };
   query: {
     pageable: Pageable;
@@ -46373,7 +45265,7 @@ export type GetRevenueDashboardData = {
   body?: never;
   path?: never;
   query: {
-    domain: SchemaEnum8;
+    domain: SchemaEnum7;
     start_date?: Date;
     end_date?: Date;
   };
@@ -46441,7 +45333,7 @@ export type ListSalesData = {
   body?: never;
   path?: never;
   query: {
-    domain: SchemaEnum8;
+    domain: SchemaEnum7;
     start_date?: Date;
     end_date?: Date;
     payment_status?: string;
@@ -46514,7 +45406,7 @@ export type ListPaymentsData = {
   body?: never;
   path?: never;
   query: {
-    domain: SchemaEnum8;
+    domain: SchemaEnum7;
     start_date?: Date;
     end_date?: Date;
     status?: string;
@@ -46550,7 +45442,7 @@ export type GetRevenueDashboard1Data = {
   body?: never;
   path?: never;
   query: {
-    domain: SchemaEnum8;
+    domain: SchemaEnum7;
     start_date?: Date;
     end_date?: Date;
   };
@@ -46856,39 +45748,6 @@ export type SearchAttemptsResponses = {
 };
 
 export type SearchAttemptsResponse = SearchAttemptsResponses[keyof SearchAttemptsResponses];
-
-export type DownloadData = {
-  body?: never;
-  path: {
-    orderId: string;
-  };
-  query?: {
-    t?: string;
-  };
-  url: '/api/v1/public/receipts/{orderId}.pdf';
-};
-
-export type DownloadErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type DownloadError = DownloadErrors[keyof DownloadErrors];
-
-export type DownloadResponses = {
-  /**
-   * OK
-   */
-  200: string;
-};
-
-export type DownloadResponse = DownloadResponses[keyof DownloadResponses];
 
 export type ListProgramTrainingRateUpdatesData = {
   body?: never;
@@ -47912,7 +46771,7 @@ export type ListOrganisationWalletTransactionsData = {
   };
   query: {
     currency_code?: string;
-    type?: Array<ItemsEnum4>;
+    type?: Array<ItemsEnum3>;
     from?: Date;
     to?: Date;
     pageable: Pageable;
@@ -47951,7 +46810,7 @@ export type ExportOrganisationWalletTransactionsData = {
   };
   query?: {
     currency_code?: string;
-    type?: Array<ItemsEnum4>;
+    type?: Array<ItemsEnum3>;
     from?: Date;
     to?: Date;
   };
@@ -48017,75 +46876,6 @@ export type ListOrganisationWalletStatementsResponses = {
 
 export type ListOrganisationWalletStatementsResponse =
   ListOrganisationWalletStatementsResponses[keyof ListOrganisationWalletStatementsResponses];
-
-export type ListOrganisationWalletSalesData = {
-  body?: never;
-  path: {
-    organisationUuid: string;
-  };
-  query: {
-    pageable: Pageable;
-  };
-  url: '/api/v1/organisations/{organisationUuid}/wallet/sales';
-};
-
-export type ListOrganisationWalletSalesErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ListOrganisationWalletSalesError =
-  ListOrganisationWalletSalesErrors[keyof ListOrganisationWalletSalesErrors];
-
-export type ListOrganisationWalletSalesResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePagedDtoSaleSplit;
-};
-
-export type ListOrganisationWalletSalesResponse =
-  ListOrganisationWalletSalesResponses[keyof ListOrganisationWalletSalesResponses];
-
-export type GetOrganisationWalletSaleData = {
-  body?: never;
-  path: {
-    organisationUuid: string;
-    splitUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/organisations/{organisationUuid}/wallet/sales/{splitUuid}';
-};
-
-export type GetOrganisationWalletSaleErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetOrganisationWalletSaleError =
-  GetOrganisationWalletSaleErrors[keyof GetOrganisationWalletSaleErrors];
-
-export type GetOrganisationWalletSaleResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseSaleSplit;
-};
-
-export type GetOrganisationWalletSaleResponse =
-  GetOrganisationWalletSaleResponses[keyof GetOrganisationWalletSaleResponses];
 
 export type ListOrganisationWalletAuditData = {
   body?: never;
@@ -48408,7 +47198,7 @@ export type ListObligationsData = {
     /**
      * Narrow to ACCRUED, SETTLED, CANCELLED or DISPUTED
      */
-    status?: SchemaEnum9;
+    status?: SchemaEnum8;
     pageable: Pageable;
   };
   url: '/api/v1/organisations/{organisationUuid}/instructor-obligations';
@@ -52274,37 +51064,6 @@ export type GetOrderResponses = {
 
 export type GetOrderResponse = GetOrderResponses[keyof GetOrderResponses];
 
-export type DownloadReceiptData = {
-  body?: never;
-  path: {
-    orderId: string;
-  };
-  query?: never;
-  url: '/api/v1/commerce/orders/{orderId}/receipt.pdf';
-};
-
-export type DownloadReceiptErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type DownloadReceiptError = DownloadReceiptErrors[keyof DownloadReceiptErrors];
-
-export type DownloadReceiptResponses = {
-  /**
-   * OK
-   */
-  200: string;
-};
-
-export type DownloadReceiptResponse = DownloadReceiptResponses[keyof DownloadReceiptResponses];
-
 export type GetPaymentStatusData = {
   body?: never;
   path: {
@@ -53560,7 +52319,7 @@ export type SearchCoursesAndProgrammesData = {
     /**
      * Which types to list (default all)
      */
-    show?: SchemaEnum10;
+    show?: SchemaEnum9;
     /**
      * Category UUIDs; repeat the parameter or pass a comma-separated list. A result matches when it is in any of them.
      */
@@ -53568,11 +52327,11 @@ export type SearchCoursesAndProgrammesData = {
     /**
      * Levels; repeatable or comma-separated. A course matches its difficulty; a programme matches when any member course has the level.
      */
-    level?: Array<ItemsEnum5>;
+    level?: Array<ItemsEnum4>;
     /**
      * free or paid; both (or none) means no price filter
      */
-    price?: Array<ItemsEnum6>;
+    price?: Array<ItemsEnum5>;
     /**
      * Only results by this course creator
      */
@@ -53580,7 +52339,7 @@ export type SearchCoursesAndProgrammesData = {
     /**
      * Ordering (default relevance with q, popular without). newest: created first; rating: Bayesian-smoothed review rating; popular: enrolments in the last 30 days
      */
-    sort?: SchemaEnum11;
+    sort?: SchemaEnum10;
     /**
      * 0-based page number
      */
@@ -53636,7 +52395,7 @@ export type SearchApplyToTrainCatalogueData = {
     /**
      * Which types to list (default all)
      */
-    show?: SchemaEnum10;
+    show?: SchemaEnum9;
     /**
      * Category UUIDs; repeat the parameter or pass a comma-separated list.
      */
@@ -53644,11 +52403,11 @@ export type SearchApplyToTrainCatalogueData = {
     /**
      * How results fit the caller (default open)
      */
-    fit?: SchemaEnum12;
+    fit?: SchemaEnum11;
     /**
      * Ordering (default relevance with q, popular without)
      */
-    sort?: SchemaEnum11;
+    sort?: SchemaEnum10;
     /**
      * 0-based page number
      */
@@ -54181,7 +52940,7 @@ export type GetUserActivityData = {
     /**
      * Audit scope to return
      */
-    scope?: SchemaEnum13;
+    scope?: SchemaEnum12;
     /**
      * Optional endpoint category filter
      */
@@ -54331,35 +53090,6 @@ export type GetAdminEligibleUsersResponses = {
 export type GetAdminEligibleUsersResponse =
   GetAdminEligibleUsersResponses[keyof GetAdminEligibleUsersResponses];
 
-export type ListData = {
-  body?: never;
-  path?: never;
-  query?: never;
-  url: '/api/v1/admin/sms-templates';
-};
-
-export type ListErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ListError = ListErrors[keyof ListErrors];
-
-export type ListResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseListSmsTemplateResponse;
-};
-
-export type ListResponse = ListResponses[keyof ListResponses];
-
 export type ListIndexesData = {
   body?: never;
   path?: never;
@@ -54389,76 +53119,11 @@ export type ListIndexesResponses = {
 
 export type ListIndexesResponse = ListIndexesResponses[keyof ListIndexesResponses];
 
-export type GetAdminSaleSplitData = {
-  body?: never;
-  path: {
-    splitUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/sales/splits/{splitUuid}';
-};
-
-export type GetAdminSaleSplitErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetAdminSaleSplitError = GetAdminSaleSplitErrors[keyof GetAdminSaleSplitErrors];
-
-export type GetAdminSaleSplitResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseSaleSplit;
-};
-
-export type GetAdminSaleSplitResponse =
-  GetAdminSaleSplitResponses[keyof GetAdminSaleSplitResponses];
-
-export type ListAdminOrderSaleSplitsData = {
-  body?: never;
-  path: {
-    orderId: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/sales/orders/{orderId}/splits';
-};
-
-export type ListAdminOrderSaleSplitsErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type ListAdminOrderSaleSplitsError =
-  ListAdminOrderSaleSplitsErrors[keyof ListAdminOrderSaleSplitsErrors];
-
-export type ListAdminOrderSaleSplitsResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponseListSaleSplit;
-};
-
-export type ListAdminOrderSaleSplitsResponse =
-  ListAdminOrderSaleSplitsResponses[keyof ListAdminOrderSaleSplitsResponses];
-
 export type GetRegistrationQueueData = {
   body?: never;
   path?: never;
   query?: {
-    status?: SchemaEnum14;
+    status?: SchemaEnum13;
     /**
      * Optional domain filter, e.g. student
      */
@@ -54673,7 +53338,6 @@ export type ListAdminWithdrawalsData = {
   path?: never;
   query: {
     status?: Array<ItemsEnum>;
-    unbatched?: boolean;
     pageable: Pageable;
   };
   url: '/api/v1/admin/payouts/withdrawals';
@@ -54731,37 +53395,6 @@ export type GetPayoutSummaryResponses = {
 };
 
 export type GetPayoutSummaryResponse = GetPayoutSummaryResponses[keyof GetPayoutSummaryResponses];
-
-export type GetPayoutBatchData = {
-  body?: never;
-  path: {
-    batchUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/payouts/batches/{batchUuid}';
-};
-
-export type GetPayoutBatchErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type GetPayoutBatchError = GetPayoutBatchErrors[keyof GetPayoutBatchErrors];
-
-export type GetPayoutBatchResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePayoutBatchDetail;
-};
-
-export type GetPayoutBatchResponse = GetPayoutBatchResponses[keyof GetPayoutBatchResponses];
 
 export type IsOrganisationVerifiedData = {
   body?: never;
@@ -55800,7 +54433,7 @@ export type RemoveAdminDomainData = {
     /**
      * Domain name to remove
      */
-    domain: SchemaEnum15;
+    domain: SchemaEnum14;
   };
   query?: {
     /**
@@ -55841,37 +54474,3 @@ export type RemoveAdminDomainResponses = {
 
 export type RemoveAdminDomainResponse =
   RemoveAdminDomainResponses[keyof RemoveAdminDomainResponses];
-
-export type RemovePayoutBatchWithdrawalData = {
-  body?: never;
-  path: {
-    batchUuid: string;
-    withdrawalUuid: string;
-  };
-  query?: never;
-  url: '/api/v1/admin/payouts/batches/{batchUuid}/withdrawals/{withdrawalUuid}';
-};
-
-export type RemovePayoutBatchWithdrawalErrors = {
-  /**
-   * Not Found
-   */
-  404: ResponseDtoVoid;
-  /**
-   * Internal Server Error
-   */
-  500: ResponseDtoVoid;
-};
-
-export type RemovePayoutBatchWithdrawalError =
-  RemovePayoutBatchWithdrawalErrors[keyof RemovePayoutBatchWithdrawalErrors];
-
-export type RemovePayoutBatchWithdrawalResponses = {
-  /**
-   * OK
-   */
-  200: ApiResponsePayoutBatch;
-};
-
-export type RemovePayoutBatchWithdrawalResponse =
-  RemovePayoutBatchWithdrawalResponses[keyof RemovePayoutBatchWithdrawalResponses];
