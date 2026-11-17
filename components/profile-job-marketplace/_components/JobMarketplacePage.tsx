@@ -185,7 +185,7 @@ function JobDetailsSheet({
               description={whereSummary(job)}
               actions={<OpenInMapsButton job={job} />}
             >
-              <JobWhereDetails job={job} />
+              <JobWhereDetails job={job} canViewLocation />
             </SectionCard>
 
             <SectionCard title='Description' description={scheduleSummary(facts.windows)}>

@@ -9,26 +9,38 @@ export function asRecord(value: unknown): UnknownRecord | null {
 }
 
 function getStringValue(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length > 0 ? value : undefined;
+  if (typeof value !== 'string') return undefined;
+  const message = value.trim();
+  return message && !/^validation failed[.!]?$/i.test(message) ? message : undefined;
 }
 
-function getValidationMessages(value: unknown): string[] {
+const errorMetadata = new Set([
+  'ref', 'type', 'status', 'success', 'code', 'timestamp', 'path', 'field',
+  'rejectedValue', 'objectName', 'stack', 'name', 'target',
+]);
+
+function getValidationMessages(value: unknown, seen: Set<object>, fieldMap = false): string[] {
   const message = getStringValue(value);
   if (message) return [message];
-  if (Array.isArray(value)) return value.flatMap(getValidationMessages);
-
   const record = asRecord(value);
-  if (!record) return [];
+  if (!record || seen.has(record)) return [];
+  seen.add(record);
+  if (Array.isArray(value)) return value.flatMap(item => getValidationMessages(item, seen, fieldMap));
+
+  const details = ['error', 'errors', 'data', 'response', 'cause'].flatMap(key =>
+    getValidationMessages(record[key], seen, key === 'error' || key === 'errors')
+  );
+  if (details.length) return details;
   const nestedMessage = getStringValue(record.message);
   if (nestedMessage) return [nestedMessage];
-  return Object.values(record).flatMap(getValidationMessages);
+  const detail = getStringValue(record.detail);
+  if (detail) return [detail];
+  return Object.entries(record).flatMap(([key, item]) =>
+    key === 'ref' || (!fieldMap && errorMetadata.has(key)) ? [] : getValidationMessages(item, seen)
+  );
 }
 
 export function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error) {
-    return getStringValue(error.message) ?? fallback;
-  }
-
   const message = getStringValue(error);
   if (message) return message;
 
@@ -37,27 +49,32 @@ export function getErrorMessage(error: unknown, fallback: string): string {
     return fallback;
   }
 
-  const validationMessages = getValidationMessages(errorRecord.error ?? errorRecord.errors);
-  if (validationMessages.length > 0) return validationMessages.join('\n');
+  const seen = new Set<object>([errorRecord]);
+  const validationMessages = ['error', 'errors', 'response', 'data', 'cause'].flatMap(key =>
+    getValidationMessages(errorRecord[key], seen, key === 'error' || key === 'errors')
+  );
+  if (validationMessages.length > 0) return [...new Set(validationMessages)].join('\n');
 
   return (
     getStringValue(errorRecord.message) ??
-    getStringValue(asRecord(errorRecord.error)?.message) ??
-    getStringValue(asRecord(errorRecord.data)?.message) ??
-    getStringValue(errorRecord.error) ??
+    getStringValue(errorRecord.detail) ??
     fallback
   );
 }
 
 export function getFieldErrorMessage(error: unknown, field: string): string | undefined {
-  const errorRecord = asRecord(error);
-  const nestedErrorRecord = asRecord(errorRecord?.error);
-  const fieldValue = nestedErrorRecord?.[field] ?? errorRecord?.[field];
-  const fieldRecord = asRecord(fieldValue);
-
-  return (
-    getStringValue(fieldValue) ??
-    getStringValue(fieldRecord?.message) ??
-    getStringValue(asRecord(fieldRecord?.error)?.message)
-  );
+  const seen = new Set<object>();
+  const find = (value: unknown): string | undefined => {
+    const record = asRecord(value);
+    if (!record || seen.has(record)) return undefined;
+    seen.add(record);
+    const messages = getValidationMessages(record[field], new Set());
+    if (messages.length) return [...new Set(messages)].join('\n');
+    for (const key of ['error', 'errors', 'response', 'data', 'cause']) {
+      const message = find(record[key]);
+      if (message) return message;
+    }
+    return undefined;
+  };
+  return find(error);
 }

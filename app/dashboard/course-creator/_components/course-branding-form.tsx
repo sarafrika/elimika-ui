@@ -4,6 +4,8 @@ import { Form, FormControl, FormField, FormItem, FormMessage } from '@/component
 import { Input } from '@/components/ui/input';
 import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
+import { asRecord, getErrorMessage } from '@/lib/error-utils';
+import { httpStatusOf } from '@/lib/api-errors';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -54,16 +56,6 @@ const getUploadedUrl = (value: unknown, key: `${UploadKey}_url`) => {
   if (typeof value !== 'object' || value === null) return undefined;
   const urlValue = (value as Record<string, unknown>)[key];
   return isString(urlValue) ? urlValue : undefined;
-};
-const getFormErrorMessage = (value: unknown) => {
-  if (typeof value === 'string') return value;
-  if (Array.isArray(value)) return value.find(isString);
-  return undefined;
-};
-const getErrorStatus = (value: unknown) => {
-  if (typeof value !== 'object' || value === null) return undefined;
-  const response = (value as { response?: { status?: number } }).response;
-  return response?.status;
 };
 
 type CourseFormProps = {
@@ -297,6 +289,11 @@ const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
       upload(pending.file, {
         onSuccess: (data: UploadResponse) => {
+          const result = asRecord(data);
+          if (result?.error || result?.success === false) {
+            toast.error(getErrorMessage(data, 'Upload failed.'));
+            return;
+          }
           const urlKey = `${key}_url` as const;
           // @ts-ignore
           const uploadedUrl = getUploadedUrl(data?.data, urlKey);
@@ -322,11 +319,11 @@ const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
           });
         },
         onError: (error: UploadError) => {
-          const status = getErrorStatus(error);
+          const status = httpStatusOf(error);
           if (status === 413) {
             toast.error('File too large.');
           } else {
-            toast.error('Upload failed.');
+            toast.error(getErrorMessage(error, 'Upload failed.'));
           }
         },
       });
@@ -355,41 +352,19 @@ const CourseBrandingForm = forwardRef<CourseFormRef, CourseFormProps>(
           },
           {
             onSuccess(data: UpdateCourseResponse) {
-              const respObj = data?.data;
-              const errorObj = data?.error;
-
-              if (respObj) {
-                toast.success(
-                  (respObj as { message?: string }).message || 'Course updated successfully'
-                );
-
-                queryClient.invalidateQueries({
-                  queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
-                });
-                resolve(true);
-                return;
-              }
-
-              if (errorObj && typeof errorObj === 'object') {
-                Object.values(errorObj).forEach(errorMsg => {
-                  const message = getFormErrorMessage(errorMsg);
-                  if (message) {
-                    toast.error(message);
-                  }
-                });
-                resolve(false);
-                return;
-              } else if (data?.message) {
-                toast.error(data.message || 'Failed to update course');
-                resolve(false);
-                return;
-              } else {
-                toast.error('An unknown error occurred.');
+              if (data?.error || data?.success === false || !data?.data) {
+                toast.error(getErrorMessage(data, 'Failed to update course branding.'));
                 resolve(false);
                 return;
               }
+              toast.success(data.message || 'Course updated successfully');
+              queryClient.invalidateQueries({
+                queryKey: getCourseByUuidQueryKey({ path: { uuid: editingCourseId as string } }),
+              });
+              resolve(true);
             },
-            onError() {
+            onError(error) {
+              toast.error(getErrorMessage(error, 'Failed to update course branding.'));
               resolve(false);
             },
           }

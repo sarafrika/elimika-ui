@@ -20,23 +20,24 @@ import {
   TriangleAlert,
   UserCheck,
 } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
-import { AsyncSection } from '@/components/data/async-section';
 import {
   SectionTabPanel,
   SectionTabs,
   surfaceTheme,
   useSectionTab,
 } from '@/components/data-display';
+import { AsyncSection } from '@/components/data/async-section';
+import { useHireRateCheck } from '@/components/profile-job-marketplace/_components/HireChecksPanel';
 import {
   HireClashAlert,
   hireClashTitle,
 } from '@/components/profile-job-marketplace/_components/HireClashAlert';
-import { useHireRateCheck } from '@/components/profile-job-marketplace/_components/HireChecksPanel';
 import {
   canRejectApplication,
   HIRING_STAGES,
@@ -66,7 +67,9 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
-import { extractEntity, extractList } from '@/lib/api-helpers';
+import { extractEntity } from '@/lib/api-helpers';
+import { toWalletSkill } from '@/app/dashboard/_components/skills-wallet/skill-proficiency';
+import { STALE_TIMES } from '@/lib/query-client';
 import { getErrorMessage } from '@/lib/error-utils';
 import { formatRate, formatRateAmount } from '@/lib/rate-card';
 import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
@@ -76,11 +79,10 @@ import type {
   ClassMarketplaceJobApplication,
   Instructor,
 } from '@/services/client';
-import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { createClassHref as createClassHrefFor } from '@/src/features/organisation/jobs/lib/job-routes';
 import {
   getInstructorByUuidOptions,
   getInstructorEducationOptions,
+  getInstructorDocumentsOptions,
   getInstructorExperienceOptions,
   getInstructorMembershipsOptions,
   getInstructorSkillsOptions,
@@ -88,6 +90,16 @@ import {
   listJobApplicationsOptions,
   reviewApplicationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { createClassHref as createClassHrefFor } from '@/src/features/organisation/jobs/lib/job-routes';
+
+const CandidateCredentialViewer = dynamic(
+  () =>
+    import('../_components/CandidateCredentialViewer').then(
+      module => module.CandidateCredentialViewer
+    ),
+  { ssr: false }
+);
 
 dayjs.extend(relativeTime);
 
@@ -277,6 +289,56 @@ function HireBlockedNotice({ reason }: { reason: string | null }) {
   );
 }
 
+const PROFILE_PAGE_SIZE = 20;
+
+function profileResponseError(response?: { error?: unknown; success?: boolean; message?: string }) {
+  return (
+    response?.error ||
+    (response?.success === false ? response.message || 'Unable to load profile records.' : null)
+  );
+}
+
+function ProfilePagination({
+  page,
+  totalPages = 1,
+  fetching,
+  onPageChange,
+}: {
+  page: number;
+  totalPages?: number;
+  fetching: boolean;
+  onPageChange: (page: number) => void;
+}) {
+  if (totalPages <= 1) return null;
+  return (
+    <div className='mt-4 flex flex-wrap items-center justify-end gap-3'>
+      <span className='text-muted-foreground text-sm'>
+        Page {page + 1} of {totalPages}
+      </span>
+      <Button
+        variant='outline'
+        disabled={page === 0 || fetching}
+        onClick={() => onPageChange(page - 1)}
+      >
+        Previous
+      </Button>
+      <Button
+        variant='outline'
+        disabled={page + 1 >= totalPages || fetching}
+        onClick={() => onPageChange(page + 1)}
+      >
+        Next
+      </Button>
+    </div>
+  );
+}
+
+function profileDateRange(start?: Date | null, end?: Date | null, current?: boolean | null) {
+  const format = (value?: Date | null) =>
+    value && dayjs(value).isValid() ? dayjs(value).format('MMM YYYY') : '';
+  return [format(start), current ? 'Present' : format(end)].filter(Boolean).join(' – ');
+}
+
 export default function CandidateDetailPage() {
   const params = useParams<{ candidateId: string }>();
   const instructorUuid = params?.candidateId ?? '';
@@ -286,6 +348,10 @@ export default function CandidateDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { value: tab, setValue: setTab, hrefFor } = useSectionTab(CANDIDATE_TABS, 'overview');
+  const [credentialIndex, setCredentialIndex] = useState<number | null>(null);
+  const [skillsPage, setSkillsPage] = useState(0);
+  const [experiencePage, setExperiencePage] = useState(0);
+  const [membershipsPage, setMembershipsPage] = useState(0);
   const [interviewDialogOpen, setInterviewDialogOpen] = useState(false);
   const [interviewAt, setInterviewAt] = useState('');
   const [interviewNote, setInterviewNote] = useState('');
@@ -300,30 +366,61 @@ export default function CandidateDetailPage() {
   const name = instructor?.full_name ?? 'Candidate';
 
   const skillsQuery = useQuery({
-    ...getInstructorSkillsOptions({ path: { instructorUuid } }),
+    ...getInstructorSkillsOptions({
+      path: { instructorUuid },
+      query: { pageable: { page: skillsPage, size: PROFILE_PAGE_SIZE } },
+    }),
     enabled: Boolean(instructorUuid),
     retry: false,
+    staleTime: STALE_TIMES.entity,
   });
   const experienceQuery = useQuery({
-    ...getInstructorExperienceOptions({ path: { instructorUuid } }),
+    ...getInstructorExperienceOptions({
+      path: { instructorUuid },
+      query: { pageable: { page: experiencePage, size: PROFILE_PAGE_SIZE } },
+    }),
     enabled: Boolean(instructorUuid),
     retry: false,
+    staleTime: STALE_TIMES.entity,
   });
   const educationQuery = useQuery({
     ...getInstructorEducationOptions({ path: { instructorUuid } }),
     enabled: Boolean(instructorUuid),
     retry: false,
+    staleTime: STALE_TIMES.entity,
   });
   const membershipsQuery = useQuery({
-    ...getInstructorMembershipsOptions({ path: { instructorUuid } }),
+    ...getInstructorMembershipsOptions({
+      path: { instructorUuid },
+      query: { pageable: { page: membershipsPage, size: PROFILE_PAGE_SIZE } },
+    }),
     enabled: Boolean(instructorUuid),
     retry: false,
+    staleTime: STALE_TIMES.entity,
   });
 
-  const skills = extractList<Record<string, unknown>>(skillsQuery.data);
-  const experience = extractList<Record<string, unknown>>(experienceQuery.data);
-  const education = extractList<Record<string, unknown>>(educationQuery.data);
-  const memberships = extractList<Record<string, unknown>>(membershipsQuery.data);
+  const documentsQuery = useQuery({
+    ...getInstructorDocumentsOptions({ path: { instructorUuid } }),
+    enabled: Boolean(instructorUuid),
+    retry: false,
+    staleTime: STALE_TIMES.entity,
+  });
+
+  const skillsError = skillsQuery.error || profileResponseError(skillsQuery.data);
+  const experienceError = experienceQuery.error || profileResponseError(experienceQuery.data);
+  const educationError = educationQuery.error || profileResponseError(educationQuery.data);
+  const membershipsError = membershipsQuery.error || profileResponseError(membershipsQuery.data);
+  const documentsError = documentsQuery.error || profileResponseError(documentsQuery.data);
+  const skillsData = skillsError ? undefined : skillsQuery.data?.data;
+  const experienceData = experienceError ? undefined : experienceQuery.data?.data;
+  const membershipsData = membershipsError ? undefined : membershipsQuery.data?.data;
+  const skills = useMemo(() => (skillsData?.content ?? []).map(toWalletSkill), [skillsData]);
+  const experience = experienceData?.content ?? [];
+  const education = educationError ? [] : (educationQuery.data?.data ?? []);
+  const memberships = membershipsData?.content ?? [];
+  const documents = documentsError ? [] : (documentsQuery.data?.data ?? []);
+  const experienceCount = experienceData?.metadata?.totalElements ?? experience.length;
+  const skillCount = skillsData?.metadata?.totalElements ?? skills.length;
 
   const jobQuery = useQuery({
     ...getJobOptions({ path: { jobUuid } }),
@@ -450,11 +547,6 @@ export default function CandidateDetailPage() {
     setInterviewNote('');
   };
 
-  const skillNames = useMemo(
-    () => skills.map(s => String(s.skill_name ?? s.name ?? '')).filter(Boolean),
-    [skills]
-  );
-
   if (instructorQuery.isLoading) {
     return (
       <div className={cn(surfaceTheme.pageWide, 'space-y-6 py-4')}>
@@ -568,18 +660,14 @@ export default function CandidateDetailPage() {
         <StatCard
           icon={<Briefcase className='h-4 w-4' />}
           label='Experience'
-          value={`${experience.length} role${experience.length === 1 ? '' : 's'}`}
+          value={`${experienceCount} role${Number(experienceCount) === 1 ? '' : 's'}`}
         />
         <StatCard
           icon={<GraduationCap className='h-4 w-4' />}
           label='Education'
           value={`${education.length} record${education.length === 1 ? '' : 's'}`}
         />
-        <StatCard
-          icon={<Award className='h-4 w-4' />}
-          label='Skills'
-          value={String(skillNames.length)}
-        />
+        <StatCard icon={<Award className='h-4 w-4' />} label='Skills' value={String(skillCount)} />
         <StatCard
           icon={<CalendarClock className='h-4 w-4' />}
           label='Applied'
@@ -657,47 +745,144 @@ export default function CandidateDetailPage() {
                 <CardContent>
                   <AsyncSection
                     loading={skillsQuery.isLoading}
-                    error={skillsQuery.error}
-                    empty={!skillsQuery.isLoading && skillNames.length === 0}
+                    error={skillsError}
+                    onRetry={() => void skillsQuery.refetch()}
+                    empty={!skillsQuery.isLoading && skills.length === 0}
                     emptyTitle='No skills listed'
                     emptyDescription="This instructor hasn't added skills to their profile."
                   >
-                    <div className='flex flex-wrap gap-1.5'>
-                      {skillNames.map(s => (
-                        <Badge
-                          key={s}
-                          variant='outline'
-                          className='border-success/30 bg-success/10 text-success'
-                        >
-                          {s}
-                        </Badge>
+                    <ul className='space-y-3'>
+                      {skills.map(skill => (
+                        <li key={skill.id} className='rounded-lg border p-3'>
+                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                            <span className='text-sm font-medium'>{skill.name}</span>
+                            <Badge variant='outline'>{skill.level}</Badge>
+                          </div>
+                          <div className='mt-2 flex items-center gap-3'>
+                            <Progress
+                              value={skill.proficiency_pct}
+                              className='h-1.5 flex-1'
+                              aria-label={`${skill.name} proficiency`}
+                            />
+                            <span className='text-muted-foreground text-xs'>
+                              {skill.proficiency_pct}%
+                            </span>
+                          </div>
+                          <p className='text-muted-foreground mt-2 text-xs'>
+                            Last assessed: {skill.last_assessed}
+                          </p>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
+                    <ProfilePagination
+                      page={skillsPage}
+                      totalPages={skillsData?.metadata?.totalPages}
+                      fetching={skillsQuery.isFetching}
+                      onPageChange={setSkillsPage}
+                    />
                   </AsyncSection>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle className='text-base'>Memberships & credentials</CardTitle>
+                  <CardTitle className='text-base'>Professional memberships</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <AsyncSection
                     loading={membershipsQuery.isLoading}
-                    error={membershipsQuery.error}
+                    error={membershipsError}
+                    onRetry={() => void membershipsQuery.refetch()}
                     empty={!membershipsQuery.isLoading && memberships.length === 0}
                     emptyTitle='No memberships listed'
                     emptyDescription='No professional memberships on this profile.'
                   >
                     <ul className='space-y-2'>
-                      {memberships.map((m, i) => (
-                        <li key={i} className='flex items-start gap-2 text-sm'>
-                          <Award className='mt-0.5 h-4 w-4 shrink-0 text-teal-600' />
-                          <span>
-                            {String(
-                              m.organization ?? m.organisation ?? m.name ?? m.title ?? 'Membership'
+                      {memberships.map((membership, index) => (
+                        <li
+                          key={membership.uuid ?? index}
+                          className='flex items-start gap-2 text-sm'
+                        >
+                          <Award className='text-primary mt-0.5 h-4 w-4 shrink-0' />
+                          <div>
+                            <p className='font-medium'>{membership.organisation_name}</p>
+                            {membership.membership_number && (
+                              <p className='text-muted-foreground text-xs'>
+                                Membership number: {membership.membership_number}
+                              </p>
                             )}
-                            {m.role ? ` — ${m.role}` : ''}
-                          </span>
+                            <p className='text-muted-foreground text-xs'>
+                              {membership.membership_period ||
+                                profileDateRange(
+                                  membership.start_date,
+                                  membership.end_date,
+                                  membership.is_active
+                                )}
+                            </p>
+                            {membership.membership_status && (
+                              <Badge variant='outline' className='mt-1'>
+                                {membership.membership_status}
+                              </Badge>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                    <ProfilePagination
+                      page={membershipsPage}
+                      totalPages={membershipsData?.metadata?.totalPages}
+                      fetching={membershipsQuery.isFetching}
+                      onPageChange={setMembershipsPage}
+                    />
+                  </AsyncSection>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle className='text-base'>Credentials</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <AsyncSection
+                    loading={documentsQuery.isLoading}
+                    error={documentsError}
+                    onRetry={() => void documentsQuery.refetch()}
+                    empty={documents.length === 0}
+                    emptyTitle='No credentials listed'
+                    emptyDescription='No credential documents on this profile.'
+                  >
+                    <ul className='space-y-3'>
+                      {documents.map((document, index) => (
+                        <li key={document.uuid ?? index} className='flex items-start gap-2 text-sm'>
+                          <Award className='text-primary mt-0.5 h-4 w-4 shrink-0' />
+                          <div className='min-w-0 flex-1 space-y-1'>
+                            <p className='font-medium'>
+                              {document.title || document.original_filename}
+                            </p>
+                            {document.description && (
+                              <p className='text-muted-foreground text-xs'>
+                                {stripHtml(document.description)}
+                              </p>
+                            )}
+                            {(document.verification_status || document.status) && (
+                              <Badge variant='outline'>
+                                {document.verification_status || document.status}
+                              </Badge>
+                            )}
+                            {document.expiry_date && (
+                              <p className='text-muted-foreground text-xs'>
+                                Expires {dayjs(document.expiry_date).format('DD MMM YYYY')}
+                              </p>
+                            )}
+                            {document.file_url && (
+                              <Button
+                                variant='link'
+                                size='sm'
+                                className='h-auto p-0'
+                                onClick={() => setCredentialIndex(index)}
+                              >
+                                View credential
+                              </Button>
+                            )}
+                          </div>
                         </li>
                       ))}
                     </ul>
@@ -714,40 +899,47 @@ export default function CandidateDetailPage() {
                 <CardContent>
                   <AsyncSection
                     loading={experienceQuery.isLoading}
-                    error={experienceQuery.error}
+                    error={experienceError}
+                    onRetry={() => void experienceQuery.refetch()}
                     empty={!experienceQuery.isLoading && experience.length === 0}
                     emptyTitle='No experience listed'
                     emptyDescription="This instructor hasn't added work history."
                   >
                     <ol className='border-muted relative space-y-5 border-l-2 pl-6'>
-                      {experience.map((e, i) => (
-                        <li key={i} className='relative'>
-                          <span className='absolute -left-[29px] flex h-6 w-6 items-center justify-center rounded-full border-2 border-teal-500 bg-teal-500 text-white'>
+                      {experience.map((record, index) => (
+                        <li key={record.uuid ?? index} className='relative'>
+                          <span className='bg-primary text-primary-foreground border-primary absolute -left-[29px] flex h-6 w-6 items-center justify-center rounded-full border-2'>
                             <Briefcase className='h-3 w-3' />
                           </span>
-                          <div className='text-sm font-medium'>
-                            {String(e.job_title ?? e.title ?? e.role ?? 'Role')}
+                          <div className='text-sm font-medium'>{record.position}</div>
+                          <div className='text-muted-foreground text-xs'>
+                            {record.organisation_name}
                           </div>
                           <div className='text-muted-foreground text-xs'>
-                            {String(
-                              e.organization_name ??
-                                e.organisation ??
-                                e.company ??
-                                e.organization ??
-                                ''
-                            )}
-                            {e.start_date || e.years
-                              ? ` · ${String(e.years ?? `${e.start_date ?? ''}${e.end_date ? ` – ${e.end_date}` : ''}`)}`
+                            {record.employment_period ||
+                              profileDateRange(
+                                record.start_date,
+                                record.end_date,
+                                record.is_current_position
+                              )}
+                            {record.years_of_experience != null
+                              ? ` · ${record.years_of_experience} years`
                               : ''}
                           </div>
-                          {(e.description || e.summary) && (
+                          {(record.responsibilities || record.summary) && (
                             <p className='text-muted-foreground mt-1 text-xs'>
-                              {stripHtml(String(e.description ?? e.summary))}
+                              {stripHtml(record.responsibilities || record.summary)}
                             </p>
                           )}
                         </li>
                       ))}
                     </ol>
+                    <ProfilePagination
+                      page={experiencePage}
+                      totalPages={experienceData?.metadata?.totalPages}
+                      fetching={experienceQuery.isFetching}
+                      onPageChange={setExperiencePage}
+                    />
                   </AsyncSection>
                 </CardContent>
               </Card>
@@ -758,20 +950,20 @@ export default function CandidateDetailPage() {
                 <CardContent>
                   <AsyncSection
                     loading={educationQuery.isLoading}
-                    error={educationQuery.error}
+                    error={educationError}
+                    onRetry={() => void educationQuery.refetch()}
                     empty={!educationQuery.isLoading && education.length === 0}
                     emptyTitle='No education listed'
                     emptyDescription='No education records on this profile.'
                   >
                     <ul className='space-y-2'>
                       {education.map((ed, i) => (
-                        <li key={i} className='flex items-start gap-2 text-sm'>
-                          <GraduationCap className='mt-0.5 h-4 w-4 shrink-0 text-teal-600' />
+                        <li key={ed.uuid ?? i} className='flex items-start gap-2 text-sm'>
+                          <GraduationCap className='text-primary mt-0.5 h-4 w-4 shrink-0' />
                           <span>
-                            {String(ed.qualification ?? ed.degree ?? ed.title ?? 'Qualification')}
-                            {ed.school_name || ed.institution
-                              ? ` — ${String(ed.school_name ?? ed.institution)}`
-                              : ''}
+                            {ed.qualification}
+                            {ed.school_name ? ` — ${ed.school_name}` : ''}
+                            {ed.year_completed ? ` (${ed.year_completed})` : ''}
                           </span>
                         </li>
                       ))}
@@ -887,6 +1079,14 @@ export default function CandidateDetailPage() {
           </Card>
         </aside>
       </div>
+
+      {credentialIndex !== null && documents[credentialIndex] && (
+        <CandidateCredentialViewer
+          documents={documents}
+          initialIndex={credentialIndex}
+          onClose={() => setCredentialIndex(null)}
+        />
+      )}
 
       <AlertDialog
         open={interviewDialogOpen}

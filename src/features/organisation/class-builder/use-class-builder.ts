@@ -72,7 +72,13 @@ export function serviceRate(
  * Everything the Create class and Post job modals share: what is taught, the service, where and
  * when, and the reminders. Each modal adds its own instructor or hiring fields on top.
  */
-export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegistration: boolean }) {
+export function useClassBuilder({
+  requireOpenRegistration,
+  requireClassTitle = false,
+}: {
+  requireOpenRegistration: boolean;
+  requireClassTitle?: boolean;
+}) {
   const organisation = useOrganisation();
   const organisationUuid = organisation?.uuid ?? '';
   const approved = useApprovedOfferings(organisationUuid);
@@ -82,6 +88,7 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
   const [categoryUuid, setCategoryUuid] = useState('');
   const [subjectUuid, setSubjectUuid] = useState('');
   const [offering, setOffering] = useState('');
+  const [classTitle, setClassTitle] = useState('');
   const [service, setService] = useState<ServiceKey | null>(null);
   // Only a saved hybrid job keeps HYBRID; otherwise the service decides.
   const [savedDelivery, setSavedDelivery] = useState<DeliveryMode | null>(null);
@@ -127,7 +134,10 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
   const courses = categoryUuid && subjectUuid ? taxonomy.offeringsFor(categoryUuid, subjectUuid) : [];
   const categoryName = categoryUuid ? taxonomy.nameOf(categoryUuid) : '';
   const subjectName = subjectUuid && subjectUuid !== GENERAL_SUBJECT ? taxonomy.nameOf(subjectUuid) : '';
-  const title = [categoryName, subjectName].filter(Boolean).join(' — ') || selectedOffering?.label || 'New class';
+  const title = requireClassTitle
+    ? classTitle.trim()
+    : [categoryName, subjectName].filter(Boolean).join(' — ') || selectedOffering?.label || 'New class';
+  const titleError = requireClassTitle && !title ? 'Class title is required.' : null;
 
   const changeCategory = (value: string) => {
     setCategoryUuid(value);
@@ -171,10 +181,11 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
           : 'No seat limit set by the course or venue';
   const whereValue: WhereItHappensValue = { ...place, delivery };
   const blockers = [
+    titleError,
     !categoryUuid ? 'Category is required' : null,
     categoryUuid && !subjectUuid ? 'Subject is required' : null,
     categoryUuid && subjectUuid && courses.length === 0
-      ? `No courses exist for ${title}. Pick a different subject.`
+      ? 'No courses exist for the selected subject. Pick a different subject.'
       : null,
     !selectedOffering ? 'Course is required' : null,
     !service ? 'Pick a service' : null,
@@ -195,6 +206,7 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
     (job: ClassMarketplaceJob, scope: 'all' | 'schedule' = 'all') => {
       hydrateSchedule(job);
       if (scope === 'schedule') return;
+      setClassTitle(job.title ?? '');
       const value = job.course_uuid
         ? `course:${job.course_uuid}`
         : job.program_uuid
@@ -372,6 +384,10 @@ export function useClassBuilder({ requireOpenRegistration }: { requireOpenRegist
     changeOffering,
     selectedOffering,
     title,
+    classTitle,
+    setClassTitle,
+    requireClassTitle,
+    titleError,
     service,
     changeService,
     delivery,

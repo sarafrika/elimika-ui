@@ -9,13 +9,19 @@
  * `post-generation-fix.mjs`, so it survives `pnpm openapi-ts`. It must not import the
  * client itself, or the two modules would import each other.
  */
+import { getErrorMessage } from '@/lib/error-utils';
+
 export function attachErrorStatus(error: unknown, response: Response | undefined): unknown {
   // No response means a network failure or a throw before fetch; pass the error through.
   if (!response) return error;
   const status = response.status;
 
   if (typeof error === 'object' && error !== null && !Array.isArray(error)) {
-    return { ...error, status };
+    return {
+      ...error,
+      status,
+      message: getErrorMessage(error, 'The request could not be completed. Please review your entries and try again.'),
+    };
   }
 
   // A plain-text or empty body (a gateway page, a proxy timeout). Keep the text out of

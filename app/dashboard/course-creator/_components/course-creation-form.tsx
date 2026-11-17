@@ -38,7 +38,7 @@ import { useOptionalCourseCreator } from '@/context/course-creator-context';
 import { useInstructor } from '@/context/instructor-context';
 import { useDifficultyLevels } from '@/hooks/use-difficultyLevels';
 import { type CourseSetupDrafts, type CourseSetupSectionRef, getCreatedCourse } from '@/lib/course-setup';
-import { getErrorMessage } from '@/lib/error-utils';
+import { getErrorMessage, getFieldErrorMessage } from '@/lib/error-utils';
 import { createCategory } from '@/services/client';
 import {
   addCourseTrainingRequirementMutation,
@@ -87,14 +87,6 @@ import {
 } from './training-requirement-section';
 
 type CategoryItem = { uuid?: string; name?: string };
-type CategoryMutationResponse = { error?: Record<string, unknown>; message?: string };
-
-const getFormErrorMessage = (value: unknown) => {
-  if (typeof value === 'string') return value;
-  if (Array.isArray(value)) return value.find(item => typeof item === 'string');
-  return undefined;
-};
-
 type FormSectionProps = {
   title: string;
   description: string;
@@ -388,18 +380,21 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
       mutationFn: ({ body }: { body: { name: string; parent_uuid?: string | null } }) =>
-        createCategory({ body }),
-      onSuccess: (data: CategoryMutationResponse) => {
-        const createdUuid = data?.data?.uuid || data?.data?.uuid;
-        if (data?.error) {
-          const duplicateMessage = getFormErrorMessage(data.error.error);
-          if (duplicateMessage?.toLowerCase().includes('duplicate key')) {
+        createCategory({ body, throwOnError: true }),
+      onError: error => toast.error(getErrorMessage(error, 'Failed to add category.')),
+      onSuccess: ({ data, error }) => {
+        if (error || data?.error || data?.success === false) {
+          const message = getErrorMessage(error ?? data, 'Failed to add category.');
+          if (message.toLowerCase().includes('duplicate key')) {
             toast.error('Category already exists');
           } else {
-            toast.error('Failed to add category');
+            toast.error(message);
           }
-          dialogCloseRef.current?.click();
-          setCategoryInput('');
+          return;
+        }
+        const createdUuid = data?.data?.uuid;
+        if (!createdUuid) {
+          toast.error('The category response did not include a category ID. Please try again.');
           return;
         }
 
@@ -481,6 +476,14 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       setSaveStage(null);
     };
 
+    const showCourseError = (error: unknown, fallback: string) => {
+      for (const field of Object.keys(form.getValues())) {
+        const message = getFieldErrorMessage(error, field);
+        if (message) form.setError(field, { type: 'server', message });
+      }
+      toast.error(getErrorMessage(error, fallback));
+    };
+
     const onSubmit = (data: CourseCreationFormValues) => {
       if (savingRef.current) return;
       const resolvedCourseCreatorUuid = authorUuid;
@@ -536,12 +539,13 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           {
             onError(error) {
               finishSaving();
-              toast.error(error.message || 'Could not save the course.');
+              showCourseError(error, 'Could not save the course.');
             },
             async onSuccess(response) {
               try {
                 if (response.error || response.success === false) {
-                  throw new Error(response.message || 'Could not save the course.');
+                  showCourseError(response, 'Could not save the course.');
+                  return;
                 }
                 await savePendingSections(targetCourseUuid);
                 await queryClient.invalidateQueries({
@@ -600,7 +604,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         {
           onError(error) {
             finishSaving();
-            toast.error(error?.message);
+            showCourseError(error, 'Could not create the course.');
           },
           onSuccess: async courseResponse => {
             let createdCourse: Course;
@@ -608,7 +612,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
               createdCourse = getCreatedCourse(courseResponse);
             } catch (error) {
               finishSaving();
-              toast.error(getErrorMessage(error, 'Could not create the course.'));
+              showCourseError(error, 'Could not create the course.');
               return;
             }
 
@@ -652,7 +656,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     const onError = (errors: Record<string, unknown>) => {
       if (Object.keys(errors).length > 0) {
-        toast.error('Please fill in all required fields.');
+        toast.error(getErrorMessage({ errors }, 'Please review the course fields and try again.'));
       }
     };
 
@@ -710,10 +714,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                   render={({ field }) => (
                     <FormItem className='grid gap-1.5'>
                       <FormLabel className='text-base font-semibold'>
-                        Course code (optional)
+                        Course code
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder='e.g. DATA101' {...field} value={field.value ?? ''} />
+                        <Input placeholder='e.g. DATA101' maxLength={30} {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

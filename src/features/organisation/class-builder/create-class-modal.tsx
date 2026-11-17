@@ -67,7 +67,7 @@ export function CreateClassModal({
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const builder = useClassBuilder({ requireOpenRegistration: true });
+  const builder = useClassBuilder({ requireOpenRegistration: true, requireClassTitle: true });
   const { organisationUuid, schedule } = builder;
 
   const { jobs } = useOrganisationJobs(organisationUuid);

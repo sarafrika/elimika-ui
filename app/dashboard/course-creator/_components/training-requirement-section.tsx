@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import type { CourseSetupSectionRef } from '@/lib/course-setup';
+import { asRecord, getErrorMessage } from '@/lib/error-utils';
 import {
   addCourseTrainingRequirementMutation,
   deleteCourseTrainingRequirementMutation,
@@ -236,7 +237,7 @@ export function TrainingRequirementsSection({
             path: { courseUuid: uuid },
           });
           if (response.error || response.success === false || !response.data) {
-            throw new Error(response.message || 'Failed to save requirement.');
+            throw new Error(getErrorMessage(response, 'Failed to save requirement.'));
           }
           return { draftId: draft.id, requirement: response.data };
         })
@@ -272,7 +273,9 @@ export function TrainingRequirementsSection({
       }
 
       if (failed > 0) {
-        const message = `${failed} requirement(s) failed to save. Retry the remaining rows.`;
+        const details = results.flatMap(result => result.status === 'rejected'
+          ? [getErrorMessage(result.reason, 'Failed to save requirement.')] : []);
+        const message = [...new Set(details)].join('\n');
         if (queued) throw new Error(message);
         toast.error(message);
       }
@@ -288,11 +291,12 @@ export function TrainingRequirementsSection({
         if (!draftsByProvider[provider].some(draft => draft.name.trim())) continue;
         try {
           await saveDraftsForProvider(provider, uuid, true);
-        } catch {
-          failures.push(PROVIDERS.find(item => item.value === provider)?.label ?? provider);
+        } catch (error) {
+          const providerName = PROVIDERS.find(item => item.value === provider)?.label ?? provider;
+          failures.push(`${providerName}: ${getErrorMessage(error, 'Could not save requirements.')}`);
         }
       }
-      if (failures.length) throw new Error(`Could not save requirements for ${failures.join(', ')}.`);
+      if (failures.length) throw new Error(failures.join('\n'));
     },
   }));
 
@@ -344,7 +348,12 @@ export function TrainingRequirementsSection({
       },
     } as UpdateRequirementVariables;
     updateTrainingReqMut.mutate(variables, {
-      onSuccess: () => {
+      onSuccess: response => {
+        const result = asRecord(response);
+        if (result?.error || result?.success === false) {
+          toast.error(getErrorMessage(response, 'Failed to update requirement.'));
+          return;
+        }
         setExistingRequirements(prev =>
           prev.map(r => {
             if (r.uuid !== req.uuid) return r;
@@ -366,7 +375,7 @@ export function TrainingRequirementsSection({
         toast.success('Requirement updated.');
         cancelEdit();
       },
-      onError: () => toast.error('Failed to update requirement.'),
+      onError: error => toast.error(getErrorMessage(error, 'Failed to update requirement.')),
     });
   };
 
@@ -380,7 +389,13 @@ export function TrainingRequirementsSection({
       },
     } as DeleteRequirementVariables;
     deleteTrainingReqMut.mutate(variables, {
-      onSuccess: () => {
+      onSuccess: response => {
+        const result = asRecord(response);
+        if (result?.error || result?.success === false) {
+          setDeletingId(null);
+          toast.error(getErrorMessage(response, 'Failed to delete requirement.'));
+          return;
+        }
         qc.invalidateQueries({
           queryKey: getCourseTrainingRequirementsQueryKey({
             path: { courseUuid: targetCourseUuid },
@@ -391,7 +406,10 @@ export function TrainingRequirementsSection({
         setDeletingId(null);
         if (editingReqId === req.uuid) cancelEdit();
       },
-      onError: () => setDeletingId(null),
+      onError: error => {
+        setDeletingId(null);
+        toast.error(getErrorMessage(error, 'Failed to delete requirement.'));
+      },
     });
   };
 

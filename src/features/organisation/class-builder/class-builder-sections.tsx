@@ -12,6 +12,7 @@ import {
   WhereItHappens,
 } from '@/components/class-form';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatRate } from '@/lib/rate-card';
@@ -58,9 +59,9 @@ function Picker({
         {label} *{badge ? <Badge variant='outline'>{badge}</Badge> : null}
       </Label>
       <Select value={value} onValueChange={next => {
-          // Radix reports '' when its options change under it; that is not a pick.
-          if (next) onChange(next);
-        }} disabled={disabled || options.length === 0}>
+        // Radix reports '' when its options change under it; that is not a pick.
+        if (next) onChange(next);
+      }} disabled={disabled || options.length === 0}>
         <SelectTrigger id={id} className='w-full'>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
@@ -76,7 +77,7 @@ function Picker({
   );
 }
 
-/** Category → Subject → title preview → Course, with an optional slot beside the course. */
+/** Category → Subject → class title → Course, with an optional slot beside the course. */
 export function OfferingSection({ builder, aside }: { builder: ClassBuilder; aside?: ReactNode }) {
   const { taxonomy, subjects, courses } = builder;
   const loading = builder.approved.loading || taxonomy.loading;
@@ -102,12 +103,28 @@ export function OfferingSection({ builder, aside }: { builder: ClassBuilder; asi
         />
       </div>
 
-      <div className='border-border/60 bg-muted/20 rounded-md border px-3 py-2.5'>
+      <div className='border-border/60 bg-muted/20 rounded-md border space-y-1 px-3 py-2.5'>
         <p className='text-muted-foreground text-xs font-medium'>Class title</p>
-        <p className='text-foreground text-sm font-semibold'>{builder.title}</p>
-        <p className='text-muted-foreground text-xs'>
-          Auto-generated from Category and Subject. This is what will appear on the classes list.
-        </p>
+        <Input
+          id='class-title'
+          name='title'
+          value={builder.classTitle}
+          onChange={event => builder.setClassTitle(event.target.value)}
+          placeholder='e.g. Violin class for beginners'
+          required
+          aria-invalid={Boolean(builder.titleError)}
+          aria-describedby={builder.titleError ? 'class-title-error' : 'class-title-hint'}
+          className={cn(builder.titleError && 'border-destructive')}
+        />
+        {builder.titleError ? (
+          <p id='class-title-error' role='alert' className='text-destructive text-xs'>
+            {builder.titleError}
+          </p>
+        ) : (
+          <p id='class-title-hint' className='text-muted-foreground text-xs'>
+            Choose a distinct title for this class. It will appear on the classes list.
+          </p>
+        )}
       </div>
 
       <div className={cn('grid gap-4', aside ? 'sm:grid-cols-2' : '')}>
@@ -120,7 +137,7 @@ export function OfferingSection({ builder, aside }: { builder: ClassBuilder; asi
           options={courses.map(course => ({ value: course.value, label: course.label }))}
           placeholder={
             builder.subjectUuid && courses.length === 0
-              ? `No courses for ${builder.title}`
+              ? 'No courses for the selected subject'
               : 'Select course'
           }
         />

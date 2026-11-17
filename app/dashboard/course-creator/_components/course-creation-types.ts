@@ -12,7 +12,10 @@ export const providedByOptions = [
 ] as const;
 export const courseCreationSchema = z.object({
   name: z.string().min(1, 'Course name is required'),
-  course_code: z.string().trim().optional(),
+  course_code: z.string().trim().refine(
+    value => value === '' || /^[A-Za-z0-9-]{2,30}$/.test(value),
+    'Course code must be 2-30 letters, digits or hyphens'
+  ).optional(),
   status: z.nativeEnum(SchemaEnum6).default(SchemaEnum6.DRAFT),
   description: z.string().min(10, 'Course description is required'),
   objectives: z

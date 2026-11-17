@@ -1,5 +1,7 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/error-utils';
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
@@ -299,6 +301,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
         },
         {
           onSuccess: response => {
+            if (response.error || response.success === false) {
+              toast.error(getErrorMessage(response, 'Failed to save lesson content.'));
+              return;
+            }
             qc.invalidateQueries({
               queryKey: getLessonContentQueryKey({
                 path: { courseUuid: courseId as string, lessonUuid: activeLessonId as string },
@@ -308,7 +314,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
             resetContentForm();
           },
           onError: error => {
-            toast.error(error?.message);
+            toast.error(getErrorMessage(error, 'Failed to save lesson content.'));
           },
         }
       );
@@ -320,6 +326,10 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
         },
         {
           onSuccess: response => {
+            if (response.error || response.success === false) {
+              toast.error(getErrorMessage(response, 'Failed to save lesson content.'));
+              return;
+            }
             qc.invalidateQueries({
               queryKey: getLessonContentQueryKey({
                 path: { courseUuid: courseId as string, lessonUuid: activeLessonId as string },
@@ -329,7 +339,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
             resetContentForm();
           },
           onError: error => {
-            toast.error(error?.message);
+            toast.error(getErrorMessage(error, 'Failed to save lesson content.'));
           },
         }
       );
@@ -893,7 +903,7 @@ export const ContentCreationForm: React.FC<LessonCreationFormProps> = ({
                                                 resetContentForm();
                                               },
                                               onError: error => {
-                                                toast.error(error?.message);
+                                                toast.error(getErrorMessage(error, 'Failed to save lesson content.'));
                                               },
                                             }
                                           );

@@ -1,5 +1,7 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/error-utils';
+
 import { PageHeader } from '@/components/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -649,7 +651,7 @@ export default function CreateCoursePage() {
         onSuccess: async (response, variables) => {
             const action = variables.body.is_published ? 'publish' : 'unpublish';
             if (response.error || response.success === false) {
-                toast.error(response.message || `Failed to ${action} assignment.`);
+                toast.error(getErrorMessage(response, `Failed to ${action} assignment.`));
                 return;
             }
 
@@ -667,7 +669,7 @@ export default function CreateCoursePage() {
         },
         onError: (error, variables) => {
             const action = variables.body.is_published ? 'publish' : 'unpublish';
-            toast.error(error instanceof Error ? error.message : `Failed to ${action} assignment.`);
+            toast.error(getErrorMessage(error, `Failed to ${action} assignment.`));
         },
     });
 
@@ -702,7 +704,7 @@ export default function CreateCoursePage() {
             setAssessmentToDelete(null);
             toast.success(`${assessmentToDelete.kind} deleted successfully.`);
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : `Failed to delete ${assessmentToDelete.kind.toLowerCase()}.`);
+            toast.error(getErrorMessage(error, `Failed to delete ${assessmentToDelete.kind.toLowerCase()}.`));
         }
     }, [assessmentToDelete, deleteAssignmentMut, deleteQuizMut, refreshAssessmentLists]);
 
@@ -741,7 +743,7 @@ export default function CreateCoursePage() {
             });
 
             if (data.error || data.success === false) {
-                toast.error(data.message || 'Failed to publish course.');
+                toast.error(getErrorMessage(data, 'Failed to publish course.'));
                 return;
             }
 
@@ -749,7 +751,7 @@ export default function CreateCoursePage() {
             router.push(`/dashboard/course-creator/course-management`);
             await invalidateContentModerationWorkflowQueries(queryClient);
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to publish course.');
+            toast.error(getErrorMessage(err, 'Failed to publish course.'));
         } finally {
             setIsUpdatingPublication(false);
         }
@@ -764,14 +766,14 @@ export default function CreateCoursePage() {
                 path: { uuid: resolvedCourseId },
             });
             if (data.error || data.success === false) {
-                toast.error(data.message || 'Failed to unpublish course.');
+                toast.error(getErrorMessage(data, 'Failed to unpublish course.'));
                 return;
             }
 
             toast.success(data.message || 'Course unpublished successfully.');
             await invalidateContentModerationWorkflowQueries(queryClient);
         } catch (err) {
-            toast.error(err instanceof Error ? err.message : 'Failed to unpublish course.');
+            toast.error(getErrorMessage(err, 'Failed to unpublish course.'));
         } finally {
             setIsUpdatingPublication(false);
         }

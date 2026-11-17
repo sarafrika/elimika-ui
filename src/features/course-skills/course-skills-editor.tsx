@@ -97,7 +97,7 @@ export function CourseSkillsEditor({
 
   const responseError =
     query.data?.error || query.data?.success === false
-      ? new Error(query.data.message || 'Could not load the course skills')
+      ? new Error(getErrorMessage(query.data, 'Could not load the course skills'))
       : null;
   const current = rows ?? toRows(responseError ? undefined : query.data?.data);
   const dirty = rows !== null;
@@ -124,7 +124,7 @@ export function CourseSkillsEditor({
         },
       });
       if (response.error || response.success === false) {
-        throw new Error(response.message || 'Could not save the course skills.');
+        throw new Error(getErrorMessage(response, 'Could not save the course skills.'));
       }
       queryClient.setQueryData(getCourseSkillsQueryKey({ path: { uuid } }), response);
       setRows(null);

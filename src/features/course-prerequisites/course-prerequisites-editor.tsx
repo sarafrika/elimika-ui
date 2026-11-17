@@ -82,7 +82,7 @@ export function CoursePrerequisitesEditor({
   const mutation = useMutation(replaceCoursePrerequisitesMutation());
   const busy = isSaving || mutation.isPending;
   const responseError = query.data?.error || query.data?.success === false
-    ? new Error(query.data.message || 'Could not load the prerequisites.')
+    ? new Error(getErrorMessage(query.data, 'Could not load the prerequisites.'))
     : null;
 
   const serverRows = toRows(responseError ? undefined : query.data?.data);
@@ -109,7 +109,7 @@ export function CoursePrerequisitesEditor({
         },
       });
       if (response.error || response.success === false) {
-        throw new Error(response.message || 'Could not save the prerequisites.');
+        throw new Error(getErrorMessage(response, 'Could not save the prerequisites.'));
       }
       const saved = response.data ?? [];
       const wentToDraft =

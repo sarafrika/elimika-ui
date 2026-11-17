@@ -5,7 +5,6 @@ import { type FormEvent, useId, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { RateCardGrid } from '@/components/rate-card/rate-card-grid';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -151,14 +150,17 @@ function UpdateRatesForm({
       </div>
 
       {cardErrors.length > 0 || submit.error ? (
-        <Alert variant='destructive'>
-          <AlertCircle aria-hidden />
-          <AlertDescription>
+        <div
+          role='alert'
+          className='bg-destructive/15 text-destructive border-destructive/20 flex items-start gap-3 rounded-lg border p-3.5 text-sm'
+        >
+          <AlertCircle className='mt-0.5 h-4 w-4 shrink-0' aria-hidden='true' />
+          <div className='grid gap-1'>
             {[...cardErrors, ...(submit.error ? [submit.error.message] : [])].map(message => (
-              <p key={message}>{message}</p>
+              <p className='text-destructive' key={message}>{message}</p>
             ))}
-          </AlertDescription>
-        </Alert>
+          </div>
+        </div>
       ) : null}
 
       <DialogFooter>

@@ -1,5 +1,7 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/error-utils';
+
 import { useQuery } from '@tanstack/react-query';
 import { Check, FileText, Loader2, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -35,25 +37,7 @@ type LessonList = { content?: LessonItem[] } | undefined;
 type RubricItem = Pick<AssessmentRubric, 'uuid' | 'title' | 'description'>;
 type QuizStatus = 'DRAFT' | 'IN_REVIEW' | 'PUBLISHED' | 'ARCHIVED';
 
-const getApiErrorMessage = (error: unknown): string => {
-  if (typeof error === 'string') return error;
-  if (!error || typeof error !== 'object') return 'Unknown error';
-
-  const response = error as Record<string, unknown>;
-  if (response.error && typeof response.error === 'object') {
-    const nestedMessage = getApiErrorMessage(response.error);
-    if (nestedMessage !== 'Request failed' && nestedMessage !== 'Unknown error') {
-      return nestedMessage;
-    }
-  }
-
-  return typeof response.message === 'string' && response.message !== 'Validation failed'
-    ? response.message
-    : (Object.values(response).find(
-      (value): value is string =>
-        typeof value === 'string' && Boolean(value.trim()) && value !== 'Validation failed'
-    ) ?? 'Request failed');
-};
+const getApiErrorMessage = (error: unknown): string => getErrorMessage(error, 'Could not save the assessment.');
 
 export type QuizPayload = {
   title: string;

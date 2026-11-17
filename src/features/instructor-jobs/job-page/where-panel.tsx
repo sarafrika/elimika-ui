@@ -1,4 +1,4 @@
-import { ExternalLink, MapPin, Presentation, Wrench } from 'lucide-react';
+import { ExternalLink, LockKeyhole, MapPin, Presentation, Wrench } from 'lucide-react';
 
 import { jobAddress, jobHasPin, jobTown } from '@/components/profile-job-marketplace/job-place';
 import { StaticMap } from '@/components/maps/static-map';
@@ -16,7 +16,8 @@ function mapsLink(job: ClassMarketplaceJob) {
 
 /** One line for the Where header: the address, or how online delivery works. */
 export function whereSummary(job: ClassMarketplaceJob) {
-  if (job.location_type === 'ONLINE') return 'Online · meeting link shared when the class is created';
+  if (job.location_type === 'ONLINE')
+    return 'Online · meeting link shared when the class is created';
   return jobAddress(job) || job.branch_name || 'The organisation hasn’t set a location yet.';
 }
 
@@ -33,8 +34,29 @@ export function OpenInMapsButton({ job }: { job: ClassMarketplaceJob }) {
   );
 }
 
+const LOCATION_VISIBILITY_MESSAGE =
+  'The class location, venue and branch will only be visible to shortlisted and selected candidates.';
+
 /** The branch pin, venue and equipment for in-person jobs; the meeting note for online ones. */
-export function JobWhereDetails({ job }: { job: ClassMarketplaceJob }) {
+export function JobWhereDetails({
+  job,
+  canViewLocation = false,
+}: {
+  job: ClassMarketplaceJob;
+  canViewLocation?: boolean;
+}) {
+  if (!canViewLocation) {
+    return (
+      <div
+        role='status'
+        className='bg-muted/30 text-muted-foreground flex items-start gap-3 rounded-md border p-4 text-sm'
+      >
+        <LockKeyhole aria-hidden className='mt-0.5 size-4 shrink-0' />
+        <p>{LOCATION_VISIBILITY_MESSAGE}</p>
+      </div>
+    );
+  }
+
   const resources = job.resources ?? [];
   const venue = resources.find(
     resource => resource.resource_type === 'VENUE' && resource.resource_name
@@ -113,14 +135,20 @@ export function JobWhereDetails({ job }: { job: ClassMarketplaceJob }) {
   );
 }
 
-export function WherePanel({ job }: { job: ClassMarketplaceJob }) {
+export function WherePanel({
+  job,
+  canViewLocation,
+}: {
+  job: ClassMarketplaceJob;
+  canViewLocation: boolean;
+}) {
   return (
     <SectionCard
       title='Where you’ll teach'
-      description={whereSummary(job)}
-      actions={<OpenInMapsButton job={job} />}
+      description={canViewLocation ? whereSummary(job) : undefined}
+      actions={canViewLocation ? <OpenInMapsButton job={job} /> : undefined}
     >
-      <JobWhereDetails job={job} />
+      <JobWhereDetails job={job} canViewLocation={canViewLocation} />
     </SectionCard>
   );
 }
