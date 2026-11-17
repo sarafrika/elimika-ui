@@ -39,7 +39,7 @@ import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { ProfileHero } from '@/src/features/profile/landing/components/profile-hero';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { ChevronRight, LayoutPanelLeft, ShieldCheck, Wallet } from 'lucide-react';
+import { ChevronRight, LayoutPanelLeft, Pencil, ShieldCheck, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type React from 'react';
@@ -552,9 +552,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
           eyebrow='SETTINGS AND CONFIGURATION'
           title={config.title}
           description={config.subtitle}
-          actions={
-            <></>
-          }
+          actions={<></>}
         />
 
         <SectionTabs
@@ -603,7 +601,18 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                       </Button>
                     }
                     actions={
-                      <></>
+                      !isEditing ? (
+                        <Button
+                          type='button'
+                          variant='secondary'
+                          size='sm'
+                          onClick={handleStartEditing}
+                          aria-controls='settings-profile-form'
+                        >
+                          <Pencil className='size-4' aria-hidden />
+                          Edit profile
+                        </Button>
+                      ) : null
                     }
                   />
 
@@ -621,6 +630,7 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
 
                     <Form {...form}>
                       <form
+                        id='settings-profile-form'
                         onSubmit={form.handleSubmit(handleSaveProfile, tabErrors.onInvalid)}
                         className='max-w-5xl space-y-5'
                       >
@@ -892,10 +902,10 @@ function DashboardSettingsPageBody({ variant }: DashboardSettingsPageProps) {
                               }
                             >
                               {updateUser.isPending ||
-                                updateStudentProfile.isPending ||
-                                updateInstructorProfile.isPending ||
-                                updateCourseCreatorProfile.isPending ||
-                                isSubmitting ? (
+                              updateStudentProfile.isPending ||
+                              updateInstructorProfile.isPending ||
+                              updateCourseCreatorProfile.isPending ||
+                              isSubmitting ? (
                                 <span className='flex items-center gap-2'>
                                   <Spinner className='h-4 w-4' />
                                   Saving...

@@ -19,6 +19,7 @@ import Spinner from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import {
   getRateBasis,
+  type MethodPrefix,
   normaliseRateCard,
   offeredMethods,
   type RateCard,
@@ -74,6 +75,9 @@ function UpdateRatesForm({
 }: Omit<UpdateRatesDialogProps, 'open' | 'onOpenChange'> & { onClose: () => void }) {
   const noteId = useId();
   const [draft, setDraft] = useState<RateCard>(() => normaliseRateCard(currentCard));
+  const [enabledMethods, setEnabledMethods] = useState<MethodPrefix[]>(() =>
+    offeredMethods(currentCard).map(method => method.prefix)
+  );
   const [note, setNote] = useState('');
   const [attempted, setAttempted] = useState(false);
   const submit = useSubmitRateUpdate(kind, parentUuid, applicationUuid);
@@ -87,7 +91,10 @@ function UpdateRatesForm({
     const offered = offeredMethods(currentCard).map(method => method.prefix);
     return offered.length > 0 ? offered : undefined;
   }, [focusBasis, currentCard]);
-  const validation = useMemo(() => validateRateCard(draft, minimum), [draft, minimum]);
+  const validation = useMemo(
+    () => validateRateCard(draft, minimum, enabledMethods),
+    [draft, minimum, enabledMethods]
+  );
   const unchanged = useMemo(
     () => rateCardChanges(currentCard, draft).length === 0,
     [currentCard, draft]
@@ -129,6 +136,15 @@ function UpdateRatesForm({
         mode='edit'
         value={draft}
         onChange={setDraft}
+        onMethodToggle={(prefix, offered) => {
+          setEnabledMethods(current =>
+            offered
+              ? current.includes(prefix)
+                ? current
+                : [...current, prefix]
+              : current.filter(method => method !== prefix)
+          );
+        }}
         errors={attempted ? validation.cells : undefined}
         minimum={minimum}
         highlightBasis={focusBasis}
@@ -157,7 +173,9 @@ function UpdateRatesForm({
           <AlertCircle className='mt-0.5 h-4 w-4 shrink-0' aria-hidden='true' />
           <div className='grid gap-1'>
             {[...cardErrors, ...(submit.error ? [submit.error.message] : [])].map(message => (
-              <p className='text-destructive' key={message}>{message}</p>
+              <p className='text-destructive' key={message}>
+                {message}
+              </p>
             ))}
           </div>
         </div>

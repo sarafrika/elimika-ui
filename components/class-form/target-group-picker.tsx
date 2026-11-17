@@ -3,7 +3,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
-import { type FormEvent, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 import { Badge } from '@/components/ui/badge';
@@ -38,9 +38,11 @@ import {
  */
 function NewGroupDialog({
   organisationUuid,
+  branchUuid,
   onCreated,
 }: {
   organisationUuid: string;
+  branchUuid?: string;
   onCreated: (groupUuid: string) => void;
 }) {
   const qc = useQueryClient();
@@ -60,7 +62,12 @@ function NewGroupDialog({
     create.mutate(
       {
         path: { organisationUuid },
-        body: { name, group_type: groupType || undefined, description: description || undefined },
+        body: {
+          name,
+          branch_uuid: branchUuid || undefined,
+          group_type: groupType || undefined,
+          description: description || undefined,
+        },
       },
       {
         onSuccess: async response => {
@@ -88,7 +95,9 @@ function NewGroupDialog({
         <DialogHeader>
           <DialogTitle>Create student group</DialogTitle>
           <DialogDescription>
-            Groups you create here are available to every class this organisation posts.
+            {branchUuid
+              ? 'The new group will belong to the selected branch.'
+              : 'Create a student group for this organisation.'}
           </DialogDescription>
         </DialogHeader>
         <form className='space-y-4' onSubmit={submit}>
@@ -125,19 +134,50 @@ function NewGroupDialog({
  */
 export function TargetGroupPicker({
   organisationUuid,
+  branchUuid,
   targetGroupUuids,
   onTargetGroupsChange,
 }: {
   organisationUuid: string;
+  branchUuid?: string;
   targetGroupUuids: string[];
   onTargetGroupsChange: (next: string[]) => void;
 }) {
   const groupsQuery = useQuery({
-    ...listGroupsOptions({ path: { organisationUuid } }),
+    ...listGroupsOptions({
+      path: { organisationUuid },
+      query: branchUuid ? { branchUuid } : undefined,
+    }),
     enabled: Boolean(organisationUuid),
     staleTime: STALE_TIMES.reference,
   });
-  const groups = extractList<StudentGroup>(groupsQuery.data);
+  const groups = useMemo(
+    () =>
+      extractList<StudentGroup>(groupsQuery.data).filter(
+        group => Boolean(group.uuid) && (!branchUuid || group.branch_uuid === branchUuid)
+      ),
+    [groupsQuery.data, branchUuid]
+  );
+
+  useEffect(() => {
+    if (
+      !groupsQuery.isSuccess ||
+      groupsQuery.isFetching ||
+      groupsQuery.data?.error ||
+      groupsQuery.data?.success === false
+    )
+      return;
+    const available = new Set(groups.map(group => group.uuid));
+    const next = targetGroupUuids.filter(uuid => available.has(uuid));
+    if (next.length !== targetGroupUuids.length) onTargetGroupsChange(next);
+  }, [
+    groups,
+    groupsQuery.isSuccess,
+    groupsQuery.isFetching,
+    groupsQuery.data,
+    targetGroupUuids,
+    onTargetGroupsChange,
+  ]);
 
   const toggle = (uuid: string, on: boolean) =>
     onTargetGroupsChange(
@@ -157,7 +197,11 @@ export function TargetGroupPicker({
           <span className='text-muted-foreground text-[11px] font-normal'>(optional)</span>
         </Label>
         {groups.length > 0 && (
-          <NewGroupDialog organisationUuid={organisationUuid} onCreated={select} />
+          <NewGroupDialog
+            organisationUuid={organisationUuid}
+            branchUuid={branchUuid}
+            onCreated={select}
+          />
         )}
       </div>
       <div className='max-h-40 space-y-1.5 overflow-y-auto rounded-md border p-2.5'>
@@ -171,8 +215,14 @@ export function TargetGroupPicker({
           <div className='text-muted-foreground text-xs'>Could not load groups.</div>
         ) : groups.length === 0 ? (
           <div className='space-y-2 py-1 text-center'>
-            <p className='text-muted-foreground text-xs'>No student groups yet.</p>
-            <NewGroupDialog organisationUuid={organisationUuid} onCreated={select} />
+            <p className='text-muted-foreground text-xs'>
+              {branchUuid ? 'No student groups in this branch yet.' : 'No student groups yet.'}
+            </p>
+            <NewGroupDialog
+              organisationUuid={organisationUuid}
+              branchUuid={branchUuid}
+              onCreated={select}
+            />
           </div>
         ) : (
           groups.map(g => {

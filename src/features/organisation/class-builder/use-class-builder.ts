@@ -38,10 +38,17 @@ const categoryFor = (category: string, subject: string) =>
 
 export type Place = Omit<WhereItHappensValue, 'delivery'>;
 export type MembershipPreference = 'ANY' | 'ORGANISATION_ONLY';
-export type Hiring = { description: string; requirements: string; membership: MembershipPreference };
+export type Hiring = {
+  description: string;
+  requirements: string;
+  membership: MembershipPreference;
+};
 
 // Fields the API has that the checked-in generated client predates; drop once it is regenerated.
-type HiringFields = { requirements?: string | null; membership_preference?: MembershipPreference | null };
+type HiringFields = {
+  requirements?: string | null;
+  membership_preference?: MembershipPreference | null;
+};
 export type HiringJob = ClassMarketplaceJob & HiringFields;
 export type HiringJobRequest = ClassMarketplaceJobRequest & HiringFields;
 export type ClassCreateRequest = ClassDefinitionCreateRequestWritable & {
@@ -50,7 +57,6 @@ export type ClassCreateRequest = ClassDefinitionCreateRequestWritable & {
 
 const EMPTY_PLACE: Place = { branchUuid: '', meetingLink: '', venueUuid: '', equipmentUuids: [] };
 const BASES: SelectableRateBasis[] = ['per_hour', 'per_day'];
-
 
 export const deliveryForService = (service: ServiceKey | null): DeliveryMode =>
   getService(service)?.online ? 'ONLINE' : 'IN_PERSON';
@@ -131,12 +137,16 @@ export function useClassBuilder({
   );
 
   const subjects = categoryUuid ? taxonomy.subjectsFor(categoryUuid) : [];
-  const courses = categoryUuid && subjectUuid ? taxonomy.offeringsFor(categoryUuid, subjectUuid) : [];
+  const courses =
+    categoryUuid && subjectUuid ? taxonomy.offeringsFor(categoryUuid, subjectUuid) : [];
   const categoryName = categoryUuid ? taxonomy.nameOf(categoryUuid) : '';
-  const subjectName = subjectUuid && subjectUuid !== GENERAL_SUBJECT ? taxonomy.nameOf(subjectUuid) : '';
+  const subjectName =
+    subjectUuid && subjectUuid !== GENERAL_SUBJECT ? taxonomy.nameOf(subjectUuid) : '';
   const title = requireClassTitle
     ? classTitle.trim()
-    : [categoryName, subjectName].filter(Boolean).join(' — ') || selectedOffering?.label || 'New class';
+    : [categoryName, subjectName].filter(Boolean).join(' — ') ||
+      selectedOffering?.label ||
+      'New class';
   const titleError = requireClassTitle && !title ? 'Class title is required.' : null;
 
   const changeCategory = (value: string) => {
@@ -168,7 +178,9 @@ export function useClassBuilder({
   const individual = service ? serviceFormat(service) === 'INDIVIDUAL' : false;
   const prescribedSeats = individual
     ? 1
-    : (selectedOffering?.classLimit ?? (physical ? selectedVenue?.seat_capacity : null) ?? undefined);
+    : (selectedOffering?.classLimit ??
+      (physical ? selectedVenue?.seat_capacity : null) ??
+      undefined);
   const maxValue = individual ? 1 : (savedSeats ?? prescribedSeats ?? undefined);
   const seatsLabel = individual
     ? '1 seat, set by the service'
@@ -314,11 +326,13 @@ export function useClassBuilder({
       default_start_time: earliest.start_time,
       default_end_time: earliest.end_time,
       location_type: delivery,
-      meeting_link: physical && delivery === 'IN_PERSON' ? undefined : place.meetingLink.trim() || undefined,
+      meeting_link:
+        physical && delivery === 'IN_PERSON' ? undefined : place.meetingLink.trim() || undefined,
       max_participants: maxValue,
       allow_waitlist: allowWaitlist,
       sale_price: salePrice ?? 0,
-      instructor_pay: instructorPay,
+      // A withheld card is unknown, not zero pay; let the API validate the approved rate.
+      ...(instructorPay !== null ? { instructor_pay: instructorPay } : {}),
       rate_basis: pricing?.basis ?? 'per_hour',
       ...(targetGroupUuids.length > 0 ? { target_group_uuids: targetGroupUuids } : {}),
       remind_students: reminder.sendStudents,
@@ -355,7 +369,8 @@ export function useClassBuilder({
       max_participants: maxValue,
       allow_waitlist: allowWaitlist,
       sale_price: salePrice ?? undefined,
-      instructor_pay: instructorPay ?? undefined,
+      // A withheld card is unknown, not zero pay; let the API validate the approved rate.
+      ...(instructorPay !== null ? { instructor_pay: instructorPay } : {}),
       rate_basis: pricing?.basis,
       class_reminder_minutes: REMINDER_MINUTES[reminder.window],
       registration_period_start_date: apiCalendarDay(schedule.regStart),

@@ -37,6 +37,8 @@ type RateCardGridProps = {
   value: RateCard | null | undefined;
   /** Edit mode: receives the whole next card (cells may hold 0 until normalised). */
   onChange?: (next: RateCard) => void;
+  /** Edit mode: tracks enabled methods even while both rate inputs are empty. */
+  onMethodToggle?: (prefix: MethodPrefix, offered: boolean) => void;
   /** Diff mode: the live card the proposal replaces. */
   compareTo?: RateCard | null;
   /** Owner-only below-minimum flags; flagged cells are highlighted. */
@@ -63,6 +65,7 @@ export function RateCardGrid({
   mode,
   value,
   onChange,
+  onMethodToggle,
   compareTo,
   floorFlags,
   minimum,
@@ -92,11 +95,13 @@ export function RateCardGrid({
 
   const setOffered = (method: TrainingMethod, on: boolean) => {
     markOpen(method.prefix, on);
+    onMethodToggle?.(method.prefix, on);
     if (!on) onChange?.(clearMethod(card, method));
   };
 
   const setCell = (method: TrainingMethod, key: RateCellKey, raw: string) => {
     markOpen(method.prefix, true);
+    onMethodToggle?.(method.prefix, true);
     const parsed = raw === '' ? null : Number(raw);
     onChange?.({ ...card, [key]: Number.isFinite(parsed) ? parsed : null });
   };
@@ -145,6 +150,12 @@ export function RateCardGrid({
       </div>
 
       <div className='text-muted-foreground space-y-1 text-xs'>
+        {mode === 'edit' ? (
+          <p>
+            For each method you offer, enter a per-hour rate, a per-day rate, or both. At least one
+            is required.
+          </p>
+        ) : null}
         <p>Hybrid classes use the in-person rates.</p>
         {mode === 'edit' && typeof minimum === 'number' && minimum > 0 ? (
           <p>
@@ -165,7 +176,7 @@ export function RateCardReviewNotes({ notes }: { notes?: string | null }) {
 
   return (
     <section aria-label='Review notes' className='border-border bg-muted/30 rounded-lg border p-3'>
-      <h3 className='text-muted-foreground text-xs font-medium inline mr-1.5'>Review notes:</h3>
+      <h3 className='text-muted-foreground mr-1.5 inline text-xs font-medium'>Review notes:</h3>
       <span className='text-foreground text-sm break-words'>{singleLineNotes}</span>
     </section>
   );
