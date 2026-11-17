@@ -193,7 +193,8 @@ type RateCardErrors = {
 /** Offered methods need at least one rate; every supplied rate must meet the minimum. */
 export function validateRateCard(
   card: RateCardInput | null | undefined,
-  minimum?: number | null
+  minimum?: number | null,
+  enabledMethods: readonly MethodPrefix[] = []
 ): RateCardErrors {
   const cells: RateCardErrors['cells'] = {};
   const cardErrors: string[] = [];
@@ -202,6 +203,14 @@ export function validateRateCard(
   const offered = offeredMethods(card);
 
   if (offered.length === 0) cardErrors.push('Offer at least one training method.');
+
+  for (const prefix of enabledMethods) {
+    if (!isMethodOffered(card, prefix)) {
+      cardErrors.push(
+        `${getTrainingMethod(prefix).label}: enter a per-hour rate, a per-day rate, or both.`
+      );
+    }
+  }
 
   for (const method of offered) {
     for (const basis of RATE_BASES) {

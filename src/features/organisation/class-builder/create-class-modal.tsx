@@ -2,6 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Send } from 'lucide-react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { type FormEvent, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -21,9 +22,15 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { getErrorMessage } from '@/lib/error-utils';
-import { rateFor } from '@/lib/rate-card';
+import { formatRateBasis, RATE_BASES, rateFor, TRAINING_METHODS } from '@/lib/rate-card';
 import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import { cn } from '@/lib/utils';
 import {
@@ -32,6 +39,7 @@ import {
   getJobOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
+import { dashboardUrl } from '@/src/features/dashboard/lib/dashboard-url';
 import { useOrganisationJobs } from '@/src/features/organisation/jobs/hooks/use-organisation-jobs';
 import { hiredInstructorUuid, jobStage } from '@/src/features/organisation/jobs/lib/job-stage';
 import {
@@ -41,6 +49,7 @@ import {
   Section,
   ServiceSection,
 } from './class-builder-sections';
+import { instructorServiceRate } from './instructor-service-rate';
 import { viewClassHref } from './routes';
 import { type HiringJob, useClassBuilder } from './use-class-builder';
 import { useClassInstructors } from './use-class-instructors';
@@ -69,6 +78,25 @@ export function CreateClassModal({
   const queryClient = useQueryClient();
   const builder = useClassBuilder({ requireOpenRegistration: true, requireClassTitle: true });
   const { organisationUuid, schedule } = builder;
+  const selectedOffering = builder.selectedOffering;
+  const hasMissingRates =
+    Boolean(selectedOffering) &&
+    TRAINING_METHODS.some(method =>
+      RATE_BASES.some(
+        basis =>
+          rateFor(selectedOffering?.rateCard, {
+            format: method.format,
+            delivery: method.location === 'online' ? 'ONLINE' : 'IN_PERSON',
+            basis: basis.value,
+          }) === null
+      )
+    );
+  const rateApplicationHref = selectedOffering?.applicationUuid
+    ? dashboardUrl(
+        'organisation',
+        `approvals/${encodeURIComponent(selectedOffering.applicationUuid)}`
+      )
+    : null;
 
   const { jobs } = useOrganisationJobs(organisationUuid);
   const [jobUuid, setJobUuid] = useState(prefill.job ?? '');
@@ -114,7 +142,13 @@ export function CreateClassModal({
     setPrefilled(true);
   }, [prefilled, prefill, taxonomyReady, prefillOffering, prefillSlot]);
 
-  const { instructors, busy, checking, loading: instructorsLoading } = useClassInstructors({
+  const {
+    instructors,
+    busy,
+    checking,
+    loading: instructorsLoading,
+    error: instructorsError,
+  } = useClassInstructors({
     organisationUuid,
     offering: builder.offering,
     windows: schedule.windows,
@@ -132,24 +166,35 @@ export function CreateClassModal({
   );
   const instructor = instructors.find(item => item.uuid === effectiveInstructorUuid);
 
-  // The instructor is paid their own approved rate for the service, never above the price.
-  const instructorRate =
+  // Only a disclosed card can establish that a rate is missing. The API validates withheld rates.
+  const instructorRateCheck =
     instructor && builder.service && builder.pricing
-      ? rateFor(instructor.rateCard, {
+      ? instructorServiceRate(instructor.rateCard, {
           format: serviceFormat(builder.service),
           delivery: builder.delivery,
           basis: builder.pricing.basis,
         })
       : null;
+  const instructorRate = instructorRateCheck?.rate ?? null;
 
   const issues = [
     ...builder.blockers,
     !builder.isOrgVerified ? 'Your organisation must be verified before publishing classes.' : null,
     fromJob ? null : !instructorUuid ? 'Instructor is required' : null,
-    !fromJob && instructor && builder.service && instructorRate === null
-      ? `${instructor.name} has no approved rate for a ${getService(builder.service)?.title.toLowerCase()} on this course.`
+    !fromJob && instructorUuid && instructorsLoading ? 'Checking instructor approval.' : null,
+    !fromJob && instructorsError
+      ? 'Could not verify the approved instructors. Please try again.'
       : null,
-    !fromJob && instructorRate !== null && builder.salePrice !== null && instructorRate > builder.salePrice
+    !fromJob && instructorUuid && !instructorsLoading && !instructorsError && !instructor
+      ? 'Select an instructor approved for the selected course or program.'
+      : null,
+    !fromJob && instructor && builder.service && instructorRateCheck?.status === 'missing'
+      ? `${instructor.name} has no approved ${formatRateBasis(builder.pricing?.basis)} rate for a ${getService(builder.service)?.title.toLowerCase()} on this ${builder.selectedOffering?.kind.toLowerCase() ?? 'course'}.`
+      : null,
+    !fromJob &&
+    instructorRate !== null &&
+    builder.salePrice !== null &&
+    instructorRate > builder.salePrice
       ? `${instructor?.name}'s rate is above the class price.`
       : null,
     !fromJob && instructorUuid && busy.has(instructorUuid)
@@ -188,7 +233,13 @@ export function CreateClassModal({
 
   const createDirect = useMutation({
     ...createClassDefinitionMultipartMutation(),
-    onSuccess: response => onPublished(response?.data?.class_definition?.uuid),
+    onSuccess: response => {
+      if (response?.error || response?.success === false) {
+        onError(response);
+        return;
+      }
+      return onPublished(response?.data?.class_definition?.uuid);
+    },
     onError,
   });
   const createFromJob = useMutation({
@@ -212,11 +263,13 @@ export function CreateClassModal({
       createFromJob.mutate({
         path: { jobUuid: job.uuid },
         // The generated client predates this endpoint's optional body.
-        ...({ body: builder.buildJobRequest(Number(job.instructor_pay ?? 0), {
-          description: job.description ?? '',
-          requirements: job.requirements ?? '',
-          membership: job.membership_preference ?? 'ANY',
-        }) } as object),
+        ...({
+          body: builder.buildJobRequest(Number(job.instructor_pay ?? 0), {
+            description: job.description ?? '',
+            requirements: job.requirements ?? '',
+            membership: job.membership_preference ?? 'ANY',
+          }),
+        } as object),
       });
       return;
     }
@@ -280,6 +333,13 @@ export function CreateClassModal({
           </SelectContent>
         </Select>
       )}
+      {!fromJob && instructorRateCheck?.status === 'unavailable' ? (
+        <p className='text-muted-foreground text-xs'>
+          This instructor is approved to teach the selected{' '}
+          {builder.selectedOffering?.kind.toLowerCase() ?? 'course'}. Their rate card is private;
+          the approved rate for this service will be checked when you publish.
+        </p>
+      ) : null}
       {builder.offering && !fromJob && !instructorsLoading && instructors.length === 0 ? (
         <p className='text-muted-foreground text-xs'>
           None of your instructors is approved for this course yet. Post a job to hire one.
@@ -341,7 +401,9 @@ export function CreateClassModal({
                     }}
                     className='flex flex-col gap-2'
                   >
-                    <label className={cn('flex items-center gap-2 text-sm', !jobIsHired && 'opacity-50')}>
+                    <label
+                      className={cn('flex items-center gap-2 text-sm', !jobIsHired && 'opacity-50')}
+                    >
                       <RadioGroupItem value='all' disabled={!jobIsHired} />
                       Everything from the job{jobIsHired ? '' : ' (hire someone first)'}
                     </label>
@@ -366,6 +428,17 @@ export function CreateClassModal({
 
             <OfferingSection builder={builder} aside={instructorField} />
             <ServiceSection builder={builder} />
+            {hasMissingRates && rateApplicationHref ? (
+              <div className='border-warning/40 bg-warning/10 flex flex-wrap items-center justify-between gap-3 rounded-md border p-3'>
+                <p className='text-foreground text-sm'>
+                  Some training rates are missing for {selectedOffering?.label}. Update your rate
+                  application to add the rates you want to offer.
+                </p>
+                <Button asChild variant='outline' size='sm'>
+                  <Link href={rateApplicationHref}>Update rate application</Link>
+                </Button>
+              </div>
+            ) : null}
             <LogisticsSections builder={builder} excludeJobUuid={fromJob ? job?.uuid : undefined} />
 
             <IssuesPanel issues={issues} checking={checking} />

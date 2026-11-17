@@ -14,7 +14,13 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatRate } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
 import { ScheduleSection } from './schedule-section';
@@ -22,7 +28,15 @@ import { type ClassBuilder, deliveryForService, serviceRate } from './use-class-
 
 const SERVICE_ORDER: ServiceKey[] = ['1on1', 'group', 'online', 'private-online'];
 
-export function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
+export function Section({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint?: string;
+  children: ReactNode;
+}) {
   return (
     <section className='flex flex-col gap-3'>
       <div>
@@ -58,10 +72,14 @@ function Picker({
       <Label htmlFor={id} className='flex items-center gap-2'>
         {label} *{badge ? <Badge variant='outline'>{badge}</Badge> : null}
       </Label>
-      <Select value={value} onValueChange={next => {
-        // Radix reports '' when its options change under it; that is not a pick.
-        if (next) onChange(next);
-      }} disabled={disabled || options.length === 0}>
+      <Select
+        value={value}
+        onValueChange={next => {
+          // Radix reports '' when its options change under it; that is not a pick.
+          if (next) onChange(next);
+        }}
+        disabled={disabled || options.length === 0}
+      >
         <SelectTrigger id={id} className='w-full'>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
@@ -103,7 +121,7 @@ export function OfferingSection({ builder, aside }: { builder: ClassBuilder; asi
         />
       </div>
 
-      <div className='border-border/60 bg-muted/20 rounded-md border space-y-1 px-3 py-2.5'>
+      <div className='border-border/60 bg-muted/20 space-y-1 rounded-md border px-3 py-2.5'>
         <p className='text-muted-foreground text-xs font-medium'>Class title</p>
         <Input
           id='class-title'
@@ -166,7 +184,9 @@ export function ServiceSection({ builder }: { builder: ClassBuilder }) {
               onClick={() => builder.changeService(key)}
               className={cn(
                 'flex flex-col items-start gap-1 rounded-md border p-3 text-left transition-colors',
-                selected ? 'border-primary bg-primary/5 ring-primary/30 ring-2' : 'border-border hover:bg-muted/40'
+                selected
+                  ? 'border-primary bg-primary/5 ring-primary/30 ring-2'
+                  : 'border-border hover:bg-muted/40'
               )}
             >
               <span className='text-foreground flex items-center gap-2 text-sm font-semibold'>
@@ -207,7 +227,12 @@ export function LogisticsSections({
         <WhereItHappens
           organisationUuid={builder.organisationUuid}
           value={builder.whereValue}
-          onChange={patch => builder.setPlace(current => ({ ...current, ...patch }))}
+          onChange={patch => {
+            if (patch.branchUuid !== undefined && patch.branchUuid !== builder.place.branchUuid) {
+              builder.setTargetGroupUuids([]);
+            }
+            builder.setPlace(current => ({ ...current, ...patch }));
+          }}
           maxParticipants={builder.maxValue}
         />
       </Section>
@@ -218,6 +243,7 @@ export function LogisticsSections({
       >
         <TargetGroupPicker
           organisationUuid={builder.organisationUuid}
+          branchUuid={builder.place.branchUuid}
           targetGroupUuids={builder.targetGroupUuids}
           onTargetGroupsChange={builder.setTargetGroupUuids}
         />
@@ -243,9 +269,13 @@ export function LogisticsSections({
 export function IssuesPanel({ issues, checking }: { issues: string[]; checking?: boolean }) {
   if (issues.length === 0) return null;
   return (
-    <div role='alert' className='border-destructive/50 bg-destructive/5 rounded-md border p-3 text-sm'>
+    <div
+      role='alert'
+      className='border-destructive/50 bg-destructive/5 rounded-md border p-3 text-sm'
+    >
       <p className='text-destructive font-semibold'>
-        Resolve before publishing:{checking ? <span className='text-muted-foreground font-normal'> checking…</span> : null}
+        Resolve before publishing:
+        {checking ? <span className='text-muted-foreground font-normal'> checking…</span> : null}
       </p>
       <ul className='text-foreground mt-1 list-disc space-y-0.5 pl-5'>
         {issues.map(issue => (

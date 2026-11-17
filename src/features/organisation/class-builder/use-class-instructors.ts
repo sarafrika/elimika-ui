@@ -18,6 +18,7 @@ export type ClassInstructor = {
   uuid: string;
   name: string;
   email?: string | null;
+  /** Null when the API withholds the instructor's private rate card. */
   rateCard?: RateCard | null;
 };
 
@@ -76,7 +77,7 @@ export function useClassInstructors({
   const instructors = useMemo<ClassInstructor[]>(() => {
     const cards = new Map<string, RateCard | null>();
     for (const row of approvals.data?.data?.content ?? []) {
-      if (row.applicant_uuid) cards.set(row.applicant_uuid, (row.rate_card as RateCard) ?? null);
+      if (row.applicant_uuid) cards.set(row.applicant_uuid, row.rate_card ?? null);
     }
     return extractList<OrgInstructorSummary>(rosterQuery.data)
       .filter(row => row.instructor_uuid && cards.has(row.instructor_uuid))

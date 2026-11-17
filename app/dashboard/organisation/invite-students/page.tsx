@@ -69,6 +69,9 @@ import {
   sendOrganisationInvitationsMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 
+import { invitationAudience } from './_components/invitation-audience';
+import { useInviteGroupStudents } from './_components/use-invite-group-students';
+
 const categoryLabel = (cd: ClassDefinition) =>
   cd.location_type === 'ONLINE'
     ? 'Virtual'
@@ -229,6 +232,8 @@ export default function InviteStudentsPage() {
   const [showHistory, setShowHistory] = useState(false);
   const [selectedClasses, setSelectedClasses] = useState<string[]>([]);
   const [selectedGroups, setSelectedGroups] = useState<string[]>([]);
+  const [excludedStudents, setExcludedStudents] = useState<string[]>([]);
+  const groupAudience = useInviteGroupStudents(organisationUuid, selectedGroups);
   const [selectedBranch, setSelectedBranch] = useState<string>('');
   const [emailDraft, setEmailDraft] = useState('');
   const [emailRecipients, setEmailRecipients] = useState<Recipient[]>([]);
@@ -288,15 +293,19 @@ export default function InviteStudentsPage() {
   );
 
   const groupsQuery = useQuery({
-    ...listGroupsOptions({ path: { organisationUuid } }),
+    ...listGroupsOptions({
+      path: { organisationUuid },
+      query: selectedBranch ? { branchUuid: selectedBranch } : undefined,
+    }),
     enabled: Boolean(organisationUuid),
   });
   const groups = useMemo(
     () =>
-      (groupsQuery.data?.data ?? []).filter((g): g is StudentGroup & { uuid: string } =>
-        Boolean(g?.uuid)
+      (groupsQuery.data?.data ?? []).filter(
+        (g): g is StudentGroup & { uuid: string } =>
+          Boolean(g?.uuid) && (!selectedBranch || g.branch_uuid === selectedBranch)
       ),
-    [groupsQuery.data]
+    [groupsQuery.data, selectedBranch]
   );
 
   const invitationsQuery = useQuery({
@@ -385,18 +394,21 @@ export default function InviteStudentsPage() {
     setEmailRecipients(current => current.filter(recipient => recipient.email !== email));
   }, []);
 
-  /** Students reached via a group, on top of any addresses pasted in. */
-  const groupReach = useMemo(
-    () =>
-      groups
-        .filter(g => selectedGroups.includes(g.uuid))
-        .reduce((total, g) => total + toNumber(g.member_count), 0),
-    [groups, selectedGroups]
+  const groupStudents = useMemo(
+    () => groupAudience.students.filter(student => !excludedStudents.includes(student.id)),
+    [groupAudience.students, excludedStudents]
   );
+  const invitationRecipients = useMemo(
+    () => invitationAudience(recipients, groupAudience.students, excludedStudents),
+    [recipients, groupAudience.students, excludedStudents]
+  );
+  const groupReach = groupStudents.filter(student => student.email).length;
+  const audienceCount = invitationRecipients.length;
+  const audienceReady = !groupAudience.isLoading && !groupAudience.isError;
 
   const sendInvitations = useMutation(sendOrganisationInvitationsMutation());
   const sending = sendInvitations.isPending;
-  const canSend = recipients.length > 0 || selectedGroups.length > 0;
+  const canSend = audienceReady && audienceCount > 0;
   const selectedClassTitles = useMemo(
     () =>
       selectedClasses
@@ -540,8 +552,9 @@ export default function InviteStudentsPage() {
       const response = await sendInvitations.mutateAsync({
         path: { organisationUuid },
         body: {
-          recipients: recipients.map(r => ({ email: r.email, name: r.name || null })),
-          student_group_uuids: selectedGroups.length ? selectedGroups : null,
+          recipients: invitationRecipients.map(r => ({ email: r.email, name: r.name || null })),
+          // Send the reviewed audience explicitly so excluded group members stay excluded.
+          student_group_uuids: null,
           domain_name: 'student',
           branch_uuid: selectedBranch || null,
           class_uuids: selectedClasses.length ? selectedClasses : null,
@@ -550,6 +563,9 @@ export default function InviteStudentsPage() {
         },
       });
 
+      if (response?.error || response?.success === false) {
+        throw new Error(getErrorMessage(response, 'Could not send invitations.'));
+      }
       const result = response?.data ?? {};
       const out: SendResult[] = [
         ...(result.sent ?? []).map(i => ({ email: i.recipient_email ?? '', ok: true })),
@@ -587,10 +603,43 @@ export default function InviteStudentsPage() {
     setStep(1);
     setSelectedClasses([]);
     setSelectedGroups([]);
+    setExcludedStudents([]);
     setSelectedBranch('');
   };
 
   const canNext = step === 1 ? selectedClasses.length > 0 : step === 2 ? canSend : true;
+
+  const branchPicker = (
+    <div className='space-y-2'>
+      <Label htmlFor='invitation-branch'>Branch</Label>
+      <Select
+        value={selectedBranch || 'none'}
+        onValueChange={value => {
+          const nextBranch = value === 'none' ? '' : value;
+          if (nextBranch === selectedBranch) return;
+          setSelectedBranch(nextBranch);
+          setSelectedGroups([]);
+          setExcludedStudents([]);
+        }}
+      >
+        <SelectTrigger id='invitation-branch' className='sm:max-w-sm'>
+          <SelectValue placeholder='No specific branch' />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value='none'>No specific branch (organisation-wide)</SelectItem>
+          {branches.map(b => (
+            <SelectItem key={b.uuid} value={b.uuid ?? ''}>
+              {b.branch_name}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className='text-muted-foreground text-xs'>
+        Student groups are limited to the selected branch. Changing branches clears the selected
+        groups.
+      </p>
+    </div>
+  );
 
   return (
     <div className='mx-auto w-full max-w-[2200px] space-y-6 px-3 py-4 sm:px-5 lg:px-6'>
@@ -716,325 +765,412 @@ export default function InviteStudentsPage() {
           {/* Step 1 - Classes */}
           {step === 1 && (
             <>
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-base'>
-                  <Users className='h-4 w-4' /> Select classes
-                </CardTitle>
-                <CardDescription>
-                  Pick the classes students will be invited to enrol in.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-4 xl:space-y-5'>
-                {classes.length > 0 && (
-                  <CategoryTabs
-                    items={classTabItems}
-                    activeCategory={activeCategory}
-                    onCategoryChange={setActiveCategory}
-                    subjectByCategory={subjectByCategory}
-                    onSubjectChange={setSubjectByCategory}
-                  />
-                )}
-                <div className='max-h-[360px] overflow-y-auto pr-3 xl:max-h-[540px] 2xl:max-h-[620px]'>
-                  {classesQuery.isLoading ? (
-                    <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
-                      {[...Array(8)].map((_, index) => (
-                        <Skeleton key={index} className='h-[62px] rounded-md' />
-                      ))}
-                    </div>
-                  ) : classesQuery.isError ? (
-                    <EmptyState
-                      variant='compact'
-                      icon={Users}
-                      title='Could not load classes'
-                      description={getErrorMessage(classesQuery.error, 'Please try again.')}
-                      action={
-                        <Button variant='outline' size='sm' onClick={() => classesQuery.refetch()}>
-                          Retry
-                        </Button>
-                      }
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2 text-base'>
+                    <Users className='h-4 w-4' /> Select classes
+                  </CardTitle>
+                  <CardDescription>
+                    Pick the classes students will be invited to enrol in.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='space-y-4 xl:space-y-5'>
+                  {classes.length > 0 && (
+                    <CategoryTabs
+                      items={classTabItems}
+                      activeCategory={activeCategory}
+                      onCategoryChange={setActiveCategory}
+                      subjectByCategory={subjectByCategory}
+                      onSubjectChange={setSubjectByCategory}
                     />
-                  ) : filteredClasses.length === 0 ? (
-                    <EmptyState
-                      variant='compact'
-                      icon={Users}
-                      title='No classes to select'
-                      description='Create a class first, then return here to invite students.'
-                    />
-                  ) : (
-                    <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
-                      {filteredClasses.map(item => {
-                        const checked = selectedClasses.includes(item.id);
-                        return (
-                          <label
-                            key={item.id}
-                            className={cn(
-                              'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors',
-                              checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                            )}
-                          >
-                            <Checkbox
-                              checked={checked}
-                              onCheckedChange={() => setSelectedClasses(s => toggle(s, item.id))}
-                              className='mt-0.5'
-                              aria-label={`Select ${item.title}`}
-                            />
-                            <div className='min-w-0 flex-1'>
-                              <div className='truncate text-sm font-medium'>{item.title}</div>
-                              <div className='text-muted-foreground truncate text-xs'>
-                                {item.category}
-                              </div>
-                            </div>
-                          </label>
-                        );
-                      })}
-                    </div>
                   )}
-                </div>
-                <div className='text-muted-foreground flex items-center justify-between text-xs'>
-                  <span>
-                    {selectedClasses.length} of {filteredClasses.length} selected
-                  </span>
-                  <div className='flex gap-2'>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => setSelectedClasses(filteredClasses.map(item => item.id))}
-                    >
-                      Select all
-                    </Button>
-                    <Button variant='ghost' size='sm' onClick={() => setSelectedClasses([])}>
-                      Clear
-                    </Button>
+                  <div className='max-h-[360px] overflow-y-auto pr-3 xl:max-h-[540px] 2xl:max-h-[620px]'>
+                    {classesQuery.isLoading ? (
+                      <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+                        {[...Array(8)].map((_, index) => (
+                          <Skeleton key={index} className='h-[62px] rounded-md' />
+                        ))}
+                      </div>
+                    ) : classesQuery.isError ? (
+                      <EmptyState
+                        variant='compact'
+                        icon={Users}
+                        title='Could not load classes'
+                        description={getErrorMessage(classesQuery.error, 'Please try again.')}
+                        action={
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={() => classesQuery.refetch()}
+                          >
+                            Retry
+                          </Button>
+                        }
+                      />
+                    ) : filteredClasses.length === 0 ? (
+                      <EmptyState
+                        variant='compact'
+                        icon={Users}
+                        title='No classes to select'
+                        description='Create a class first, then return here to invite students.'
+                      />
+                    ) : (
+                      <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4'>
+                        {filteredClasses.map(item => {
+                          const checked = selectedClasses.includes(item.id);
+                          return (
+                            <label
+                              key={item.id}
+                              className={cn(
+                                'flex cursor-pointer items-start gap-3 rounded-md border p-3 transition-colors',
+                                checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                              )}
+                            >
+                              <Checkbox
+                                checked={checked}
+                                onCheckedChange={() => setSelectedClasses(s => toggle(s, item.id))}
+                                className='mt-0.5'
+                                aria-label={`Select ${item.title}`}
+                              />
+                              <div className='min-w-0 flex-1'>
+                                <div className='truncate text-sm font-medium'>{item.title}</div>
+                                <div className='text-muted-foreground truncate text-xs'>
+                                  {item.category}
+                                </div>
+                              </div>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                  <div className='text-muted-foreground flex items-center justify-between text-xs'>
+                    <span>
+                      {selectedClasses.length} of {filteredClasses.length} selected
+                    </span>
+                    <div className='flex gap-2'>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        onClick={() => setSelectedClasses(filteredClasses.map(item => item.id))}
+                      >
+                        Select all
+                      </Button>
+                      <Button variant='ghost' size='sm' onClick={() => setSelectedClasses([])}>
+                        Clear
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
 
-            <Card>
+              <Card>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2 text-base'>
                     <MapPin className='h-4 w-4' /> Branch
                     <span className='text-muted-foreground text-xs font-normal'>(optional)</span>
                   </CardTitle>
                   <CardDescription>
-                    Assign the invited students to a training branch, or leave them organisation-wide.
+                    Assign the invited students to a training branch, or leave them
+                    organisation-wide.
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Select
-                    value={selectedBranch || 'none'}
-                    onValueChange={v => setSelectedBranch(v === 'none' ? '' : v)}
-                  >
-                    <SelectTrigger className='sm:max-w-sm'>
-                      <SelectValue placeholder='No specific branch' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value='none'>No specific branch (organisation-wide)</SelectItem>
-                      {branches.map(b => (
-                        <SelectItem key={b.uuid} value={b.uuid ?? ''}>
-                          {b.branch_name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </CardContent>
+                <CardContent>{branchPicker}</CardContent>
               </Card>
             </>
           )}
 
           {/* Step 2 - Recipients */}
           {step === 2 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-base'>
-                  <UsersRound className='h-4 w-4' /> Select recipients
-                </CardTitle>
-                <CardDescription>
-                  Send to student groups or paste specific emails. Everyone is invited individually.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-4 xl:grid xl:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)] xl:gap-5 xl:space-y-0 2xl:grid-cols-[minmax(0,1.25fr)_minmax(440px,0.75fr)]'>
-                <div className='space-y-3'>
-                  <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
-                    Student groups
-                  </Label>
-                  {groupsQuery.isLoading ? (
-                    <div className='grid gap-2 sm:grid-cols-2 2xl:grid-cols-3'>
-                      {[...Array(4)].map((_, index) => (
-                        <Skeleton key={index} className='h-[62px] rounded-md' />
-                      ))}
-                    </div>
-                  ) : groupsQuery.isError ? (
-                    <EmptyState
-                      variant='compact'
-                      icon={UsersRound}
-                      title='Could not load student groups'
-                      description={getErrorMessage(groupsQuery.error, 'Please try again.')}
-                      action={
-                        <Button variant='outline' size='sm' onClick={() => groupsQuery.refetch()}>
-                          Retry
-                        </Button>
-                      }
-                    />
-                  ) : groups.length === 0 ? (
-                    <EmptyState
-                      variant='compact'
-                      icon={UsersRound}
-                      title='No student groups yet'
-                      description='Paste recipient emails below to invite students directly.'
-                    />
-                  ) : (
-                    <div className='grid gap-2 sm:grid-cols-2 2xl:grid-cols-3'>
-                      {groups.map(group => {
-                        const checked = selectedGroups.includes(group.uuid);
-                        const memberCount = toNumber(group.member_count);
-                        return (
-                          <label
-                            key={group.uuid}
-                            className={cn(
-                              'flex cursor-pointer items-center justify-between gap-3 rounded-md border p-3 transition-colors',
-                              checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
-                            )}
-                          >
-                            <div className='flex min-w-0 items-center gap-3'>
-                              <Checkbox
-                                checked={checked}
-                                onCheckedChange={() =>
-                                  setSelectedGroups(current => toggle(current, group.uuid))
-                                }
-                              />
-                              <div className='min-w-0'>
-                                <div className='truncate text-sm font-medium'>{group.name}</div>
-                                {group.group_type && (
-                                  <div className='text-muted-foreground truncate text-xs'>
-                                    {group.group_type}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            <Badge variant='secondary' className='shrink-0'>
-                              {formatCount(memberCount, '0')}
-                            </Badge>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                <div className='space-y-4'>
-                  <div>
-                    <Label
-                      htmlFor='recipient-email-input'
-                      className='text-muted-foreground mb-2 block text-xs uppercase'
-                    >
-                      Recipient emails
+            <>
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2 text-base'>
+                    <UsersRound className='h-4 w-4' /> Select recipients
+                  </CardTitle>
+                  <CardDescription>
+                    Send to student groups or paste specific emails. Everyone is invited
+                    individually.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='space-y-4 xl:grid xl:grid-cols-[minmax(0,1.15fr)_minmax(380px,0.85fr)] xl:gap-5 xl:space-y-0 2xl:grid-cols-[minmax(0,1.25fr)_minmax(440px,0.75fr)]'>
+                  <div className='xl:col-span-2'>{branchPicker}</div>
+                  <div className='space-y-3'>
+                    <Label className='text-muted-foreground mb-2 block text-xs uppercase'>
+                      Student groups
                     </Label>
-                    <div
-                      className={cn(
-                        'border-input bg-background focus-within:border-ring focus-within:ring-ring/50 flex min-h-11 cursor-text flex-wrap items-center gap-2 rounded-md border px-2 py-2 shadow-xs transition-[border-color,box-shadow] focus-within:ring-[3px]',
-                        invalidRecipients.length > 0 &&
-                          'border-destructive focus-within:ring-destructive/20'
-                      )}
-                      onClick={() => emailInputRef.current?.focus()}
-                    >
-                      {recipients.map(recipient => (
-                        <span
-                          key={recipient.email}
-                          className='bg-primary/10 text-primary border-primary/20 inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium'
-                        >
-                          <span className='max-w-[220px] truncate 2xl:max-w-[300px]'>
-                            {recipient.email}
-                          </span>
-                          <button
-                            type='button'
-                            className='hover:bg-primary/10 focus-visible:ring-ring/50 -mr-1 inline-flex h-5 w-5 items-center justify-center rounded-full outline-none focus-visible:ring-[3px]'
-                            aria-label={`Remove ${recipient.email}`}
-                            onClick={event => {
-                              event.stopPropagation();
-                              removeEmailRecipient(recipient.email);
-                            }}
-                          >
-                            <X className='h-3 w-3' />
-                          </button>
-                        </span>
-                      ))}
-                      <Input
-                        ref={emailInputRef}
-                        id='recipient-email-input'
-                        type='text'
-                        inputMode='email'
-                        autoComplete='email'
-                        placeholder={
-                          recipients.length === 0
-                            ? 'student1@example.com, student2@example.com'
-                            : 'Add another email'
+                    {groupsQuery.isLoading ? (
+                      <div className='grid gap-2 sm:grid-cols-2 2xl:grid-cols-3'>
+                        {[...Array(4)].map((_, index) => (
+                          <Skeleton key={index} className='h-[62px] rounded-md' />
+                        ))}
+                      </div>
+                    ) : groupsQuery.isError ? (
+                      <EmptyState
+                        variant='compact'
+                        icon={UsersRound}
+                        title='Could not load student groups'
+                        description={getErrorMessage(groupsQuery.error, 'Please try again.')}
+                        action={
+                          <Button variant='outline' size='sm' onClick={() => groupsQuery.refetch()}>
+                            Retry
+                          </Button>
                         }
-                        value={emailDraft}
-                        onChange={event => handleEmailDraftChange(event.target.value)}
-                        onKeyDown={handleEmailKeyDown}
-                        onPaste={handleEmailPaste}
-                        onBlur={commitEmailDraft}
-                        aria-describedby='recipient-email-help recipient-email-errors'
-                        aria-invalid={invalidRecipients.length > 0}
-                        className='h-7 min-w-[14rem] flex-1 border-0 bg-transparent px-1 py-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm'
                       />
-                    </div>
-                    <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
-                      <Badge variant='outline'>{recipients.length} valid</Badge>
-                      {invalidRecipients.length > 0 && (
-                        <Badge variant='destructive'>{invalidRecipients.length} invalid</Badge>
-                      )}
-                      <span id='recipient-email-help' className='sm:ml-auto'>
-                        Press Enter, Tab, comma, or paste a list to add people.
-                      </span>
-                    </div>
-                    {invalidRecipients.length > 0 && (
-                      <div
-                        id='recipient-email-errors'
-                        className='text-destructive mt-1 flex flex-wrap items-center gap-2 text-xs'
+                    ) : groups.length === 0 ? (
+                      <EmptyState
+                        variant='compact'
+                        icon={UsersRound}
+                        title={
+                          selectedBranch
+                            ? 'No student groups in this branch'
+                            : 'No student groups yet'
+                        }
+                        description='Choose another branch or paste recipient emails to invite students directly.'
+                      />
+                    ) : (
+                      <div className='grid gap-2 sm:grid-cols-2 2xl:grid-cols-3'>
+                        {groups.map(group => {
+                          const checked = selectedGroups.includes(group.uuid);
+                          const memberCount = toNumber(group.member_count);
+                          return (
+                            <label
+                              key={group.uuid}
+                              className={cn(
+                                'flex cursor-pointer items-center justify-between gap-3 rounded-md border p-3 transition-colors',
+                                checked ? 'border-primary bg-primary/5' : 'hover:bg-muted/50'
+                              )}
+                            >
+                              <div className='flex min-w-0 items-center gap-3'>
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={() =>
+                                    setSelectedGroups(current => toggle(current, group.uuid))
+                                  }
+                                />
+                                <div className='min-w-0'>
+                                  <div className='truncate text-sm font-medium'>{group.name}</div>
+                                  {group.group_type && (
+                                    <div className='text-muted-foreground truncate text-xs'>
+                                      {group.group_type}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <Badge variant='secondary' className='shrink-0'>
+                                {formatCount(memberCount, '0')}
+                              </Badge>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className='space-y-4'>
+                    <div>
+                      <Label
+                        htmlFor='recipient-email-input'
+                        className='text-muted-foreground mb-2 block text-xs uppercase'
                       >
-                        <span>
-                          Ignored: {invalidRecipients.slice(0, 3).join(', ')}
-                          {invalidRecipients.length > 3
-                            ? `, +${invalidRecipients.length - 3} more`
-                            : ''}
+                        Recipient emails
+                      </Label>
+                      <div
+                        className={cn(
+                          'border-input bg-background focus-within:border-ring focus-within:ring-ring/50 flex min-h-11 cursor-text flex-wrap items-center gap-2 rounded-md border px-2 py-2 shadow-xs transition-[border-color,box-shadow] focus-within:ring-[3px]',
+                          invalidRecipients.length > 0 &&
+                            'border-destructive focus-within:ring-destructive/20'
+                        )}
+                        onClick={() => emailInputRef.current?.focus()}
+                      >
+                        {recipients.map(recipient => (
+                          <span
+                            key={recipient.email}
+                            className='bg-primary/10 text-primary border-primary/20 inline-flex max-w-full items-center gap-1 rounded-full border px-2 py-1 text-xs font-medium'
+                          >
+                            <span className='max-w-[220px] truncate 2xl:max-w-[300px]'>
+                              {recipient.email}
+                            </span>
+                            <button
+                              type='button'
+                              className='hover:bg-primary/10 focus-visible:ring-ring/50 -mr-1 inline-flex h-5 w-5 items-center justify-center rounded-full outline-none focus-visible:ring-[3px]'
+                              aria-label={`Remove ${recipient.email}`}
+                              onClick={event => {
+                                event.stopPropagation();
+                                removeEmailRecipient(recipient.email);
+                              }}
+                            >
+                              <X className='h-3 w-3' />
+                            </button>
+                          </span>
+                        ))}
+                        <Input
+                          ref={emailInputRef}
+                          id='recipient-email-input'
+                          type='text'
+                          inputMode='email'
+                          autoComplete='email'
+                          placeholder={
+                            recipients.length === 0
+                              ? 'student1@example.com, student2@example.com'
+                              : 'Add another email'
+                          }
+                          value={emailDraft}
+                          onChange={event => handleEmailDraftChange(event.target.value)}
+                          onKeyDown={handleEmailKeyDown}
+                          onPaste={handleEmailPaste}
+                          onBlur={commitEmailDraft}
+                          aria-describedby='recipient-email-help recipient-email-errors'
+                          aria-invalid={invalidRecipients.length > 0}
+                          className='h-7 min-w-[14rem] flex-1 border-0 bg-transparent px-1 py-0 shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 md:text-sm'
+                        />
+                      </div>
+                      <div className='text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-xs'>
+                        <Badge variant='outline'>{recipients.length} valid</Badge>
+                        {invalidRecipients.length > 0 && (
+                          <Badge variant='destructive'>{invalidRecipients.length} invalid</Badge>
+                        )}
+                        <span id='recipient-email-help' className='sm:ml-auto'>
+                          Press Enter, Tab, comma, or paste a list to add people.
                         </span>
+                      </div>
+                      {invalidRecipients.length > 0 && (
+                        <div
+                          id='recipient-email-errors'
+                          className='text-destructive mt-1 flex flex-wrap items-center gap-2 text-xs'
+                        >
+                          <span>
+                            Ignored: {invalidRecipients.slice(0, 3).join(', ')}
+                            {invalidRecipients.length > 3
+                              ? `, +${invalidRecipients.length - 3} more`
+                              : ''}
+                          </span>
+                          <Button
+                            type='button'
+                            variant='link'
+                            size='sm'
+                            className='text-destructive h-auto px-0 py-0 text-xs'
+                            onClick={() => setInvalidRecipients([])}
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                    <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
+                      <div className='flex items-center justify-between'>
+                        <span className='text-muted-foreground'>Estimated reach</span>
+                        <span className='font-semibold tabular-nums'>
+                          {groupAudience.isLoading ? 'Loading…' : formatCount(audienceCount, '0')}{' '}
+                          student
+                          {audienceCount === 1 ? '' : 's'}
+                        </span>
+                      </div>
+                      {selectedGroups.length > 0 && recipients.length > 0 && (
+                        <p className='text-muted-foreground text-xs'>
+                          Anyone appearing in both is invited once.
+                        </p>
+                      )}
+                      {invalidRecipients.length > 0 && (
+                        <p className='text-muted-foreground text-xs'>
+                          Invalid entries stay out of the send batch until corrected.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              {selectedGroups.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='flex items-center gap-2 text-base'>
+                      <UsersRound className='h-4 w-4' /> Selected recipients
+                    </CardTitle>
+                    <CardDescription>
+                      Review the students included from your selected groups.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className='space-y-3'>
+                    <div className='flex flex-wrap items-center justify-between gap-2'>
+                      <p className='font-medium'>Students in selected groups</p>
+                      {excludedStudents.length > 0 && (
                         <Button
                           type='button'
                           variant='link'
                           size='sm'
-                          className='text-destructive h-auto px-0 py-0 text-xs'
-                          onClick={() => setInvalidRecipients([])}
+                          className='h-auto p-0'
+                          onClick={() => setExcludedStudents([])}
                         >
-                          Clear
+                          Restore removed students
                         </Button>
-                      </div>
-                    )}
-                  </div>
-                  <div className='bg-muted/50 space-y-1.5 rounded-md p-3 text-sm'>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-muted-foreground'>Estimated reach</span>
-                      <span className='font-semibold tabular-nums'>
-                        {formatCount(recipients.length + groupReach, '0')} student
-                        {recipients.length + groupReach === 1 ? '' : 's'}
-                      </span>
+                      )}
                     </div>
-                    {selectedGroups.length > 0 && recipients.length > 0 && (
-                      <p className='text-muted-foreground text-xs'>
-                        Anyone appearing in both is invited once.
-                      </p>
+                    <p className='text-muted-foreground text-xs'>
+                      Remove students from this invitation list. Their group membership stays the
+                      same.
+                    </p>
+                    {groupAudience.isLoading ? (
+                      <Skeleton className='h-24 w-full' />
+                    ) : groupAudience.isError ? (
+                      <EmptyState
+                        variant='compact'
+                        title='Could not load group students'
+                        description='Retry before sending invitations.'
+                        action={
+                          <Button
+                            type='button'
+                            variant='outline'
+                            size='sm'
+                            onClick={() => void groupAudience.refetch()}
+                          >
+                            Retry
+                          </Button>
+                        }
+                      />
+                    ) : groupStudents.length === 0 ? (
+                      <EmptyState
+                        variant='compact'
+                        title='No group students included'
+                        description='Select another group or restore removed students.'
+                      />
+                    ) : (
+                      <ul className='max-h-72 space-y-2 overflow-y-auto pr-1'>
+                        {groupStudents.map(student => (
+                          <li
+                            key={student.id}
+                            className='bg-background flex items-start justify-between gap-3 rounded-md border p-2'
+                          >
+                            <div className='min-w-0'>
+                              <p className='truncate text-sm font-medium'>{student.name}</p>
+                              <p className='text-muted-foreground truncate text-xs'>
+                                {student.email || 'No email address — will not be invited'}
+                              </p>
+                              <p className='text-muted-foreground text-xs'>
+                                {student.groups.join(' · ')}
+                              </p>
+                            </div>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='icon'
+                              className='h-7 w-7 shrink-0'
+                              aria-label={`Remove ${student.name} from invitation list`}
+                              onClick={() =>
+                                setExcludedStudents(current =>
+                                  uniqueStrings([...current, student.id])
+                                )
+                              }
+                            >
+                              <X className='h-4 w-4' />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
                     )}
-                    {invalidRecipients.length > 0 && (
-                      <p className='text-muted-foreground text-xs'>
-                        Invalid entries stay out of the send batch until corrected.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              )}
+            </>
           )}
 
           {/* Step 3 - Message & send */}
@@ -1173,7 +1309,7 @@ export default function InviteStudentsPage() {
                     <div className='flex items-center justify-between'>
                       <span className='text-muted-foreground'>Recipients</span>
                       <span className='font-semibold tabular-nums'>
-                        {formatCount(recipients.length + groupReach, '0')}
+                        {formatCount(audienceCount, '0')}
                       </span>
                     </div>
                     <div className='flex items-center justify-between'>
@@ -1188,8 +1324,8 @@ export default function InviteStudentsPage() {
                     </div>
                     {selectedGroups.length > 0 && (
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        Student groups currently reach about {formatCount(groupReach, '0')} member
-                        {groupReach === 1 ? '' : 's'} before server-side de-duplication.
+                        {formatCount(groupReach, '0')} group student{groupReach === 1 ? '' : 's'}{' '}
+                        included after removals. Duplicate email addresses receive one invitation.
                       </p>
                     )}
                   </div>
@@ -1227,9 +1363,7 @@ export default function InviteStudentsPage() {
                 ) : (
                   <Send className='mr-2 h-4 w-4' />
                 )}
-                {sending
-                  ? 'Sending...'
-                  : `Send invitation${recipients.length + selectedGroups.length === 1 ? '' : 's'}`}
+                {sending ? 'Sending...' : `Send invitation${audienceCount === 1 ? '' : 's'}`}
               </Button>
             )}
           </div>
