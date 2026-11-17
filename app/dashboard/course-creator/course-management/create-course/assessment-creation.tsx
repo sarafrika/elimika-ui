@@ -1,6 +1,8 @@
 
 'use client';
 
+import { getErrorMessage } from '@/lib/error-utils';
+
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
@@ -106,28 +108,7 @@ type CreateAssignmentVariables = MutationVariables<ReturnType<typeof createAssig
 type UpdateAssignmentVariables = MutationVariables<ReturnType<typeof updateAssignmentMutation>>;
 type CreateQuizVariables = MutationVariables<ReturnType<typeof createQuizMutation>>;
 
-const getApiErrorMessage = (error: unknown): string => {
-    if (typeof error === 'string') return error;
-    if (!error || typeof error !== 'object') return 'Unknown error';
-
-    const response = error as Record<string, unknown>;
-    const nestedError = response.error;
-    if (nestedError && typeof nestedError === 'object') {
-        const nestedMessage = getApiErrorMessage(nestedError);
-        if (nestedMessage !== 'Request failed' && nestedMessage !== 'Unknown error') {
-            return nestedMessage;
-        }
-    }
-
-    if (typeof response.message === 'string' && response.message !== 'Validation failed') {
-        return response.message;
-    }
-
-    return Object.values(response).find(
-        (value): value is string =>
-            typeof value === 'string' && Boolean(value.trim()) && value !== 'Validation failed'
-    ) ?? 'Request failed';
-};
+const getApiErrorMessage = (error: unknown): string => getErrorMessage(error, 'Could not save the assessment.');
 
 type QuizState = Record<string, Question[]>;
 

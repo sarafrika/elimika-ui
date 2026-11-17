@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
+import { canViewJobLocation } from '@/components/profile-job-marketplace/application-status';
 import { SectionError } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -63,6 +64,7 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
   const [applyOpen, setApplyOpen] = useState(false);
   const data = useJobPage(jobUuid, now);
   const { job, facts, jobQuery, eligibility, readiness } = data;
+  const canViewLocation = canViewJobLocation(data.applicationStatus);
 
   const requested = searchParams.get('tab') as JobTab | null;
   const tab: JobTab = requested && TABS.includes(requested) ? requested : 'overview';
@@ -153,6 +155,7 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
             now={now}
             organisation={data.organisation}
             organisationLoading={data.organisationLoading}
+            canViewLocation={canViewLocation}
           />
         ) : (
           <JobHeroSkeleton />
@@ -192,7 +195,7 @@ export function JobPage({ jobUuid }: { jobUuid: string }) {
                 />
               </SectionTabPanel>
               <SectionTabPanel value='where'>
-                <WherePanel job={job} />
+                <WherePanel job={job} canViewLocation={canViewLocation} />
               </SectionTabPanel>
               <SectionTabPanel value='pay'>
                 <PayPanel

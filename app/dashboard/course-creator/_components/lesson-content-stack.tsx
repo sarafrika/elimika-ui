@@ -1,5 +1,7 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/error-utils';
+
 import { LessonContentViewerDialog } from '@/components/content-preview/LessonContentPreview';
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
@@ -54,7 +56,7 @@ function pageValidationError(values: PageValues, types: ContentType[]) {
     try {
       resolvePageAttachment(values.file, types);
     } catch (error) {
-      return error instanceof Error ? error.message : 'Unable to attach this file.';
+      return getErrorMessage(error, 'Unable to attach this file.');
     }
   } else if (
     !values.fileUrl &&
@@ -74,7 +76,7 @@ function assertSuccess(
   result: { error?: unknown; success?: boolean; message?: string } | undefined
 ) {
   if (!result || result.error || result.success === false) {
-    throw new Error(result?.message || 'Unable to save changes. Please try again.');
+    throw new Error(getErrorMessage(result, 'Unable to save changes. Please try again.'));
   }
 }
 
@@ -403,7 +405,7 @@ function LessonPages({
     savedLessonRef.current = saved;
   };
   const reportSaveError = (error: unknown) => {
-    const message = error instanceof Error ? error.message : 'Unable to save this lesson.';
+    const message = getErrorMessage(error, 'Unable to save this lesson.');
     setSaveError(message);
     toast.error(message);
   };
@@ -465,7 +467,7 @@ function LessonPages({
         try {
           await persistPage(page.entry, page.values);
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Unable to save this page.';
+          const message = getErrorMessage(error, 'Unable to save this page.');
           throw new Error(
             `Page ${page.pageIndex + 1}: ${message} Saved pages have been kept. Save again to continue.`
           );
@@ -530,7 +532,7 @@ function LessonPages({
       await refresh();
       toast.success('Page removed');
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Unable to remove this page.');
+      toast.error(getErrorMessage(error, 'Unable to remove this page.'));
     } finally {
       busyRef.current = false;
       setBusy(null);
@@ -723,7 +725,7 @@ function LessonPageEditor({
       setDirty(true);
       setError('');
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Unable to attach this file.');
+      setError(getErrorMessage(error, 'Unable to attach this file.'));
     }
   };
   const submit = async () => {

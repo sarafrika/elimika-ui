@@ -98,6 +98,7 @@ export function StepDelivery({
               card={draft.card}
               currency={currency}
               errors={validation.cells}
+              methodError={validation.methods[prefix]}
               showErrors={showErrors}
               onToggle={on => toggle(prefix, on)}
               onCard={setCard}
@@ -128,6 +129,7 @@ function MethodCard({
   card,
   currency,
   errors,
+  methodError,
   showErrors,
   onToggle,
   onCard,
@@ -137,6 +139,7 @@ function MethodCard({
   card: RateCard;
   currency: string;
   errors: DeliveryValidation['cells'];
+  methodError: string | undefined;
   showErrors: boolean;
   onToggle: (on: boolean) => void;
   onCard: (card: RateCard) => void;
@@ -173,38 +176,57 @@ function MethodCard({
       </div>
 
       {on ? (
-        <div className='grid gap-3 sm:grid-cols-2'>
-          {RATE_BASES.map(basis => {
-            const key = cellKey(prefix, basis);
-            const error = errors[key];
-            const value = card[key];
-            return (
-              <div key={key} className='space-y-1'>
-                <Label htmlFor={`${id}-${basis.suffix}`} className='text-xs'>
-                  {basis.label}
-                </Label>
-                <div className='flex items-center gap-2'>
-                  <span className='text-muted-foreground text-xs font-semibold'>{currency}</span>
-                  <Input
-                    id={`${id}-${basis.suffix}`}
-                    inputMode='numeric'
-                    placeholder='0'
-                    value={value === null || value === undefined ? '' : String(value)}
-                    aria-invalid={showErrors && Boolean(error)}
-                    className={cn(showErrors && error && 'border-destructive')}
-                    onChange={event => {
-                      const raw = event.target.value.replace(/[^0-9.]/g, '');
-                      const parsed = raw === '' ? null : Number(raw);
-                      onCard({ ...card, [key]: Number.isFinite(parsed) ? parsed : null });
-                    }}
-                  />
+        <div className='space-y-3'>
+          <p id={`${id}-rates-help`} className='text-muted-foreground text-xs'>
+            Enter a per-hour rate, a per-day rate, or both.
+          </p>
+          <div className='grid gap-3 sm:grid-cols-2'>
+            {RATE_BASES.map(basis => {
+              const key = cellKey(prefix, basis);
+              const error = errors[key];
+              const value = card[key];
+              const showFieldError = Boolean(error && (showErrors || error.startsWith('At least')));
+              const describedBy = [
+                `${id}-rates-help`,
+                showErrors && methodError ? `${id}-rates-error` : null,
+                showFieldError ? `${id}-${basis.suffix}-error` : null,
+              ].filter(Boolean).join(' ');
+              return (
+                <div key={key} className='space-y-1'>
+                  <Label htmlFor={`${id}-${basis.suffix}`} className='text-xs'>
+                    {basis.label}
+                  </Label>
+                  <div className='flex items-center gap-2'>
+                    <span className='text-muted-foreground text-xs font-semibold'>{currency}</span>
+                    <Input
+                      id={`${id}-${basis.suffix}`}
+                      inputMode='numeric'
+                      placeholder='0'
+                      value={value === null || value === undefined ? '' : String(value)}
+                      aria-invalid={showErrors && Boolean(error)}
+                      aria-describedby={describedBy}
+                      className={cn(showErrors && error && 'border-destructive')}
+                      onChange={event => {
+                        const raw = event.target.value.replace(/[^0-9.]/g, '');
+                        const parsed = raw === '' ? null : Number(raw);
+                        onCard({ ...card, [key]: Number.isFinite(parsed) ? parsed : null });
+                      }}
+                    />
+                  </div>
+                  {showFieldError ? (
+                    <p id={`${id}-${basis.suffix}-error`} className='text-destructive text-xs'>
+                      {error}
+                    </p>
+                  ) : null}
                 </div>
-                {error && (showErrors || error.startsWith('At least')) ? (
-                  <p className='text-destructive text-xs'>{error}</p>
-                ) : null}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          {showErrors && methodError ? (
+            <p id={`${id}-rates-error`} className='text-destructive text-xs'>
+              {methodError}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>

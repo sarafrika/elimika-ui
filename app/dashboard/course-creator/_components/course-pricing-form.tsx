@@ -1,5 +1,7 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/error-utils';
+
 import { WatchedValue } from '@/components/form/watched-value';
 import { Button } from '@/components/ui/button';
 import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,10 +47,6 @@ import z from 'zod';
 import { type CourseCreationFormValues, CURRENCIES } from './course-creation-types';
 
 type MutationPayload = Record<string, unknown>;
-const getErrorMessage = (error: unknown) =>
-  typeof error === 'object' && error !== null && 'message' in error
-    ? String(error.message)
-    : undefined;
 
 type CourseFormProps = {
   showSubmitButton?: boolean;
@@ -202,6 +200,10 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
         const data = await PublishCourse.mutateAsync({
           path: { uuid: targetCourseId },
         });
+        if (data.error || data.success === false) {
+          toast.error(getErrorMessage(data, 'Failed to publish course.'));
+          return;
+        }
 
         router.replace('/dashboard/course-creator/course-management');
 
@@ -228,7 +230,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
 
       } catch (error) {
         toast.error(
-          getErrorMessage(error) || 'Failed to publish course'
+          getErrorMessage(error, 'Failed to publish course')
         );
       }
     };
@@ -241,6 +243,10 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
           { path: { uuid: targetCourseId } },
           {
             async onSuccess(data) {
+              if (data.error || data.success === false) {
+                toast.error(getErrorMessage(data, 'Failed to unpublish course.'));
+                return;
+              }
               toast.success(data?.message || 'Course unpublished successfully');
               queryClient.invalidateQueries({
                 queryKey: getCourseByUuidQueryKey({ path: { uuid: targetCourseId } }),
@@ -256,7 +262,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
               await invalidateContentModerationWorkflowQueries(queryClient);
             },
             onError: error => {
-              toast.error(getErrorMessage(error) || 'Failed to unpublish course');
+              toast.error(getErrorMessage(error, 'Failed to unpublish course'));
             },
           }
         );
@@ -333,7 +339,7 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
               async onSuccess(result) {
                 if (result.error || result.data?.error || result.data?.success === false) {
                   toast.error(
-                    getErrorMessage(result.error) || result.data?.message || 'Failed to save pricing.'
+                    getErrorMessage(result.error ?? result.data, 'Failed to save pricing.')
                   );
                   resolve(false);
                   return;
@@ -350,7 +356,8 @@ export const CoursePricingForm = forwardRef<CourseFormRef, CourseFormProps>(
                 });
                 resolve(true);
               },
-              onError() {
+              onError(error) {
+                toast.error(getErrorMessage(error, 'Failed to save pricing.'));
                 resolve(false);
               },
             }

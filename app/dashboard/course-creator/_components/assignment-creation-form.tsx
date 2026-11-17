@@ -1,5 +1,7 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/error-utils';
+
 import { RubricCombobox } from './rubric-combobox';
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -105,9 +107,6 @@ const ASSIGNMENT_CATEGORIES = [
 
 type AssignmentFormState = typeof EMPTY_ASSIGNMENT;
 
-const getErrorMessage = (error: unknown, fallback: string) =>
-  (error as ResponseDtoVoid | undefined)?.message ||
-  (error instanceof Error ? error.message : fallback);
 
 const toSubmissionTypes = (
   value: SubmissionTypesEnum | SubmissionTypesEnum[] | undefined
@@ -273,14 +272,14 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
           toast.success('Assignment created successfully!');
         }
       }
-    } catch {
-      toast.error(
+    } catch (error) {
+      toast.error(getErrorMessage(error,
         assignmentUuid
           ? 'Failed to update assignment.'
           : mediaFile
             ? 'Failed to save assignment and upload attachment.'
             : 'Failed to create assignment.'
-      );
+      ));
     } finally {
       setAssignmentAction(null);
     }
@@ -304,8 +303,8 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
       }));
 
       toast.success('Assignment published successfully!');
-    } catch {
-      toast.error('Failed to publish assignment.');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to publish assignment.'));
     } finally {
       setAssignmentAction(null);
     }
@@ -329,8 +328,8 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
       }));
 
       toast.success('Assignment unpublished successfully!');
-    } catch {
-      toast.error('Failed to unpublish assignment.');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to unpublish assignment.'));
     } finally {
       setAssignmentAction(null);
     }
@@ -352,7 +351,7 @@ export const AssignmentCreationForm = (props: AssignmentCreationFormProps) => {
       setAssignmentData({ ...EMPTY_ASSIGNMENT });
       toast.success('Assignment deleted successfully');
     } catch (err) {
-      toast.error('Failed to delete assignment.');
+      toast.error(getErrorMessage(err, 'Failed to delete assignment.'));
     } finally {
       setIsDeletingAssignment(false);
     }

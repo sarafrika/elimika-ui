@@ -1,5 +1,7 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/error-utils';
+
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
 import { Button } from '@/components/ui/button';
 import {
@@ -73,12 +75,6 @@ export const CONTENT_TYPES = {
 
 type SubmitCallback<T = void> = (data: T) => void;
 type RefetchCallback = () => void | Promise<void>;
-const getErrorMessage = (value: unknown) => {
-  if (typeof value !== 'object' || value === null) return undefined;
-  if ('message' in value && typeof value.message === 'string') return value.message;
-  if ('error' in value && typeof value.error === 'string') return value.error;
-  return undefined;
-};
 const resourceSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   url: z.string().url('Please enter a valid URL'),
@@ -556,7 +552,7 @@ function LessonContentForm({
       onSuccess?.();
       onCancel();
     } catch (error) {
-      toast.error(getErrorMessage(error) || 'Failed to save content');
+      toast.error(getErrorMessage(error, 'Failed to save content'));
     }
   };
 

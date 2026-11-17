@@ -9,12 +9,7 @@ import type { ClassMarketplaceJob, Organisation } from '@/services/client/types.
 import { deliveryLabel, serviceLabel } from '@/src/features/organisation/jobs/lib/job-stage';
 
 import { ReadinessChip } from '../components/readiness-chip';
-import {
-  inDaysLabel,
-  initialsOf,
-  type JobFacts,
-  sessionDate,
-} from '../job-facts';
+import { inDaysLabel, initialsOf, type JobFacts, sessionDate } from '../job-facts';
 
 function Fact({ label, value, hint }: { label: string; value: ReactNode; hint: ReactNode }) {
   return (
@@ -54,6 +49,7 @@ export function JobHero({
   now,
   organisation,
   organisationLoading,
+  canViewLocation,
 }: {
   job: ClassMarketplaceJob;
   facts: JobFacts;
@@ -61,6 +57,7 @@ export function JobHero({
   now: number;
   organisation: Organisation | undefined;
   organisationLoading: boolean;
+  canViewLocation: boolean;
 }) {
   const verified = organisation?.admin_verified === true;
   const pay = typeof job.instructor_pay === 'number' ? job.instructor_pay : null;
@@ -99,7 +96,7 @@ export function JobHero({
             <p className='text-muted-foreground text-[13px]'>
               {[
                 verified ? 'Verified organisation' : null,
-                job.branch_name,
+                canViewLocation ? job.branch_name : null,
                 job.created_date ? `posted ${formatDate(job.created_date)}` : null,
               ]
                 .filter(Boolean)

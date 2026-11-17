@@ -56,6 +56,13 @@ export function isClassCreatedStatus(status?: string | null): boolean {
   return normalise(status) === 'assigned';
 }
 
+/** Exact class locations are visible once an instructor reaches the shortlist. */
+export function canViewJobLocation(status?: string | null): boolean {
+  return (
+    stageIndexOf(status) >= HIRING_STAGES.indexOf('shortlisted') || isClassCreatedStatus(status)
+  );
+}
+
 /** Every status a filter may offer: the funnel, then the class, then the exits. */
 export const APPLICATION_STATUSES = [
   ...HIRING_STAGES,

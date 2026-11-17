@@ -1,5 +1,7 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/error-utils';
+
 import { Button } from '@/components/ui/button';
 import Spinner from '@/components/ui/spinner';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -20,10 +22,6 @@ import { PendingEditBanner } from '../../../_components/pending-edit-banner';
 import CourseBuilderPage from './CourseBuilderPage';
 import CoursePreviewPage from './CoursePreviewPage';
 
-const getErrorMessage = (error: unknown) =>
-  typeof error === 'object' && error !== null && 'message' in error
-    ? String(error.message)
-    : undefined;
 
 const CourseCreationPage = () => {
   const queryClient = useQueryClient();
@@ -51,12 +49,16 @@ const CourseCreationPage = () => {
         },
         {
           async onSuccess(data, _variables, _context) {
+            if (data.error || data.success === false) {
+              toast.error(getErrorMessage(data, 'Failed to publish course.'));
+              return;
+            }
             toast.success(data?.message);
             router.push('/dashboard/course-creator/course-management');
             await invalidateContentModerationWorkflowQueries(queryClient);
           },
           onError: error => {
-            toast.error(getErrorMessage(error) || 'Failed to publish course');
+            toast.error(getErrorMessage(error, 'Failed to publish course'));
           },
         }
       );
@@ -73,6 +75,10 @@ const CourseCreationPage = () => {
         },
         {
           async onSuccess(data) {
+            if (data.error || data.success === false) {
+              toast.error(getErrorMessage(data, 'Failed to unpublish course.'));
+              return;
+            }
             toast.success(data?.message || 'Course unpublished successfully');
             queryClient.invalidateQueries({
               queryKey: getCourseByUuidQueryKey({ path: { uuid: courseId as string } }),
@@ -88,7 +94,7 @@ const CourseCreationPage = () => {
             await invalidateContentModerationWorkflowQueries(queryClient);
           },
           onError: error => {
-            toast.error(getErrorMessage(error) || 'Failed to unpublish course');
+            toast.error(getErrorMessage(error, 'Failed to unpublish course'));
           },
         }
       );

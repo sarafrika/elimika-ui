@@ -1,4 +1,5 @@
 import type { ApiResponseCourse, Course, CourseSkill } from '@/services/client/types.gen';
+import { getErrorMessage } from './error-utils';
 
 export type CourseSkillDraft = {
   skillUuid: string;
@@ -25,9 +26,7 @@ export type CourseSetupSectionRef = {
 
 export function getCreatedCourse(response: Course | ApiResponseCourse): Course {
   if (('error' in response && response.error) || ('success' in response && response.success === false)) {
-    throw new Error(
-      'message' in response && response.message ? response.message : 'Could not create the course.'
-    );
+    throw new Error(getErrorMessage(response, 'Could not create the course.'), { cause: response });
   }
   const course = 'data' in response ? response.data : response;
   if (!course || !('name' in course) || !course.uuid) {

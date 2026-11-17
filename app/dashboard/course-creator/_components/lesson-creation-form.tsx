@@ -1,5 +1,7 @@
 'use client';
 
+import { getErrorMessage } from '@/lib/error-utils';
+
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { FileText, FileUp, Headphones, ImageIcon, PlusCircle, Trash2, Video } from 'lucide-react';
@@ -270,6 +272,10 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
         { body: createLessonBody, path: { courseUuid: course?.data?.uuid as string } },
         {
           onSuccess: data => {
+            if (data.error || data.success === false) {
+              toast.error(getErrorMessage(data, 'Failed to save lesson.'));
+              return;
+            }
             qc.invalidateQueries({
               queryKey: getCourseLessonsQueryKey({
                 path: { courseUuid: course?.data?.uuid as string },
@@ -286,18 +292,8 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
             // Point the sidebar highlight at the new lesson without refilling the form
             setActiveLessonId(data?.data?.uuid as string);
           },
-          onError: (data: LessonMutationError) => {
-            const error = data?.error;
-            if (error?.lesson_number) {
-              if (error.lesson_number.toLowerCase().includes('duplicate')) {
-                toast.error('Duplicate lesson number found.');
-              } else {
-                toast.error(error.lesson_number);
-              }
-            }
-            toast.error(
-              `${data?.message ?? 'An error occurred.'}. Check for duplicate lesson numbers.`
-            );
+          onError: (error: LessonMutationError) => {
+            toast.error(getErrorMessage(error, 'Failed to create lesson.'));
           },
         }
       );
@@ -313,6 +309,10 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
         },
         {
           onSuccess: data => {
+            if (data.error || data.success === false) {
+              toast.error(getErrorMessage(data, 'Failed to save lesson.'));
+              return;
+            }
             qc.invalidateQueries({
               queryKey: getCourseLessonsQueryKey({
                 path: { courseUuid: course?.data?.uuid as string },
@@ -329,6 +329,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
             });
             toast.success(data?.message);
           },
+          onError: error => toast.error(getErrorMessage(error, 'Failed to update lesson.')),
         }
       );
     }

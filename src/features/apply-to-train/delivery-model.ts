@@ -26,6 +26,7 @@ export function deliveryFromCard(card?: RateCard | null): DeliveryDraft {
 
 export type DeliveryValidation = {
   cells: Partial<Record<RateCellKey, string>>;
+  methods: Partial<Record<MethodPrefix, string>>;
   general: string[];
   count: number;
 };
@@ -33,24 +34,28 @@ export type DeliveryValidation = {
 /** Every switched-on method needs at least one rate; supplied rates must meet the minimum. */
 export function validateDelivery(draft: DeliveryDraft, minimum: number | null): DeliveryValidation {
   const cells: DeliveryValidation['cells'] = {};
+  const methods: DeliveryValidation['methods'] = {};
   const general: string[] = [];
   const floor = minimum !== null && minimum > 0 ? minimum : null;
   if (draft.methods.length === 0) general.push('Switch on at least one way to deliver this.');
   for (const prefix of draft.methods) {
     const hasRate = RATE_BASES.some(basis => parseRate(draft.card[cellKey(prefix, basis)]) !== null);
+    if (!hasRate) methods[prefix] = 'Enter at least one rate: per hour or per day.';
     for (const basis of RATE_BASES) {
       const key = cellKey(prefix, basis);
       const value = parseRate(draft.card[key]);
-      if (value === null) {
-        if (!hasRate) cells[key] = 'Enter at least one rate: per hour or per day.';
-        continue;
-      }
+      if (value === null) continue;
       if (value <= 0) cells[key] = 'Must be above zero.';
       else if (floor !== null && value < floor)
         cells[key] = `At least ${formatRateAmount(floor, draft.card.currency)}, the minimum training fee.`;
     }
   }
-  return { cells, general, count: general.length + Object.keys(cells).length };
+  return {
+    cells,
+    methods,
+    general,
+    count: general.length + Object.keys(cells).length + Object.keys(methods).length,
+  };
 }
 
 /** The card to send: switched-off methods cleared, KES by default. */
