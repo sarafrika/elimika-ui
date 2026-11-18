@@ -8,7 +8,7 @@ import type {
   ClassMarketplaceJobResource,
   ClassSessionTemplate,
 } from '@/services/client';
-import { createClassHref, jobHref, repostJobHref, viewClassHref } from './job-routes';
+import { createClassHref, jobMatchesHref, repostJobHref, viewClassHref } from './job-routes';
 
 export type JobStage = 'open' | 'awaiting_class' | 'class_created' | 'closed';
 
@@ -214,7 +214,7 @@ export function nextStepCta(job: ClassMarketplaceJob, now = Date.now()) {
   const jobUuid = job.uuid ?? '';
   switch (jobStage(job, now)) {
     case 'open':
-      return { label: 'Review applicants', href: jobHref(jobUuid, 'applicants') };
+      return { label: 'Review applicants', href: jobMatchesHref(jobUuid) };
     case 'awaiting_class':
       return { label: 'Create class', href: createClassHref(jobUuid) };
     case 'class_created':

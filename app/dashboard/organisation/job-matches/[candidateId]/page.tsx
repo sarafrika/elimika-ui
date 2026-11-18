@@ -26,6 +26,9 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
+import { jobMatchesHref, jobsHref } from '@/src/features/organisation/jobs/lib/job-routes';
+
+import { toWalletSkill } from '@/app/dashboard/_components/skills-wallet/skill-proficiency';
 import {
   SectionTabPanel,
   SectionTabs,
@@ -67,10 +70,10 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { useUsersByIds } from '@/hooks/use-batched-lookups';
 import { extractEntity } from '@/lib/api-helpers';
-import { toWalletSkill } from '@/app/dashboard/_components/skills-wallet/skill-proficiency';
-import { STALE_TIMES } from '@/lib/query-client';
 import { getErrorMessage } from '@/lib/error-utils';
+import { STALE_TIMES } from '@/lib/query-client';
 import { formatRate, formatRateAmount } from '@/lib/rate-card';
 import { parseSchedulingConflicts, type SchedulingConflict } from '@/lib/scheduling-conflicts';
 import { cn } from '@/lib/utils';
@@ -81,8 +84,8 @@ import type {
 } from '@/services/client';
 import {
   getInstructorByUuidOptions,
-  getInstructorEducationOptions,
   getInstructorDocumentsOptions,
+  getInstructorEducationOptions,
   getInstructorExperienceOptions,
   getInstructorMembershipsOptions,
   getInstructorSkillsOptions,
@@ -92,6 +95,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
 import { createClassHref as createClassHrefFor } from '@/src/features/organisation/jobs/lib/job-routes';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 
 const CandidateCredentialViewer = dynamic(
   () =>
@@ -363,6 +367,14 @@ export default function CandidateDetailPage() {
     enabled: Boolean(instructorUuid),
   });
   const instructor = extractEntity<Instructor>(instructorQuery.data);
+  const userIds = useMemo(
+    () => (instructor?.user_uuid ? [instructor.user_uuid] : []),
+    [instructor?.user_uuid]
+  );
+  const { userMap } = useUsersByIds(userIds);
+  const profileImageUrl = instructor?.user_uuid
+    ? toAuthenticatedMediaUrl(userMap[instructor.user_uuid]?.profile_image_url)
+    : null;
   const name = instructor?.full_name ?? 'Candidate';
 
   const skillsQuery = useQuery({
@@ -559,7 +571,10 @@ export default function CandidateDetailPage() {
     return (
       <div className='p-6'>
         <p className='text-muted-foreground'>Candidate not found.</p>
-        <Link href='/dashboard/organisation/job-matches' className='text-primary underline'>
+        <Link
+          href={jobUuid ? jobMatchesHref(jobUuid) : jobsHref()}
+          className='text-primary underline'
+        >
           Back to Job Matches
         </Link>
       </div>
@@ -572,7 +587,7 @@ export default function CandidateDetailPage() {
         <Button
           variant='ghost'
           size='sm'
-          onClick={() => router.push('/dashboard/organisation/job-matches')}
+          onClick={() => router.push(jobUuid ? jobMatchesHref(jobUuid) : jobsHref())}
         >
           <ArrowLeft className='mr-1.5 h-4 w-4' /> Back to Job Matches
         </Button>
@@ -582,9 +597,7 @@ export default function CandidateDetailPage() {
       <Card className='relative overflow-hidden border-none bg-gradient-to-br from-teal-600 via-teal-700 to-teal-800 text-white shadow-xl'>
         <CardContent className='relative flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:p-8'>
           <Avatar className='h-24 w-24 border-4 border-white/30 shadow-2xl sm:h-32 sm:w-32'>
-            {instructor.profile_image_url && (
-              <AvatarImage src={instructor.profile_image_url} alt={name} />
-            )}
+            {profileImageUrl && <AvatarImage src={profileImageUrl} alt={name} />}
             <AvatarFallback className='bg-teal-900 text-2xl text-white'>
               {initials(name)}
             </AvatarFallback>

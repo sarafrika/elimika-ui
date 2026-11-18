@@ -8,11 +8,11 @@ import { OrgPage } from '@/app/dashboard/organisation/_components/org-page';
 import { useOrganisationBranches } from '@/components/class-form';
 import { KpiCard, PageHeader } from '@/components/dashboard';
 import { AsyncSection } from '@/components/data/async-section';
+import { SearchQueryInput } from '@/components/search/search-input';
+import { SearchNotice } from '@/components/search/search-notice';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
-import { SearchQueryInput } from '@/components/search/search-input';
-import { SearchNotice } from '@/components/search/search-notice';
 import {
   Select,
   SelectContent,
@@ -34,11 +34,10 @@ import { formatDate, formatDateTime } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob, Instructor } from '@/services/client';
 import { useOrganisationJobs } from '../hooks/use-organisation-jobs';
-import { jobHref, postJobHref } from '../lib/job-routes';
+import { jobHref, jobMatchesHref, postJobHref } from '../lib/job-routes';
 import {
   deliveryLabel,
   hiredInstructorUuid,
-  type JobStage,
   jobResourcesHoldState,
   jobSessionWindows,
   jobStage,
@@ -47,6 +46,7 @@ import {
   resourceHoldState,
   serviceLabel,
   sessionCountLabel,
+  type JobStage,
 } from '../lib/job-stage';
 import { HoldBadge, JobStageBadge } from './job-badges';
 
@@ -305,14 +305,14 @@ function JobRow({
   return (
     <div
       className={cn(
-        'hover:bg-muted/30 flex flex-col gap-3 border-b px-4 py-4 text-sm last:border-b-0 lg:items-start',
+        'hover:bg-muted/30 relative isolate flex flex-col gap-3 border-b px-4 py-4 text-sm last:border-b-0 lg:items-start',
         ROW_GRID
       )}
     >
       <div className='min-w-0'>
         <Link
-          href={jobHref(job.uuid ?? '')}
-          className='text-foreground font-semibold hover:underline'
+          href={jobMatchesHref(job.uuid ?? '')}
+          className="text-foreground font-semibold hover:underline after:absolute after:inset-0 after:z-0 after:content-[''] focus-visible:outline-none focus-visible:after:ring-2 focus-visible:after:ring-ring focus-visible:after:ring-inset"
         >
           {job.title || 'Untitled job'}
         </Link>
@@ -380,10 +380,18 @@ function JobRow({
       </div>
 
       <div className='flex flex-row flex-wrap items-center gap-3 lg:flex-col lg:items-end lg:gap-1.5'>
-        <Button asChild size='sm' variant={stage === 'awaiting_class' ? 'default' : 'outline'}>
+        <Button
+          asChild
+          size='sm'
+          variant={stage === 'awaiting_class' ? 'default' : 'outline'}
+          className='relative z-10'
+        >
           <Link href={cta.href}>{cta.label}</Link>
         </Button>
-        <Link href={jobHref(job.uuid ?? '')} className='text-primary text-sm hover:underline'>
+        <Link
+          href={jobHref(job.uuid ?? '')}
+          className='text-primary relative z-10 text-sm hover:underline'
+        >
           View job
         </Link>
       </div>
