@@ -565,7 +565,6 @@ export default {
         { title: 'My Courses', url: '/dashboard/courses', icon: BookOpen },
         { title: 'My Applications', url: '/dashboard/my-applications', icon: FileText },
         { title: 'Student Groups', url: '/dashboard/groups', icon: UsersRound },
-        { title: 'Job Matches', url: '/dashboard/job-matches', icon: Sparkles },
       ],
     },
     {

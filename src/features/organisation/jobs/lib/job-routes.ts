@@ -14,6 +14,14 @@ const id = (value: string) => encodeURIComponent(value);
 
 export const jobsHref = () => org('jobs');
 
+export const jobMatchesHref = (jobUuid: string) => org(`job-matches?job=${id(jobUuid)}`);
+
+export const jobMatchCandidateHref = (
+  jobUuid: string,
+  instructorUuid: string,
+  applicationUuid: string
+) => org(`job-matches/${id(instructorUuid)}?job=${id(jobUuid)}&application=${id(applicationUuid)}`);
+
 export const postJobHref = (courseUuid?: string | null) => postJobModalHref({ courseUuid });
 
 export const jobHref = (jobUuid: string, tab?: JobTab) =>

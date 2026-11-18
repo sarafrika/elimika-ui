@@ -62,7 +62,13 @@ import { cn } from '@/lib/utils';
 import type { ClassMarketplaceJob } from '@/services/client';
 import { cancelJobMutation, getJobOptions } from '@/services/client/@tanstack/react-query.gen';
 import { invalidateJobApplicationWorkflowQueries } from '@/src/features/dashboard/workflow-query-invalidation';
-import { editJobHref, JOB_TABS, jobApplicantHref, jobsHref } from '../lib/job-routes';
+import {
+  editJobHref,
+  JOB_TABS,
+  jobApplicantHref,
+  jobMatchesHref,
+  jobsHref,
+} from '../lib/job-routes';
 import {
   deliveryLabel,
   hiredApplicationFor,
@@ -238,6 +244,11 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
         )}
         {job && cta && confirmed ? (
           <div className='flex flex-wrap items-center gap-2'>
+            {stage !== 'open' ? (
+              <Button asChild variant='outline'>
+                <Link href={jobMatchesHref(jobUuid)}>View job matches</Link>
+              </Button>
+            ) : null}
             {canEdit ? (
               <Button asChild variant='outline'>
                 <Link href={editJobHref(jobUuid)}>
@@ -248,7 +259,7 @@ export function JobDetailsPage({ jobUuid }: { jobUuid: string }) {
             ) : null}
             <Button asChild>
               <Link href={cta.href}>
-                {cta.label}
+                {stage === 'open' ? 'View job matches' : cta.label}
                 <ArrowRight className='h-4 w-4' />
               </Link>
             </Button>
