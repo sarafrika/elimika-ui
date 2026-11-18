@@ -5,6 +5,7 @@ import { cache } from 'react';
 import type { UserDomain } from '@/lib/types';
 import { auth } from '@/services/auth';
 import type { User } from '@/services/client';
+import { getCurrentAccountStatus } from '@/services/client/sdk.gen';
 import { fetchCurrentUser } from '@/services/user/current-user';
 import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
@@ -127,6 +128,40 @@ async function decide<T>(
   return fresh.status === 'authenticated' ? evaluate(fresh) : result;
 }
 
+/** A role the caller applied for that is still under review or was turned down. */
+export type OpenApplication = {
+  domain: UserDomain;
+  status: string;
+  reason: string | null;
+};
+
+/** Applications not yet approved; `/me` lists approved roles only, so these come from account status. */
+const fetchOpenApplications = cache(async (): Promise<OpenApplication[]> => {
+  try {
+    const { data } = await getCurrentAccountStatus({
+      security: [{ scheme: 'bearer', type: 'http' }],
+      next: { revalidate: 0 },
+    });
+    return (data?.data?.domain_applications ?? []).flatMap(application => {
+      const domain = normalizeStoredUserDomain(application.domain);
+      if (!domain || !application.status || application.status === 'APPROVED') return [];
+      return [{ domain, status: application.status, reason: application.review_reason ?? null }];
+    });
+  } catch {
+    return [];
+  }
+});
+
+/** The application to show: the preferred role's first, then anything still pending. */
+function pickApplication(applications: OpenApplication[], preferred: UserDomain | null) {
+  return (
+    applications.find(application => application.domain === preferred) ??
+    applications.find(application => application.status === 'PENDING') ??
+    applications[0] ??
+    null
+  );
+}
+
 /** The domain to act as, given what the viewer holds and what they last chose. */
 function pickActiveDomain(domains: UserDomain[], preferred: UserDomain | null) {
   if (preferred && domains.includes(preferred)) return preferred;
@@ -153,10 +188,17 @@ export async function resolveDashboardEntryTarget(
   preferredDomain: UserDomain | null,
   nextPath = 'overview'
 ): Promise<DashboardEntryResolution> {
-  return decide(
+  const result = await decide(
     identity => evaluateEntryTarget(identity, preferredDomain, nextPath),
     result => result.redirectTo.startsWith('/onboarding')
   );
+  if (result.redirectTo !== '/onboarding') return result;
+
+  // No approved role yet, but an application is open: wait on that role's dashboard.
+  const application = pickApplication(await fetchOpenApplications(), preferredDomain);
+  return application
+    ? { redirectTo: dashboardUrl(application.domain, nextPath), activeDomain: application.domain }
+    : result;
 }
 
 function evaluateEntryTarget(
@@ -199,10 +241,15 @@ function evaluateEntryTarget(
 export async function resolveDashboardGuard(
   preferredDomain: UserDomain | null
 ): Promise<DashboardGuardResolution> {
-  return decide(
+  const result = await decide(
     identity => evaluateGuard(identity, preferredDomain),
     result => result.redirectTo !== null
   );
+  if (result.redirectTo !== '/onboarding') return result;
+
+  // Let an applicant into the shell; the role layout shows the review status.
+  const application = pickApplication(await fetchOpenApplications(), preferredDomain);
+  return application ? { redirectTo: null, activeDomain: application.domain } : result;
 }
 
 function evaluateGuard(
@@ -239,6 +286,8 @@ type RoleAccessResolution = {
   redirectTo: string | null;
   /** The viewer's own domain that satisfies this segment, when access is granted. */
   matchedDomain: UserDomain | null;
+  /** Set when the viewer applied for this role but is not approved: show its status instead. */
+  application?: OpenApplication;
 };
 
 /**
@@ -252,10 +301,16 @@ type RoleAccessResolution = {
  * dashboard rather than shown a 404.
  */
 export async function assertRoleAccess(segment: RoleSegment): Promise<RoleAccessResolution> {
-  return decide(
+  const result = await decide(
     identity => evaluateRoleAccess(identity, segment),
     result => result.redirectTo !== null
   );
+  if (!result.redirectTo || result.matchedDomain) return result;
+
+  const application = (await fetchOpenApplications()).find(
+    open => domainToRouteSegment(open.domain) === segment
+  );
+  return application ? { redirectTo: null, matchedDomain: null, application } : result;
 }
 
 function evaluateRoleAccess(identity: Identity, segment: RoleSegment): RoleAccessResolution {

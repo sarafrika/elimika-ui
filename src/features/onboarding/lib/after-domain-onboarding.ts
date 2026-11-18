@@ -4,9 +4,8 @@ import { getCurrentAccountStatus } from '@/services/client';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 
 /**
- * Where to go once a domain profile is created. Instructor, course creator and
- * organisation start PENDING, so their dashboard would bounce straight back to
- * onboarding; send them to the onboarding page, which shows the review status.
+ * Where to go once a domain profile is created: that role's dashboard. Instructor, course
+ * creator and organisation start PENDING, so the dashboard shows the review status until approved.
  */
 export async function routeAfterDomainOnboarding(
   domain: UserDomain,
@@ -22,15 +21,12 @@ export async function routeAfterDomainOnboarding(
     approved = false;
   }
 
-  if (approved) {
-    if (announce) toast.success(`${label} account created successfully!`);
-    navigate(buildDashboardSwitchPath(domain));
-    return;
-  }
-
-  if (announce)
+  if (announce) {
     toast.success(
-      `${label} application submitted. An Elimika admin will review it before your dashboard opens.`
+      approved
+        ? `${label} account created successfully!`
+        : `${label} application submitted. An Elimika admin will review it before your dashboard opens.`
     );
-  navigate('/onboarding');
+  }
+  navigate(buildDashboardSwitchPath(domain));
 }

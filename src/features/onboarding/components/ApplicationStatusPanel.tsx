@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Clock3, ShieldAlert } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { getCurrentAccountStatusOptions } from '@/services/client/@tanstack/react-query.gen';
+import { plainText } from '@/src/features/onboarding/lib/plain-text';
 
 const DOMAIN_LABELS: Record<string, string> = {
   instructor: 'Instructor',
@@ -11,13 +12,6 @@ const DOMAIN_LABELS: Record<string, string> = {
   organisation_user: 'Organisation',
   student: 'Student',
 };
-
-/** Admin reasons may arrive as rich-text HTML; show them as plain words. */
-function plainText(html?: string) {
-  if (!html) return '';
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim();
-}
 
 /** Shows applications still under review (or turned down) so onboarding never looks like a dead end. */
 export function ApplicationStatusPanel() {
