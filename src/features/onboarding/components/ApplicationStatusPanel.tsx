@@ -34,10 +34,10 @@ export function ApplicationStatusPanel() {
         return (
           <Alert
             key={`${application.domain}-${application.status}`}
-            variant={pending ? 'default' : 'destructive'}
+            className={pending ? undefined : 'border-destructive/40 bg-destructive/5'}
           >
-            <Icon className='h-4 w-4' />
-            <AlertTitle>
+            <Icon className={pending ? 'h-4 w-4' : 'text-destructive h-4 w-4'} />
+            <AlertTitle className={pending ? undefined : 'text-destructive'}>
               {pending
                 ? `${label} application awaiting approval`
                 : `${label} application not approved`}
