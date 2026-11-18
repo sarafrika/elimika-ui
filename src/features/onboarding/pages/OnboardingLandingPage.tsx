@@ -1,4 +1,5 @@
 import { AccountTypeSelector } from '@/src/features/onboarding/components/AccountTypeSelector';
+import { ApplicationStatusPanel } from '@/src/features/onboarding/components/ApplicationStatusPanel';
 
 export function OnboardingLandingPage() {
   return (
@@ -11,6 +12,8 @@ export function OnboardingLandingPage() {
             guide you through the setup process.
           </p>
         </div>
+
+        <ApplicationStatusPanel />
 
         <AccountTypeSelector />
 

@@ -14,7 +14,7 @@ import Spinner from '@/components/ui/spinner';
 import { getErrorMessage } from '@/lib/error-utils';
 import { createInstructor } from '@/services/client';
 import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-session-identity';
-import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { routeAfterDomainOnboarding } from '@/src/features/onboarding/lib/after-domain-onboarding';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { InstructorLocationFields } from '@/src/features/profile/forms/shared/components/InstructorLocationFields';
 import { InstructorProfessionalFields } from '@/src/features/profile/forms/shared/components/InstructorProfessionalFields';
@@ -84,9 +84,8 @@ export function InstructorOnboardingForm() {
         await user.invalidateQuery();
       }
 
-      toast.success('Instructor account created successfully!');
       await refreshSessionIdentity();
-      router.replace(buildDashboardSwitchPath('instructor'));
+      await routeAfterDomainOnboarding('instructor', 'Instructor', path => router.replace(path));
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to create instructor account. Please try again.'));
     } finally {

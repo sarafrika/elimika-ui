@@ -37,7 +37,6 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { DocumentTypeOption } from '@/services/client/types.gen';
 import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-session-identity';
-import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
   OrganisationCountryField,
   OrganisationIdentityFields,
@@ -49,6 +48,7 @@ import {
   type OrganisationRegistrationFormData,
   organisationRegistrationSchema,
 } from '@/src/features/organisation/forms/shared/organisation-profile';
+import { routeAfterDomainOnboarding } from '@/src/features/onboarding/lib/after-domain-onboarding';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type CapturedValidationDocument = {
@@ -304,7 +304,7 @@ function ValidationDocumentRow({
         </div>
 
         <div className='space-y-2'>
-{documentType.requires_expiry ? (
+          {documentType.requires_expiry ? (
             <>
               <Label htmlFor={expiryId}>Expiry date</Label>
               <Input
@@ -546,7 +546,12 @@ export function OrganizationOnboardingForm() {
       }
 
       await refreshSessionIdentity();
-      router.replace(buildDashboardSwitchPath('organisation_user'));
+      await routeAfterDomainOnboarding(
+        'organisation_user',
+        'Organisation',
+        path => router.replace(path),
+        false
+      );
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to register organization. Please try again.'));
     }

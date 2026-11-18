@@ -13,7 +13,7 @@ import { Form } from '@/components/ui/form';
 import { getErrorMessage } from '@/lib/error-utils';
 import { createCourseCreator } from '@/services/client';
 import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-session-identity';
-import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { routeAfterDomainOnboarding } from '@/src/features/onboarding/lib/after-domain-onboarding';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { CourseCreatorProfileFields } from '@/src/features/profile/forms/shared/components/CourseCreatorProfileFields';
 import { CourseCreatorUserInfoGrid } from '@/src/features/profile/forms/shared/components/CourseCreatorUserInfoGrid';
@@ -88,9 +88,10 @@ export function CourseCreatorOnboardingForm() {
         await user.invalidateQuery();
       }
 
-      toast.success('Course Creator account created successfully!');
       await refreshSessionIdentity();
-      router.replace(buildDashboardSwitchPath('course_creator'));
+      await routeAfterDomainOnboarding('course_creator', 'Course Creator', path =>
+        router.replace(path)
+      );
     } catch (error) {
       toast.error(
         getErrorMessage(error, 'Failed to create course creator account. Please try again.')

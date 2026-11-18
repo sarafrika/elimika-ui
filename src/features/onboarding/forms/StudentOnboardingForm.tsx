@@ -1,17 +1,26 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { GraduationCap } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner';
-import { createStudent } from '@/services/client';
+import { getErrorMessage } from '@/lib/error-utils';
+import {
+  createStudent,
+  getCurrentUser,
+  type UpdateUserData,
+  type User,
+  updateUser,
+} from '@/services/client';
 import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-session-identity';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
@@ -27,6 +36,20 @@ export function StudentOnboardingForm() {
   const user = useUserProfile();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // The student age gate needs a date of birth; Keycloak sign-up does not always collect one.
+  // Read it from /users/me: the profile context fills a missing date of birth with today.
+  const { data: account } = useQuery({
+    queryKey: ['onboarding', 'raw-current-user'],
+    // Raw JSON: the generated transformer turns a null date of birth into 1970-01-01.
+    queryFn: async () => {
+      const response = await getCurrentUser({ responseTransformer: undefined });
+      return (response.data?.data ?? null) as User | null;
+    },
+    retry: false,
+  });
+  const needsDob = Boolean(account) && !account?.dob;
+  const [dob, setDob] = useState('');
+  const today = new Date().toISOString().slice(0, 10);
 
   const form = useForm<StudentProfileFormData>({
     resolver: zodResolver(studentProfileSchema),
@@ -39,14 +62,45 @@ export function StudentOnboardingForm() {
     },
   });
 
+  // The profile can load after mount (e.g. a reload); an empty user_uuid fails validation silently.
+  useEffect(() => {
+    if (user?.uuid && !form.getValues('user_uuid')) {
+      form.setValue('user_uuid', user.uuid);
+    }
+  }, [user?.uuid, form]);
+
   const handleSubmit = async (data: StudentProfileFormData) => {
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
       return;
     }
 
+    if (needsDob && !dob) {
+      toast.error('Enter your date of birth to continue.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
+      if (needsDob) {
+        // PUT replaces every field, so send the current record with the new date of birth.
+        const body = {
+          first_name: account?.first_name,
+          middle_name: account?.middle_name,
+          last_name: account?.last_name,
+          email: account?.email,
+          username: account?.username,
+          phone_number: account?.phone_number,
+          active: account?.active ?? true,
+          gender: account?.gender,
+          dob,
+        } as unknown as UpdateUserData['body'];
+        const userResponse = await updateUser({ path: { uuid: user.uuid }, body });
+        if (userResponse.error) {
+          throw userResponse.error;
+        }
+      }
+
       const response = await createStudent({
         body: data,
       });
@@ -66,8 +120,8 @@ export function StudentOnboardingForm() {
       toast.success('Student account created successfully!');
       await refreshSessionIdentity();
       router.replace(buildDashboardSwitchPath('student'));
-    } catch (_error) {
-      toast.error('Failed to create student account. Please try again.');
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to create student account. Please try again.'));
       setIsSubmitting(false);
     }
   };
@@ -86,6 +140,28 @@ export function StudentOnboardingForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+          {needsDob && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Date of birth</CardTitle>
+                <CardDescription>
+                  Required so we can apply the right age rules to your account.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='space-y-2'>
+                <Label htmlFor='student-dob'>Date of birth</Label>
+                <Input
+                  id='student-dob'
+                  type='date'
+                  max={today}
+                  required
+                  value={dob}
+                  onChange={event => setDob(event.target.value)}
+                />
+              </CardContent>
+            </Card>
+          )}
+
           {/* Guardian Information */}
           <Card>
             <CardHeader>
