@@ -21,6 +21,8 @@ import { cn } from '@/lib/utils';
 import type { DocumentTypeOption, Instructor, InstructorDocument, User } from '@/services/client';
 import { useInstructorEducation } from '../hooks/use-person-record';
 import {
+  useRejectCourseCreator,
+  useRejectInstructor,
   useVerifyCourseCreator,
   useVerifyDocument,
   useVerifyInstructor,
@@ -109,6 +111,7 @@ export function VerificationTab({
       <ProfileDecision
         personName={personName || 'This person'}
         instructorUuid={instructor?.uuid}
+        userUuid={instructor?.user_uuid ?? person?.uuid}
         profileVerified={profileVerified}
         requiredVerified={requiredVerified}
         requiredTotal={requiredTypeUuids.length}
@@ -512,6 +515,7 @@ function DecisionPanel({
 function ProfileDecision({
   personName,
   instructorUuid,
+  userUuid,
   profileVerified,
   requiredVerified,
   requiredTotal,
@@ -519,12 +523,14 @@ function ProfileDecision({
 }: {
   personName: string;
   instructorUuid?: string;
+  userUuid?: string;
   profileVerified: boolean;
   requiredVerified: number;
   requiredTotal: number;
   unlocked: boolean;
 }) {
   const { verify, isPending } = useVerifyInstructor();
+  const rejection = useRejectInstructor();
 
   if (profileVerified) {
     return (
@@ -561,6 +567,15 @@ function ProfileDecision({
         if (!instructorUuid) return;
         verify({ instructorUuid, reason, name: personName }, done);
       }}
+      reject={{
+        action: 'rejectInstructor',
+        isPending: rejection.isPending,
+        disabled: !userUuid,
+        onConfirm: (reason, done) => {
+          if (!userUuid) return;
+          rejection.reject({ userUuid, reason, name: personName }, done);
+        },
+      }}
     />
   );
 }
@@ -576,6 +591,7 @@ export function CourseCreatorDecision({
   verified: boolean;
 }) {
   const { verify, isPending } = useVerifyCourseCreator();
+  const rejection = useRejectCourseCreator();
 
   if (verified) {
     return (
@@ -601,6 +617,15 @@ export function CourseCreatorDecision({
         if (!courseCreatorUuid) return;
         verify({ courseCreatorUuid, reason, name: personName }, done);
       }}
+      reject={{
+        action: 'rejectCourseCreator',
+        isPending: rejection.isPending,
+        disabled: !courseCreatorUuid,
+        onConfirm: (reason, done) => {
+          if (!courseCreatorUuid) return;
+          rejection.reject({ courseCreatorUuid, reason, name: personName }, done);
+        },
+      }}
     />
   );
 }
@@ -614,6 +639,7 @@ function ApprovalDecision({
   disabled,
   isPending,
   onConfirm,
+  reject,
 }: {
   title: string;
   prompt: string;
@@ -623,8 +649,18 @@ function ApprovalDecision({
   disabled: boolean;
   isPending: boolean;
   onConfirm: (reason: string, done: () => void) => void;
+  reject?: {
+    action: 'rejectInstructor' | 'rejectCourseCreator';
+    disabled: boolean;
+    isPending: boolean;
+    onConfirm: (reason: string, done: () => void) => void;
+  };
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  /** Which button opened the confirmation: approve or reject share the one reason. */
+  const [choice, setChoice] = useState<'approve' | 'reject'>('approve');
+  const rejecting = choice === 'reject' && reject;
+  const busy = isPending || Boolean(reject?.isPending);
   /** Frozen when the form validates, so the modal quotes what will be sent. */
   const [pendingReason, setPendingReason] = useState('');
   const form = useForm<z.infer<typeof reasonSchema>>({
@@ -646,6 +682,7 @@ function ApprovalDecision({
       <form
         className='flex flex-wrap items-end gap-2'
         onSubmit={form.handleSubmit(values => {
+          setChoice('approve');
           setPendingReason(values.reason.trim());
           setConfirmOpen(true);
         })}
@@ -666,7 +703,22 @@ function ApprovalDecision({
             )}
           />
         </div>
-        <Button type='submit' className='rounded-md' disabled={isPending || disabled}>
+        {reject ? (
+          <Button
+            type='button'
+            variant='outline'
+            className='border-destructive/50 text-destructive hover:bg-destructive/10 rounded-md'
+            disabled={busy || reject.disabled}
+            onClick={form.handleSubmit(values => {
+              setChoice('reject');
+              setPendingReason(values.reason.trim());
+              setConfirmOpen(true);
+            })}
+          >
+            Reject
+          </Button>
+        ) : null}
+        <Button type='submit' className='rounded-md' disabled={busy || disabled}>
           {buttonLabel}
         </Button>
       </form>
@@ -674,15 +726,18 @@ function ApprovalDecision({
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        action={action}
+        action={rejecting ? rejecting.action : action}
         subject={{ name: personName }}
         note={pendingReason}
-        isPending={isPending}
+        isPending={busy}
         onConfirm={() =>
-          onConfirm(pendingReason, () => {
-            setConfirmOpen(false);
-            form.reset();
-          })
+          (rejecting ? rejecting.onConfirm : onConfirm)(
+            noteToPlainText(pendingReason).trim(),
+            () => {
+              setConfirmOpen(false);
+              form.reset();
+            }
+          )
         }
       />
     </div>

@@ -12,6 +12,13 @@ const DOMAIN_LABELS: Record<string, string> = {
   student: 'Student',
 };
 
+/** Admin reasons may arrive as rich-text HTML; show them as plain words. */
+function plainText(html?: string) {
+  if (!html) return '';
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return (doc.body.textContent ?? '').replace(/\s+/g, ' ').trim();
+}
+
 /** Shows applications still under review (or turned down) so onboarding never looks like a dead end. */
 export function ApplicationStatusPanel() {
   const { data } = useQuery({
@@ -45,7 +52,7 @@ export function ApplicationStatusPanel() {
             <AlertDescription>
               {pending
                 ? `We have your ${label} details. An Elimika admin will review them and your dashboard opens once approved. You do not need to submit again.`
-                : application.review_reason ||
+                : plainText(application.review_reason) ||
                   `Your ${label} application was ${application.status?.toLowerCase()}. Contact support for help.`}
             </AlertDescription>
           </Alert>

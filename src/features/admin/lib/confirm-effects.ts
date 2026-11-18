@@ -69,6 +69,28 @@ export const confirmEffects = {
     warnings: ['Revoking later is done from the same record, with a reason.'],
   }),
 
+  rejectInstructor: subject => ({
+    title: `Reject ${subject.name}’s instructor application?`,
+    confirmLabel: 'Reject application',
+    tone: 'danger',
+    effects: [
+      'The instructor application is marked rejected and the dashboard stays closed',
+      `${subject.name} sees your reason on the onboarding page and can pick another role`,
+      'You can still verify them later from this record',
+    ],
+  }),
+
+  rejectCourseCreator: subject => ({
+    title: `Reject ${subject.name}’s course creator application?`,
+    confirmLabel: 'Reject application',
+    tone: 'danger',
+    effects: [
+      'The course creator application is marked rejected and the dashboard stays closed',
+      `${subject.name} sees your reason on the onboarding page and can pick another role`,
+      'You can still approve them later from this record',
+    ],
+  }),
+
   revokeInstructor: subject => ({
     title: `Revoke ${subject.name}’s instructor verification?`,
     confirmLabel: 'Revoke verification',

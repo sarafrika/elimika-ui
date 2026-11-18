@@ -6,6 +6,8 @@ import { toast } from 'sonner';
 import { useUserProfile } from '@/context/profile-context';
 import { getErrorMessage } from '@/lib/error-utils';
 import {
+  moderateCourseCreatorMutation,
+  moderateUserDomainMutation,
   verifyCourseCreatorMutation,
   verifyDocumentMutation,
   verifyInstructorMutation,
@@ -118,4 +120,65 @@ export function useVerifyCourseCreator() {
   };
 
   return { verify, isPending: mutation.isPending };
+}
+
+/** Reject a pending instructor application; the user stays on onboarding and sees the reason. */
+export function useRejectInstructor() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation(moderateUserDomainMutation());
+
+  const reject = (
+    input: { userUuid: string; reason: string; name?: string },
+    onDone?: () => void
+  ) => {
+    mutation.mutate(
+      {
+        path: { userUuid: input.userUuid, domain: 'instructor' },
+        query: { action: 'reject', reason: input.reason },
+      },
+      {
+        onSuccess: async () => {
+          await invalidateAfterVerification(queryClient);
+          toast.success(`${input.name ?? 'Instructor'}’s application was rejected`);
+          onDone?.();
+        },
+        onError: error => {
+          toast.error(verificationErrorMessage(error, 'Couldn’t reject that application.'));
+        },
+      }
+    );
+  };
+
+  return { reject, isPending: mutation.isPending };
+}
+
+/** Reject a course creator application; the user stays on onboarding and sees the reason. */
+export function useRejectCourseCreator() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation(moderateCourseCreatorMutation());
+
+  const reject = (
+    input: { courseCreatorUuid: string; reason: string; name?: string },
+    onDone?: () => void
+  ) => {
+    mutation.mutate(
+      {
+        path: { uuid: input.courseCreatorUuid },
+        query: { action: 'reject' },
+        body: { reason: input.reason },
+      },
+      {
+        onSuccess: async () => {
+          await invalidateAfterVerification(queryClient);
+          toast.success(`${input.name ?? 'Course creator'}’s application was rejected`);
+          onDone?.();
+        },
+        onError: error => {
+          toast.error(verificationErrorMessage(error, 'Couldn’t reject that application.'));
+        },
+      }
+    );
+  };
+
+  return { reject, isPending: mutation.isPending };
 }
