@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { extractEntity, extractList } from '@/lib/api-helpers';
 import { formatDateOnly } from '@/lib/date';
 import type {
+  CourseCreator,
   CourseCreatorDocumentDto,
   Instructor,
   InstructorDocument,
@@ -16,14 +17,15 @@ import type {
 } from '@/services/client';
 import {
   getCourseByUuidOptions,
+  getCourseCreatorByUuidOptions,
   getCourseCreatorDocumentsOptions,
   getInstructorByUuidOptions,
   getInstructorDocumentsOptions,
   getUserByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { InboxItem } from '../hooks/use-review-queue';
 import { listQuery } from '../lib/admin-queries';
 import { adminRoutes } from '../lib/admin-routes';
-import type { InboxItem } from '../hooks/use-review-queue';
 import { SectionBoundary } from './section-boundary';
 
 interface RecordOnFile {
@@ -124,6 +126,14 @@ function PersonPreview({ item }: { item: InboxItem }) {
 function CreatorPreview({ item }: { item: InboxItem }) {
   const courseCreatorUuid = item.courseCreatorUuid ?? '';
 
+  // The queue row has no user id; the profile carries it, and the decision lives on that record.
+  const creatorQuery = useQuery({
+    ...getCourseCreatorByUuidOptions({ path: { uuid: courseCreatorUuid } }),
+    ...listQuery,
+    enabled: Boolean(courseCreatorUuid),
+  });
+  const userUuid = extractEntity<CourseCreator>(creatorQuery.data)?.user_uuid ?? '';
+
   const documentsQuery = useQuery({
     ...getCourseCreatorDocumentsOptions({ path: { courseCreatorUuid } }),
     ...listQuery,
@@ -156,8 +166,12 @@ function CreatorPreview({ item }: { item: InboxItem }) {
         name={item.subject}
         subtitle={item.who}
         records={records}
-        href={null}
-        hrefLabel='Course creator records open with the People section'
+        href={
+          userUuid
+            ? adminRoutes.person(userUuid, 'verification', { queue: item.type, item: item.id })
+            : null
+        }
+        hrefLabel={`Review in ${item.subject}’s record`}
       />
     </SectionBoundary>
   );

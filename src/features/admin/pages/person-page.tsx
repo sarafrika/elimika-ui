@@ -3,27 +3,31 @@
 import { useMemo, useState } from 'react';
 
 import {
-  type SectionTab,
   SectionCardSkeleton,
+  type SectionTab,
   SectionTabPanel,
   SectionTabs,
   surfaceTheme,
   useSectionTab,
 } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
+import { useSearchState } from '@/hooks/use-search-state';
 import { formatDate } from '@/lib/date';
+import { stringParam } from '@/lib/search-state';
+import { cn } from '@/lib/utils';
 import type { User } from '@/services/client';
 import { AuditTab } from '../components/audit-tab';
 import { ConfirmDialog } from '../components/confirm-dialog';
 import { LearningTab } from '../components/learning-tab';
 import { MoneyTab } from '../components/money-tab';
 import { OverviewTab } from '../components/overview-tab';
+import { type RecordBadge, RecordHeader } from '../components/record-header';
 import { SectionBoundary } from '../components/section-boundary';
-import { RecordHeader, type RecordBadge } from '../components/record-header';
 import { TeachingTab } from '../components/teaching-tab';
-import { VerificationTab } from '../components/verification-tab';
+import { CourseCreatorDecision, VerificationTab } from '../components/verification-tab';
 import { useSavePerson } from '../hooks/use-person-actions';
 import {
+  useCourseCreatorProfile,
   useDocumentTypes,
   useInstructorDocuments,
   useInstructorProfile,
@@ -31,9 +35,6 @@ import {
   useStudentProfile,
 } from '../hooks/use-person-record';
 import type { PersonTab } from '../lib/admin-routes';
-import { stringParam } from '@/lib/search-state';
-import { cn } from '@/lib/utils';
-import { useSearchState } from '@/hooks/use-search-state';
 
 const PERSON_TABS: readonly PersonTab[] = [
   'overview',
@@ -67,6 +68,7 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
   const { person, query: personQuery } = usePersonRecord(userUuid);
   const { instructor, query: instructorQuery } = useInstructorProfile(userUuid);
   const { documents, query: documentsQuery } = useInstructorDocuments(instructor?.uuid);
+  const { courseCreator } = useCourseCreatorProfile(userUuid);
   const { byUuid, documentTypes } = useDocumentTypes();
   // Only the tabs that need a learner profile ask for one.
   const { student } = useStudentProfile(
@@ -93,6 +95,15 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
       label: instructor.admin_verified
         ? 'Instructor · Verified'
         : 'Instructor · Verification pending',
+    });
+  }
+
+  if (courseCreator) {
+    badges.push({
+      status: courseCreator.admin_verified ? 'verified' : 'pending',
+      label: courseCreator.admin_verified
+        ? 'Course creator · Approved'
+        : 'Course creator · Approval pending',
     });
   }
 
@@ -156,7 +167,16 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
           </SectionTabPanel>
 
           <SectionTabPanel value='verification'>
-            {tab === 'verification' ? (
+            {tab === 'verification' && courseCreator ? (
+              <div className='mb-4'>
+                <CourseCreatorDecision
+                  personName={name || 'This person'}
+                  courseCreatorUuid={courseCreator.uuid}
+                  verified={courseCreator.admin_verified === true}
+                />
+              </div>
+            ) : null}
+            {tab === 'verification' && (instructor || !courseCreator) ? (
               <VerificationTab
                 person={person}
                 instructor={instructor}

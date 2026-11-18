@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useUserProfile } from '@/context/profile-context';
 import { getErrorMessage } from '@/lib/error-utils';
 import {
+  verifyCourseCreatorMutation,
   verifyDocumentMutation,
   verifyInstructorMutation,
 } from '@/services/client/@tanstack/react-query.gen';
@@ -13,7 +14,8 @@ import { invalidateAfterVerification } from '../lib/admin-queries';
 
 /** The API answers with its own status codes; these are what they mean to an admin. */
 function verificationErrorMessage(error: unknown, fallback: string) {
-  const status = (error as { status?: number; response?: { status?: number } } | null)?.status ??
+  const status =
+    (error as { status?: number; response?: { status?: number } } | null)?.status ??
     (error as { response?: { status?: number } } | null)?.response?.status;
 
   if (status === 403) return 'You can’t approve a profile you’re affiliated with.';
@@ -69,7 +71,10 @@ export function useVerifyInstructor() {
   const queryClient = useQueryClient();
   const mutation = useMutation(verifyInstructorMutation());
 
-  const verify = (input: { instructorUuid: string; reason: string; name?: string }, onDone?: () => void) => {
+  const verify = (
+    input: { instructorUuid: string; reason: string; name?: string },
+    onDone?: () => void
+  ) => {
     mutation.mutate(
       { path: { uuid: input.instructorUuid }, query: { reason: input.reason } },
       {
@@ -80,6 +85,33 @@ export function useVerifyInstructor() {
         },
         onError: error => {
           toast.error(verificationErrorMessage(error, 'Couldn’t verify that instructor.'));
+        },
+      }
+    );
+  };
+
+  return { verify, isPending: mutation.isPending };
+}
+
+/** Approve a course creator; the API approves their pending course_creator domain too. */
+export function useVerifyCourseCreator() {
+  const queryClient = useQueryClient();
+  const mutation = useMutation(verifyCourseCreatorMutation());
+
+  const verify = (
+    input: { courseCreatorUuid: string; reason: string; name?: string },
+    onDone?: () => void
+  ) => {
+    mutation.mutate(
+      { path: { uuid: input.courseCreatorUuid }, query: { reason: input.reason } },
+      {
+        onSuccess: async () => {
+          await invalidateAfterVerification(queryClient);
+          toast.success(`${input.name ?? 'Course creator'} is now approved`);
+          onDone?.();
+        },
+        onError: error => {
+          toast.error(verificationErrorMessage(error, 'Couldn’t approve that course creator.'));
         },
       }
     );

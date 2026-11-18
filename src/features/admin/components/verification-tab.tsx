@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { ArrowLeft, ArrowRight, Inbox, Lock, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Inbox, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
@@ -19,23 +19,33 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { DocumentTypeOption, Instructor, InstructorDocument, User } from '@/services/client';
-import { adminRoutes, type InboxType } from '../lib/admin-routes';
 import { useInstructorEducation } from '../hooks/use-person-record';
-import { useVerifyDocument, useVerifyInstructor } from '../hooks/use-verification-actions';
-import { NoteField, noteToPlainText } from './note-field';
+import {
+  useVerifyCourseCreator,
+  useVerifyDocument,
+  useVerifyInstructor,
+} from '../hooks/use-verification-actions';
+import { adminRoutes, type InboxType } from '../lib/admin-routes';
 import { ConfirmDialog } from './confirm-dialog';
+import { NoteField, noteToPlainText } from './note-field';
 import { SectionBoundary } from './section-boundary';
 
 const noteSchema = z.object({
   note: z
     .string()
-    .refine(value => noteToPlainText(value).length >= 10, 'Say what you checked — at least a sentence.'),
+    .refine(
+      value => noteToPlainText(value).length >= 10,
+      'Say what you checked — at least a sentence.'
+    ),
 });
 
 const reasonSchema = z.object({
   reason: z
     .string()
-    .refine(value => noteToPlainText(value).length >= 10, 'Say why this profile is being verified.'),
+    .refine(
+      value => noteToPlainText(value).length >= 10,
+      'Say why this profile is being verified.'
+    ),
 });
 
 interface VerificationTabProps {
@@ -69,10 +79,12 @@ export function VerificationTab({
   onSelectDocument,
   reviewQueue,
 }: VerificationTabProps) {
-  const personName = person?.full_name ?? `${person?.first_name ?? ''} ${person?.last_name ?? ''}`.trim();
+  const personName =
+    person?.full_name ?? `${person?.first_name ?? ''} ${person?.last_name ?? ''}`.trim();
 
   const selected = useMemo(
-    () => documents.find(document => document.uuid === selectedDocumentUuid) ?? documents[0] ?? null,
+    () =>
+      documents.find(document => document.uuid === selectedDocumentUuid) ?? documents[0] ?? null,
     [documents, selectedDocumentUuid]
   );
 
@@ -166,12 +178,7 @@ function ReviewModeBar({ queue }: { queue: string }) {
       <span className='text-primary-foreground text-sm font-semibold'>Review mode</span>
       <span className='text-primary-foreground/80 text-sm'>{queue} queue</span>
       <div className='ml-auto flex items-center gap-2'>
-        <Button
-          asChild
-          size='sm'
-          variant='secondary'
-          className='rounded-md'
-        >
+        <Button asChild size='sm' variant='secondary' className='rounded-md'>
           <Link href={inboxHref}>
             <ArrowLeft className='mr-1.5 size-3.5' />
             Back to inbox
@@ -277,7 +284,11 @@ function DocumentViewer({
   const url = document.file_url ?? '';
 
   return (
-    <SectionCard title={document.title} description={document.original_filename} bodyClassName='p-0'>
+    <SectionCard
+      title={document.title}
+      description={document.original_filename}
+      bodyClassName='p-0'
+    >
       {url ? (
         <DocumentPreview documentUrl={url} documentTitle={document.title} fullHeight />
       ) : (
@@ -384,7 +395,9 @@ function DecisionPanel({
   });
 
   const withChecks = (note: string) => {
-    const ticked = BASE_CHECKS.filter(check => checked.includes(check.id)).map(check => check.label);
+    const ticked = BASE_CHECKS.filter(check => checked.includes(check.id)).map(
+      check => check.label
+    );
     return ticked.length ? `${note.trim()}\n\nChecked: ${ticked.join('; ')}.` : note.trim();
   };
 
@@ -511,16 +524,7 @@ function ProfileDecision({
   requiredTotal: number;
   unlocked: boolean;
 }) {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  /** Frozen when the form validates, so the modal quotes what will be sent. */
-  const [pendingReason, setPendingReason] = useState('');
   const { verify, isPending } = useVerifyInstructor();
-
-  const form = useForm<z.infer<typeof reasonSchema>>({
-    resolver: zodResolver(reasonSchema),
-    defaultValues: { reason: '' },
-    mode: 'onSubmit',
-  });
 
   if (profileVerified) {
     return (
@@ -534,32 +538,109 @@ function ProfileDecision({
     );
   }
 
-  if (!unlocked) {
+  // Documents inform the decision but never block it: onboarding does not collect them,
+  // and a pending instructor cannot reach the upload screens until approved.
+  return (
+    <ApprovalDecision
+      title={
+        unlocked
+          ? `All ${requiredTotal} required records verified`
+          : `${requiredVerified} of ${requiredTotal || '—'} required records verified`
+      }
+      prompt={
+        unlocked
+          ? `Verify ${personName} as an instructor?`
+          : `You can still verify ${personName}; say in the reason what you checked instead.`
+      }
+      buttonLabel='Verify instructor'
+      action='verifyInstructor'
+      personName={personName}
+      disabled={!instructorUuid}
+      isPending={isPending}
+      onConfirm={(reason, done) => {
+        if (!instructorUuid) return;
+        verify({ instructorUuid, reason, name: personName }, done);
+      }}
+    />
+  );
+}
+
+/** Approve a course creator application from the person's record. */
+export function CourseCreatorDecision({
+  personName,
+  courseCreatorUuid,
+  verified,
+}: {
+  personName: string;
+  courseCreatorUuid?: string;
+  verified: boolean;
+}) {
+  const { verify, isPending } = useVerifyCourseCreator();
+
+  if (verified) {
     return (
-      <div className='border-border/70 bg-muted/20 flex flex-wrap items-center gap-3 rounded-md border px-4 py-3'>
-        <Lock className='text-muted-foreground size-4' />
-        <div className='flex-1'>
-          <p className='text-foreground text-sm font-semibold'>Instructor verification</p>
-          <p className='text-muted-foreground text-sm'>
-            Opens once every required record is verified.
-          </p>
-        </div>
-        <p className='text-muted-foreground font-mono text-sm'>
-          {requiredVerified} of {requiredTotal || '—'} required verified
+      <div className='border-success/40 bg-success/5 flex flex-wrap items-center gap-3 rounded-md border px-4 py-3'>
+        <ShieldCheck className='text-success size-4' />
+        <p className='text-foreground text-sm'>
+          <span className='font-semibold'>{personName} is an approved course creator.</span>
         </p>
       </div>
     );
   }
 
   return (
+    <ApprovalDecision
+      title='Course creator application'
+      prompt={`Approve ${personName} as a course creator?`}
+      buttonLabel='Approve course creator'
+      action='verifyCourseCreator'
+      personName={personName}
+      disabled={!courseCreatorUuid}
+      isPending={isPending}
+      onConfirm={(reason, done) => {
+        if (!courseCreatorUuid) return;
+        verify({ courseCreatorUuid, reason, name: personName }, done);
+      }}
+    />
+  );
+}
+
+function ApprovalDecision({
+  title,
+  prompt,
+  buttonLabel,
+  action,
+  personName,
+  disabled,
+  isPending,
+  onConfirm,
+}: {
+  title: string;
+  prompt: string;
+  buttonLabel: string;
+  action: 'verifyInstructor' | 'verifyCourseCreator';
+  personName: string;
+  disabled: boolean;
+  isPending: boolean;
+  onConfirm: (reason: string, done: () => void) => void;
+}) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  /** Frozen when the form validates, so the modal quotes what will be sent. */
+  const [pendingReason, setPendingReason] = useState('');
+  const form = useForm<z.infer<typeof reasonSchema>>({
+    resolver: zodResolver(reasonSchema),
+    defaultValues: { reason: '' },
+    mode: 'onSubmit',
+  });
+  const fieldId = `${action}-reason`;
+
+  return (
     <div className='border-primary bg-primary/5 flex flex-col gap-3 rounded-md border px-4 py-3'>
       <div className='flex flex-wrap items-center gap-3'>
         <ShieldCheck className='text-primary size-4' />
         <div className='flex-1'>
-          <p className='text-foreground text-sm font-semibold'>
-            All {requiredTotal} required records verified
-          </p>
-          <p className='text-muted-foreground text-sm'>Verify {personName} as an instructor?</p>
+          <p className='text-foreground text-sm font-semibold'>{title}</p>
+          <p className='text-muted-foreground text-sm'>{prompt}</p>
         </div>
       </div>
       <form
@@ -575,7 +656,7 @@ function ProfileDecision({
             name='reason'
             render={({ field }) => (
               <NoteField
-                id='verify-reason'
+                id={fieldId}
                 label='Reason'
                 required
                 value={field.value}
@@ -585,28 +666,24 @@ function ProfileDecision({
             )}
           />
         </div>
-        <Button type='submit' className='rounded-md' disabled={isPending || !instructorUuid}>
-          Verify instructor
+        <Button type='submit' className='rounded-md' disabled={isPending || disabled}>
+          {buttonLabel}
         </Button>
       </form>
 
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        action='verifyInstructor'
+        action={action}
         subject={{ name: personName }}
         note={pendingReason}
         isPending={isPending}
-        onConfirm={() => {
-          if (!instructorUuid) return;
-          verify(
-            { instructorUuid, reason: pendingReason, name: personName },
-            () => {
-              setConfirmOpen(false);
-              form.reset();
-            }
-          );
-        }}
+        onConfirm={() =>
+          onConfirm(pendingReason, () => {
+            setConfirmOpen(false);
+            form.reset();
+          })
+        }
       />
     </div>
   );

@@ -50,10 +50,23 @@ export const confirmEffects = {
     tone: 'default',
     effects: [
       'The instructor profile is marked admin-verified',
+      'A pending instructor application is approved and their instructor dashboard opens',
       `${subject.name} gets an in-app “Instructor profile approved” notification`,
       'Organisations reviewing job applications see the verified status',
     ],
     warnings: ['Your reason is sent with the request but is only written to the server log.'],
+  }),
+
+  verifyCourseCreator: subject => ({
+    title: `Approve ${subject.name} as a course creator?`,
+    confirmLabel: 'Approve course creator',
+    tone: 'default',
+    effects: [
+      'The course creator profile is marked approved and admin-verified',
+      'Their course creator application is approved and the dashboard opens',
+      `${subject.name} is notified of the decision`,
+    ],
+    warnings: ['Revoking later is done from the same record, with a reason.'],
   }),
 
   revokeInstructor: subject => ({
@@ -289,7 +302,9 @@ export const confirmEffects = {
       'It is removed from every course and job that is tagged with it',
       'Instructor skills linked to it are unlinked; their own wording stays',
     ],
-    warnings: ['Prefer retiring it (switch off Active): existing tags keep it and nothing is lost.'],
+    warnings: [
+      'Prefer retiring it (switch off Active): existing tags keep it and nothing is lost.',
+    ],
   }),
 
   settleObligation: subject => ({
@@ -677,7 +692,9 @@ export const confirmEffects = {
     title: `Save changes to ${subject.name}?`,
     confirmLabel: 'Save currency',
     tone: 'default',
-    effects: ['The name, symbol, numeric code and decimal places are replaced with what you entered'],
+    effects: [
+      'The name, symbol, numeric code and decimal places are replaced with what you entered',
+    ],
     warnings: [
       'Whether the currency is active is not changed here — that has its own action, so the default currency cannot be switched off by accident.',
     ],
