@@ -13,6 +13,7 @@ import {
   domainToRouteSegment,
   type RoleSegment,
 } from '@/src/features/dashboard/lib/dashboard-url';
+import { hasOrganisationAdminAffiliation } from '@/src/features/dashboard/lib/org-admin-affiliation';
 
 /** The slice of the user record the guards route on. */
 type IdentityUser = {
@@ -52,7 +53,7 @@ function toIdentityUser(user: User): IdentityUser {
       : [];
   return {
     domains: normalizeDomains(rawDomains),
-    hasOrganisationAffiliation: (user.organisation_affiliations?.length ?? 0) > 0,
+    hasOrganisationAffiliation: hasOrganisationAdminAffiliation(user.organisation_affiliations),
   };
 }
 
@@ -288,6 +289,8 @@ type RoleAccessResolution = {
   matchedDomain: UserDomain | null;
   /** Set when the viewer applied for this role but is not approved: show its status instead. */
   application?: OpenApplication;
+  /** Organisation segment only: not an org admin. Show a no-access page; link home here. */
+  deniedHomeHref?: string;
 };
 
 /**
@@ -310,7 +313,12 @@ export async function assertRoleAccess(segment: RoleSegment): Promise<RoleAccess
   const application = (await fetchOpenApplications()).find(
     open => domainToRouteSegment(open.domain) === segment
   );
-  return application ? { redirectTo: null, matchedDomain: null, application } : result;
+  if (application) return { redirectTo: null, matchedDomain: null, application };
+  // Students, instructors and parents get a clear no-access page, not a silent bounce.
+  if (segment === 'organisation' && result.redirectTo !== '/' && result.redirectTo !== '/onboarding') {
+    return { redirectTo: null, matchedDomain: null, deniedHomeHref: result.redirectTo };
+  }
+  return result;
 }
 
 function evaluateRoleAccess(identity: Identity, segment: RoleSegment): RoleAccessResolution {

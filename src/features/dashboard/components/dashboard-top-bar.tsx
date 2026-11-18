@@ -20,6 +20,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from 'next-themes';
 import { useCallback, useEffect, useState } from 'react';
 import { AsyncSection } from '@/components/data/async-section';
+import { formatMoney } from '@/components/money/format';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,14 +39,6 @@ import { cn } from '@/lib/utils';
 import type { ApiResponseWallet, CartResponse } from '@/services/client';
 import { getOrganisationWalletOptions, getWalletOptions } from '@/services/client/@tanstack/react-query.gen';
 import { useLogout } from '@/src/features/auth/logout';
-import { formatMoney } from '@/components/money/format';
-import {
-  purseBalances,
-  purseFigures,
-  purseForDomain,
-  purseLabel,
-  type WalletWithPurses,
-} from '@/src/features/wallet/purses';
 import {
   type CreateAction,
   dashboardDomainDisplayConfig,
@@ -57,10 +50,18 @@ import {
   roleScopedDashboardPath,
 } from '@/src/features/dashboard/lib/active-domain-storage';
 import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
+import { organisationAdminAffiliations } from '@/src/features/dashboard/lib/org-admin-affiliation';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { LazyGlobalSearchSheet } from '@/src/features/search/components/global-search-sheet-lazy';
 import { GlobalSearchTrigger } from '@/src/features/search/components/global-search-trigger';
 import { useGlobalSearchShortcut } from '@/src/features/search/hooks/use-global-search-shortcut';
+import {
+  purseBalances,
+  purseFigures,
+  purseForDomain,
+  purseLabel,
+  type WalletWithPurses,
+} from '@/src/features/wallet/purses';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { DashboardNotifications } from './dashboard-notifications';
 
@@ -165,8 +166,8 @@ export default function DashboardTopBar() {
 
   // An organisation's chip shows the organisation's wallet; everyone else sees their own.
   const isOrganisation = activeDomain === 'organisation_user' || activeDomain === 'organisation';
-  const affiliations = profile?.organisation_affiliations ?? [];
-  const organisationUuid = (affiliations.find(a => a.active) ?? affiliations[0])?.organisation_uuid;
+  const organisationUuid = organisationAdminAffiliations(profile?.organisation_affiliations)[0]
+    ?.organisation_uuid;
   const walletOptions = isOrganisation
     ? organisationUuid
       ? getOrganisationWalletOptions({ path: { organisationUuid } })

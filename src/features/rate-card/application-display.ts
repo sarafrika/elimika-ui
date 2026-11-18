@@ -7,8 +7,8 @@ import {
   RATE_BASES,
   type RateCardInput,
 } from '@/lib/rate-card';
-import type { UserOrganisationAffiliationDto } from '@/services/client';
 import type { TrainingApplicationEvent, TrainingApplicationKind } from './types';
+
 type StatusTone = 'warning' | 'success' | 'destructive' | 'muted' | 'primary';
 
 /** The status pill's words and colour; an approved card with a pending update reads as such. */
@@ -105,18 +105,5 @@ function joinOr(items: string[]) {
   return `${items.slice(0, -1).join(', ')} or ${items[items.length - 1]}`;
 }
 
-const MANAGER_DOMAINS = new Set(['organisation_user', 'admin']);
-
 /** Org-scoped managers may act for the organisation as an applicant; mirrors the backend. */
-export function managesOrganisation(
-  affiliations: readonly UserOrganisationAffiliationDto[] | null | undefined,
-  organisationUuid: string | null | undefined
-): boolean {
-  if (!organisationUuid) return false;
-  return (affiliations ?? []).some(
-    affiliation =>
-      affiliation.organisation_uuid === organisationUuid &&
-      affiliation.active !== false &&
-      MANAGER_DOMAINS.has(affiliation.domain_in_organisation ?? '')
-  );
-}
+export { managesOrganisation } from '@/src/features/dashboard/lib/org-admin-affiliation';

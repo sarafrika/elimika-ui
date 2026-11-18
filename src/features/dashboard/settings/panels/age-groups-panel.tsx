@@ -46,12 +46,12 @@ import {
   MAX_SAVED_AGE_GROUPS,
   type SavedAgeGroupView,
 } from '@/src/features/apply-to-train/age-groups/use-saved-age-groups';
+import { managesOrganisation } from '@/src/features/dashboard/lib/org-admin-affiliation';
 import { useOrganisation } from '@/src/features/organisation/context/organisation-context';
 
 type Owner = 'instructor' | 'organisation';
 type Draft = { name: string; minAge: string; maxAge: string };
 
-const MANAGER_DOMAINS = new Set(['organisation_user', 'admin']);
 
 function draftErrors(draft: Draft): Partial<Record<keyof Draft, string>> {
   const errors: Partial<Record<keyof Draft, string>> = {};
@@ -78,12 +78,7 @@ export function AgeGroupsPanel({ owner }: { owner: Owner }) {
 
   const canManage =
     !forOrganisation ||
-    (profile?.organisation_affiliations ?? []).some(
-      row =>
-        row.active !== false &&
-        row.organisation_uuid === organisationUuid &&
-        MANAGER_DOMAINS.has(row.domain_in_organisation ?? '')
-    );
+    managesOrganisation(profile?.organisation_affiliations, organisationUuid);
 
   const mine = useQuery({
     ...listMyAgeGroupsOptions(),
