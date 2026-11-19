@@ -26,6 +26,7 @@ import {
   useInstructorClassesWithSchedules,
 } from '@/hooks/use-instructor-classes-with-schedules';
 import { startScheduledInstanceMutation } from '@/services/client/@tanstack/react-query.gen';
+import { ShareAllClassesButton } from '@/src/features/find-classes/ShareAllClassesButton';
 import { useUserProfile } from '../../../../context/profile-context';
 import { ClassDeliveryStatusTab } from './_components/class-delivery-status-tab';
 import { ClassHero, ClassLessonTab, ClassOverviewTab } from './_components/class-overview-tab';
@@ -346,6 +347,7 @@ export default function NewClassPage() {
         <p className='text-foreground text-md leading-tight sm:text-lg'>
           {dateFilterDescriptions[dateFilter]} <span className='font-semibold'>Start training</span>
         </p>
+        <ShareAllClassesButton kind='instructor' uuid={instructor?.uuid} />
       </div>
 
       {hasClassesError ? (

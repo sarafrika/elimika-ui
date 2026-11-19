@@ -1,6 +1,6 @@
 'use client';
 
-import type { Dispatch } from 'react';
+import { type Dispatch, useMemo } from 'react';
 
 import { AsyncSection } from '@/components/data/async-section';
 import { Badge } from '@/components/ui/badge';
@@ -8,14 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { CourseTrainingRequirement, ProgramRequirement } from '@/services/client';
 
-import type {
-  ApplyAction,
-  ApplyState,
-  RequirementAnswer,
-  TrainingContentKind,
+import {
+  type ApplyAction,
+  type ApplyState,
+  type RequirementAnswer,
+  type TrainingContentKind,
+  programRequirementPrompt,
 } from './apply-model';
 
-/** Courses ask "do you have it?" per requirement; programs list theirs to read. */
+/** Course and program applicants answer every requirement before continuing. */
 export function StepRequirements({
   state,
   dispatch,
@@ -35,6 +36,11 @@ export function StepRequirements({
   error?: unknown;
   onRetry?: () => void;
 }) {
+  const prompts = useMemo(
+    () =>
+      contentKind === 'program' ? programRequirements.map(programRequirementPrompt) : requirements,
+    [contentKind, programRequirements, requirements]
+  );
   return (
     <AsyncSection
       loading={loading}
@@ -49,57 +55,13 @@ export function StepRequirements({
         </div>
       }
     >
-      {contentKind === 'program' ? (
-        <ProgramRequirements requirements={programRequirements} />
-      ) : (
-        <RequirementAnswers
-          answers={state.answers}
-          dispatch={dispatch}
-          requirements={requirements}
-        />
-      )}
+      <RequirementAnswers
+        answers={state.answers}
+        dispatch={dispatch}
+        requirements={prompts}
+        contentKind={contentKind}
+      />
     </AsyncSection>
-  );
-}
-
-function ProgramRequirements({ requirements }: { requirements: ProgramRequirement[] }) {
-  if (requirements.length === 0) {
-    return (
-      <div className='bg-muted/30 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
-        The program creator has not listed any requirements for this program yet. You can continue
-        to the next step.
-      </div>
-    );
-  }
-
-  return (
-    <div className='space-y-4'>
-      <div className='bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3'>
-        <p className='text-muted-foreground text-sm'>
-          These are the program requirements published by the creator. Review them before submitting
-          your application.
-        </p>
-        <Badge variant='secondary'>{requirements.length} listed</Badge>
-      </div>
-      <div className='space-y-3'>
-        {requirements.map(requirement => (
-          <div
-            key={requirement.uuid ?? requirement.requirement_text}
-            className='flex flex-wrap items-center justify-between gap-2 rounded-md border p-4'
-          >
-            <div className='space-y-1'>
-              <p className='font-medium'>{requirement.requirement_text}</p>
-              <p className='text-muted-foreground text-sm'>
-                {requirement.requirement_category ?? requirement.requirement_type}
-              </p>
-            </div>
-            <Badge variant={requirement.is_mandatory ? 'destructive' : 'outline'}>
-              {requirement.is_mandatory ? 'Mandatory' : 'Optional'}
-            </Badge>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }
 
@@ -107,15 +69,17 @@ function RequirementAnswers({
   answers,
   dispatch,
   requirements,
+  contentKind,
 }: {
   answers: RequirementAnswer[];
   dispatch: Dispatch<ApplyAction>;
-  requirements: CourseTrainingRequirement[];
+  requirements: Pick<CourseTrainingRequirement, 'uuid' | 'name' | 'description'>[];
+  contentKind: TrainingContentKind;
 }) {
   if (requirements.length === 0) {
     return (
       <div className='bg-muted/30 text-muted-foreground rounded-md border border-dashed p-6 text-center text-sm'>
-        The course creator has not listed any requirements for you to provide. You can continue to
+        The {contentKind} creator has not listed any requirements for you to provide. You can continue to
         the next step.
       </div>
     );
@@ -125,7 +89,7 @@ function RequirementAnswers({
     <div className='space-y-4'>
       <div className='bg-muted/30 flex flex-wrap items-center justify-between gap-2 rounded-md border border-dashed p-3'>
         <p className='text-muted-foreground text-sm'>
-          For each requirement the course creator set, tell us whether you already have it, and if
+          For each requirement the {contentKind} creator set, tell us whether you already have it, and if
           not, how you would get it.
         </p>
         <Badge variant='secondary'>{requirements.length} required</Badge>
@@ -153,7 +117,7 @@ function RequirementBlock({
   answer,
   dispatch,
 }: {
-  requirement: CourseTrainingRequirement;
+  requirement: Pick<CourseTrainingRequirement, 'uuid' | 'name' | 'description'>;
   answer: RequirementAnswer;
   dispatch: Dispatch<ApplyAction>;
 }) {

@@ -40,16 +40,9 @@ export function calculateCourseAnalytics(
     (acc, course) => {
       acc.totalCourses += 1;
 
-      if (course.program_uuid) {
-        programIds.add(course.program_uuid);
-      }
-
       switch (course.status) {
         case 'published':
           acc.publishedCourses += 1;
-          if (course.program_uuid) {
-            publishedProgramIds.add(course.program_uuid);
-          }
           break;
         case 'in_review':
           acc.inReviewCourses += 1;
@@ -85,22 +78,14 @@ export function calculateCourseAnalytics(
   };
 }
 
-export function calculateCourseProgramCounts(courses: Course[]) {
-  const programIds = new Set<string>();
-  const publishedProgramIds = new Set<string>();
-
-  courses.forEach(course => {
-    if (course.program_uuid) {
-      programIds.add(course.program_uuid);
-      if (course.status === 'published') {
-        publishedProgramIds.add(course.program_uuid);
-      }
-    }
-  });
-
+export function calculateCourseProgramCounts(programs: TrainingProgram[]) {
   return {
-    totalPrograms: programIds.size,
-    publishedPrograms: publishedProgramIds.size,
+    totalPrograms: new Set(programs.flatMap(program => (program.uuid ? [program.uuid] : []))).size,
+    publishedPrograms: new Set(
+      programs.flatMap(program =>
+        program.uuid && (program.published || program.status === 'published') ? [program.uuid] : []
+      )
+    ).size,
   };
 }
 
@@ -167,15 +152,6 @@ export function calculateTrainingRequirementSummary(
       if (program.published || program.status === 'published') {
         publishedProgramIds.add(program.uuid);
       }
-    }
-  }
-
-  for (const course of courses) {
-    if (course.program_uuid) {
-      programIds.add(course.program_uuid);
-    }
-    if (course.status === 'published' && course.program_uuid) {
-      publishedProgramIds.add(course.program_uuid);
     }
   }
 

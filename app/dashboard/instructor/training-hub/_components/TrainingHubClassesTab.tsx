@@ -3,6 +3,8 @@
 
 import { KpiCard, KpiCardSkeleton } from '@/components/dashboard/kpi-card';
 import { Card, CardContent } from '@/components/ui/card';
+import { useInstructor } from '@/context/instructor-context';
+import { ShareAllClassesButton } from '@/src/features/find-classes/ShareAllClassesButton';
 import { BookOpen, CalendarCheck, Clock, Users } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { LiveClassCard } from './LiveClassCard';
@@ -109,6 +111,7 @@ function matchesClassTag(
 }
 
 export function TrainingHubClassesTab() {
+  const instructor = useInstructor();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState<
     'all' | 'today' | 'upcoming' | 'incomplete' | 'remedial' | 'make-up' | 'cancelled' | 'completed'
@@ -288,7 +291,10 @@ export function TrainingHubClassesTab() {
 
       <section className='grid w-full max-w-full min-w-0 gap-4 overflow-hidden sm:w-full 2xl:max-w-[80%]'>
         <div className='min-w-0 space-y-3 overflow-hidden'>
-          <TrainingHubSectionHeader title='My Classes' />
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <TrainingHubSectionHeader title='My Classes' />
+            <ShareAllClassesButton kind='instructor' uuid={instructor?.uuid} />
+          </div>
 
           <div className='space-y-3'>
             {filteredLiveClasses.map(liveClass => (

@@ -37,6 +37,8 @@ import {
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { FindClassesPage } from '@/src/features/find-classes/FindClassesPage';
+import { parseClassShareScope } from '@/src/features/find-classes/class-share';
 import { type ClassDetailsEnrollment, useClassDetails } from '../../hooks/use-class-details';
 import { useDifficultyLevels } from '../../hooks/use-difficultyLevels';
 import { useUserDomains } from '../../hooks/use-user-query';
@@ -431,6 +433,17 @@ function ClassInviteContent() {
   );
 }
 
+function ClassInviteOrListing() {
+  const params = useSearchParams();
+  const scope = useMemo(() => parseClassShareScope(key => params.get(key)), [params]);
+  // Preserve individual invite links, including when they carry extra parameters.
+  if (params.get('id')) return <ClassInviteContent />;
+  if (scope) {
+    return <FindClassesPage domain='student' shareScope={scope} />;
+  }
+  return <ClassInviteContent />;
+}
+
 // Main page component wrapped with Suspense
 export default function PublicClassInvitePage() {
   return (
@@ -443,7 +456,7 @@ export default function PublicClassInvitePage() {
           </div>
         }
       >
-        <ClassInviteContent />
+        <ClassInviteOrListing />
       </Suspense>
     </div>
   );

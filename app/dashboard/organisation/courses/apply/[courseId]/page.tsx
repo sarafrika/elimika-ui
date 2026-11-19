@@ -17,6 +17,7 @@ import { useBreadcrumb } from '@/context/breadcrumb-provider';
 import { useInstructor } from '@/context/instructor-context';
 import { useOrganisation } from '@/context/organisation-context';
 import { STALE_TIMES } from '@/lib/query-client';
+import { programMinimumTrainingFee } from '@/lib/program-training-fee';
 import type { CourseTrainingRequirement, ProgramRequirement } from '@/services/client';
 import {
   getCourseByUuidOptions,
@@ -57,7 +58,10 @@ export default function ApplyPage() {
   useEffect(() => {
     if (!isInstructorDomain || !trainingId) return;
     router.replace(
-      instructorApplyToTrainHref({ kind: isProgram ? 'program' : 'course', uuid: trainingId }, editingUuid)
+      instructorApplyToTrainHref(
+        { kind: isProgram ? 'program' : 'course', uuid: trainingId },
+        editingUuid
+      )
     );
   }, [isInstructorDomain, trainingId, isProgram, editingUuid, router]);
   const organisation = useOrganisation();
@@ -129,11 +133,23 @@ export default function ApplyPage() {
     [courseRequirements, applicantType]
   );
   const programRequirements = useMemo<ProgramRequirement[]>(
-    () => programRequirementsQuery.data?.data?.content ?? [],
-    [programRequirementsQuery.data?.data?.content]
+    () =>
+      (programRequirementsQuery.data?.data?.content ?? []).filter(requirement =>
+        isApplicantTrainingRequirement(requirement, applicantType)
+      ),
+    [programRequirementsQuery.data?.data?.content, applicantType]
   );
 
-  const minimumFee = forCourse ? (course?.minimum_training_fee ?? null) : null;
+  const pricingQuery = forCourse ? courseQuery : programQuery;
+  const pricingResponse = pricingQuery.data;
+  const pricingError =
+    pricingQuery.error ??
+    (pricingResponse?.error || pricingResponse?.success === false
+      ? new Error(pricingResponse.message || 'Could not load the minimum training fee.')
+      : null);
+  const minimumFee = forCourse
+    ? course?.minimum_training_fee ?? null
+    : programMinimumTrainingFee(program);
   const requirementsQuery = isProgram ? programRequirementsQuery : courseRequirementsQuery;
   const requirementRowCount = isProgram ? programRequirements.length : requirements.length;
   const contentTitle = (isProgram ? program?.title : course?.name) ?? '';
@@ -234,14 +250,13 @@ export default function ApplyPage() {
         tabIndex={-1}
         aria-labelledby='apply-heading'
         className='scroll-mt-24 space-y-4'
-      // className='scroll-mt-24 space-y-4 border-t pt-6'
+        // className='scroll-mt-24 space-y-4 border-t pt-6'
       >
         <Button asChild variant='ghost' size='sm'>
           <Link href={backHref}>
             <ArrowLeft className='mr-1 h-4 w-4' /> {backLabel}
           </Link>
         </Button>
-
 
         <div>
           <h2 id='apply-heading' className='text-lg font-semibold'>
@@ -253,44 +268,52 @@ export default function ApplyPage() {
           </p>
         </div>
 
-        {editingUuid ? (
-          <AsyncSection
-            loading={edited.query.isLoading && !edited.application}
-            error={edited.query.error}
-            onRetry={() => void edited.query.refetch()}
-            errorTitle='Couldn’t load your application'
-            skeleton={<ApplyWizardSkeleton />}
-          >
-            {edited.application?.status === 'pending' ? (
-              <ApplyWizard
-                key={edited.application.uuid}
-                {...wizardProps}
-                application={edited.application}
-              />
-            ) : (
-              <EmptyState
-                variant='compact'
-                title='This application can no longer be edited'
-                description={`The ${kind} creator has already decided on it.`}
-                action={
-                  <Button asChild variant='outline' size='sm'>
-                    <Link
-                      href={
-                        isInstructorDomain
-                          ? applicationsHref
-                          : dashboardUrl('organisation', `approvals/${editingUuid}`)
-                      }
-                    >
-                      View application
-                    </Link>
-                  </Button>
-                }
-              />
-            )}
-          </AsyncSection>
-        ) : (
-          <ApplyWizard {...wizardProps} />
-        )}
+        <AsyncSection
+          loading={pricingQuery.isPending}
+          error={pricingError}
+          onRetry={() => void pricingQuery.refetch()}
+          errorTitle='Couldn’t load the training fees'
+          skeleton={<ApplyWizardSkeleton />}
+        >
+          {editingUuid ? (
+            <AsyncSection
+              loading={edited.query.isLoading && !edited.application}
+              error={edited.query.error}
+              onRetry={() => void edited.query.refetch()}
+              errorTitle='Couldn’t load your application'
+              skeleton={<ApplyWizardSkeleton />}
+            >
+              {edited.application?.status === 'pending' ? (
+                <ApplyWizard
+                  key={edited.application.uuid}
+                  {...wizardProps}
+                  application={edited.application}
+                />
+              ) : (
+                <EmptyState
+                  variant='compact'
+                  title='This application can no longer be edited'
+                  description={`The ${kind} creator has already decided on it.`}
+                  action={
+                    <Button asChild variant='outline' size='sm'>
+                      <Link
+                        href={
+                          isInstructorDomain
+                            ? applicationsHref
+                            : dashboardUrl('organisation', `approvals/${editingUuid}`)
+                        }
+                      >
+                        View application
+                      </Link>
+                    </Button>
+                  }
+                />
+              )}
+            </AsyncSection>
+          ) : (
+            <ApplyWizard {...wizardProps} />
+          )}
+        </AsyncSection>
       </section>
     </div>
   );

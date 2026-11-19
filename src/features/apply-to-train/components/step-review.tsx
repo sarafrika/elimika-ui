@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { cellKey, formatRateAmount, getTrainingMethod, parseRate } from '@/lib/rate-card';
 import { cn } from '@/lib/utils';
-import type { ProgramRequirement } from '@/services/client';
 import { type AgeGroupDraft, formatHours, type PlanLesson, totalHours } from '../age-groups/model';
 import { groupColour } from '../age-groups/step-age-groups';
 import type { DeliveryDraft } from '../delivery-model';
@@ -24,7 +23,6 @@ export function StepReview({
   lessons,
   delivery,
   answers,
-  programRequirements,
   note,
   onNote,
   onEdit,
@@ -36,7 +34,6 @@ export function StepReview({
   lessons: PlanLesson[];
   delivery: DeliveryDraft;
   answers: RequirementAnswer[];
-  programRequirements: ProgramRequirement[];
   note: string;
   onNote: (note: string) => void;
   onEdit: (step: ApplyStepId) => void;
@@ -98,29 +95,21 @@ export function StepReview({
       </Section>
 
       <Section title='Requirements' onEdit={() => onEdit('requirements')}>
-        {item.kind === 'program' ? (
-          <p className='text-muted-foreground text-sm'>
-            {programRequirements.length
-              ? `${programRequirements.length} published requirements reviewed.`
-              : 'None for this programme.'}
-          </p>
-        ) : (
-          <Rows
-            empty='None for this course.'
-            rows={answers.map(answer => ({
-              key: answer.requirementUuid,
-              label: answer.requirementName,
-              value:
-                answer.has === 'yes'
-                  ? 'Has it'
-                  : answer.has === 'no'
-                    ? answer.acquisition
-                      ? `Will ${answer.acquisition}`
-                      : 'Not sorted yet'
-                    : 'Not answered',
-            }))}
-          />
-        )}
+        <Rows
+          empty={`None for this ${item.kind === 'program' ? 'programme' : 'course'}.`}
+          rows={answers.map(answer => ({
+            key: answer.requirementUuid,
+            label: answer.requirementName,
+            value:
+              answer.has === 'yes'
+                ? 'Has it'
+                : answer.has === 'no'
+                  ? answer.acquisition
+                    ? `Will ${answer.acquisition}`
+                    : 'Not sorted yet'
+                  : 'Not answered',
+          }))}
+        />
       </Section>
 
       <section className='bg-card space-y-2 rounded-2xl border p-5 shadow-sm'>

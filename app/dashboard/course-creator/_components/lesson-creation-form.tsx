@@ -42,7 +42,7 @@ import type {
   Lesson,
   LessonContent,
   PagedDtoLesson,
-  StatusEnum,
+  LessonWritable,
 } from '../../../../services/client/types.gen';
 
 type LessonCreationFormProps = {
@@ -253,17 +253,21 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
     if (!course?.data?.uuid) return;
     const values = form.getValues();
 
-    const createLessonBody = {
+    const createLessonBody: LessonWritable = {
       course_uuid: course?.data?.uuid as string,
       title: values?.title,
       description: values?.description as string,
       learning_objectives: '',
-      status: (course?.data?.status?.toUpperCase() ?? 'DRAFT') as StatusEnum,
+      status: (
+        {
+          draft: 'DRAFT',
+          in_review: 'IN_REVIEW',
+          published: 'PUBLISHED',
+          archived: 'ARCHIVED',
+        } as const
+      )[course.data.status],
       active: course?.data?.active,
-      is_published: course?.data?.is_published,
-      created_by: course?.data?.course_creator_uuid,
       lesson_number: values.lesson_number,
-      lesson_sequence: `Lesson`,
     };
 
     if (activeLessonId === null) {
@@ -301,7 +305,7 @@ export const LessonCreationForm: React.FC<LessonCreationFormProps> = ({
       // ── UPDATE ───────────────────────────────────────────────────────────
       updateLessonMutation.mutate(
         {
-          body: createLessonBody as never,
+          body: createLessonBody,
           path: {
             courseUuid: course?.data?.uuid as string,
             lessonUuid: activeLessonId as string,

@@ -119,7 +119,10 @@ function CandidateCard({
           ) : (
             <Avatar className='border-card h-14 w-14 border-2 shadow'>
               {profileImageUrl && (
-                <AvatarImage src={toAuthenticatedMediaUrl(profileImageUrl)} alt={displayName} />
+                <AvatarImage
+                  src={toAuthenticatedMediaUrl(profileImageUrl) ?? undefined}
+                  alt={displayName}
+                />
               )}
               <AvatarFallback className='bg-primary/10 text-primary font-semibold'>
                 {initials(displayName)}
@@ -515,7 +518,10 @@ function CandidateRow({
       ) : (
         <Avatar className='h-8 w-8'>
           {profileImageUrl && (
-            <AvatarImage src={toAuthenticatedMediaUrl(profileImageUrl)} alt={displayName} />
+            <AvatarImage
+              src={toAuthenticatedMediaUrl(profileImageUrl) ?? undefined}
+              alt={displayName}
+            />
           )}
           <AvatarFallback className='bg-primary/10 text-primary text-xs font-semibold'>
             {initials(displayName)}

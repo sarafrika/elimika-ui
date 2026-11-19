@@ -53,7 +53,7 @@ const findMenuPathByUrl = (
 };
 
 const findMenuPathByUrlInSources = (
-  sources: Record<string, MenuItem[] | MenuGroup[]>,
+  sources: Record<string, MenuItem[] | MenuGroup[] | undefined>,
   url: string
 ): MenuItem[] | null => {
   for (const key in sources) {

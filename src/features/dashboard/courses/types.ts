@@ -50,7 +50,7 @@ export type ProgramBundledClass = ClassDefinition &
     isStudentEnrolled?: boolean;
   };
 
-export type SearchInstructor = Instructor & {
+export type SearchInstructor = Omit<Instructor, 'review_count'> & {
   gender?: User['gender'] | null;
   user_domain?: string | string[] | null;
   username?: string | null;

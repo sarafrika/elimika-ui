@@ -70,10 +70,6 @@ export function ClassDetailSheet({
 
                 {detail.location_type && <Badge variant='outline'>{detail.location_type}</Badge>}
 
-                {detail.skills_fund_eligible && (
-                  <Badge className='bg-success/10 text-success'>Fund Eligible</Badge>
-                )}
-
                 {detail.classRating != null ? (
                   <Badge variant='outline' className='gap-1'>
                     <span className='text-warning flex items-center'>
@@ -127,7 +123,12 @@ export function ClassDetailSheet({
                   <InfoRow
                     icon={<Calendar className='h-4 w-4' />}
                     label='Academic Period'
-                    value={detail?.academic_period}
+                    value={
+                      [detail.academic_period_start_date, detail.academic_period_end_date]
+                        .filter((date): date is Date => date != null)
+                        .map(date => date.toLocaleDateString())
+                        .join(' – ') || undefined
+                    }
                   />
 
                   <InfoRow

@@ -7,9 +7,14 @@ import { statusToneClass } from '@/components/data-display/tone';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DistanceBandBadge } from '@/src/features/near-me/near-me-control';
+import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { type ClassCardFacts, formatKes, startChip } from './class-card-facts';
 
-const MODE_LABEL: Record<string, string> = { ONLINE: 'Online', IN_PERSON: 'In person', HYBRID: 'Hybrid' };
+const MODE_LABEL: Record<string, string> = {
+  ONLINE: 'Online',
+  IN_PERSON: 'In person',
+  HYBRID: 'Hybrid',
+};
 
 function initials(name: string | undefined) {
   return (name ?? '')
@@ -30,6 +35,7 @@ export function ClassCard({
   facts,
   band,
   href,
+  detailsHref,
 }: {
   title: string;
   courseName?: string;
@@ -39,7 +45,9 @@ export function ClassCard({
   facts: ClassCardFacts;
   band?: string;
   href: string | null;
+  detailsHref?: string;
 }) {
+  const imageUrl = toAuthenticatedMediaUrl(thumbnailUrl);
   const mode = MODE_LABEL[locationType?.toUpperCase() ?? ''] ?? 'Class';
   const status = facts.closed
     ? { label: facts.closedReason === 'ended' ? 'Ended' : 'Closed', tone: statusToneClass.neutral }
@@ -47,7 +55,9 @@ export function ClassCard({
       ? { label: 'Closing soon', tone: statusToneClass.warning }
       : { label: 'Open', tone: statusToneClass.success };
   const taken =
-    facts.capacity && facts.seatsLeft != null ? Math.min(100, ((facts.capacity - facts.seatsLeft) / facts.capacity) * 100) : null;
+    facts.capacity && facts.seatsLeft != null
+      ? Math.min(100, ((facts.capacity - facts.seatsLeft) / facts.capacity) * 100)
+      : null;
   const fewSeats = facts.seatsLeft != null && facts.seatsLeft <= 3 && !facts.closed;
 
   return (
@@ -60,7 +70,7 @@ export function ClassCard({
       <div className='relative shrink-0'>
         <div className='bg-muted relative aspect-[16/10] w-full overflow-hidden'>
           <ImageWithFallback
-            src={thumbnailUrl}
+            src={imageUrl}
             alt=''
             fill
             sizes='(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw'
@@ -70,7 +80,9 @@ export function ClassCard({
                 aria-hidden
                 className={cn(
                   'absolute inset-0 flex items-center justify-center bg-gradient-to-br',
-                  facts.closed ? 'from-muted-foreground/40 to-muted' : 'from-primary/70 via-primary/40 to-primary/10'
+                  facts.closed
+                    ? 'from-muted-foreground/40 to-muted'
+                    : 'from-primary/70 via-primary/40 to-primary/10'
                 )}
               >
                 <span className='bg-card/15 absolute -top-12 -right-10 size-44 rounded-full' />
@@ -83,7 +95,12 @@ export function ClassCard({
             <CalendarDays aria-hidden className='text-primary size-3.5' />
             {startChip(facts.firstStart)}
           </span>
-          <span className={cn('absolute top-3 right-3 rounded-full border px-2.5 py-0.5 text-xs font-semibold', status.tone)}>
+          <span
+            className={cn(
+              'absolute top-3 right-3 rounded-full border px-2.5 py-0.5 text-xs font-semibold',
+              status.tone
+            )}
+          >
             {status.label}
           </span>
         </div>
@@ -100,7 +117,9 @@ export function ClassCard({
               {mode}
             </span>
           </div>
-          {courseName ? <p className='text-muted-foreground mt-1 line-clamp-1 text-xs'>{courseName}</p> : null}
+          {courseName ? (
+            <p className='text-muted-foreground mt-1 line-clamp-1 text-xs'>{courseName}</p>
+          ) : null}
         </div>
 
         {trainer ? (
@@ -121,7 +140,11 @@ export function ClassCard({
             <span className='truncate'>{facts.schedule}</span>
           </span>
           <span className='flex min-w-0 items-center gap-2'>
-            {facts.online ? <Video aria-hidden className='size-4 shrink-0' /> : <MapPin aria-hidden className='size-4 shrink-0' />}
+            {facts.online ? (
+              <Video aria-hidden className='size-4 shrink-0' />
+            ) : (
+              <MapPin aria-hidden className='size-4 shrink-0' />
+            )}
             <span className='truncate'>{facts.where}</span>
           </span>
         </div>
@@ -150,15 +173,26 @@ export function ClassCard({
         ) : null}
 
         <div className='border-border/60 flex items-end justify-between gap-2 border-t pt-3'>
-          <span className='text-muted-foreground text-xs'>{facts.breakdown ?? 'Full class price'}</span>
-          <span className='text-lg font-extrabold tracking-tight tabular-nums'>{formatKes(facts.total)}</span>
+          <span className='text-muted-foreground text-xs'>
+            {facts.breakdown ?? 'Full class price'}
+          </span>
+          <span className='text-lg font-extrabold tracking-tight tabular-nums'>
+            {formatKes(facts.total)}
+          </span>
         </div>
 
         <div className='mt-auto grid gap-2 pt-1'>
           {facts.closed ? (
-            <Button variant='outline' disabled>
-              Registration closed
-            </Button>
+            <>
+              <Button variant='outline' disabled>
+                Registration closed
+              </Button>
+              {detailsHref ? (
+                <Button asChild variant='outline'>
+                  <Link href={detailsHref}>View details</Link>
+                </Button>
+              ) : null}
+            </>
           ) : href ? (
             <>
               <Button asChild>
@@ -169,7 +203,9 @@ export function ClassCard({
               </Button>
             </>
           ) : (
-            <span className='text-muted-foreground text-center text-xs'>Join through its programme</span>
+            <span className='text-muted-foreground text-center text-xs'>
+              Join through its programme
+            </span>
           )}
         </div>
       </div>

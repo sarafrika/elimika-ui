@@ -12,7 +12,7 @@ import type { ApplyKind } from './types';
 
 const REQUIREMENT_PAGE_SIZE = 200;
 
-/** A course's requirements the instructor provides, or a programme's published list. */
+/** Only course or programme requirements assigned to the instructor. */
 export function useItemRequirements(kind: ApplyKind | null, uuid: string | null, enabled = true) {
   const forCourse = enabled && kind === 'course' && Boolean(uuid);
   const forProgram = enabled && kind === 'program' && Boolean(uuid);
@@ -39,7 +39,10 @@ export function useItemRequirements(kind: ApplyKind | null, uuid: string | null,
     [courseQuery.data]
   );
   const programRequirements = useMemo<ProgramRequirement[]>(
-    () => programQuery.data?.data?.content ?? [],
+    () =>
+      (programQuery.data?.data?.content ?? []).filter(requirement =>
+        isApplicantTrainingRequirement(requirement, 'instructor')
+      ),
     [programQuery.data]
   );
 

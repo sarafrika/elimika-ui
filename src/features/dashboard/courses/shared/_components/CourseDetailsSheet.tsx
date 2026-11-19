@@ -23,7 +23,6 @@ import {
   GraduationCap,
   Layers,
   ListChecks,
-  PiggyBank,
   Star,
   Users,
   UserSearch,
@@ -140,7 +139,13 @@ export function CourseDetailsSheet({
     }),
     enabled: !!itemId && open && isProgram,
   });
-  const programReviews: ProgramReview[] = programReviewsResp?.data?.content ?? [];
+  const programReviews: ProgramReview[] = (programReviewsResp?.content ?? []).filter(
+    (review): review is ProgramReview =>
+      typeof review === 'object' &&
+      review !== null &&
+      'rating' in review &&
+      typeof review.rating === 'number'
+  );
 
   // Reuses the same batched-lookup hook ClassProgramDetailsPage uses to get
   // assessment schemes for every bundled course in one go.
@@ -254,13 +259,7 @@ export function CourseDetailsSheet({
               {isCourse && course?.category_names?.[0] && (
                 <Badge variant='secondary'>{course.category_names[0]}</Badge>
               )}
-              {isCourse && course?.level && <Badge variant='outline'>{course.level}</Badge>}
 
-              {isCourse && course?.skills_fund_eligible && (
-                <Badge className='bg-success hover:bg-success'>
-                  <PiggyBank className='mr-1 h-3 w-3' /> Skills Fund eligible
-                </Badge>
-              )}
               {isProgram && program?.program_type && (
                 <Badge variant='secondary'>
                   <BadgeCheck className='mr-1 h-3 w-3' /> {program.program_type}
@@ -288,10 +287,10 @@ export function CourseDetailsSheet({
                   {durationLabel}
                 </div>
               )}
-              {isCourse && course?.age_group && (
+              {isCourse && course?.age_lower_limit != null && (
                 <div className='inline-flex items-center gap-1.5'>
                   <GraduationCap className='h-3.5 w-3.5' />
-                  Age {course.age_group}
+                  Age {course.age_lower_limit}+
                 </div>
               )}
               {isProgram && program?.class_limit != null && (
@@ -309,8 +308,7 @@ export function CourseDetailsSheet({
             <Section icon={<CalendarDays className='h-4 w-4' />} title='Full schedule'>
               <p className='text-foreground'>
                 {isCourse
-                  ? (course?.schedule_overview ??
-                    'Detailed schedule varies by class — open a class to see its weekly plan, session times, and delivery mode.')
+                  ? 'Detailed schedule varies by class — open a class to see its weekly plan, session times, and delivery mode.'
                   : "Once you enroll, you'll receive the full schedule for every bundled course, including dates, times, and how to join each session."}
               </p>
             </Section>

@@ -546,7 +546,7 @@ export function useStudentSkillsWalletData(achievementsEnabled = true) {
       const classDefinition = classDefinitionMap.get(enrollment.class_definition_uuid);
       const courseUuid = classDefinition?.course_uuid;
       const course = courseUuid ? courseMap.get(courseUuid) : undefined;
-      if (!course) return;
+      if (!course || !courseUuid) return;
 
       const certificate = certificatesByCourse.get(course.uuid ?? courseUuid);
       const classAverageProgress = courseProgressByClassAverage.get(courseUuid);
@@ -655,7 +655,7 @@ export function useStudentSkillsWalletData(achievementsEnabled = true) {
       const classDefinition = classDefinitionMap.get(enrollment.class_definition_uuid);
       const courseUuid = classDefinition?.course_uuid;
       const course = courseUuid ? courseMap.get(courseUuid) : undefined;
-      if (!course) return;
+      if (!course || !courseUuid) return;
 
       const classAverageProgress = courseProgressByClassAverage.get(courseUuid);
       const progress = clampPct(

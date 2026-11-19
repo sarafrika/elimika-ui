@@ -212,12 +212,13 @@ export function validateRateCard(
     }
   }
 
-  for (const method of offered) {
+  for (const method of TRAINING_METHODS) {
     for (const basis of RATE_BASES) {
       const key = cellKey(method, basis);
-      const value = parseRate(card?.[key]);
+      const raw = card?.[key];
+      const value = raw === 0 || raw === '0' ? 0 : parseRate(raw);
       if (value === null) continue;
-      if (value < 0) cells[key] = 'Must be above zero.';
+      if (value <= 0) cells[key] = 'Must be above zero.';
       else if (floor !== null && value < floor)
         cells[key] = `At least ${formatRateAmount(floor, currency)}, the minimum training fee.`;
     }

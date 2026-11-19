@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, type Page, type Request, test } from '@playwright/test';
 import {
   mockProgrammeReport,
   OTHER_PROGRAM_UUID,
@@ -236,7 +236,7 @@ test('the class Program tab shows stats, learners with level pills and skill att
 test('a course in two programs asks for a pick, then loads the chosen program', async ({
   page,
 }) => {
-  const api = await openClassProgram(page, request =>
+  const api = await openClassProgram(page, (request: Request) =>
     new URL(request.url()).searchParams.get('program_uuid') === OTHER_PROGRAM_UUID
       ? {
           ...ready(OTHER_PROGRAM_UUID, 'Junior Keyboard Pathway'),

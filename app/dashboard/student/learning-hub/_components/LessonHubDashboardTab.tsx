@@ -686,7 +686,7 @@ function RemindersWidget({
                 const dueLabel = getDueSummary(row.schedule?.due_at ?? row.assignment?.due_date).label;
                 return {
                     kind: 'assignment' as const,
-                    status: (dueLabel === 'Overdue' ? 'overdue' : 'upcoming') as const,
+                    status: dueLabel === 'Overdue' ? ('overdue' as const) : ('upcoming' as const),
                     id: row.assignment?.uuid,
                     title: row.assignment?.title ?? 'Untitled assignment',
                     course: row.classMeta.courseTitle,

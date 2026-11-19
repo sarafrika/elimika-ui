@@ -85,9 +85,10 @@ export function matchesClassFilters(
     | 'organisation_uuid'
     | 'is_active'
   >,
-  filters: ClassFilters
+  filters: ClassFilters,
+  { includeInactive = false }: { includeInactive?: boolean } = {}
 ): boolean {
-  if (definition.is_active === false) return false;
+  if (!includeInactive && definition.is_active === false) return false;
   if (filters.course && definition.course_uuid !== filters.course) return false;
   if (filters.location && definition.location_type?.toUpperCase() !== filters.location) {
     return false;

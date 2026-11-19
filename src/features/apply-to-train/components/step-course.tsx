@@ -20,7 +20,8 @@ import {
 import { ApplyItemCard } from './apply-item-card';
 
 const FIT_PILLS: { value: CatalogueFit; label: string }[] = [
-  { value: 'open', label: 'All open' },
+  { value: 'all', label: 'All available' },
+  { value: 'open', label: 'Not applied' },
   { value: 'skills', label: 'Matches my skills' },
   { value: 'applied', label: 'Already applied' },
 ];
@@ -146,7 +147,7 @@ export function StepCourse({
             <Button
               variant='outline'
               size='sm'
-              onClick={() => onFilters({ ...filters, q: '', category: null, fit: 'open', page: 0 })}
+              onClick={() => onFilters({ ...filters, q: '', category: null, fit: 'all', page: 0 })}
             >
               Clear filters
             </Button>

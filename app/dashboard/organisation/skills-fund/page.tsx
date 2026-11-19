@@ -20,7 +20,7 @@ import Spinner from '@/components/ui/spinner';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useOrganisation } from '@/context/organisation-context';
 import { extractEntity, extractList } from '@/lib/api-helpers';
-import type { SkillsFundSource, SkillsFundSummary, SkillsFundTransaction, StatusEnum14 } from '@/services/client';
+import type { SkillsFundSource, SkillsFundSummary, SkillsFundTransaction, StatusEnum15 } from '@/services/client';
 import {
   addSourceMutation,
   addTransactionMutation,
@@ -388,7 +388,7 @@ function RecordTransactionSheet({
           target_name: field(form, 't-target') || undefined,
           amount: amount ? Number(amount) : 0,
           transaction_type: field(form, 't-type'),
-          status: field(form, 't-status') as StatusEnum14,
+          status: field(form, 't-status') as StatusEnum15,
         },
       },
       {

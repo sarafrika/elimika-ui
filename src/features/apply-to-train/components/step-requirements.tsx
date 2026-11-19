@@ -1,16 +1,15 @@
 'use client';
 
-import type { Dispatch } from 'react';
 import type { RequirementAnswer } from '@/app/dashboard/organisation/courses/apply/[courseId]/_components/apply-model';
 import { AsyncSection } from '@/components/data/async-section';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/lib/utils';
 import type { CourseTrainingRequirement, ProgramRequirement } from '@/services/client';
-import type { ApplyToTrainAction } from '../model';
+import { type Dispatch, useMemo } from 'react';
+import { type ApplyToTrainAction, type RequirementPrompt, instructorRequirementPrompts } from '../model';
 import type { ApplyKind } from '../types';
 
-/** Courses ask "do you have it?" per requirement; programmes list theirs to read. */
+/** Courses and programmes share the same Yes/No and acquisition choices. */
 export function StepRequirements({
   kind,
   creator,
@@ -34,6 +33,10 @@ export function StepRequirements({
   onRetry: () => void;
   showErrors: boolean;
 }) {
+  const prompts = useMemo(
+    () => instructorRequirementPrompts(kind, courseRequirements, programRequirements),
+    [kind, courseRequirements, programRequirements]
+  );
   return (
     <section className='bg-card space-y-4 rounded-2xl border p-5 shadow-sm'>
       <div>
@@ -41,9 +44,7 @@ export function StepRequirements({
           What this {kind === 'program' ? 'programme' : 'course'} needs
         </h2>
         <p className='text-muted-foreground mt-0.5 text-sm'>
-          {kind === 'program'
-            ? 'These are the requirements the programme creator published. Review them before you apply.'
-            : `Tell ${creator} whether you already have each item. If not, say whether you’ll lease or hire it.`}
+          Tell {creator} whether you already have each item. If not, say whether you’ll lease or hire it.
         </p>
       </div>
       <AsyncSection
@@ -58,13 +59,13 @@ export function StepRequirements({
           </div>
         }
       >
-        {kind === 'program' ? (
-          <ProgramList requirements={programRequirements} />
-        ) : courseRequirements.length === 0 ? (
-          <Empty text='This course lists no requirements. Nothing to answer here.' />
+        {prompts.length === 0 ? (
+          <Empty
+            text={`This ${kind === 'program' ? 'programme' : 'course'} has no requirements assigned to you. Nothing to answer here.`}
+          />
         ) : (
           <div className='space-y-3'>
-            {courseRequirements.map(requirement => {
+            {prompts.map(requirement => {
               const answer = answers.find(row => row.requirementUuid === requirement.uuid);
               if (!answer) return null;
               return (
@@ -88,38 +89,13 @@ function Empty({ text }: { text: string }) {
   return <p className='bg-muted/40 text-muted-foreground rounded-xl p-5 text-sm'>{text}</p>;
 }
 
-function ProgramList({ requirements }: { requirements: ProgramRequirement[] }) {
-  if (requirements.length === 0)
-    return <Empty text='This programme lists no requirements yet.' />;
-  return (
-    <ul className='space-y-2'>
-      {requirements.map(requirement => (
-        <li
-          key={requirement.uuid ?? requirement.requirement_text}
-          className='flex flex-wrap items-center justify-between gap-2 rounded-xl border px-4 py-3'
-        >
-          <div>
-            <p className='text-foreground font-medium'>{requirement.requirement_text}</p>
-            <p className='text-muted-foreground text-sm'>
-              {requirement.requirement_category ?? requirement.requirement_type}
-            </p>
-          </div>
-          <Badge variant={requirement.is_mandatory ? 'destructive' : 'outline'}>
-            {requirement.is_mandatory ? 'Mandatory' : 'Optional'}
-          </Badge>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function AnswerBlock({
   requirement,
   answer,
   dispatch,
   showErrors,
 }: {
-  requirement: CourseTrainingRequirement;
+  requirement: RequirementPrompt;
   answer: RequirementAnswer;
   dispatch: Dispatch<ApplyToTrainAction>;
   showErrors: boolean;
@@ -143,10 +119,10 @@ function AnswerBlock({
         </div>
         <div role='group' aria-label={`Do you have ${requirement.name}?`} className='flex gap-1.5'>
           <Choice on={answer.has === 'yes'} onClick={() => dispatch({ type: 'answerHas', uuid, has: 'yes' })}>
-            I have it
+            Yes
           </Choice>
           <Choice on={answer.has === 'no'} onClick={() => dispatch({ type: 'answerHas', uuid, has: 'no' })}>
-            I don’t
+            No
           </Choice>
         </div>
       </div>
@@ -184,16 +160,14 @@ function Choice({
   children: React.ReactNode;
 }) {
   return (
-    <button
+    <Button
       type='button'
+      variant={on ? 'default' : 'outline'}
       aria-pressed={on}
       onClick={onClick}
-      className={cn(
-        'h-9 rounded-full border px-3.5 text-sm font-medium transition-colors',
-        on ? 'border-primary bg-primary text-primary-foreground' : 'bg-card hover:bg-muted'
-      )}
+      className='h-9 rounded-full px-3.5 text-sm font-medium'
     >
       {children}
-    </button>
+    </Button>
   );
 }

@@ -127,9 +127,7 @@ export function useClassListingSummaries(
     if (classUuid) return [{ class_definition_uuid: classUuid }];
     if (chunks.length > 0) {
       return chunks.slice(0, MAX_CLASS_BATCHES).map<Record<string, string>>(ids =>
-        ids.length === 1
-          ? { class_definition_uuid: ids.join(',') }
-          : { class_definition_uuid_in: ids.join(',') }
+        ({ [ids.length === 1 ? 'class_definition_uuid' : 'class_definition_uuid_in']: ids.join(',') })
       );
     }
     if (catalogueScope?.course_uuid) return [{ course_uuid: catalogueScope.course_uuid }];

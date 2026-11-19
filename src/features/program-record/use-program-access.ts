@@ -36,7 +36,7 @@ export function useProgramAccess(
         pageable: { page: 0, size: 1 },
         searchParams: {
           program_uuid_eq: programUuid,
-          applicant_uuid_eq: applicantUuid,
+          ...(applicantUuid ? { applicant_uuid_eq: applicantUuid } : {}),
           applicant_type_eq: applicantType,
         },
       },
@@ -104,7 +104,8 @@ export function useProgramAccess(
   let label = courseCapability(access).accessLabel;
   if (access === 'creator') label = 'Programme owner — full access';
   if (access === 'student') label = 'Enrolled in programme — reading access';
-  if (access === 'instructor' || access === 'organisation') label = 'Approved to train this programme';
+  if (access === 'instructor' || access === 'organisation')
+    label = 'Approved to train this programme';
   if (access === 'pending') label = 'Programme preview — application pending';
   if (access === 'applicant') label = 'Programme preview — not approved to train';
   if (access === 'prospect') label = 'Programme preview — not enrolled';

@@ -131,7 +131,6 @@ function CertificationsSettingsContent() {
               body: {
                 ...data,
                 user_uuid: student?.user_uuid as string,
-                updated_by: student?.user_uuid,
               },
               path: { uuid: student?.uuid as string },
             },

@@ -42,7 +42,7 @@ import {
   Users,
   UsersRound,
   Wallet,
-  Wrench
+  Wrench,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
 
@@ -62,14 +62,6 @@ export type MenuItem = {
   organisation_user?: MenuItem[];
   course_creator?: MenuItem[];
 };
-
-
-type MenuSection = {
-  title: string
-  icon: string
-  items: MenuItem[]
-}
-
 
 /**
  * A labelled group of nav items (Lovable-style sidebar sections). A domain's nav
@@ -139,7 +131,7 @@ type Menu = {
   secondary?: MenuItem[];
   user?: MenuItem[];
   admin?: MenuItem[];
-  student?: MenuSection[]
+  student?: MenuItem[];
   instructor?: MenuItem[];
   organisation_user?: MenuItem[] | MenuGroup[];
   course_creator?: MenuItem[];
@@ -191,7 +183,6 @@ export default {
   student: [
     {
       title: '',
-      icon: '',
       items: [
         {
           title: 'Home',
@@ -276,7 +267,6 @@ export default {
       ],
     },
   ],
-
 
   // ============================================================
   // INSTRUCTOR
@@ -368,7 +358,6 @@ export default {
         // },
       ],
     },
-
   ],
 
   // ============================================================
@@ -656,6 +645,5 @@ export default {
         },
       ],
     },
-
   ],
 } as Menu;

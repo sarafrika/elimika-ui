@@ -127,6 +127,7 @@ function TrainingCentreFormBody() {
     resolver: zodResolver(trainingCenterSchema),
     defaultValues: {
       ...(organisation ?? {}),
+      verification_requested_at: organisation?.verification_requested_at?.toISOString(),
       contactPersonEmail: userProfile?.email,
       contactPersonPhone: userProfile?.phone_number ?? '',
       active: true,

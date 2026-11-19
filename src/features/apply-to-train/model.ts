@@ -1,8 +1,10 @@
 import {
   type RequirementAnswer,
+  isApplicantTrainingRequirement,
+  programRequirementPrompt,
   validateAnswers,
 } from '@/app/dashboard/organisation/courses/apply/[courseId]/_components/apply-model';
-import type { TrainingRequirementAnswerRequest } from '@/services/client';
+import type { CourseTrainingRequirement, ProgramRequirement, TrainingRequirementAnswerRequest } from '@/services/client';
 import type { TrainingApplication } from '@/src/features/rate-card/types';
 import {
   type AgeGroupDraft,
@@ -10,7 +12,7 @@ import {
   groupsFromApplication,
 } from './age-groups/model';
 import { type DeliveryDraft, deliveryFromCard } from './delivery-model';
-import { APPLY_TO_TRAIN_STEPS, type ApplyItem, type ApplyStepId } from './types';
+import { APPLY_TO_TRAIN_STEPS, type ApplyItem, type ApplyStepId, type ApplyKind, isLocked } from './types';
 
 export type ApplyToTrainState = {
   step: ApplyStepId;
@@ -79,6 +81,7 @@ export function applyToTrainReducer(
     case 'go':
       return { ...state, step: action.step, visited: { ...state.visited, [state.step]: true } };
     case 'choose':
+      if (isLocked(action.item)) return state;
       if (state.item?.uuid === action.item.uuid)
         return { ...state, item: action.item, step: 'groups' };
       return {
@@ -133,6 +136,27 @@ export function applyToTrainReducer(
     default:
       return state;
   }
+}
+
+export type RequirementPrompt = { uuid: string; name: string; description?: string };
+
+/** The instructor answers only requirements assigned to them, for either content kind. */
+export function instructorRequirementPrompts(
+  kind: ApplyKind | null,
+  courseRequirements: CourseTrainingRequirement[],
+  programRequirements: ProgramRequirement[]
+): RequirementPrompt[] {
+  if (kind === 'program') {
+    return programRequirements
+      .filter(requirement => isApplicantTrainingRequirement(requirement, 'instructor'))
+      .map(programRequirementPrompt);
+  }
+  if (kind !== 'course') return [];
+  return courseRequirements.flatMap(requirement =>
+    requirement.uuid && isApplicantTrainingRequirement(requirement, 'instructor')
+      ? [{ uuid: requirement.uuid, name: requirement.name, description: requirement.description }]
+      : []
+  );
 }
 
 export const answerErrors = (answers: RequirementAnswer[]) => validateAnswers(answers);

@@ -23,10 +23,11 @@ import { invalidateTrainingApplicationWorkflowQueries } from '@/src/features/das
 import type { TrainingApplication } from '@/src/features/rate-card/types';
 
 import {
-  type ApplyStep,
   applyReducer,
+  type ApplyStep,
   buildApplicationPayload,
   initialApplyState,
+  isApplicantTrainingRequirement,
   type StepId,
   validateAnswers,
   validatePricing,
@@ -45,7 +46,7 @@ export type ApplyWizardProps = {
   applicantType: CourseTrainerApplicantType;
   /** Empty until the viewer's profile resolves; submission waits for it. */
   applicantUuid: string;
-  /** Already filtered to the requirements the applicant provides. */
+  /** Filtered by applicant type inside the wizard before answering or submitting. */
   requirements: CourseTrainingRequirement[];
   programRequirements: ProgramRequirement[];
   minimumFee?: number | null;
@@ -89,13 +90,27 @@ export function ApplyWizard({
   );
   const editing = Boolean(application?.uuid);
 
+  const applicantRequirements = useMemo(
+    () =>
+      requirements.filter(requirement => isApplicantTrainingRequirement(requirement, applicantType)),
+    [requirements, applicantType]
+  );
   const requirementSeeds = useMemo(
     () =>
-      requirements
+      applicantRequirements
         .filter(requirement => requirement.uuid)
         .map(requirement => ({ uuid: requirement.uuid as string, name: requirement.name })),
-    [requirements]
+    [applicantRequirements]
   );
+
+  // An edited application may still contain answers assigned to another provider.
+  const applicantState = useMemo(() => {
+    const requirementUuids = new Set(requirementSeeds.map(requirement => requirement.uuid));
+    return {
+      ...state,
+      answers: state.answers.filter(answer => requirementUuids.has(answer.requirementUuid)),
+    };
+  }, [state, requirementSeeds]);
 
   const requirementsReady = !isProgram && !requirementsLoading && !requirementsError;
   useEffect(() => {
@@ -114,7 +129,7 @@ export function ApplyWizard({
       if (isProgram) return [];
       if (requirementsError) return ['Reload the course requirements to answer them.'];
       if (requirementsLoading) return ['Wait for the course requirements to load.'];
-      return validateAnswers(state.answers);
+      return validateAnswers(applicantState.answers);
     };
     const pricing = () => validatePricing(state.card, minimumFee);
     switch (state.step) {
@@ -132,7 +147,7 @@ export function ApplyWizard({
     minimumFee,
     requirementsError,
     requirementsLoading,
-    state.answers,
+    applicantState.answers,
     state.card,
     state.step,
   ]);
@@ -163,7 +178,7 @@ export function ApplyWizard({
       return;
     }
 
-    const payload = buildApplicationPayload(state, { applicantType, isProgram });
+    const payload = buildApplicationPayload(applicantState, { applicantType, isProgram });
     const onSuccess = async (response: { data?: { uuid?: string } } | undefined) => {
       await invalidateTrainingApplicationWorkflowQueries(queryClient);
       toast.success(editing ? 'Application updated' : 'Application submitted', {
@@ -212,14 +227,18 @@ export function ApplyWizard({
         </CardHeader>
         <CardContent className='space-y-6'>
           {current.id === 'venues' ? (
-            <StepClassrooms state={state} dispatch={dispatch} organisationUuid={applicantUuid} />
+            <StepClassrooms
+              state={applicantState}
+              dispatch={dispatch}
+              organisationUuid={applicantUuid}
+            />
           ) : null}
           {current.id === 'requirements' ? (
             <StepRequirements
-              state={state}
+              state={applicantState}
               dispatch={dispatch}
               contentKind={isProgram ? 'program' : 'course'}
-              requirements={requirements}
+              requirements={applicantRequirements}
               programRequirements={programRequirements}
               loading={requirementsLoading}
               error={requirementsError}
@@ -227,11 +246,11 @@ export function ApplyWizard({
             />
           ) : null}
           {current.id === 'pricing' ? (
-            <StepPricing state={state} dispatch={dispatch} minimumFee={minimumFee} />
+            <StepPricing state={applicantState} dispatch={dispatch} minimumFee={minimumFee} />
           ) : null}
           {current.id === 'review' ? (
             <StepReview
-              state={state}
+              state={applicantState}
               dispatch={dispatch}
               contentKind={isProgram ? 'program' : 'course'}
               applicantType={applicantType}

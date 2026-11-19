@@ -34805,7 +34805,7 @@ export const zSearchCoursesAndProgrammesQuery = z.object({
     .optional(),
   creator_uuid: z.string().uuid().describe('Only results by this course creator').optional(),
   sort: zSchemaEnum10.optional(),
-  page: z.string().describe('0-based page number').optional().default(0),
+  page: z.string().describe('0-based page number').optional().default('0'),
   size: z.string().describe('Page size, 1-48').optional().default('24'),
 });
 
@@ -34823,7 +34823,7 @@ export const zSearchApplyToTrainCatalogueQuery = z.object({
     .optional(),
   fit: zSchemaEnum11.optional(),
   sort: zSchemaEnum10.optional(),
-  page: z.string().describe('0-based page number').optional().default(0),
+  page: z.string().describe('0-based page number').optional().default('0'),
   size: z.string().describe('Page size, 1-48').optional().default('24'),
 });
 

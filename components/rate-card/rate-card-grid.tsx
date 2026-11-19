@@ -43,7 +43,7 @@ type RateCardGridProps = {
   compareTo?: RateCard | null;
   /** Owner-only below-minimum flags; flagged cells are highlighted. */
   floorFlags?: RateFloorFlags | null;
-  /** Minimum training fee, shown as a hint in edit mode. */
+  /** Minimum training fee, shown below every input in edit mode. */
   minimum?: number | null;
   /** Per-cell messages, e.g. `validateRateCard(card, minimum).cells`. */
   errors?: Partial<Record<RateCellKey, string>>;
@@ -140,6 +140,7 @@ export function RateCardGrid({
             compareTo={compareTo}
             floorFlags={floorFlags}
             errors={errors}
+            minimum={minimum}
             highlightBasis={highlightBasis}
             currency={money}
             open={opened.has(method.prefix)}
@@ -189,6 +190,7 @@ type MethodRowProps = {
   compareTo?: RateCard | null;
   floorFlags?: RateFloorFlags | null;
   errors?: Partial<Record<RateCellKey, string>>;
+  minimum?: number | null;
   highlightBasis?: SelectableRateBasis;
   currency: string;
   open: boolean;
@@ -203,6 +205,7 @@ function MethodRow({
   compareTo,
   floorFlags,
   errors,
+  minimum,
   highlightBasis,
   currency,
   open,
@@ -214,6 +217,10 @@ function MethodRow({
     isMethodOffered(card, method) || (mode === 'diff' && isMethodOffered(compareTo, method));
   const editable = mode === 'edit' && (offered || open);
   const showCells = mode === 'edit' ? editable : offered;
+  const minimumSatisfied = typeof minimum === 'number' && RATE_BASES.some(basis => {
+    const amount = parseRate(card[cellKey(method, basis)]);
+    return amount !== null && amount >= minimum;
+  });
 
   return (
     <div
@@ -263,6 +270,8 @@ function MethodRow({
                 {...cellProps}
                 value={card[key]}
                 error={errors?.[key]}
+                minimum={minimum}
+                minimumSatisfied={minimumSatisfied}
                 onChange={event => onCell(key, event.target.value)}
               />
             );
@@ -345,12 +354,19 @@ function EditCell({
   belowFloor,
   value,
   error,
+  minimum,
+  minimumSatisfied,
   onChange,
 }: CellProps & {
   value: number | null | undefined;
   error?: string;
+  minimum?: number | null;
+  minimumSatisfied: boolean;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }) {
+  const hasMinimum = typeof minimum === 'number' && Number.isFinite(minimum) && minimum > 0;
+  const hasRate = typeof value === 'number' && Number.isFinite(value);
+  const showMinimum = hasMinimum && (hasRate ? value < minimum : !minimumSatisfied);
   return (
     <div className={cellFrame(highlighted, belowFloor && !error)}>
       <Label htmlFor={id} className='text-muted-foreground mb-1 text-xs font-normal md:sr-only'>
@@ -371,18 +387,22 @@ function EditCell({
           id={id}
           type='number'
           inputMode='decimal'
-          min={0}
+          min={hasMinimum ? minimum : 0}
           step='any'
           value={typeof value === 'number' && Number.isFinite(value) ? value : ''}
           onChange={onChange}
           aria-invalid={error ? true : undefined}
-          aria-describedby={error ? `${id}-error` : undefined}
+          aria-describedby={error ? `${id}-error` : showMinimum ? `${id}-minimum` : undefined}
           className='bg-background pl-12 tabular-nums'
         />
       </div>
       {error ? (
         <p id={`${id}-error`} className='text-destructive mt-1 text-xs'>
           {error}
+        </p>
+      ) : showMinimum ? (
+        <p id={`${id}-minimum`} className='text-destructive mt-1 text-xs'>
+          Minimum training fee: {formatRateAmount(minimum, currency)}.
         </p>
       ) : (
         <FloorNote belowFloor={belowFloor} />
