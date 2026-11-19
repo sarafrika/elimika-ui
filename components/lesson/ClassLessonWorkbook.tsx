@@ -36,6 +36,7 @@ import {
   startScheduledInstanceMutation,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, ContentType, Course, Lesson } from '@/services/client/types.gen';
+import { courseContentQueryOptions } from '@/src/features/course-record/course-content-query';
 import { EvaluationPanel } from './EvaluationPanel';
 import { SessionReportPanel } from './SessionReportPanel';
 import { useWorkbookNavigation } from './useWorkbookNavigation';
@@ -47,7 +48,8 @@ import {
 import { WorkbookClassRegister } from './WorkbookClassRegister';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
-import { hasApiError, type WorkbookRole } from './workbook-data';
+import { hasApiError, type WorkbookRole, type WorkbookNextCourse } from './workbook-data';
+import { resolveWorkbookLessonContent } from './workbook-content';
 
 export function ClassLessonWorkbook(props: {
   classId: string;
@@ -57,9 +59,38 @@ export function ClassLessonWorkbook(props: {
   lesson?: Lesson;
   role: WorkbookRole;
   moreLessons?: ReactNode;
+  lessonsList?: ReactNode;
+  nextCourse?: WorkbookNextCourse;
 }) {
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(() => new Set());
+  const { navigate } = useWorkbookNavigation();
   const lessonId = props.lesson?.uuid;
+  if ((!props.lesson || !lessonId) && props.lessonsList) {
+    return (
+      <LessonShell
+        classTitle={props.classDefinition.title}
+        courseTitle='Programme'
+        roleLabel={props.role === 'instructor' ? 'Instructor · Training' : 'Student · Learning'}
+        homeHref={
+          props.role === 'instructor'
+            ? '/dashboard/instructor/training-hub?tab=classes'
+            : '/dashboard/student/learning-hub'
+        }
+        tab='lesson'
+        showList
+        onTabChange={() => {}}
+        onBrowseLessons={() => navigate({ view: 'lessons' })}
+        pageIndex={0}
+        pageCount={0}
+        onPageChange={() => {}}
+        contentReady={false}
+        isCompleted={false}
+        onComplete={() => {}}
+      >
+        {props.lessonsList}
+      </LessonShell>
+    );
+  }
   if (!props.lesson || !lessonId)
     return (
       <div className='space-y-4 p-6'>
@@ -68,6 +99,9 @@ export function ClassLessonWorkbook(props: {
           description='Lessons will appear here when they are published.'
         />
         {props.moreLessons}
+        <Button variant='outline' onClick={() => navigate({ view: 'lessons' })}>
+          All lessons
+        </Button>
       </div>
     );
   return (
@@ -91,6 +125,8 @@ function SelectedLessonWorkbook({
   lessonId,
   role,
   moreLessons,
+  lessonsList,
+  nextCourse,
   isCompleted,
   onComplete,
 }: {
@@ -102,6 +138,8 @@ function SelectedLessonWorkbook({
   lessonId: string;
   role: WorkbookRole;
   moreLessons?: ReactNode;
+  lessonsList?: ReactNode;
+  nextCourse?: WorkbookNextCourse;
   isCompleted: boolean;
   onComplete: () => void;
 }) {
@@ -186,23 +224,34 @@ function SelectedLessonWorkbook({
           ? requestedTab
           : 'lesson';
   const showList = searchParams.get('view') === 'lessons';
+  // This endpoint resolves instructor/student access on the server and includes
+  // lesson bodies for enrolled learners, unlike the authoring lesson endpoint.
+  const courseContentQuery = useQuery({
+    ...courseContentQueryOptions(course.uuid ?? ''),
+    enabled: Boolean(course.uuid),
+    staleTime: STALE_TIMES.entity,
+  });
+  const hasCourseContent =
+    !hasApiError(courseContentQuery.data ?? undefined) &&
+    courseContentQuery.data?.data?.full_access === true;
+  // Some assigned instructors have lesson-level access only. Keep that
+  // server-authorised path as a fallback, without fetching every lesson.
   const contentQuery = useQuery({
-    ...getLessonContentOptions({ path: { courseUuid: lesson.course_uuid, lessonUuid: lessonId } }),
-    enabled: Boolean(lesson.course_uuid && lessonId),
+    ...getLessonContentOptions({ path: { courseUuid: course.uuid ?? '', lessonUuid: lessonId } }),
+    enabled:
+      Boolean(course.uuid && lessonId) &&
+      (courseContentQuery.isSuccess || courseContentQuery.isError) &&
+      !hasCourseContent,
     staleTime: STALE_TIMES.entity,
   });
   const typesQuery = useQuery({
     ...getAllContentTypesOptions({ query: { pageable: { page: 0, size: 100 } } }),
     staleTime: STALE_TIMES.reference,
   });
-  const contents = useMemo(
+  const { contents, lessonFound } = useMemo(
     () =>
-      hasApiError(contentQuery.data)
-        ? []
-        : [...(contentQuery.data?.data ?? [])].sort(
-          (a, b) => (a.display_order ?? 0) - (b.display_order ?? 0)
-        ),
-    [contentQuery.data]
+      resolveWorkbookLessonContent(courseContentQuery.data, contentQuery.data, lessonId),
+    [courseContentQuery.data, contentQuery.data, lessonId]
   );
   const contentTypes = useMemo(
     () =>
@@ -222,13 +271,17 @@ function SelectedLessonWorkbook({
       ? '/dashboard/instructor/training-hub?tab=classes'
       : '/dashboard/student/learning-hub';
   const selectLesson = (id: string) =>
-    navigate({ lesson: id, content: null, view: null, tab: 'lesson' });
+    navigate({ course: course.uuid ?? null, lesson: id, content: null, view: null, tab: 'lesson' });
   const nextLesson = lessons[lessons.findIndex(item => item.uuid === lessonId) + 1];
   const contentError =
-    contentQuery.isError ||
+    (hasCourseContent
+      ? !lessonFound
+      : contentQuery.isError || hasApiError(contentQuery.data)) ||
     typesQuery.isError ||
-    hasApiError(contentQuery.data) ||
     hasApiError(typesQuery.data);
+  const contentLoading =
+    courseContentQuery.isLoading || (!hasCourseContent && contentQuery.isLoading);
+  const contentSuccess = hasCourseContent || contentQuery.isSuccess;
   const resources = (
     <ResourcesPanel
       materials={contents}
@@ -238,24 +291,23 @@ function SelectedLessonWorkbook({
 
   const progressPercentage = classDefinition.class_progress_percentage ?? 0;
 
-  let body: ReactNode;
-  if (showList)
-    body = (
+  const lessonOutline = showList ? (lessonsList ?? (
       <LessonsListPanel
         lessons={lessons}
         currentLesson={lessonId}
         onSelect={selectLesson}
         moreLessons={moreLessons}
       />
-    );
-  else if (tab === 'practice')
-    body = <PracticePanel courseId={lesson.course_uuid} lessonId={lessonId} role={role} />;
+    )) : undefined;
+  let body: ReactNode;
+  if (tab === 'practice')
+    body = <PracticePanel courseId={course.uuid ?? ''} lessonId={lessonId} role={role} />;
   else if (tab === 'quiz' || tab === 'assignment' || tab === 'grading')
     body = (
       <EvaluationPanel
         key={tab}
         classId={classId}
-        courseId={lesson.course_uuid}
+        courseId={course.uuid ?? ''}
         lessonId={lessonId}
         role={role}
         section={tab}
@@ -285,12 +337,13 @@ function SelectedLessonWorkbook({
         )}
       </div>
     );
-  else if (contentQuery.isLoading || typesQuery.isLoading) body = <WorkbookLoading />;
+  else if (contentLoading || typesQuery.isLoading) body = <WorkbookLoading />;
   else if (contentError)
     body = (
       <WorkbookError
         title='Unable to load lesson content'
         retry={() => {
+          void courseContentQuery.refetch();
           void contentQuery.refetch();
           void typesQuery.refetch();
         }}
@@ -402,17 +455,43 @@ function SelectedLessonWorkbook({
       }}
       onTabChange={value => navigate({ tab: value, view: null })}
       showList={showList}
-      onBrowseLessons={() => navigate({ view: 'lessons' })}
+      lessonOutline={lessonOutline}
+      onBrowseLessons={() => navigate({ view: showList ? null : 'lessons' })}
       pageIndex={pageIndex}
       pageCount={contentError || (requestedContentId && foundIndex < 0) ? 0 : contents.length}
       contentReady={
-        contentQuery.isSuccess &&
+        contentSuccess &&
         typesQuery.isSuccess &&
         !contentError &&
         (!requestedContentId || foundIndex >= 0)
       }
       onPageChange={index => navigate({ content: contents[index]?.uuid ?? null })}
       onNextLesson={nextLesson?.uuid ? () => selectLesson(nextLesson.uuid!) : undefined}
+      nextCourseAction={
+        nextCourse?.uuid &&
+        !nextLesson &&
+        !moreLessons &&
+        (isCompleted ||
+          (tab === 'lesson' &&
+            !contentLoading &&
+            !contentError &&
+            (!requestedContentId || foundIndex >= 0) &&
+            contents.length > 0 &&
+            pageIndex === contents.length - 1))
+          ? {
+              title: nextCourse.name,
+              onStart: () =>
+                navigate({
+                  course: nextCourse.uuid,
+                  lesson: nextCourse.lessonUuid ?? null,
+                  content: null,
+                  enrollment: null,
+                  tab: 'lesson',
+                  view: null,
+                }),
+            }
+          : undefined
+      }
       actions={
         <div className='flex flex-wrap items-center gap-3'>
 

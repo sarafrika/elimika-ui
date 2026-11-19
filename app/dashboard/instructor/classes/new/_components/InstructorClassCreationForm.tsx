@@ -108,6 +108,7 @@ import {
 } from '@/services/client/@tanstack/react-query.gen';
 import type { CreateClassDefinitionMultipartData } from '@/services/client/types.gen';
 import {
+  ApplicantTypeEnum,
   ConflictResolutionEnum,
   LocationTypeEnum,
   RecurrenceTypeEnum,
@@ -917,32 +918,50 @@ const InstructorClassCreationForm = ({
   } = useInstructorApprovedOfferings(instructor?.uuid);
 
   const catalogItems = useMemo<CatalogItem[]>(() => {
-    const courseItems: CatalogItem[] = approvedCourses.map(course => ({
-      label: course?.name,
-      source: 'course',
-      uuid: String(course?.uuid),
-      classLimit: course?.class_limit ?? 0,
-      thumbnailUrl: course?.thumbnail_url || 'NF',
-      rateCard: course?.application?.rate_card as CatalogRateCard | undefined,
-      applicationUuid: course?.application?.uuid,
-      requirementAnswers: course?.application?.requirement_answers,
-      ageGroups: course?.application?.age_groups,
-      pendingRateUpdateUuid: course?.application?.pending_rate_update_uuid,
-    }));
-    const programItems: CatalogItem[] = approvedPrograms.map(program => ({
-      label: program?.title,
-      source: 'program',
-      uuid: String(program?.uuid),
-      classLimit: program?.class_limit ?? 0,
-      rateCard: program?.application?.rate_card as CatalogRateCard | undefined,
-      applicationUuid: program?.application?.uuid,
-      requirementAnswers: program?.application?.requirement_answers,
-      ageGroups: program?.application?.age_groups,
-      pendingRateUpdateUuid: program?.application?.pending_rate_update_uuid,
-      thumbnailUrl: '',
-    }));
+    const courseItems: CatalogItem[] = approvedCourses
+      .filter(
+        course =>
+          course.application.status === 'approved' &&
+          course.application.applicant_type === ApplicantTypeEnum.INSTRUCTOR &&
+          Boolean(instructor?.uuid) &&
+          course.application.applicant_uuid === instructor?.uuid &&
+          course.application.course_uuid === course.uuid
+      )
+      .map(course => ({
+        label: course?.name,
+        source: 'course',
+        uuid: String(course?.uuid),
+        classLimit: course?.class_limit ?? 0,
+        thumbnailUrl: course?.thumbnail_url || 'NF',
+        rateCard: course?.application?.rate_card as CatalogRateCard | undefined,
+        applicationUuid: course?.application?.uuid,
+        requirementAnswers: course?.application?.requirement_answers,
+        ageGroups: course?.application?.age_groups,
+        pendingRateUpdateUuid: course?.application?.pending_rate_update_uuid,
+      }));
+    const programItems: CatalogItem[] = approvedPrograms
+      .filter(
+        program =>
+          program.application.status === 'approved' &&
+          program.application.applicant_type === ApplicantTypeEnum.INSTRUCTOR &&
+          Boolean(instructor?.uuid) &&
+          program.application.applicant_uuid === instructor?.uuid &&
+          program.application.program_uuid === program.uuid
+      )
+      .map(program => ({
+        label: program?.title,
+        source: 'program',
+        uuid: String(program?.uuid),
+        classLimit: program?.class_limit ?? 0,
+        rateCard: program?.application?.rate_card as CatalogRateCard | undefined,
+        applicationUuid: program?.application?.uuid,
+        requirementAnswers: program?.application?.requirement_answers,
+        ageGroups: program?.application?.age_groups,
+        pendingRateUpdateUuid: program?.application?.pending_rate_update_uuid,
+        thumbnailUrl: '',
+      }));
     return [...courseItems, ...programItems];
-  }, [approvedCourses, approvedPrograms]);
+  }, [approvedCourses, approvedPrograms, instructor?.uuid]);
 
   useEffect(() => {
     if (!isDataInitialized || classId || !requestedOffering || offeringPrefillApplied) return;
@@ -967,10 +986,12 @@ const InstructorClassCreationForm = ({
 
   const selectedCatalogItem = useMemo(
     () =>
+      // Program classes may retain a course id in restored or existing data.
+      // Resolve the offering kind first so its rates cannot come from another kind.
       catalogItems.find(item =>
-        item.source === 'course'
-          ? item.uuid === classDetails.course_uuid
-          : item.uuid === classDetails.program_uuid
+        classDetails.program_uuid
+          ? item.source === 'program' && item.uuid === classDetails.program_uuid
+          : item.source === 'course' && item.uuid === classDetails.course_uuid
       ),
     [catalogItems, classDetails.course_uuid, classDetails.program_uuid]
   );

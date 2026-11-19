@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, BookOpen, ChevronLeft, ChevronRight, ClipboardCheck, Dumbbell, FileCheck2, FileQuestion, FileText, FolderOpen, Home, List, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import { type ReactNode, useEffect, useRef } from 'react';
-import { Card } from '../../../../../../components/ui/card';
+import { Card, CardContent } from '../../../../../../components/ui/card';
 import type { LessonTabKey } from './LessonTabPanels';
 
 const TABS = [
@@ -46,11 +46,13 @@ export function LessonShell({
   onBrowseLessons,
   showList,
   children,
+  lessonOutline,
   actions,
   pageIndex,
   pageCount,
   onPageChange,
   onNextLesson,
+  nextCourseAction,
   contentReady,
   isCompleted,
   onComplete,
@@ -68,11 +70,13 @@ export function LessonShell({
   onBrowseLessons: () => void;
   showList: boolean;
   children: ReactNode;
+  lessonOutline?: ReactNode;
   actions?: ReactNode;
   pageIndex: number;
   pageCount: number;
   onPageChange: (index: number) => void;
   onNextLesson?: () => void;
+  nextCourseAction?: { title: string; onStart: () => void };
   contentReady: boolean;
   isCompleted: boolean;
   onComplete: () => void;
@@ -80,8 +84,8 @@ export function LessonShell({
   /** The session report is the instructor's; learners never see the tab. */
   showReportTab?: boolean;
 }) {
-  const showPagination = tab === 'lesson' && !showList && pageCount > 0;
-  const showNavigation = !showList && tab !== 'resources' && (tab !== 'lesson' || contentReady);
+  const showPagination = tab === 'lesson' && pageCount > 0;
+  const showNavigation = tab !== 'resources' && (tab !== 'lesson' || contentReady);
   const nextSection = NEXT_SECTION[tab];
   const previousSection = PREVIOUS_SECTION[tab];
   const hasNextContent = tab === 'lesson' && pageIndex < pageCount - 1;
@@ -98,7 +102,7 @@ export function LessonShell({
   const contentStart = useRef<HTMLDivElement>(null);
   const hasMounted = useRef(false);
   useEffect(() => {
-    const target = hasMounted.current ? contentStart.current : shellStart.current;
+    const target = !hasMounted.current || showList ? shellStart.current : contentStart.current;
     target?.scrollIntoView({ block: 'start' });
     hasMounted.current = true;
   }, [pageIndex, tab, showList]);
@@ -159,8 +163,8 @@ export function LessonShell({
                     key={key}
                     variant='ghost'
                     onClick={() => onTabChange(key)}
-                    aria-current={!showList && tab === key ? 'page' : undefined}
-                    className={`h-12 shrink-0 rounded-none border-b-2 px-3 ${!showList && tab === key
+                    aria-current={tab === key ? 'page' : undefined}
+                    className={`h-12 shrink-0 rounded-none border-b-2 px-3 ${tab === key
                       ? 'border-primary text-primary'
                       : 'text-muted-foreground border-transparent'
                       }`}
@@ -202,9 +206,9 @@ export function LessonShell({
                 </Link>
               </Button>
 
-              <Button variant='outline' onClick={onBrowseLessons}>
+              <Button variant='outline' onClick={onBrowseLessons} aria-expanded={showList}>
                 <List className='h-4 w-4' />
-                All lessons
+                {showList ? 'Hide lessons' : 'All lessons'}
               </Button>
 
               {actions}
@@ -216,6 +220,13 @@ export function LessonShell({
         <main className='flex min-w-0 flex-1 flex-col px-3 py-4 sm:px-7 sm:py-6'>
           <div className='mx-auto flex w-full flex-col items-start gap-6 lg:flex-row'>
             <div className='w-full min-w-0 flex-1'>
+              {lessonOutline && (
+                <Card className='mb-4'>
+                  <CardContent className='max-h-[28rem] overflow-y-auto'>
+                    {lessonOutline}
+                  </CardContent>
+                </Card>
+              )}
               <Card className='min-h-[34rem] rounded-lg border shadow-sm'>
                 <div
                   ref={contentStart}
@@ -266,6 +277,14 @@ export function LessonShell({
                   <Button onClick={nextAction.onClick}>
                     {nextAction.label}
                     <ChevronRight className='h-4 w-4' />
+                  </Button>
+                </div>
+              )}
+              {nextCourseAction && (
+                <div className='mt-4 flex justify-end'>
+                  <Button onClick={nextCourseAction.onStart} className='h-auto whitespace-normal'>
+                    Start next course: {nextCourseAction.title}
+                    <ChevronRight className='h-4 w-4 shrink-0' />
                   </Button>
                 </div>
               )}

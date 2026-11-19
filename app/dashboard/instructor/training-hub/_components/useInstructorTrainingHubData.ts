@@ -167,15 +167,10 @@ export function useInstructorTrainingHubData() {
     [approvedApplicationMap, coursesResponse?.data?.content]
   );
 
-  const relevantClasses = useMemo(
-    () =>
-      classes.filter(classItem => {
-        const resourceUuid = classItem?.course_uuid ?? classItem?.program_uuid;
-
-        return Boolean(resourceUuid) && approvedApplicationMap.has(resourceUuid as string);
-      }),
-    [approvedApplicationMap, classes]
-  );
+  // The instructor class endpoint already scopes this list to their assigned classes.
+  // Course application approvals describe the creation catalogue, not existing classes:
+  // filtering by them hides program classes and classes assigned by organisations.
+  const relevantClasses = classes;
 
   const classesByCourse = useMemo(() => {
     const map = new Map<string, typeof relevantClasses>();
@@ -316,7 +311,9 @@ export function useInstructorTrainingHubData() {
         classUuid: classItem.uuid ?? '',
         title: classItem.title,
         duration_minutes: classItem.duration_minutes ?? 'N/A',
-        provider: classItem.course?.category_names?.[0] ?? 'Approved course',
+        provider:
+          classItem.course?.category_names?.[0] ??
+          (classItem.program_uuid ? 'Approved program' : 'Approved course'),
         level:
           classItem.course?.total_duration_display ||
           classItem.course?.category_names?.[0] ||
