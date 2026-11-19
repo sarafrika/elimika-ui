@@ -11,6 +11,7 @@ import { DashboardPageSkeleton } from '@/src/features/dashboard/components/dashb
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { domainFromPath } from '@/src/features/dashboard/lib/dashboard-url';
+import { hasOrganisationAdminAffiliation } from '@/src/features/dashboard/lib/org-admin-affiliation';
 import {
   useOrganisation,
   useOrganisationLoading,
@@ -51,7 +52,7 @@ export default function DomainAccessGate({ children }: { children: ReactNode }) 
   const pathname = usePathname();
   const router = useRouter();
 
-  const hasOrganisation = Boolean(profile?.organisation_affiliations?.length);
+  const hasOrganisation = hasOrganisationAdminAffiliation(profile?.organisation_affiliations);
   const organisationVerifiedFlag = resolveOrganisationVerified(organisation);
   const organisationVerified = hasOrganisation ? organisationVerifiedFlag === true : true;
 

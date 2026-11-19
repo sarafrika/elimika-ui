@@ -11,6 +11,7 @@ import {
   type UserOrganisationAffiliationDto,
 } from '@/services/client';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
+import { organisationAdminAffiliations } from '@/src/features/dashboard/lib/org-admin-affiliation';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 
 type OrganisationContextValue = Organisation | null;
@@ -44,10 +45,11 @@ export default function OrganisationProvider({
   const [storedOrgId, setStoredOrgId] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
 
-  const affiliations: UserOrganisationAffiliationDto[] =
-    userProfile?.organisation_affiliations ?? [];
-  const activeAffiliation: UserOrganisationAffiliationDto | undefined =
-    affiliations.find(org => org.active) ?? affiliations[0];
+  // Only orgs the user administers; a student/instructor affiliation never selects an org here.
+  const affiliations: UserOrganisationAffiliationDto[] = organisationAdminAffiliations(
+    userProfile?.organisation_affiliations
+  );
+  const activeAffiliation: UserOrganisationAffiliationDto | undefined = affiliations[0];
 
   const storageKey = useMemo(() => {
     const identifier = userProfile?.uuid ?? identity?.uuid ?? userProfile?.email;

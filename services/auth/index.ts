@@ -1,6 +1,7 @@
 import NextAuth, { type NextAuthConfig } from 'next-auth';
 import type { JWT } from 'next-auth/jwt';
 import Keycloak from 'next-auth/providers/keycloak';
+import { hasOrganisationAdminAffiliation, organisationAdminAffiliations } from '@/src/features/dashboard/lib/org-admin-affiliation';
 
 /**
  * Decode JWT token to extract claims
@@ -59,9 +60,9 @@ function getSessionIdToken(session: unknown): string | undefined {
 
 // Lets the client start the organisation fetch alongside `/me` instead of after it.
 function activeOrganisationUuid(
-  affiliations: { active?: boolean; organisation_uuid?: string }[] | null | undefined
+  affiliations: Parameters<typeof organisationAdminAffiliations>[0]
 ): string | null {
-  const affiliation = affiliations?.find(a => a.active) ?? affiliations?.[0];
+  const [affiliation] = organisationAdminAffiliations(affiliations);
   return affiliation?.organisation_uuid ?? null;
 }
 
@@ -82,7 +83,7 @@ async function stampIdentity(token: JWT): Promise<JWT> {
       identity: {
         uuid: user.uuid,
         domains: rawDomains.filter((d): d is string => typeof d === 'string' && d.length > 0),
-        hasOrganisationAffiliation: (user.organisation_affiliations?.length ?? 0) > 0,
+        hasOrganisationAffiliation: hasOrganisationAdminAffiliation(user.organisation_affiliations),
         organisationUuid: activeOrganisationUuid(user.organisation_affiliations),
       },
     };
