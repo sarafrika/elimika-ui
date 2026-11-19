@@ -50,7 +50,8 @@ test('the cards show the selected approved service without separate delivery or 
   );
   assert.match(html, /Which service\?/);
   assert.match(html, /KES 1,200 \/ hour/);
-  assert.equal((html.match(/role="radio"/g) ?? []).length, 1);
+  assert.equal((html.match(/role="radio"/g) ?? []).length, 4);
+  assert.equal((html.match(/disabled=""/g) ?? []).length, 3);
   assert.equal((html.match(/aria-checked="true"/g) ?? []).length, 1);
   assert.doesNotMatch(html, /How is it delivered\?|How are learners billed\?|Instructor pay/);
 });

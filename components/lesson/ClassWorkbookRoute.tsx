@@ -1,18 +1,9 @@
 'use client';
 
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
-import { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { ProgramLessonsPanel } from './ProgramLessonsPanel';
+import { useProgramWorkbookLessons } from './useProgramWorkbookLessons';
 import { EmptyState } from '@/components/ui/empty-state';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getClassDefinitionOptions,
@@ -22,17 +13,22 @@ import {
   getProgramCoursesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import type { ClassDefinition, Course, Lesson } from '@/services/client/types.gen';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { useMemo, type ReactNode } from 'react';
 import { ClassLessonWorkbook } from './ClassLessonWorkbook';
 import { useSessionLesson } from './useSessionLesson';
 import { useWorkbookNavigation } from './useWorkbookNavigation';
-import { WorkbookError } from './WorkbookError';
-import { WorkbookLoading } from './WorkbookLoading';
 import {
   hasApiError,
   nextWorkbookPage,
   WORKBOOK_PAGE_SIZE,
   type WorkbookRole,
+  type WorkbookNextCourse,
 } from './workbook-data';
+import { WorkbookError } from './WorkbookError';
+import { WorkbookLoading } from './WorkbookLoading';
 
 export function ClassWorkbookRoute({
   role,
@@ -102,7 +98,6 @@ function ClassWorkspace({ classId, role }: { classId: string; role: WorkbookRole
 type WorkspaceProps = { classId: string; classDefinition: ClassDefinition; role: WorkbookRole };
 
 function ProgramWorkspace({ programId, ...props }: WorkspaceProps & { programId: string }) {
-  const { searchParams, navigate } = useWorkbookNavigation();
   const query = useQuery({
     ...getProgramCoursesOptions({ path: { programUuid: programId } }),
     enabled: Boolean(programId),
@@ -111,42 +106,88 @@ function ProgramWorkspace({ programId, ...props }: WorkspaceProps & { programId:
   if (query.isLoading) return <WorkbookLoading />;
   if (query.isError || hasApiError(query.data))
     return <WorkbookError retry={() => void query.refetch()} />;
-  const courses = query.data?.data?.filter(course => Boolean(course.uuid)) ?? [];
-  const course = courses.find(item => item.uuid === searchParams.get('course')) ?? courses[0];
-  if (!course?.uuid) return <EmptyState title='No courses in this programme' />;
+  const courses =
+    query.data?.data?.filter((course): course is Course & { uuid: string } =>
+      Boolean(course.uuid)
+    ) ?? [];
+  if (!courses.length) return <EmptyState title='No courses in this programme' />;
+  return <LoadedProgramWorkspace {...props} courses={courses} />;
+}
+
+function LoadedProgramWorkspace({
+  courses,
+  ...props
+}: WorkspaceProps & {
+  courses: (Course & { uuid: string })[];
+}) {
+  const { searchParams, navigate } = useWorkbookNavigation();
+  const curriculum = useProgramWorkbookLessons(courses, props.role);
+  if (curriculum.isLoading) return <WorkbookLoading />;
+  if (curriculum.isError) return <WorkbookError retry={curriculum.retry} />;
+  const requestedLesson = searchParams.get('lesson');
+  const course =
+    courses.find(item => item.uuid === searchParams.get('course')) ??
+    courses.find(item =>
+      curriculum.lessonsByCourse.get(item.uuid)?.some(lesson => lesson.uuid === requestedLesson)
+    ) ??
+    courses[0];
+  if (!course) return <EmptyState title='No courses in this programme' />;
+  const nextCourse = courses[courses.indexOf(course) + 1];
+
   return (
-    <div>
-      <div className='bg-background border-b p-4'>
-        <Select
-          value={course.uuid}
-          onValueChange={id =>
-            navigate({ course: id, lesson: null, content: null, tab: 'lesson', view: null })
+    <CourseWorkspace
+      key={course.uuid}
+      {...props}
+      courseId={course.uuid}
+      programCourse={course}
+      programLessons={curriculum.lessonsByCourse.get(course.uuid) ?? []}
+      lessonsList={
+        <ProgramLessonsPanel
+          courses={courses}
+          lessonsByCourse={curriculum.lessonsByCourse}
+          onSelect={(courseId, lessonId) =>
+            navigate({
+              course: courseId,
+              lesson: lessonId,
+              content: null,
+              enrollment: null,
+              tab: 'lesson',
+              view: null,
+            })
           }
-        >
-          <SelectTrigger className='w-full sm:w-96' aria-label='Programme course'>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {courses.map(item =>
-              item.uuid ? (
-                <SelectItem key={item.uuid} value={item.uuid}>
-                  {item.name}
-                </SelectItem>
-              ) : null
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-      <CourseWorkspace key={course.uuid} {...props} courseId={course.uuid} />
-    </div>
+        />
+      }
+      nextCourse={
+        nextCourse
+          ? {
+              uuid: nextCourse.uuid,
+              name: nextCourse.name,
+              lessonUuid: curriculum.lessonsByCourse.get(nextCourse.uuid)?.[0]?.uuid,
+            }
+          : undefined
+      }
+    />
   );
 }
 
-function CourseWorkspace({ courseId, ...props }: WorkspaceProps & { courseId: string }) {
+function CourseWorkspace({
+  courseId,
+  programCourse,
+  programLessons,
+  lessonsList,
+  nextCourse,
+  ...props
+}: WorkspaceProps & {
+  courseId: string;
+  programCourse?: Course;
+  programLessons?: Lesson[];
+  lessonsList?: ReactNode;
+  nextCourse?: WorkbookNextCourse;
+}) {
   const { searchParams } = useWorkbookNavigation();
   const courseQuery = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseId } }),
-    enabled: Boolean(courseId),
+    enabled: Boolean(courseId) && !programCourse,
     staleTime: STALE_TIMES.entity,
   });
   const lessonsQuery = useInfiniteQuery({
@@ -156,15 +197,17 @@ function CourseWorkspace({ courseId, ...props }: WorkspaceProps & { courseId: st
     }),
     initialPageParam: 0,
     getNextPageParam: nextWorkbookPage,
-    enabled: Boolean(courseId),
+    enabled: Boolean(courseId) && !programLessons,
     staleTime: STALE_TIMES.entity,
   });
   const lessons = useMemo(
     () =>
       (
+        programLessons ??
         lessonsQuery.data?.pages.flatMap(page =>
           hasApiError(page) ? [] : (page.data?.content ?? [])
-        ) ?? []
+        ) ??
+        []
       )
         .filter(
           lesson =>
@@ -173,7 +216,7 @@ function CourseWorkspace({ courseId, ...props }: WorkspaceProps & { courseId: st
               (lesson.active !== false && lesson.status?.toUpperCase() === 'PUBLISHED'))
         )
         .sort((a, b) => a.lesson_number - b.lesson_number),
-    [lessonsQuery.data, props.role]
+    [lessonsQuery.data, programLessons, props.role]
   );
   // A link to a session without a lesson opens the lesson that session teaches.
   const sessionLesson = useSessionLesson(
@@ -181,12 +224,11 @@ function CourseWorkspace({ courseId, ...props }: WorkspaceProps & { courseId: st
     searchParams.get('lesson') ? null : searchParams.get('schedule'),
     lessons
   );
-  if (courseQuery.isLoading || lessonsQuery.isLoading) return <WorkbookLoading />;
+  if ((!programCourse && courseQuery.isLoading) || (!programLessons && lessonsQuery.isLoading))
+    return <WorkbookLoading />;
   if (
-    courseQuery.isError ||
-    lessonsQuery.isError ||
-    hasApiError(courseQuery.data) ||
-    lessonsQuery.data?.pages.some(hasApiError)
+    (!programCourse && (courseQuery.isError || hasApiError(courseQuery.data))) ||
+    (!programLessons && (lessonsQuery.isError || lessonsQuery.data?.pages.some(hasApiError)))
   ) {
     return (
       <WorkbookError
@@ -197,20 +239,28 @@ function CourseWorkspace({ courseId, ...props }: WorkspaceProps & { courseId: st
       />
     );
   }
-  const course = courseQuery.data?.data;
+  const course = programCourse ?? courseQuery.data?.data;
   if (!course) return <EmptyState title='Course not found' />;
   const requestedLessonId = searchParams.get('lesson');
   const requestedLesson = lessons.find(lesson => lesson.uuid === requestedLessonId);
-  const moreLessons = lessonsQuery.hasNextPage ? (
-    <Button
-      variant='outline'
-      disabled={lessonsQuery.isFetchingNextPage}
-      onClick={() => void lessonsQuery.fetchNextPage()}
-    >
-      Load more lessons
-    </Button>
-  ) : null;
-  const workbookProps = { ...props, course, lessons, moreLessons };
+  const moreLessons =
+    !programLessons && lessonsQuery.hasNextPage ? (
+      <Button
+        variant='outline'
+        disabled={lessonsQuery.isFetchingNextPage}
+        onClick={() => void lessonsQuery.fetchNextPage()}
+      >
+        Load more lessons
+      </Button>
+    ) : null;
+  const workbookProps = {
+    ...props,
+    course: { ...course, uuid: courseId },
+    lessons,
+    moreLessons,
+    lessonsList,
+    nextCourse,
+  };
   if (requestedLessonId && !requestedLesson)
     return (
       <RequestedLessonWorkspace
@@ -220,7 +270,12 @@ function CourseWorkspace({ courseId, ...props }: WorkspaceProps & { courseId: st
         lessonId={requestedLessonId}
       />
     );
-  return <ClassLessonWorkbook {...workbookProps} lesson={requestedLesson ?? sessionLesson ?? lessons[0]} />;
+  return (
+    <ClassLessonWorkbook
+      {...workbookProps}
+      lesson={requestedLesson ?? sessionLesson ?? lessons[0]}
+    />
+  );
 }
 
 function RequestedLessonWorkspace({
@@ -233,6 +288,8 @@ function RequestedLessonWorkspace({
   course: Course;
   lessons: Lesson[];
   moreLessons: React.ReactNode;
+  lessonsList?: ReactNode;
+  nextCourse?: WorkbookNextCourse;
 }) {
   const query = useQuery({
     ...getCourseLessonOptions({ path: { courseUuid: courseId, lessonUuid: lessonId } }),

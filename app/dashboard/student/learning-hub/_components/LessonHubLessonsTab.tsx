@@ -47,6 +47,7 @@ type ClassDetails = {
     title: string;
     description?: string | null;
     course_uuid?: string | null;
+    program_uuid?: string | null;
     thumbnail_url?: string | null;
 };
 
@@ -57,6 +58,7 @@ type ClassCardRow = {
     classDescription?: string | null;
     classHref: string;
     courseId?: string;
+    programId?: string;
     statusLabel: string;
     sessionCountLabel: string;
     latestActivityLabel: string;
@@ -161,7 +163,8 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                 const classDefinition = classDefinitionMap[item.class_definition_uuid] as
                     | ClassDetails
                     | undefined;
-                const courseUuid = classDefinition?.course_uuid ?? undefined;
+                const programId = classDefinition?.program_uuid ?? undefined;
+                const courseUuid = programId ? undefined : classDefinition?.course_uuid ?? undefined;
                 const classTitle =
                     classDefinition?.title?.trim() ||
                     '';
@@ -174,6 +177,7 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                     classDescription: classDefinition?.description ?? null,
                     classHref,
                     courseId: courseUuid,
+                    programId,
                     statusLabel: item.latest_enrollment_status
                         ? String(item.latest_enrollment_status).replaceAll('_', ' ')
                         : 'Enrolled',
@@ -197,7 +201,7 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                         : 'Start time pending',
                 };
             })
-            .filter(item => Boolean(item.courseId));
+            .filter(item => Boolean(item.courseId || item.programId));
     }, [classDefinitionMap, learningHubData.classEnrollments]);
 
     const courseUuids = useMemo(
@@ -220,7 +224,9 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
 
             return {
                 ...row,
-                courseTitle: course?.title ?? course?.name ?? 'Course content',
+                courseTitle: course?.title ?? course?.name ?? (
+                    row.programId ? 'Programme courses' : 'Course content'
+                ),
             };
         });
     }, [baseClassRows, courseMap]);
@@ -343,7 +349,11 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                         rows,
                     };
                 })
-                .filter(item => item.rows.length > 0),
+                .filter(item => item.rows.length > 0 || (
+                    item.programId &&
+                    (classFilter === 'all' || item.classDefinitionUuid === classFilter) &&
+                    !onlyBookmarked
+                )),
         [bookmarks, classFilter, classRows, lessons, onlyBookmarked]
     );
 
@@ -481,7 +491,7 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
             </div>
 
             <div className='mt-6 space-y-6'>
-                {filteredLessons.length === 0 ? (
+                {visibleClasses.length === 0 ? (
                     <Card>
                         <CardContent className='py-8 text-center text-sm text-muted-foreground'>
                             No lessons match this filter.
@@ -498,6 +508,20 @@ export function LessonHubLessonsTab({ learningHubData }: LessonHubLessonsTabProp
                             </CardHeader>
 
                             <CardContent className='space-y-2'>
+                                {classRow.programId && (
+                                    <div className='space-y-3 py-2'>
+                                        <p className='text-muted-foreground text-sm'>
+                                            Browse every course in this programme and open its
+                                            published lessons and learning materials.
+                                        </p>
+                                        <Button asChild variant='outline'>
+                                            <Link href={classRow.classHref}>
+                                                <BookOpen className='size-4' />
+                                                Browse programme courses and lessons
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                )}
                                 {classRow.rows
                                     .slice()
                                     .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))

@@ -16,6 +16,7 @@ import {
   STUDENT_PROFILE_PROMPT,
   studentCoursePath,
   studentEnrollmentState,
+  studentEnrollmentHref,
   studentEnrollmentSwitchHref,
   studentProfileSetupHref,
 } from '@/src/features/dashboard/lib/student-enrollment';
@@ -30,6 +31,7 @@ type StudentCourseActionProps = Pick<
   href: string;
   children: ReactNode;
   onContinue?: () => void;
+  onNavigate?: () => void;
 };
 
 /** Browsing stays open; the student profile is required only when a learner action is clicked. */
@@ -37,6 +39,7 @@ export function StudentCourseAction({
   href,
   children,
   onContinue,
+  onNavigate,
   ...props
 }: StudentCourseActionProps) {
   const profile = useUserProfile();
@@ -49,10 +52,28 @@ export function StudentCourseAction({
     activeDomain: domain.activeDomain,
   });
 
-  if (state === 'loading' || props.disabled) {
+  if (props.disabled) {
     return (
-      <Button {...props} type='button' disabled aria-busy={state === 'loading'}>
+      <Button {...props} type='button' disabled>
         {children}
+      </Button>
+    );
+  }
+
+  // Profile hydration should not disable navigation to enrollment. The entry
+  // route resolves the profile before continuing to the requested class.
+  if (state === 'loading') {
+    return (
+      <Button {...props} asChild>
+        <Link
+          href={studentEnrollmentHref(href)}
+          onClick={event => {
+            event.stopPropagation();
+            onNavigate?.();
+          }}
+        >
+          {children}
+        </Link>
       </Button>
     );
   }
@@ -64,6 +85,7 @@ export function StudentCourseAction({
         type='button'
         onClick={event => {
           event.stopPropagation();
+          onNavigate?.();
           onContinue();
         }}
       >
@@ -77,7 +99,10 @@ export function StudentCourseAction({
       <Button {...props} asChild>
         <Link
           href={state === 'ready' ? studentCoursePath(href) : studentEnrollmentSwitchHref(href)}
-          onClick={event => event.stopPropagation()}
+          onClick={event => {
+            event.stopPropagation();
+            onNavigate?.();
+          }}
         >
           {children}
         </Link>

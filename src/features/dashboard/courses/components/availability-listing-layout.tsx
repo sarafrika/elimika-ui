@@ -25,12 +25,12 @@ import {
   Users,
   Wallet,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
+import { classRegistrationState } from '../lib/class-registration-state';
 import { useClassSchedule } from '../../../../../hooks/use-class-schedule';
 import { useCourseLessonsWithContent } from '../../../../../hooks/use-courselessonwithcontent';
 import type { ClassSessionTemplate, Organisation } from '../../../../../services/client';
 import { toAuthenticatedMediaUrl } from '../../../../lib/media-url';
-import { useUserDomain } from '../../context/user-domain-context';
 import { ClassDetailSheet } from '../shared/_components/ClassDetailsSheet';
 import { VideoPreviewModal } from '@/components/ui/video-preview-modal';
 import { BundledClass } from '../types';
@@ -163,15 +163,8 @@ export default function AvailabilityClassCard({
   organisation = null,
   priority = false,
 }: Props) {
-  const { activeDomain } = useUserDomain();
-  const isStudentDomain = activeDomain === 'student';
-
   const [detail, setDetail] = useState<BundledClass | null>(null);
   const [isPromoVideoOpen, setIsPromoVideoOpen] = useState(false);
-  const [isRegistrationOngoing, setIsRegistrationOngoing] = useState(false);
-  const [isRegistrationPeriodUndefined, setIsRegistrationPeriodUndefined] = useState(false);
-  const [isClassEnded, setIsClassEnded] = useState(false);
-  const [canEnrollClass, setCanEnrollClass] = useState(false);
 
   // Listings carry no ratings; the block is hidden rather than showing a false zero.
   const hasRating = cls.classRating != null;
@@ -193,9 +186,10 @@ export default function AvailabilityClassCard({
   // CLASS SCHEDULES: learner listings batch undated classes' schedules; any other card loads its
   // own only when Class Info opens.
   const ownSchedule = useClassSchedule(cls.uuid, !cls.scheduleLoaded && detail !== null);
-  // Staff read session progress from the class DTO instead of fetching the schedule.
+  // These public counts apply to every viewer. Enrollment state must not change
+  // merely because the student's dashboard profile has finished hydrating.
   const dtoSessionCount =
-    !isStudentDomain && cls.scheduled_session_count != null
+    cls.scheduled_session_count != null
       ? Number(cls.scheduled_session_count)
       : undefined;
   const dtoEnded =
@@ -231,51 +225,14 @@ export default function AvailabilityClassCard({
   const isStudentEnrolled = cls.isStudentEnrolled === true;
   const seatsTaken: number | string = cls.enrolledCount ?? '—';
 
-  // REGISTRATION PERIOD, CLASS ENDED BLOCK
-  useEffect(() => {
-    const now = new Date();
-
-    const registrationStartDate = registrationStart ? new Date(registrationStart) : null;
-
-    const registrationEndDate = registrationEnd ? new Date(registrationEnd) : null;
-
-    const classEndDate = endsAt ? new Date(endsAt) : null;
-
-    const noRegistrationPeriod = !registrationStartDate && !registrationEndDate;
-
-    const registrationOngoing = noRegistrationPeriod
-      ? false
-      : (!registrationStartDate || now >= registrationStartDate) &&
-        (!registrationEndDate || now <= registrationEndDate);
-
-    const classEnded = dtoEnded || (classEndDate !== null && now >= classEndDate);
-
-    setIsRegistrationPeriodUndefined(noRegistrationPeriod);
-    setIsRegistrationOngoing(registrationOngoing);
-    setIsClassEnded(classEnded);
-
-    setCanEnrollClass(
-      endStateKnown && !classEnded && (registrationOngoing || noRegistrationPeriod)
-    );
-  }, [registrationStart, registrationEnd, endsAt, endStateKnown, dtoEnded]);
-
-  useEffect(() => {
-    const now = new Date();
-
-    if (!cls?.registration_period_start_date) {
-      setIsRegistrationOngoing(false);
-      return;
-    }
-
-    const start = new Date(cls?.registration_period_start_date);
-    const end = cls?.registration_period_end_date
-      ? new Date(cls?.registration_period_end_date)
-      : null;
-
-    const isOngoing = now >= start && (end === null || now <= end);
-
-    setIsRegistrationOngoing(isOngoing);
-  }, [cls?.registration_period_start_date, cls?.registration_period_end_date]);
+  const { isRegistrationOngoing, isRegistrationPeriodUndefined, isClassEnded, canViewEnrollment } =
+    classRegistrationState({
+      registrationStart,
+      registrationEnd,
+      endsAt,
+      endStateKnown,
+      completed: dtoEnded,
+    });
 
   return (
     <div>
@@ -464,7 +421,7 @@ export default function AvailabilityClassCard({
             ) : (
               <StudentCourseAction
                 href={studentClassEnrollmentPath(cls)}
-                disabled={!canEnrollClass}
+                disabled={!canViewEnrollment}
                 onContinue={() => onEnroll(cls)}
                 className='bg-primary hover:bg-primary/90'
               >

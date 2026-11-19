@@ -1,4 +1,5 @@
 export type WorkbookRole = 'instructor' | 'student';
+export type WorkbookNextCourse = { uuid: string; name: string; lessonUuid?: string };
 
 /** Keep API failure envelopes distinct from legitimately empty lists. */
 export function hasApiError(response?: { error?: unknown; success?: boolean }) {

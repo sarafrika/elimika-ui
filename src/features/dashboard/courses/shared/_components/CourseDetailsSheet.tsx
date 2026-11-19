@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { Badge } from '@/components/ui/badge';
-import { StudentCourseAction } from '../../components/StudentCourseAction';
 import { Separator } from '@/components/ui/separator';
 import {
   Sheet,
@@ -27,6 +26,7 @@ import {
   Users,
   UserSearch,
 } from 'lucide-react';
+import { StudentCourseAction } from '../../components/StudentCourseAction';
 
 import { useCourseAssessmentsByCourseUuids } from '@/hooks/use-batched-lookups';
 import { useCourseLessonsWithContent } from '@/hooks/use-courselessonwithcontent';
@@ -328,13 +328,12 @@ export function CourseDetailsSheet({
               <p className='text-foreground'>
                 {studentRequirements.length > 0
                   ? studentRequirements
-                      .map(
-                        (requirement: CourseTrainingRequirement) =>
-                          `${requirement.name} (${requirement.quantity ?? 0} ${
-                            requirement.unit ?? ''
-                          })`
-                      )
-                      .join(', ') + '.'
+                    .map(
+                      (requirement: CourseTrainingRequirement) =>
+                        `${requirement.name} (${requirement.quantity ?? 0} ${requirement.unit ?? ''
+                        })`
+                    )
+                    .join(', ') + '.'
                   : 'No student-provided materials required.'}
               </p>
             </Section>
@@ -346,11 +345,11 @@ export function CourseDetailsSheet({
               <p className='text-foreground'>
                 {assessments.length > 0
                   ? assessments
-                      .map(
-                        (assessment: CourseAssessment) =>
-                          `${assessment.title || 'Untitled Assessment'} (${assessment.weight_percentage ?? 0}%)`
-                      )
-                      .join(', ') + '.'
+                    .map(
+                      (assessment: CourseAssessment) =>
+                        `${assessment.title || 'Untitled Assessment'} (${assessment.weight_percentage ?? 0}%)`
+                    )
+                    .join(', ') + '.'
                   : 'Assessment details will be shared by the instructor.'}
               </p>
             </Section>
@@ -408,6 +407,7 @@ export function CourseDetailsSheet({
                     ? `/dashboard/courses/available-classes/${resolvedId}`
                     : `/dashboard/courses/available-programs/${resolvedId}`
                 }
+                onNavigate={() => onOpenChange(false)}
                 className='bg-primary hover:bg-primary/90'
               >
                 <Users className='mr-1 h-4 w-4' /> Join a Class
