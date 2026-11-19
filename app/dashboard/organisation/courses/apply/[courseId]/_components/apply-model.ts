@@ -6,7 +6,7 @@ import {
 } from '@/lib/rate-card';
 import type {
   CourseTrainingApplicationUpdateRequest,
-  CourseTrainingRequirement,
+  ProgramRequirement,
   TrainingRequirementAnswerRequest,
 } from '@/services/client';
 import type { CourseTrainerApplicantType } from '@/src/features/course-record';
@@ -156,7 +156,7 @@ export function offersInPerson(card: RateCard): boolean {
 
 /** The provider vocabulary, spelled every way the API has spelled it. */
 function normalizeRequirementProvider(provider?: string | null) {
-  switch (provider?.toLowerCase()) {
+  switch (provider?.trim().toLowerCase()) {
     case 'organisation':
     case 'organization':
     case 'organisation_user':
@@ -174,13 +174,24 @@ function normalizeRequirementProvider(provider?: string | null) {
   }
 }
 
-/** Requirements the applicant provides; an unstated provider counts as theirs. */
+/** Courses identify the provider; programs classify requirements by the responsible party. */
 export function isApplicantTrainingRequirement(
-  requirement: CourseTrainingRequirement,
+  requirement: { provided_by?: string | null; requirement_type?: string | null },
   applicantType: CourseTrainerApplicantType
 ) {
-  const provider = normalizeRequirementProvider(requirement.provided_by);
-  return provider === null || provider === applicantType;
+  const provider = normalizeRequirementProvider(
+    requirement.provided_by ?? requirement.requirement_type
+  );
+  return provider === applicantType;
+}
+
+/** Adapt a program requirement to the same question shape used for course requirements. */
+export function programRequirementPrompt(requirement: ProgramRequirement) {
+  return {
+    uuid: requirement.uuid ?? `${requirement.requirement_type}:${requirement.requirement_text}`,
+    name: requirement.requirement_text,
+    description: requirement.requirement_category ?? requirement.requirement_type,
+  };
 }
 
 /** The applicant's own note, or null; nothing else is folded into it. */

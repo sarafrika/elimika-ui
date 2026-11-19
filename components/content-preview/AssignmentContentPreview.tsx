@@ -38,7 +38,7 @@ function getFileType(file: AssignmentAttachment) {
   const mimeType = file.mime_type?.toLowerCase() ?? '';
   const extension = (file.original_filename || file.file_url || file.stored_filename || '')
     .split(/[?#]/)[0]
-    .split('.')
+    ?.split('.')
     .pop()
     ?.toLowerCase();
 

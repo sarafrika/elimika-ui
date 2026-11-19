@@ -52,6 +52,9 @@ export type CredentialItem = {
   recordUuid?: string;
   documentUuid?: string;
   stage: string;
+  completionLabel?: string;
+  issueLabel?: string;
+  profile_image?: string;
   level: string;
   status: string;
   statusIcon: LucideIcon;

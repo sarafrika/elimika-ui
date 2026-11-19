@@ -462,6 +462,7 @@ function mapCertificateItems(
         issuer,
         issuerIconText: getInitials(issuer).slice(0, 1) || 'C',
 
+        stage: status.stage,
         completionLabel: `Completed ${formatLongDate(completedTimeStamp)}`,
         issueLabel: `Issued ${formatLongDate(issueTimeStamp)}`,
 
@@ -481,8 +482,6 @@ function mapCertificateItems(
         metadata: certificate.final_grade ? `${certificate.final_grade}%` : undefined,
 
         timestamp: issueTimeStamp ? new Date(issueTimeStamp).getTime() : undefined,
-
-        completedDate: completedTimeStamp ? new Date(completedTimeStamp).getTime() : undefined,
 
         // optional: expose original learning object
         course: certificate.course,

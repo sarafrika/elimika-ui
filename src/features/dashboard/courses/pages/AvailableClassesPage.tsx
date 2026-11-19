@@ -89,12 +89,12 @@ export default function AvailableClassesPage({
     () =>
       nearMe.active
         ? filteredClasses
-          .filter(cls => cls.uuid && nearBands.has(cls.uuid))
-          .sort(
-            (left, right) =>
-              (nearBands.get(left.uuid ?? '')?.rank ?? 0) -
-              (nearBands.get(right.uuid ?? '')?.rank ?? 0)
-          )
+            .filter(cls => cls.uuid && nearBands.has(cls.uuid))
+            .sort(
+              (left, right) =>
+                (nearBands.get(left.uuid ?? '')?.rank ?? 0) -
+                (nearBands.get(right.uuid ?? '')?.rank ?? 0)
+            )
         : filteredClasses,
     [filteredClasses, nearMe.active, nearBands]
   );
@@ -358,30 +358,46 @@ export function CompareTable({
   onRemove: (id: string) => void;
 }) {
   const rows: { key: string; label: string; get: (c: BundledClass) => string }[] = [
-    { key: 'institution_name', label: 'Institution', get: c => c?.institution_name ?? '—' },
     { key: 'instructor', label: 'Instructor', get: c => c.instructor?.name ?? '—' },
-    { key: 'delivery_mode', label: 'Delivery mode', get: c => c.delivery_mode ?? '—' },
-    { key: 'class_type', label: 'Class type', get: c => c.class_type ?? '—' },
-    { key: 'academic_period', label: 'Academic period', get: c => c.academic_period ?? '—' },
-    { key: 'weekly_schedule', label: 'Weekly schedule', get: c => c.weekly_schedule ?? '—' },
+    { key: 'delivery_mode', label: 'Delivery mode', get: c => c.location_type ?? '—' },
+    { key: 'class_type', label: 'Class type', get: c => c.session_format ?? '—' },
+    {
+      key: 'academic_period',
+      label: 'Academic period',
+      get: c =>
+        [c.academic_period_start_date, c.academic_period_end_date]
+          .filter((date): date is Date => date != null)
+          .map(date => date.toLocaleDateString())
+          .join(' – ') || '—',
+    },
+    {
+      key: 'weekly_schedule',
+      label: 'Weekly schedule',
+      get: c => (c.schedule.length ? `${c.schedule.length} sessions` : '—'),
+    },
     {
       key: 'capacity',
       label: 'Capacity',
-      get: c => `${c.seats_available ?? 0} / ${c.capacity ?? 0} seats`,
+      get: c =>
+        `${c.max_participants != null && c.enrolledCount != null ? Math.max(0, c.max_participants - c.enrolledCount) : '—'} / ${c.max_participants ?? '—'} seats`,
     },
     {
       key: 'tuition_fee_kes',
       label: 'Tuition',
-      get: c => `KES ${Number(c.tuition_fee_kes ?? 0).toLocaleString()}`,
+      get: c => `KES ${Number(c.sale_price ?? 0).toLocaleString()}`,
     },
     {
-      key: 'skills_fund_eligible',
-      label: 'Skills Fund',
-      get: c => (c.skills_fund_eligible ? 'Eligible' : 'Not eligible'),
+      key: 'age_group',
+      label: 'Age group',
+      get: c => (c.course?.age_lower_limit != null ? `${c.course.age_lower_limit}+` : '—'),
     },
-    { key: 'age_group', label: 'Age group', get: c => c.age_group ?? '—' },
-    { key: 'prerequisite_level', label: 'Prerequisite', get: c => c.prerequisite_level ?? '—' },
-    { key: 'rating', label: 'Rating', get: c => (c.rating != null ? `${c.rating} ★` : '—') },
+    { key: 'prerequisite_level', label: 'Prerequisite', get: c => c.course?.prerequisites ?? '—' },
+    {
+      key: 'rating',
+      label: 'Rating',
+      get: c =>
+        c.classRating?.average_rating != null ? `${c.classRating?.average_rating} ★` : '—',
+    },
   ];
 
   return (

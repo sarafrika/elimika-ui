@@ -528,14 +528,14 @@ function TrainingRequirementsCard({
                                       <ul className='space-y-2'>
                                         {items.map((item, index) => {
                                           const label =
-                                            ('name' in item && item.name) ||
+                                            ('name' in item && typeof item.name === 'string' && item.name) ||
                                             ('requirement_text' in item
                                               ? item.requirement_text?.split('\n')[0]?.replace(/^Name:\s*/i, '')
                                               : undefined) ||
                                             'Untitled requirement';
 
                                           const detail =
-                                            'description' in item && item.description
+                                            'description' in item && typeof item.description === 'string' && item.description
                                               ? item.description
                                               : 'requirement_text' in item
                                                 ? item.requirement_text
@@ -552,7 +552,7 @@ function TrainingRequirementsCard({
                                           return (
                                             <li
                                               key={
-                                                ('uuid' in item && item.uuid) ||
+                                                ('uuid' in item && typeof item.uuid === 'string' && item.uuid) ||
                                                 `${provider}-${index}`
                                               }
                                               className='bg-muted/30 rounded-md p-2.5'

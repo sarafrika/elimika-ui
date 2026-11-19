@@ -6,8 +6,11 @@ import { STALE_TIMES } from '@/lib/query-client';
 import type { GetAllClassDefinitionsData, ScheduledInstance } from '@/services/client';
 import {
   getAllClassDefinitionsOptions,
+  getClassDefinitionsForInstructorOptions,
+  getClassDefinitionsForOrganisationOptions,
   getClassSchedulesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
+import type { ClassShareScope } from './class-share';
 
 // Bound the fallback to twelve requests including visible-card enrichment. A backend
 // summary/view endpoint is needed for larger catalogues; never truncate their counts.
@@ -24,25 +27,57 @@ export function useClassCatalogue(
   {
     enabled = true,
     includeSchedules = true,
-  }: { enabled?: boolean; includeSchedules?: boolean } = {}
+    shareScope,
+  }: { enabled?: boolean; includeSchedules?: boolean; shareScope?: ClassShareScope } = {}
 ) {
+  const shared = useQueries({
+    queries: (shareScope?.uuid ? [shareScope] : []).slice(0, 1).map(scope => ({
+      ...(scope.kind === 'organisation'
+        ? getClassDefinitionsForOrganisationOptions({
+            path: { organisationUuid: scope.uuid },
+          })
+        : getClassDefinitionsForInstructorOptions({
+            path: { instructorUuid: scope.uuid },
+            query: { activeOnly: false },
+          })),
+      enabled,
+      staleTime: STALE_TIMES.live,
+    })),
+    combine: results => ({
+      response: results[0]?.data,
+      pending: results.some(result => result.isPending),
+      fetching: results.some(result => result.isFetching),
+      success: results[0]?.isSuccess ?? false,
+      error: results[0]?.error,
+      refetch: () => Promise.all(results.map(result => result.refetch())),
+    }),
+  });
   const first = useQuery({
     ...getAllClassDefinitionsOptions({
       query: { ...query, pageable: { page: 0, size: BATCH_SIZE } },
     }),
-    enabled,
+    enabled: enabled && !shareScope,
     staleTime: STALE_TIMES.live,
   });
-  const firstResponseFailed = Boolean(first.data?.error || first.data?.success === false);
-  const firstPage = firstResponseFailed ? undefined : first.data?.data;
+  const firstResponseFailed = Boolean(
+    !shareScope && (first.data?.error || first.data?.success === false)
+  );
+  const firstPage = shareScope || firstResponseFailed ? undefined : first.data?.data;
   const pageCount = firstPage?.metadata?.totalPages ?? 1;
-  const tooLarge = pageCount > MAX_PAGES;
+  const tooLarge =
+    pageCount > MAX_PAGES ||
+    Boolean(
+      shareScope &&
+        !shared.response?.error &&
+        shared.response?.success !== false &&
+        (shared.response?.data?.length ?? 0) > BATCH_SIZE * MAX_PAGES
+    );
   const remaining = useQueries({
     queries: Array.from({ length: tooLarge ? 0 : Math.max(0, pageCount - 1) }, (_, index) => ({
       ...getAllClassDefinitionsOptions({
         query: { ...query, pageable: { page: index + 1, size: BATCH_SIZE } },
       }),
-      enabled: enabled && first.isSuccess && !firstResponseFailed,
+      enabled: enabled && !shareScope && first.isSuccess && !firstResponseFailed,
       staleTime: STALE_TIMES.live,
     })),
     combine: results => ({
@@ -54,20 +89,32 @@ export function useClassCatalogue(
     }),
   });
   const pages = useMemo(() => [first.data, ...remaining.pages], [first.data, remaining.pages]);
-  const responseError = pages.find(page => page?.error || page?.success === false);
+  const responseError = shareScope
+    ? shared.response?.error || shared.response?.success === false
+      ? shared.response
+      : undefined
+    : pages.find(page => page?.error || page?.success === false);
   const rows = useMemo(() => {
     const seen = new Set<string>();
-    return pages
-      .flatMap(page => (page?.error || page?.success === false ? [] : (page?.data?.content ?? [])))
-      .filter(row => {
-        const uuid = row.class_definition?.uuid;
-        if (!uuid || seen.has(uuid)) return false;
-        seen.add(uuid);
-        return true;
-      });
-  }, [pages]);
+    const listings = shareScope
+      ? shared.response?.error || shared.response?.success === false
+        ? []
+        : (shared.response?.data ?? [])
+      : pages.flatMap(page =>
+          page?.error || page?.success === false ? [] : (page?.data?.content ?? [])
+        );
+    return listings.filter(row => {
+      const uuid = row.class_definition?.uuid;
+      if (!uuid || seen.has(uuid)) return false;
+      seen.add(uuid);
+      return true;
+    });
+  }, [pages, shareScope, shared.response]);
+  const listingSuccess = shareScope ? shared.success : first.isSuccess;
+  const listingPending = shareScope ? shared.pending : first.isPending || remaining.pending;
+  const listingError = shareScope ? shared.error : (first.error ?? remaining.error);
   const listingsReady =
-    first.isSuccess && !remaining.pending && !remaining.error && !tooLarge && !responseError;
+    listingSuccess && !listingPending && !listingError && !tooLarge && !responseError;
   const batches = useMemo(() => {
     if (!enabled || !includeSchedules || !listingsReady) return [];
     const ids = rows.flatMap(row =>
@@ -105,8 +152,7 @@ export function useClassCatalogue(
     return map;
   }, [schedules.responses]);
   const error =
-    first.error ??
-    remaining.error ??
+    listingError ??
     schedules.error ??
     (responseError ? new Error(responseError.message || 'Could not load classes.') : null) ??
     (scheduleError
@@ -123,8 +169,13 @@ export function useClassCatalogue(
     sessionsByClass,
     error,
     isError: Boolean(error),
-    isLoading: enabled && !error && (first.isPending || remaining.pending || schedules.pending),
-    isFetching: first.isFetching || remaining.fetching || schedules.fetching,
-    refetch: () => Promise.all([first.refetch(), remaining.refetch(), schedules.refetch()]),
+    isLoading: enabled && !error && (listingPending || schedules.pending),
+    isFetching:
+      (shareScope ? shared.fetching : first.isFetching || remaining.fetching) || schedules.fetching,
+    refetch: () =>
+      Promise.all([
+        shareScope ? shared.refetch() : Promise.all([first.refetch(), remaining.refetch()]),
+        schedules.refetch(),
+      ]),
   };
 }

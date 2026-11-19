@@ -22,7 +22,7 @@ import { socialShareActions } from '../../../instructor/classes/overview/[id]/pa
 import { Donut, StatCard, type SkillsWalletData } from './SkillsWalletShared';
 
 type SkillsWalletCompetenciesTabProps = {
-  data: Pick<SkillsWalletData, 'competencies'>;
+  data: Pick<SkillsWalletData, 'competencies' | 'studentName' | 'topSkills'>;
 };
 
 export function SkillsWalletCompetenciesTab({ data }: SkillsWalletCompetenciesTabProps) {

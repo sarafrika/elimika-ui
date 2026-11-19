@@ -103,13 +103,7 @@ export function StepReview({
           }
           onEdit={() => goTo('requirements')}
         />
-        {contentKind === 'program' ? (
-          <p className='text-muted-foreground rounded-md border border-dashed p-3'>
-            {programRequirements.length === 0
-              ? 'No program requirements were published yet.'
-              : 'You reviewed the program requirements.'}
-          </p>
-        ) : state.answers.length === 0 ? (
+        {state.answers.length === 0 ? (
           <p className='text-muted-foreground rounded-md border border-dashed p-3'>
             No requirements to answer.
           </p>

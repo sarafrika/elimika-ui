@@ -38,7 +38,7 @@ export function useSubmitRateUpdate(
     mutationFn: ({ rateCard, note }) =>
       withBackendMessage(async () => {
         const body = { rate_card: normaliseRateCard(rateCard), note: note?.trim() || null };
-        const { data, error } =
+        const { data } =
           kind === 'course'
             ? await submitTrainingRateUpdate({
                 path: { courseUuid: parentUuid, applicationUuid },
@@ -50,8 +50,8 @@ export function useSubmitRateUpdate(
                 body,
                 throwOnError: true,
               });
-        if (error || data?.error || data?.success === false) {
-          throw new Error(getErrorMessage(error ?? data, 'Could not send your rate update.'));
+        if (data?.error || data?.success === false) {
+          throw new Error(getErrorMessage(data, 'Could not send your rate update.'));
         }
         return data?.data ?? null;
       }, 'Could not send your rate update.'),

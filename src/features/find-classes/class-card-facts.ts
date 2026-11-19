@@ -2,7 +2,7 @@ import { DEFAULT_CLASS_TIME_ZONE, dayjs, parseApiDate } from '@/lib/date';
 import type { ClassBatchSummary, ClassDefinition, ScheduledInstance } from '@/services/client/types.gen';
 
 type Session = Pick<ScheduledInstance, 'start_time' | 'end_time' | 'status'>;
-type Definition = Pick<
+type Definition = Partial<Pick<
   ClassDefinition,
   | 'sale_price'
   | 'rate_basis'
@@ -12,7 +12,7 @@ type Definition = Pick<
   | 'location_type'
   | 'location_name'
   | 'max_participants'
->;
+>>;
 
 export type ClassCardFacts = {
   /** What the learner pays for the whole class, as the cart prices it. */

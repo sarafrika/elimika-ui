@@ -42,3 +42,14 @@ test('an empty card is rejected and supplied rates must meet the minimum', () =>
     assert.equal(result.cells.private_online_hourly_rate, undefined);
   }
 });
+
+test('an explicit zero cannot bypass validation beside another valid rate', () => {
+  for (const zero of [0, '0']) {
+    const result = validateRateCard(
+      { private_online_hourly_rate: 200, group_online_daily_rate: zero },
+      100
+    );
+    assert.equal(result.valid, false);
+    assert.ok(result.cells.group_online_daily_rate);
+  }
+});

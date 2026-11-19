@@ -161,7 +161,11 @@ export function getDurationBucket(totalMinutes: number) {
   return '20-plus-hours';
 }
 
-export function formatDurationFromParts(hours?: number, minutes?: number, display?: string | null) {
+export function formatDurationFromParts(
+  hours?: number | null,
+  minutes?: number | null,
+  display?: string | null
+) {
   if (display && display.trim() !== '') {
     return display;
   }

@@ -18,7 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { formatRateAmount } from '@/lib/rate-card';
 import { usePlanLessons } from '../age-groups/use-plan-lessons';
 import { trackApplicationHref } from '../links';
-import { type ApplyItem, ageRangeLabel, isLocked, kindNoun } from '../types';
+import { type ApplyItem, ageRangeLabel, isLocked, kindNoun, canReapply } from '../types';
 import { useItemRequirements } from '../use-item-requirements';
 
 /** Everything about one catalogue item before choosing it: lessons, requirements, ages. */
@@ -118,6 +118,9 @@ export function ItemDetailsSheet({
 
               {locked ? (
                 <div className='space-y-3'>
+                  <Button type='button' className='w-full' disabled>
+                Apply
+              </Button>
                   <p className='bg-warning/10 text-foreground flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm'>
                     <TriangleAlert aria-hidden className='text-warning mt-0.5 size-4 shrink-0' />
                     {item.application?.status === 'approved'
@@ -132,7 +135,7 @@ export function ItemDetailsSheet({
                 </div>
               ) : selected ? null : (
                 <Button type='button' className='h-11 w-full' onClick={() => onChoose(item)}>
-                  Choose this {kindNoun(item.kind)}
+                  {canReapply(item) ? 'Reapply' : 'Apply'}
                 </Button>
               )}
             </div>

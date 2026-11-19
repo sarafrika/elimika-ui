@@ -56,7 +56,14 @@ import { useSearchParams } from 'next/navigation';
 import { useMemo } from 'react';
 import { ClassCard } from './class-card';
 import { classCardFacts } from './class-card-facts';
-import { CLASS_VIEWS, classViewCounts, classViewPage, isClassView } from './class-views';
+import { matchesClassShare, type ClassShareScope } from './class-share';
+import {
+  CLASS_VIEWS,
+  classViewCounts,
+  classViewPage,
+  isClassView,
+  paginateClassMatches,
+} from './class-views';
 import { useClassCatalogue } from './use-class-catalogue';
 import {
   type ClassFilters,
@@ -88,7 +95,13 @@ function rowCourseTitle(item: ClassDefinitionResponse): string | undefined {
  * `GET /classes` with `q`, near-me and filters, classified before UI pagination. Text and near-me are served
  * by the classes search index; a class's distance comes back as a coarse band only.
  */
-export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
+export function FindClassesPage({
+  domain,
+  shareScope,
+}: {
+  domain: 'student' | 'parent';
+  shareScope?: ClassShareScope;
+}) {
   const params = useSearchParams();
   const patch = useSearchStatePatch();
   const search = useUrlSearchQuery();
@@ -98,36 +111,54 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
   const setFilter = (key: keyof ClassFilters, value: string | undefined) =>
     patch({ [key]: value || undefined, page: undefined });
 
-  const classes = useClassCatalogue({
-    ...(search.q ? { q: search.q } : {}),
-    ...nearMe.params,
-    searchParams: toClassSearchParams(filters),
-  });
+  const classes = useClassCatalogue(
+    {
+      ...(search.q ? { q: search.q } : {}),
+      ...nearMe.params,
+      searchParams: toClassSearchParams(filters),
+    },
+    { shareScope }
+  );
+  const sharedSearch = params.get('q') ?? '';
   const rows = useMemo(
     () =>
       classes.rows.flatMap(item => {
         const definition = item.class_definition;
         if (!definition?.uuid) return [];
+        if (shareScope && !matchesClassShare(item, shareScope, filters, sharedSearch)) return [];
         return [{ definition, band: item.distance_band, courseTitle: rowCourseTitle(item) }];
       }),
-    [classes.rows]
+    [classes.rows, shareScope, filters, sharedSearch]
   );
   const cards = useMemo(() => {
     const now = new Date();
     return rows.map(row => ({
       ...row,
-      facts: classCardFacts(
-        row.definition,
-        classes.sessionsByClass[row.definition.uuid ?? ''] ?? [],
-        undefined,
-        now
-      ),
+      facts: {
+        ...classCardFacts(
+          row.definition,
+          classes.sessionsByClass[row.definition.uuid ?? ''] ?? [],
+          undefined,
+          now
+        ),
+        ...(row.definition.is_active === false ? { closed: true } : {}),
+      },
     }));
   }, [rows, classes.sessionsByClass]);
   const viewValue = params.get('view');
-  const view = isClassView(viewValue) ? viewValue : 'open';
-  const viewCounts = useMemo(() => classViewCounts(cards), [cards]);
-  const result = useMemo(() => classViewPage(cards, view, page, PAGE_SIZE), [cards, view, page]);
+  const defaultView = shareScope ? 'all' : 'open';
+  const view = isClassView(viewValue) ? viewValue : defaultView;
+  const views = shareScope
+    ? [{ id: 'all' as const, label: 'All classes' }, ...CLASS_VIEWS]
+    : CLASS_VIEWS;
+  const viewCounts = useMemo(() => ({ ...classViewCounts(cards), all: cards.length }), [cards]);
+  const result = useMemo(
+    () =>
+      view === 'all'
+        ? paginateClassMatches(cards, page, PAGE_SIZE)
+        : classViewPage(cards, view, page, PAGE_SIZE),
+    [cards, view, page]
+  );
   const total = cards.length;
   const totalPages = result.totalPages;
   const visible = result.items;
@@ -172,7 +203,8 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
   const courseLabel = (courseUuid: string) =>
     embeddedTitles[courseUuid] ?? courses.courseMap[courseUuid]?.name;
 
-  const unavailable = search.searchUnavailable || isSearchUnavailable(classes.error);
+  const unavailable =
+    !shareScope && (search.searchUnavailable || isSearchUnavailable(classes.error));
   const issue = unavailable ? 'unavailable' : classifySearchError(classes.error, search.q);
   const filtered = hasClassFilters(filters);
 
@@ -180,11 +212,12 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
     search.clear();
     nearMe.clear();
     patch({
+      q: undefined,
       course: undefined,
       location: undefined,
       format: undefined,
       from: undefined,
-      organisation: undefined,
+      organisation: shareScope?.kind === 'organisation' ? shareScope.uuid : undefined,
       view: undefined,
       page: undefined,
     });
@@ -195,8 +228,12 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
       <div className={surfaceTheme.pageStack}>
         <PageHeader
           eyebrow='Find classes'
-          title='Classes you can join'
-          description='Every price is the full amount for the class — pay once with M-Pesa.'
+          title={shareScope ? `Classes from this ${shareScope.kind}` : 'Classes you can join'}
+          description={
+            shareScope
+              ? 'Browse classes and open an invitation to see the details and register.'
+              : 'Every price is the full amount for the class — pay once with M-Pesa.'
+          }
         />
 
         <section aria-label='Summary' className={surfaceTheme.statGrid}>
@@ -234,10 +271,14 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
           <div className='flex flex-col gap-3 lg:flex-row lg:items-start'>
             <SearchQueryInput
               search={search}
-              placeholder='Search classes, courses, trainers or places'
+              placeholder={
+                shareScope
+                  ? 'Search classes, courses or places'
+                  : 'Search classes, courses, trainers or places'
+              }
               aria-label='Search classes'
             />
-            <NearMeControl nearMe={nearMe} />
+            {!shareScope ? <NearMeControl nearMe={nearMe} /> : null}
           </div>
 
           <div className='grid gap-3 sm:grid-cols-2 xl:grid-cols-4'>
@@ -289,19 +330,24 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
             </div>
           </div>
 
-          {filtered ? (
+          {filtered || shareScope ? (
             <div className='flex flex-wrap items-center gap-2'>
               {filters.organisation ? (
                 <Badge variant='secondary' className='gap-1'>
                   One organisation
-                  <button
-                    type='button'
-                    aria-label='Remove the organisation filter'
-                    onClick={() => setFilter('organisation', undefined)}
-                  >
-                    <X className='size-3' />
-                  </button>
+                  {!shareScope ? (
+                    <button
+                      type='button'
+                      aria-label='Remove the organisation filter'
+                      onClick={() => setFilter('organisation', undefined)}
+                    >
+                      <X className='size-3' />
+                    </button>
+                  ) : null}
                 </Badge>
+              ) : null}
+              {shareScope?.kind === 'instructor' ? (
+                <Badge variant='secondary'>One instructor</Badge>
               ) : null}
               <Button variant='ghost' size='sm' onClick={clearAll}>
                 Clear all
@@ -368,7 +414,7 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
                 aria-label='Class views'
                 className='thin-scrollbar flex gap-6 overflow-x-auto shadow-[inset_0_-1px_0_0_var(--color-border)]'
               >
-                {CLASS_VIEWS.map(v => {
+                {views.map(v => {
                   const active = v.id === view;
                   return (
                     <button
@@ -376,7 +422,7 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
                       type='button'
                       aria-pressed={active}
                       onClick={() =>
-                        patch({ view: v.id === 'open' ? undefined : v.id, page: undefined })
+                        patch({ view: v.id === defaultView ? undefined : v.id, page: undefined })
                       }
                       className={cn(
                         'text-muted-foreground hover:text-foreground flex h-11 flex-none items-center gap-2 border-b-2 border-transparent text-sm font-medium',
@@ -419,7 +465,7 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
                       size='sm'
                       onClick={() => patch({ view: undefined, page: undefined })}
                     >
-                      Show all open
+                      {shareScope ? 'Show all classes' : 'Show all open'}
                     </Button>
                   }
                 />
@@ -452,10 +498,17 @@ export function FindClassesPage({ domain }: { domain: 'student' | 'parent' }) {
                               Number(summary?.max_participants ?? facts.capacity ?? 0) || null,
                           }}
                           band={nearMe.active ? band : undefined}
+                          detailsHref={
+                            shareScope && definition.uuid
+                              ? `/class-invite?${new URLSearchParams({ id: definition.uuid })}`
+                              : undefined
+                          }
                           href={
-                            definition.course_uuid && definition.uuid
-                              ? enrolHref(domain, definition.course_uuid, definition.uuid)
-                              : null
+                            shareScope && definition.uuid
+                              ? `/class-invite?${new URLSearchParams({ id: definition.uuid })}`
+                              : definition.course_uuid && definition.uuid
+                                ? enrolHref(domain, definition.course_uuid, definition.uuid)
+                                : null
                           }
                         />
                       </li>

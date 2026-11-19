@@ -44,7 +44,7 @@ function readStudyActivityStore(): StudyActivityStore {
     }
 
     return Object.fromEntries(
-      Object.entries(parsed as Record<string, unknown>).filter(([, value]) => typeof value === 'number')
+      Object.entries(parsed as Record<string, unknown>).filter((entry): entry is [string, number] => typeof entry[1] === 'number' && Number.isFinite(entry[1]))
     );
   } catch {
     return {};
@@ -74,7 +74,7 @@ function computeStudyMetrics(store: StudyActivityStore, liveStartedAt: number | 
           [liveKey]: (store[liveKey] ?? 0) + liveMinutes,
         };
 
-  const weeklyStudyMinutes = Array.from({ length: WEEK_WINDOW_DAYS }).reduce((sum, _, index) => {
+  const weeklyStudyMinutes = Array.from({ length: WEEK_WINDOW_DAYS }).reduce<number>((sum, _, index) => {
     const key = getDateKey(getDateDaysAgo(index));
     return sum + (effectiveStore[key] ?? 0);
   }, 0);

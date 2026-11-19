@@ -38,7 +38,7 @@ export function LessonHubClassInvitesTab({ highlightId }: { highlightId?: string
             toast.success('Invitation accepted.');
             qc.invalidateQueries({ queryKey: listMyInvitationsQueryKey() });
         },
-        onError: (error: unknown) => {
+        onError: error => {
             const message = error instanceof Error ? error.message : 'Could not accept the invitation.';
             toast.error(message);
         },
@@ -50,7 +50,7 @@ export function LessonHubClassInvitesTab({ highlightId }: { highlightId?: string
             toast.success('Invitation declined.');
             qc.invalidateQueries({ queryKey: listMyInvitationsQueryKey() });
         },
-        onError: (error: unknown) => {
+        onError: error => {
             const message = error instanceof Error ? error.message : 'Could not decline the invitation.';
             toast.error(message);
         },

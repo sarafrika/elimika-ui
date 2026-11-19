@@ -369,7 +369,7 @@ function StudentBookingPage() {
             <BookingDetailPanel
               booking={selectedBooking}
               instructorName={instructorMap[selectedBooking.instructor_uuid]?.full_name}
-              instructorHeadline={instructorMap[selectedBooking.instructor_uuid]?.professional_headline}
+              instructorHeadline={instructorMap[selectedBooking.instructor_uuid]?.professional_headline ?? undefined}
               courseName={courseMap[selectedBooking.course_uuid]?.name}
               onPay={() => handlePay(selectedBooking)}
               paying={paymentMutation.isPending}

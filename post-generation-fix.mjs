@@ -65,9 +65,12 @@ const fixReactQueryGeneration = content => {
   return nextContent;
 };
 
+// Numeric defaults need coercion, while catalogue pagination remains a string schema.
 const fixZodGeneration = content =>
   content
-    .replaceAll(".default('0')", '.default(0)')
+    .replace(/(z\s*\.number\(\)[\s\S]*?)(?=\n\s*\w+:|\n\}\))/g, block =>
+      block.replaceAll(".default('0')", '.default(0)')
+    )
     .replaceAll(".default('2')", '.default(2)')
     .replaceAll(".default('true')", '.default(true)')
     .replaceAll(".default('false')", '.default(false)');
@@ -104,8 +107,7 @@ const fixClientGeneration = content => {
 
 // Per-operation serializers would override the flattening one in hey-api.ts and send
 // `pageable[page]=0`, which the API ignores; keep the global serializer in charge.
-const fixSdkGeneration = content =>
-  content.replaceAll(/^\s*querySerializer: \{.*\},\n/gm, '');
+const fixSdkGeneration = content => content.replaceAll(/^\s*querySerializer: \{.*\},\n/gm, '');
 
 const updateFile = (filePath, transform) => {
   const currentContent = readFileSync(filePath, 'utf8');

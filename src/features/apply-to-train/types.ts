@@ -1,4 +1,4 @@
-import type { ApplyCatalogueItem, StatusEnum3 } from '@/services/client';
+import type { ApplyCatalogueItem, StatusEnum4 } from '@/services/client';
 
 export type ApplyKind = 'course' | 'program';
 
@@ -28,7 +28,7 @@ export type ApplyItem = {
   requirementCount: number | null;
   courseCount: number | null;
   matchesSkills: boolean;
-  application: { uuid: string; status: StatusEnum3 } | null;
+  application: { uuid: string; status: StatusEnum4 } | null;
   minimumFee: number | null;
 };
 
@@ -67,6 +67,10 @@ export function toApplyItem(hit: ApplyCatalogueItem): ApplyItem | null {
 export function isLocked(item: ApplyItem): boolean {
   const status = item.application?.status;
   return status === 'pending' || status === 'approved';
+}
+
+export function canReapply(item: ApplyItem): boolean {
+  return item.application?.status === 'revoked' || item.application?.status === 'rejected';
 }
 
 export function ageRangeLabel(min: number | null, max: number | null): string {

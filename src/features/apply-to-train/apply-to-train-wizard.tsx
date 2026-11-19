@@ -1,12 +1,15 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useReducer, useState } from 'react';
 import { toast } from 'sonner';
 
 import { useInstructor } from '@/context/instructor-context';
 import { getErrorMessage } from '@/lib/error-utils';
+import { programMinimumTrainingFee } from '@/lib/program-training-fee';
+import { STALE_TIMES } from '@/lib/query-client';
 import {
+  getTrainingProgramByUuidOptions,
   submitProgramTrainingApplicationMutation,
   submitTrainingApplicationMutation,
   updateProgramTrainingApplicationMutation,
@@ -23,7 +26,7 @@ import { StepCourse } from './components/step-course';
 import { StepDelivery } from './components/step-delivery';
 import { StepRequirements } from './components/step-requirements';
 import { StepReview } from './components/step-review';
-import { type StepStatus, StepTabs } from './components/step-tabs';
+import { type StepStatus } from './components/step-tabs';
 import { type RailLine, SummaryRail } from './components/summary-rail';
 import { deliveryRateCard, validateDelivery } from './delivery-model';
 import {
@@ -31,6 +34,7 @@ import {
   answersPayload,
   applyToTrainReducer,
   initialApplyToTrainState,
+  instructorRequirementPrompts,
   stepIndex,
 } from './model';
 import { APPLY_TO_TRAIN_STEPS, type ApplyItem, type ApplyStepId, kindNoun } from './types';
@@ -114,17 +118,49 @@ export function ApplyToTrainWizard({
   const [filters, setFilters] = useState<CatalogueFilters>({
     q: '',
     show: 'all',
-    fit: 'open',
+    fit: 'all',
     category: null,
     page: 0,
   });
   const [details, setDetails] = useState<ApplyItem | null>(null);
-  const { item, step } = state;
+  const { item: selectedItem, step } = state;
+  const plan = usePlanLessons(selectedItem?.kind ?? null, selectedItem?.uuid ?? null);
+  // Resolve programme pricing from its own record, including catalogue selections.
+  const programPricing = useQueries({
+    queries: (selectedItem?.kind === 'program' && selectedItem.uuid ? [selectedItem.uuid] : [])
+      .slice(0, 1)
+      .map(uuid => ({
+      ...getTrainingProgramByUuidOptions({ path: { uuid } }),
+      enabled: Boolean(uuid),
+      staleTime: STALE_TIMES.entity,
+    })),
+    combine: results => ({
+      data: results[0]?.data,
+      error: results[0]?.error ?? null,
+      pending: results.some(result => result.isPending),
+    }),
+  });
+  const programResponse = programPricing.data;
+  const minimumFeeError = programPricing.error ?? (
+    programResponse?.error || programResponse?.success === false
+      ? new Error(programResponse.message || 'Could not load programme training fees.')
+      : null
+  );
+  const item = useMemo(
+    () => selectedItem?.kind === 'program'
+      ? {
+          ...selectedItem,
+          minimumFee: programResponse?.error || programResponse?.success === false
+            ? null
+            : programMinimumTrainingFee(programResponse?.data),
+        }
+      : selectedItem,
+    [selectedItem, programResponse]
+  );
   const editing = Boolean(application?.uuid);
   const noun = item ? kindNoun(item.kind) : 'course';
   const creator = item?.creator ?? `the ${noun} creator`;
 
-  const plan = usePlanLessons(item?.kind ?? null, item?.uuid ?? null);
   const requirements = useItemRequirements(item?.kind ?? null, item?.uuid ?? null);
   const scope = useMemo(
     () => ({ min: item?.ageMin ?? null, max: item?.ageMax ?? null }),
@@ -132,13 +168,21 @@ export function ApplyToTrainWizard({
   );
 
   const seeds = useMemo(
-    () =>
-      requirements.courseRequirements
-        .filter(requirement => requirement.uuid)
-        .map(requirement => ({ uuid: requirement.uuid as string, name: requirement.name })),
-    [requirements.courseRequirements]
+    () => instructorRequirementPrompts(
+      item?.kind ?? null,
+      requirements.courseRequirements,
+      requirements.programRequirements
+    ),
+    [item?.kind, requirements.courseRequirements, requirements.programRequirements]
   );
-  const answersReady = item?.kind === 'course' && !requirements.loading && !requirements.error;
+  const answers = useMemo(() => seeds.map(requirement =>
+    state.answers.find(answer => answer.requirementUuid === requirement.uuid) ?? {
+      requirementUuid: requirement.uuid,
+      requirementName: requirement.name,
+      has: null,
+    }
+  ), [seeds, state.answers]);
+  const answersReady = Boolean(item) && !requirements.loading && !requirements.error;
   useEffect(() => {
     if (answersReady) dispatch({ type: 'initAnswers', requirements: seeds });
   }, [answersReady, seeds]);
@@ -152,10 +196,17 @@ export function ApplyToTrainWizard({
       return { ...result, general: [...result.general, 'Reload the lessons to plan your hours.'], count: result.count + 1 };
     return result;
   }, [state.groups, plan.lessons, plan.loading, plan.error, scope]);
-  const deliveryValidation = useMemo(
-    () => validateDelivery(state.delivery, item?.minimumFee ?? null),
-    [state.delivery, item?.minimumFee]
-  );
+  const deliveryValidation = useMemo(() => {
+    const result = validateDelivery(state.delivery, item?.minimumFee ?? null);
+    const feeMessage = minimumFeeError
+      ? 'Reload the programme training fees before setting your rates.'
+      : programPricing.pending
+        ? 'Wait for the programme training fees to load.'
+        : null;
+    return feeMessage
+      ? { ...result, general: [...result.general, feeMessage], count: result.count + 1 }
+      : result;
+  }, [state.delivery, item?.minimumFee, minimumFeeError, programPricing.pending]);
 
   const errors: Record<ApplyStepId, number> = {
     course: item ? 0 : 1,
@@ -165,9 +216,7 @@ export function ApplyToTrainWizard({
       ? 0
       : requirements.loading || requirements.error
         ? 1
-        : item.kind === 'course'
-          ? answerErrors(state.answers).length
-          : 0,
+        : answerErrors(answers).length,
     review: 0,
   };
   const shown = (id: ApplyStepId) => state.tried || Boolean(state.visited[id]);
@@ -189,7 +238,7 @@ export function ApplyToTrainWizard({
 
   const tone = (id: ApplyStepId): RailLine['tone'] =>
     errors[id] > 0 && shown(id) ? 'danger' : 'default';
-  const answered = state.answers.filter(
+  const answered = answers.filter(
     answer => answer.has === 'yes' || (answer.has === 'no' && answer.acquisition)
   ).length;
   const lines: Record<ApplyStepId, RailLine> = {
@@ -210,11 +259,9 @@ export function ApplyToTrainWizard({
       : { label: 'Delivery', status: 'Not started', tone: shown('delivery') && item ? 'danger' : 'muted' },
     requirements: !item
       ? { label: 'Requirements', status: 'Not started', tone: 'muted' }
-      : item.kind === 'program'
-        ? { label: 'Requirements', status: 'Read only', tone: 'default' }
-        : {
+      : {
           label: 'Requirements',
-          status: state.answers.length ? `${answered} of ${state.answers.length} answered` : 'None',
+          status: answers.length ? `${answered} of ${answers.length} answered` : 'None',
           tone: tone('requirements'),
         },
     review: { label: 'Review', status: step === 'review' ? 'In progress' : '—', tone: 'muted' },
@@ -245,7 +292,7 @@ export function ApplyToTrainWizard({
     const payload = {
       rate_card: deliveryRateCard(state.delivery),
       application_notes: state.note.trim() || null,
-      ...(item.kind === 'course' ? { requirement_answers: answersPayload(state.answers) } : {}),
+      ...(item.kind === 'course' ? { requirement_answers: answersPayload(answers) } : {}),
       age_groups: toAgeGroupRequests(state.groups, plan.lessons),
     };
     const onSuccess = async (response: { data?: { uuid?: string } } | undefined) => {
@@ -282,6 +329,10 @@ export function ApplyToTrainWizard({
   };
 
   const next = () => {
+    if (step === 'requirements' && errors.requirements > 0) {
+      dispatch({ type: 'blocked', step });
+      return;
+    }
     if (step === 'review') submit();
     else if (item) go(APPLY_TO_TRAIN_STEPS[currentIndex + 1]!.id);
   };
@@ -346,14 +397,14 @@ export function ApplyToTrainWizard({
             <StepRequirements
               kind={item.kind}
               creator={creator}
-              answers={state.answers}
+              answers={answers}
               dispatch={dispatch}
               courseRequirements={requirements.courseRequirements}
               programRequirements={requirements.programRequirements}
               loading={requirements.loading}
               error={requirements.error}
               onRetry={requirements.refetch}
-              showErrors={shown('requirements')}
+              showErrors={shown('requirements') || step === 'requirements'}
             />
           ) : null}
           {step === 'review' && item ? (
@@ -362,8 +413,7 @@ export function ApplyToTrainWizard({
               groups={state.groups}
               lessons={plan.lessons}
               delivery={state.delivery}
-              answers={state.answers}
-              programRequirements={requirements.programRequirements}
+              answers={answers}
               note={state.note}
               onNote={note => dispatch({ type: 'note', note })}
               onEdit={go}
@@ -388,7 +438,7 @@ export function ApplyToTrainWizard({
                 ? 'Save changes'
                 : NEXT_LABEL[step]
           }
-          nextDisabled={step === 'course' && !item}
+          nextDisabled={(step === 'course' && !item) || (step === 'requirements' && errors.requirements > 0)}
           submitting={submitting}
           tip={TIPS[step]}
         />

@@ -5,6 +5,7 @@ import { useMemo } from 'react';
 
 import { useCourseCreatorsByIds } from '@/hooks/use-batched-lookups';
 import { STALE_TIMES } from '@/lib/query-client';
+import { programMinimumTrainingFee } from '@/lib/program-training-fee';
 import {
   getCourseByUuidOptions,
   getProgramCoursesOptions,
@@ -14,7 +15,7 @@ import type { ApplyItem, ApplyKind } from './types';
 
 /**
  * The item a deep link names, read from the course or programme itself. A programme's
- * band is where its courses' ranges overlap and its floor their highest fee, as the server has it.
+ * band is where its courses' ranges overlap; its minimum fee comes from the programme itself.
  */
 export function useDeepLinkItem(kind: ApplyKind | null, uuid: string | null) {
   const forCourse = kind === 'course' && Boolean(uuid);
@@ -42,7 +43,15 @@ export function useDeepLinkItem(kind: ApplyKind | null, uuid: string | null) {
   const creatorIds = useMemo(() => (creatorUuid ? [creatorUuid] : []), [creatorUuid]);
   const { courseCreatorMap } = useCourseCreatorsByIds(creatorIds);
   const creator = courseCreatorMap[creatorUuid]?.full_name ?? null;
-  const memberCourses = programCoursesQuery.data?.data;
+  const memberResponse = programCoursesQuery.data;
+  const memberError = forProgram
+    ? programCoursesQuery.error ?? (
+        memberResponse?.error || memberResponse?.success === false
+          ? new Error(memberResponse.message || 'Could not load programme courses.')
+          : null
+      )
+    : null;
+  const memberCourses = memberError ? undefined : memberResponse?.data;
 
   const item = useMemo<ApplyItem | null>(() => {
     if (course?.uuid)
@@ -67,9 +76,6 @@ export function useDeepLinkItem(kind: ApplyKind | null, uuid: string | null) {
       const courses = memberCourses ?? [];
       const lows = courses.flatMap(row => (row.age_lower_limit == null ? [] : [row.age_lower_limit]));
       const highs = courses.flatMap(row => (row.age_upper_limit == null ? [] : [row.age_upper_limit]));
-      const fees = courses.flatMap(row =>
-        row.minimum_training_fee == null ? [] : [row.minimum_training_fee]
-      );
       return {
         kind: 'program',
         uuid: program.uuid,
@@ -85,7 +91,7 @@ export function useDeepLinkItem(kind: ApplyKind | null, uuid: string | null) {
         courseCount: courses.length || null,
         matchesSkills: false,
         application: null,
-        minimumFee: fees.length ? Math.max(...fees) : null,
+        minimumFee: programMinimumTrainingFee(program),
       };
     }
     return null;
@@ -96,5 +102,14 @@ export function useDeepLinkItem(kind: ApplyKind | null, uuid: string | null) {
     (forCourse || forProgram) &&
     (active.isLoading || (forProgram && programCoursesQuery.isLoading));
   const notFound = (forCourse || forProgram) && active.isSuccess && !item;
-  return { item, loading, error: active.error ?? null, notFound, refetch: active.refetch };
+  return {
+    item,
+    loading,
+    error: active.error ?? memberError,
+    notFound,
+    refetch: () => Promise.all([
+      active.refetch(),
+      ...(forProgram ? [programCoursesQuery.refetch()] : []),
+    ]),
+  };
 }

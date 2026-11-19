@@ -101,7 +101,7 @@ export function summarizeClassReportAssessments({
   bands = [],
 }: {
   report: ClassReport;
-  tasks: Map<string, LessonGradingTask[]>;
+  tasks: ReadonlyMap<string, readonly LessonGradingTask[]>;
   enrollments: CourseEnrollment[];
   submissions: Map<string, AssignmentSubmission>;
   attempts: Map<string, QuizAttempt>;

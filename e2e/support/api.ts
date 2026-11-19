@@ -46,7 +46,7 @@ export class MockApi {
       const result = await found.handler(request, path.match(found.pattern) as RegExpMatchArray);
       if (result && typeof result === 'object' && STATUS in (result as Record<symbol, unknown>)) {
         const failure = (result as Record<symbol, { status: number; body: unknown }>)[STATUS];
-        return route.fulfill({ status: failure.status, json: failure.body });
+        if (failure) return route.fulfill({ status: failure.status, json: failure.body });
       }
       return route.fulfill({ status: 200, json: ok(result) });
     });

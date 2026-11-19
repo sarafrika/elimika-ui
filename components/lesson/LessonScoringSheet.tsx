@@ -33,7 +33,7 @@ import {
   getRubricMatrixOptions,
   upsertLineItemRubricEvaluationMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import { StatusEnum7 } from '@/services/client/types.gen';
+import { StatusEnum8 } from '@/services/client/types.gen';
 import { WorkbookError } from './WorkbookError';
 import { WorkbookLoading } from './WorkbookLoading';
 import { hasApiError } from './workbook-data';
@@ -205,7 +205,7 @@ function RubricCell({
   };
 
   const save = async (
-    status: (typeof StatusEnum7)[keyof typeof StatusEnum7],
+    status: (typeof StatusEnum8)[keyof typeof StatusEnum8],
     selections: Record<string, string>,
     comments: string
   ) => {
@@ -227,7 +227,7 @@ function RubricCell({
       toast.error(response.message || 'Unable to save the lesson score.');
       return;
     }
-    toast.success(status === StatusEnum7.PENDING ? 'Draft saved.' : 'Lesson score submitted.');
+    toast.success(status === StatusEnum8.PENDING ? 'Draft saved.' : 'Lesson score submitted.');
     await Promise.all([
       client.invalidateQueries({ queryKey: getLineItemRubricEvaluationQueryKey({ path: cellPath }) }),
       client.invalidateQueries({ queryKey: getLineItemRevisionsQueryKey({ path: cellPath }) }),
@@ -259,7 +259,7 @@ function RubricCell({
           )
         )}
         initialComments={evaluation?.comments ?? ''}
-        submitted={evaluation?.status === StatusEnum7.COMPLETED}
+        submitted={evaluation?.status === StatusEnum8.COMPLETED}
         savedScore={{ score: evaluation?.score, maxScore: evaluation?.max_score }}
         bands={(bandsQuery.data?.data ?? []).flatMap(band =>
           band.name && band.min_percentage != null ? [{ name: band.name, min: band.min_percentage }] : []
@@ -302,7 +302,7 @@ function ScoreForm({
   passMark: number | null;
   isPending: boolean;
   onSave: (
-    status: (typeof StatusEnum7)[keyof typeof StatusEnum7],
+    status: (typeof StatusEnum8)[keyof typeof StatusEnum8],
     selections: Record<string, string>,
     comments: string
   ) => Promise<void>;
@@ -329,7 +329,7 @@ function ScoreForm({
       return;
     }
     setConfirming(false);
-    void onSave(StatusEnum7.COMPLETED, selections, comments);
+    void onSave(StatusEnum8.COMPLETED, selections, comments);
   };
 
   return (
@@ -409,7 +409,7 @@ function ScoreForm({
           variant='outline'
           disabled={isPending || submitted}
           title={submitted ? 'A submitted score is corrected by submitting again' : undefined}
-          onClick={() => void onSave(StatusEnum7.PENDING, selections, comments)}
+          onClick={() => void onSave(StatusEnum8.PENDING, selections, comments)}
         >
           Save draft
         </Button>

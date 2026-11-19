@@ -1,83 +1,49 @@
 'use client';
 
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { isForbidden, isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { searchApplyToTrainCatalogueOptions } from '@/services/client/@tanstack/react-query.gen';
-import { type ApplyItem, toApplyItem } from './types';
+import { type CatalogueFilters, catalogueRequests, mergeCataloguePages } from './catalogue-model';
 
-export type CatalogueShow = 'all' | 'courses' | 'programmes';
-export type CatalogueFit = 'open' | 'skills' | 'applied';
+export { CATALOGUE_PAGE_SIZE, type CatalogueFilters, type CatalogueFit, type CatalogueShow } from './catalogue-model';
 
-export type CatalogueFilters = {
-  q: string;
-  show: CatalogueShow;
-  fit: CatalogueFit;
-  category: string | null;
-  page: number;
-};
-
-export const CATALOGUE_PAGE_SIZE = 24;
-
-const count = (value: unknown) => {
-  const parsed = Number(value ?? 0);
-  return Number.isFinite(parsed) ? parsed : 0;
-};
-
-/** The apply-to-train catalogue: search-only, so a 503 means no list at all. */
+/** Search-only, with at most two requests per page to include every application status. */
 export function useApplyCatalogue(filters: CatalogueFilters, enabled = true) {
   const q = useDebouncedValue(filters.q.trim());
-  const query = useQuery({
-    ...searchApplyToTrainCatalogueOptions({
-      query: {
-        ...(q ? { q } : {}),
-        show: filters.show,
-        fit: filters.fit,
-        sort: q ? 'relevance' : 'newest',
-        ...(filters.category ? { category_uuid: [filters.category] } : {}),
-        page: String(filters.page),
-        size: String(CATALOGUE_PAGE_SIZE),
-      },
-    }),
-    enabled,
-    placeholderData: keepPreviousData,
-    staleTime: STALE_TIMES.live,
-    retry: retryUnlessClientOrSearchError,
+  const requests = catalogueRequests(filters, q);
+  const query = useQueries({
+    queries: requests.slice(0, 2).map(query => ({
+      ...searchApplyToTrainCatalogueOptions({ query }),
+      enabled,
+      placeholderData: keepPreviousData,
+      staleTime: STALE_TIMES.live,
+      retry: retryUnlessClientOrSearchError,
+    })),
+    combine: results => {
+      const failed = results.find(result => result.data?.error || result.data?.success === false);
+      return {
+        pages: results.flatMap(result =>
+          result.data?.error || result.data?.success === false || !result.data?.data
+            ? []
+            : [result.data.data]
+        ),
+        isLoading: results.some(result => result.isLoading),
+        isPlaceholderData: results.some(result => result.isPlaceholderData),
+        error: results.find(result => result.error)?.error ?? (
+          failed ? new Error(failed.data?.message || 'Could not load the catalogue.') : null
+        ),
+        refetch: () => Promise.all(results.map(result => result.refetch())),
+      };
+    },
   });
-
-  const data = query.data?.data;
-  const items = useMemo(
-    () => (data?.content ?? []).map(toApplyItem).filter((item): item is ApplyItem => item !== null),
-    [data?.content]
-  );
-  const facets = useMemo(
-    () => ({
-      show: {
-        all: count(data?.facets?.show?.all),
-        courses: count(data?.facets?.show?.courses),
-        programmes: count(data?.facets?.show?.programmes),
-      },
-      fit: {
-        open: count(data?.facets?.fit?.open),
-        skills: count(data?.facets?.fit?.skills),
-        applied: count(data?.facets?.fit?.applied),
-      },
-      categories: (data?.facets?.category ?? [])
-        .filter(row => row.uuid)
-        .map(row => ({ uuid: row.uuid as string, name: row.name ?? 'Category', count: count(row.count) })),
-    }),
-    [data?.facets]
-  );
-
+  const catalogue = useMemo(() => mergeCataloguePages(query.pages), [query.pages]);
   return {
     query,
-    items,
-    facets,
-    totalPages: data?.metadata?.totalPages ?? 1,
-    total: count(data?.metadata?.totalElements),
+    ...catalogue,
     unavailable: isSearchUnavailable(query.error),
     forbidden: isForbidden(query.error),
   };

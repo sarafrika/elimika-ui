@@ -17,7 +17,7 @@ import type {
   CreateRubricScoringLevelData,
   RubricCriteria as RubricCriteriaBody,
   RubricScoring as RubricScoringBody,
-  StatusEnum,
+  StatusEnum2,
   UpdateAssessmentRubricData,
   UpdateRubricCriterionData,
   UpdateRubricScoringData,
@@ -155,7 +155,7 @@ type UpdateRubricCriterionBody = UpdateRubricCriterionData['body'];
 type CreateRubricScoringBody = RubricScoringBody;
 type UpdateRubricScoringBody = UpdateRubricScoringData['body'];
 
-const toApiStatus = (status: EditableRubric['status']): StatusEnum => {
+const toApiStatus = (status: EditableRubric['status']): StatusEnum2 => {
   switch (status) {
     case 'in_review':
       return 'IN_REVIEW';
@@ -457,10 +457,10 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
         uuid: criterion.uuid || '',
         scoring: Array.isArray(criterion.scoring)
           ? criterion.scoring.map(score => ({
-            ...score,
-            uuid: score.uuid || '',
-            points: score.score_range || '0',
-          }))
+              ...score,
+              uuid: score.uuid || '',
+              points: score.score_range || '0',
+            }))
           : [],
       })),
     };
@@ -483,7 +483,9 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
       });
       handleEditRubric(readRubricRecord(response));
     } catch (error) {
-      toast.error(getErrorMessage(error, 'Unable to load this rubric for editing. Please try again.'));
+      toast.error(
+        getErrorMessage(error, 'Unable to load this rubric for editing. Please try again.')
+      );
     } finally {
       setLoadingEditUuid(null);
     }
@@ -1346,8 +1348,8 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
                           const matchingScoring =
                             (scoringLevel.uuid
                               ? c.scoring.find(
-                                s => s.rubric_scoring_level_uuid === scoringLevel.uuid
-                              )
+                                  s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                                )
                               : undefined) ?? c.scoring[slIdx];
 
                           const scoringEntry = matchingScoring || {
@@ -1362,8 +1364,8 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
                           // - Otherwise fall back to position index (slIdx)
                           const actualIdx = scoringLevel.uuid
                             ? c.scoring.findIndex(
-                              s => s.rubric_scoring_level_uuid === scoringLevel.uuid
-                            )
+                                s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                              )
                             : slIdx;
 
                           const resolvedIdx = actualIdx !== -1 ? actualIdx : slIdx;
@@ -1544,7 +1546,9 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
             <table className='w-full table-fixed text-sm'>
               <thead>
                 <tr className='bg-muted/40 border-b'>
-                  <th className='text-foreground w-[45%] px-6 py-3 text-left font-semibold'>Title</th>
+                  <th className='text-foreground w-[45%] px-6 py-3 text-left font-semibold'>
+                    Title
+                  </th>
                   <th className='text-foreground px-4 py-3 text-left font-semibold'>Type</th>
                   <th className='text-foreground px-4 py-3 text-left font-semibold'>Category</th>
                   <th className='text-foreground px-4 py-3 text-center font-semibold'>Weight</th>
@@ -1587,7 +1591,7 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
                           </Link>
                           {rubric.description && (
                             <p
-                              className='text-muted-foreground line-clamp-2 break-words text-xs'
+                              className='text-muted-foreground line-clamp-2 text-xs break-words'
                               title={rubric.description}
                             >
                               {rubric.description}
@@ -1624,7 +1628,11 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
                             event.stopPropagation();
                             void handleEditFromTable(rubric);
                           }}
-                          disabled={Boolean(loadingEditUuid) || deleteRubric.isPending || !canChangeRubric(rubric)}
+                          disabled={
+                            Boolean(loadingEditUuid) ||
+                            deleteRubric.isPending ||
+                            !canChangeRubric(rubric)
+                          }
                           aria-label={`Edit ${rubric.title || 'rubric'}`}
                           title={canChangeRubric(rubric) ? 'Edit rubric' : RUBRIC_AUTHOR_ONLY}
                         >

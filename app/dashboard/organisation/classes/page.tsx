@@ -60,6 +60,7 @@ import {
   listResourcesOptions,
 } from '@/services/client/@tanstack/react-query.gen';
 import { createClassHref } from '@/src/features/organisation/class-builder/routes';
+import { ShareAllClassesButton } from '@/src/features/find-classes/ShareAllClassesButton';
 
 const NEW_CLASS_HREF = createClassHref();
 
@@ -74,12 +75,12 @@ type ClassInstructor = { name: string; imageUrl?: string | null } | undefined;
 const instructorInitials = (i: ClassInstructor) =>
   i
     ? i.name
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map(part => part[0])
-        .join('')
-        .toUpperCase() || '?'
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(part => part[0])
+      .join('')
+      .toUpperCase() || '?'
     : '?';
 const instructorName = (i: ClassInstructor) => i?.name ?? '—';
 
@@ -293,7 +294,12 @@ export default function ClassesPage() {
       <PageHeader
         title='Classes'
         description='Schedule cohorts, assign instructors, and track capacity.'
-        action={createButton}
+        action={
+          <div className='flex flex-wrap gap-2'>
+            <ShareAllClassesButton kind='organisation' uuid={organisationUuid} />
+            {createButton}
+          </div>
+        }
       />
 
       <div className={surfaceTheme.statGrid}>

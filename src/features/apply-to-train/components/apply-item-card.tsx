@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 import { CourseCatalogCardLayout } from '@/src/features/dashboard/courses/shared/_components/CourseCatalogCardLayout';
 import { getCardPresentation } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { trackApplicationHref } from '../links';
-import { type ApplyItem, ageRangeLabel, isLocked } from '../types';
+import { type ApplyItem, ageRangeLabel, isLocked, canReapply } from '../types';
 
 const STATUS_LABEL = {
   pending: 'Pending review',
@@ -38,7 +38,7 @@ export function ApplyItemCard({
   const presentation = getCardPresentation(index);
   const locked = isLocked(item);
   const status = item.application?.status;
-  const reapply = status === 'rejected' || status === 'revoked';
+  const reapply = canReapply(item);
 
   return (
     <div
@@ -92,11 +92,16 @@ export function ApplyItemCard({
       >
         <div className='w-full'>
           {locked && item.application ? (
-            <Button asChild variant='outline' className='w-full'>
-              <Link href={trackApplicationHref(item.kind, item.uuid)}>
-                {status === 'approved' ? 'View approval' : 'Track application'}
-              </Link>
-            </Button>
+            <div className='space-y-2'>
+              <Button type='button' className='w-full' disabled>
+                Apply
+              </Button>
+              <Button asChild variant='outline' className='w-full'>
+                <Link href={trackApplicationHref(item.kind, item.uuid)}>
+                  {status === 'approved' ? 'View approval' : 'Track application'}
+                </Link>
+              </Button>
+            </div>
           ) : (
             <Button type='button' className='w-full' onClick={onChoose} aria-pressed={selected}>
               {selected ? (

@@ -69,7 +69,7 @@ function getProfileDetailsDefaults(profile: ProfilePageProps['profile']): Editab
     professional_headline: profile.professional_headline ?? '',
     website: profile.website ?? '',
     bio: profile.bio ?? profile.student_profile?.bio ?? '',
-    location_name: profile.location_name ?? '',
+    location_name: profile.address ?? '',
     latitude:
       typeof profile.latitude === 'number' && Number.isFinite(profile.latitude)
         ? String(profile.latitude)
