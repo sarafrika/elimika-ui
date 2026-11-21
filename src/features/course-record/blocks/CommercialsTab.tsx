@@ -85,11 +85,19 @@ export interface CourseOrderRow {
  * Tab
  * ────────────────────────────────────────────────────────────────────────── */
 
+export type CommercialCourseTerms = Partial<
+  Pick<
+    Course,
+    'price' | 'minimum_training_fee' | 'creator_share_percentage' | 'instructor_share_percentage'
+  >
+>;
+
 interface CommercialsTabProps {
   /** From the API. The capability map decides whether this tab exists at all. */
   access: CourseAccess;
   /** Carries the list price, the fee floor and the two share percentages. */
-  course?: Course;
+  course?: CommercialCourseTerms;
+  revenueSplitNote?: string;
   /** The `owner` block is what makes this tab renderable. */
   stats?: CourseStats;
   /** Spread `asyncProps(record.stats)`. */
@@ -110,6 +118,7 @@ interface CommercialsTabProps {
 export function CommercialsTab({
   access,
   course,
+  revenueSplitNote,
   stats,
   statsAsync,
   trainers,
@@ -130,7 +139,7 @@ export function CommercialsTab({
     <div className={cn('flex flex-col gap-[18px]', className)}>
       <ConfidentialityBanner />
 
-      <CommercialTerms course={course} currency={currency} />
+      <CommercialTerms course={course} currency={currency} revenueSplitNote={revenueSplitNote} />
 
       <ApprovedRateCards
         trainers={trainers}
@@ -178,7 +187,8 @@ function ConfidentialityBanner() {
  * ────────────────────────────────────────────────────────────────────────── */
 
 interface CommercialTermsProps {
-  course?: Course;
+  course?: CommercialCourseTerms;
+  revenueSplitNote?: string;
   currency?: string;
   className?: string;
 }
@@ -186,6 +196,7 @@ interface CommercialTermsProps {
 /** List price, fee floor and the split — the three numbers a rate card obeys. */
 function CommercialTerms({
   course,
+  revenueSplitNote,
   currency = COURSE_DEFAULT_CURRENCY,
   className,
 }: CommercialTermsProps) {
@@ -210,6 +221,9 @@ function CommercialTerms({
       <Card className='gap-0 px-[18px] py-4'>
         <TermLabel>Revenue split</TermLabel>
         <RevenueSplitBar creator={creatorShare} instructor={instructorShare} />
+        {revenueSplitNote && (
+          <p className='text-muted-foreground mt-2 text-xs'>{revenueSplitNote}</p>
+        )}
       </Card>
     </div>
   );
@@ -509,7 +523,7 @@ function optional(value: number | null | undefined): number | undefined {
 
 /** "40" → "40%". Whole numbers stay whole; a half share keeps its decimal. */
 function formatShare(value: number): string {
-  return `${Number.isInteger(value) ? value : value.toFixed(1)}%`;
+  return `${Number.isInteger(value) ? value : value.toFixed(2)}%`;
 }
 
 /** Routes may hand over an ISO date or one already formatted; both render. */

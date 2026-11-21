@@ -181,7 +181,12 @@ export const getNotificationUrlPath = (
       }
       return action_url;
 
+    case 'DOMAIN_APPROVAL_GRANTED':
+      return normalizeLegacyActionUrl('/dashboard/settings', activeDomain);
     // Not yet implemented
+    case 'DOMAIN_APPROVAL_DECLINED':
+    case 'DOMAIN_APPROVAL_REQUESTED':
+
     case 'COURSE_ENROLLMENT_WELCOME':
     case 'COURSE_COMPLETION_CERTIFICATE':
     case 'LEARNING_MILESTONE_ACHIEVED':
@@ -199,10 +204,45 @@ export const getNotificationUrlPath = (
     case 'WEEKLY_PROGRESS_SUMMARY':
     case 'LEARNING_STREAK_ACHIEVEMENT':
     case 'PEER_ACHIEVEMENT_CELEBRATION':
-      return '';
-
+    case 'TRAINING_RATE_UPDATE_SUBMITTED':
+    case 'TRAINING_RATE_UPDATE_APPROVED':
+    case 'TRAINING_RATE_UPDATE_REJECTED':
+    case 'CLASS_MARKETPLACE_JOB_APPLICATION_REJECTED':
+    case 'CLASS_MARKETPLACE_JOB_APPLICATION_NOT_SELECTED':
+    case 'CLASS_MARKETPLACE_JOB_EXPIRED':
+    case 'CLASS_MARKETPLACE_JOB_APPLICATION_SHORTLISTED':
+    case 'CLASS_MARKETPLACE_JOB_APPLICATION_INTERVIEWING':
+    case 'CLASS_MARKETPLACE_JOB_APPLICATION_OFFERED':
+    case 'CLASS_MARKETPLACE_JOB_APPLICATION_HIRED':
+    case 'CLASS_MARKETPLACE_JOB_APPLICATION_ASSIGNED':
+    case 'CLASS_MARKETPLACE_JOB_APPLICATION_CANCELLED':
+    case 'CLASS_MARKETPLACE_JOB_APPLICATION_WITHDRAWN':
+    case 'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_ORGANISATION':
+    case 'CLASS_MARKETPLACE_JOB_HIRE_BLOCKED_INSTRUCTOR':
+    case 'SESSION_REPORT_DUE':
+    case 'SESSION_REPORT_OVERDUE':
+    case 'SESSION_REPORT_OVERDUE_ORG':
+    case 'COURSE_REVIEW_SUBMITTED':
+    case 'PROGRAM_REVIEW_SUBMITTED':
+    case 'CLASS_REVIEW_SUBMITTED':
+    case 'INSTRUCTOR_REVIEW_SUBMITTED':
+    case 'ORDER_PAYMENT_RECEIPT':
+    case 'INSTRUCTOR_VERIFICATION_APPROVED':
+    case 'INSTRUCTOR_VERIFICATION_REVOKED':
+    case 'COURSE_CREATOR_VERIFICATION_APPROVED':
+    case 'COURSE_CREATOR_VERIFICATION_REVOKED':
+    case 'ORGANISATION_VERIFICATION_APPROVED':
+    case 'ORGANISATION_VERIFICATION_REVOKED':
+    case 'ORGANISATION_INVITATION':
+    case 'GUARDIAN_CONSENT_REQUEST':
+    case 'GUARDIAN_LINK_INVITATION':
+    case 'GUARDIAN_LINK_ESTABLISHED':
+    case 'ORGANISATION_INVITATION_ACCEPTED':
+    case 'ORGANISATION_ANNOUNCEMENT':
+    case 'WALLET_WITHDRAWAL_PAID':
+    case 'WALLET_WITHDRAWAL_FAILED':
     default:
-      return action_url || '';
+      return action_url || normalizeLegacyActionUrl('/dashboard/overview', activeDomain);
   }
 };
 
@@ -275,11 +315,11 @@ export function DashboardNotifications({
         description: notification.body,
         action: popupHref
           ? {
-              label: 'Open',
-              onClick: () => {
-                router.push(popupHref || notificationHref);
-              },
-            }
+            label: 'Open',
+            onClick: () => {
+              router.push(popupHref || notificationHref);
+            },
+          }
           : undefined,
       });
     }

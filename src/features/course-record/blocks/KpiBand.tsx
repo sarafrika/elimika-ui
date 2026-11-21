@@ -27,6 +27,7 @@ import {
 
 interface KpiBandProps extends CourseBlockAsyncProps {
   access: CourseAccess;
+  contentKind?: 'course' | 'program';
   stats?: CourseStats;
   /**
    * Replaces the capability map's scope line once the name is known —
@@ -59,6 +60,7 @@ const KPI_BAND_GRID = 'grid grid-cols-2 gap-3.5 md:grid-cols-3 xl:grid-cols-5';
 
 export function KpiBand({
   access,
+  contentKind = 'course',
   stats,
   scopeLabel,
   currency = 'KES',
@@ -70,7 +72,7 @@ export function KpiBand({
   onRetry,
   className,
 }: KpiBandProps) {
-  const kpi = courseCapability(access).kpi;
+  const kpi = courseCapability(access, contentKind).kpi;
 
   // The enrolled learner gets the progress strip instead of a KPI band.
   if (!kpi) return null;

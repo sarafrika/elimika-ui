@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
 import { isAuthenticatedMediaUrl, toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { toast } from 'sonner';
 import {
@@ -57,6 +58,7 @@ function MediaPicker({
   const { control } = useFormContext<ProgramFormValues>();
   const existingUrl = useWatch({ control, name: media.name });
   const [preview, setPreview] = useState<string>();
+  const [dragging, setDragging] = useState(false);
   useEffect(() => {
     if (!file) {
       setPreview(undefined);
@@ -68,9 +70,47 @@ function MediaPicker({
   }, [file]);
   const source = toAuthenticatedMediaUrl(preview ?? existingUrl);
   const isVideo = media.key === 'intro_video';
+  const selectFile = (selected?: File) => {
+    if (!selected) return;
+    if (!selected.type.startsWith(isVideo ? 'video/' : 'image/')) {
+      toast.error(`Choose ${isVideo ? 'a video' : 'an image'} file.`);
+      return;
+    }
+    if (isVideo && selected.size > MAX_VIDEO_SIZE_BYTES) {
+      toast.error(`Video too large. Max size: ${MAX_VIDEO_SIZE_MB}MB.`);
+      return;
+    }
+    onSelect(media.key, selected);
+  };
+
   return (
-    <div className='min-w-0 space-y-3'>
+    <div
+      role='group'
+      aria-label={media.label}
+      onDragOver={event => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        setDragging(true);
+      }}
+      onDragLeave={event => {
+        if (!(event.relatedTarget instanceof Node) || !event.currentTarget.contains(event.relatedTarget)) {
+          setDragging(false);
+        }
+      }}
+      onDrop={event => {
+        event.preventDefault();
+        setDragging(false);
+        selectFile(event.dataTransfer.files[0]);
+      }}
+      className={cn(
+        'min-w-0 space-y-3 rounded-md border border-dashed p-3',
+        dragging ? 'border-primary bg-primary/5' : 'border-border'
+      )}
+    >
       <Label htmlFor={id}>{media.label}</Label>
+      <p className='text-muted-foreground text-xs'>
+        Drag and drop {isVideo ? 'a video' : 'an image'} here, or choose a file below.
+      </p>
       {source && (
         <div className='border-border bg-muted relative aspect-video overflow-hidden rounded-md border'>
           {isVideo ? (
@@ -104,16 +144,7 @@ function MediaPicker({
         onChange={event => {
           const selected = event.target.files?.[0];
           event.target.value = '';
-          if (!selected) return;
-          if (!selected.type.startsWith(isVideo ? 'video/' : 'image/')) {
-            toast.error(`Choose ${isVideo ? 'a video' : 'an image'} file.`);
-            return;
-          }
-          if (isVideo && selected.size > MAX_VIDEO_SIZE_BYTES) {
-            toast.error(`Video too large. Max size: ${MAX_VIDEO_SIZE_MB}MB.`);
-            return;
-          }
-          onSelect(media.key, selected);
+          selectFile(selected);
         }}
       />
       {file && (

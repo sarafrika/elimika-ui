@@ -15,6 +15,7 @@ export interface EntityFact {
 
 export interface EntityHeaderCardProps {
   title: string;
+  code?: string;
   /** Small caps line above the badges, behind the brand accent bar: "Course". */
   eyebrow?: ReactNode;
   /** Chips beside the eyebrow: category, level, status. */
@@ -48,6 +49,7 @@ export interface EntityHeaderCardProps {
  */
 export function EntityHeaderCard({
   title,
+  code,
   eyebrow,
   badges,
   description,
@@ -78,7 +80,7 @@ export function EntityHeaderCard({
       className={cn(
         'bg-card grid gap-5 overflow-hidden rounded-2xl border p-4 sm:p-5 lg:gap-6',
         left &&
-          (media ? 'md:grid-cols-[240px_minmax(0,1fr)]' : 'md:grid-cols-[auto_minmax(0,1fr)]'),
+        (media ? 'md:grid-cols-[240px_minmax(0,1fr)]' : 'md:grid-cols-[auto_minmax(0,1fr)]'),
         left && aside
           ? media
             ? 'lg:grid-cols-[300px_minmax(0,1fr)_340px]'
@@ -147,5 +149,27 @@ export function EntityHeaderCard({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function Chip({
+  children,
+  strong,
+  className,
+}: {
+  children: ReactNode;
+  strong?: boolean;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn(
+        'inline-flex h-[22px] items-center rounded-md px-2 text-xs font-medium',
+        strong ? 'bg-primary/10 text-primary font-semibold' : 'bg-muted text-foreground',
+        className
+      )}
+    >
+      {children}
+    </span>
   );
 }

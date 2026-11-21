@@ -5,6 +5,8 @@ import { useUserProfile } from '@/context/profile-context';
 import { useStudent } from '@/context/student-context';
 import { useStudentsByIds } from '@/hooks/use-batched-lookups';
 import { extractPage } from '@/lib/api-helpers';
+import { programRevenueShares } from '@/lib/course-creator/revenue-shares';
+import { programRequirementProvider, readProgramRequirementText } from '@/lib/program-requirements';
 import { STALE_TIMES } from '@/lib/query-client';
 import type { CourseReview } from '@/services/client';
 import {
@@ -15,7 +17,9 @@ import {
   getProgramReviewsOptions,
   getTrainingProgramByUuidOptions,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Course } from '@/services/client/types.gen';
+import { allProgramRequirementsOptions } from '@/services/program-requirements';
+import type { OverviewTrainingRequirement } from '@/src/features/course-record/blocks/OverviewTab';
+import type { CommercialCourseTerms } from '@/src/features/course-record/blocks/CommercialsTab';
 import {
   ActionsCard,
   ActivityTab,
@@ -24,6 +28,7 @@ import {
   type CourseCurriculumItem,
   type CourseCurriculumLesson,
   type CourseRailActionItem,
+  courseBulletLines,
   DeliveryTab,
   GateBanner,
   GlanceCard,
@@ -112,6 +117,27 @@ export function ProgramRecordPage({
   });
   const program = programQ.data?.data;
 
+  const requirementsQ = useQuery(allProgramRequirementsOptions(programUuid));
+  const requirements = useMemo<OverviewTrainingRequirement[]>(() => {
+    if (requirementsQ.data?.error || requirementsQ.data?.success === false) return [];
+    return (requirementsQ.data?.data?.content ?? []).map(requirement => {
+      const resource = readProgramRequirementText(requirement.requirement_text);
+      const type = resource.requirement_type;
+      const quantity = Number(resource.quantity);
+      return {
+        uuid: requirement.uuid,
+        name: resource.name,
+        description: resource.description,
+        requirement_type:
+          type === 'material' || type === 'equipment' || type === 'facility' ? type : 'other',
+        quantity: Number.isFinite(quantity) ? quantity : undefined,
+        unit: resource.unit,
+        is_mandatory: requirement.is_mandatory,
+        provided_by: programRequirementProvider(requirement.requirement_type),
+      };
+    });
+  }, [requirementsQ.data]);
+
   const coursesQ = useQuery({
     ...getProgramCoursesOptions({ path: { programUuid } }),
     enabled: !!programUuid,
@@ -150,7 +176,8 @@ export function ProgramRecordPage({
     enabled: Boolean(creatorUuid),
     staleTime: STALE_TIMES.entity,
   });
-  const creator = creatorQ.data;
+  // @ts-ignore
+  const creator = creatorQ?.data?.data;
 
   const pathname = usePathname();
   const segment = routeSegmentFromPath(pathname);
@@ -271,6 +298,7 @@ export function ProgramRecordPage({
   const kpiBand = (
     <KpiBand
       access={access}
+      contentKind='program'
       stats={stats}
       currency={COURSE_DEFAULT_CURRENCY}
       priceFrom={program?.price ?? undefined}
@@ -285,12 +313,17 @@ export function ProgramRecordPage({
   const overviewPanel = (
     <OverviewTab
       access={access}
+      aboutHeading='About this program'
       description={program?.description}
-      objectives={(program?.objectives ?? '').split('\n')}
-      prerequisites={(program?.prerequisites ?? '').split('\n')}
+      objectives={courseBulletLines(program?.objectives)}
+      prerequisites={courseBulletLines(program?.prerequisites)}
       fitVars={vars}
-      requirements={undefined}
-      requirementsAsync={{ loading: false, error: undefined }}
+      requirements={requirements}
+      requirementsAsync={{
+        loading: requirementsQ.isLoading,
+        error: requirementsQ.error || requirementsQ.data?.error || requirementsQ.data?.success === false,
+        onRetry: () => void requirementsQ.refetch(),
+      }}
     />
   );
 
@@ -352,21 +385,25 @@ export function ProgramRecordPage({
     </div>
   );
 
-  const programCommercialCourse = useMemo<Course | undefined>(
+  const revenueShares = useMemo(() => {
+    if (coursesQ.isPending || coursesQ.isError || !courses.length) return undefined;
+    const courseMap = Object.fromEntries(
+      courses.flatMap(course => course.uuid ? [[course.uuid, course]] : [])
+    );
+    return programRevenueShares(Object.keys(courseMap), courseMap);
+  }, [courses, coursesQ.isPending, coursesQ.isError]);
+
+  const programCommercialCourse = useMemo<CommercialCourseTerms | undefined>(
     () =>
       program
         ? {
-          ...program,
-          name: program.title,
-          duration_hours: program.total_duration_hours,
-          duration_minutes: program.total_duration_minutes,
-          price: program.price ?? 0,
-          minimum_training_fee: program.price ?? 0,
-          creator_share_percentage: 60,
-          instructor_share_percentage: 40,
+          price: program.price,
+          minimum_training_fee: revenueShares?.totalMinimumFee,
+          creator_share_percentage: revenueShares?.creatorShare,
+          instructor_share_percentage: revenueShares?.instructorShare,
         }
         : undefined,
-    [program]
+    [program, revenueShares]
   );
 
   const programCommercialStats = useMemo(
@@ -395,6 +432,7 @@ export function ProgramRecordPage({
     <CommercialsTab
       access={access}
       course={programCommercialCourse}
+      revenueSplitNote='Weighted by the minimum training fees of the courses in this program. When every fee is zero, each course has equal weight.'
       stats={programCommercialStats}
       statsAsync={{ loading: false }}
       trainers={[]}
@@ -498,6 +536,7 @@ export function ProgramRecordPage({
         onPrimaryAction={onPrimaryAction}
         hero={{
           title: program?.title,
+          code: program?.program_code!,
           summary: program?.description ?? undefined,
           categories: categoryName ? [categoryName] : undefined,
           status: program?.status,

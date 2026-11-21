@@ -248,10 +248,12 @@ export function CourseRecordView({
       >
         <EntityHeaderCard
           className={hero.className}
+          code={hero.code}
           title={hero.title ?? '—'}
           eyebrow={eyebrow}
           badges={
             <>
+              {hero?.code ? <Chip strong>{hero?.code}</Chip> : null}
               {leadCategory ? <Chip strong>{leadCategory}</Chip> : null}
               {otherCategories.map(category => (
                 <Chip key={category}>{category}</Chip>
@@ -268,10 +270,10 @@ export function CourseRecordView({
                 <span className='bg-primary/10 text-primary inline-flex size-[30px] shrink-0 items-center justify-center rounded-full text-xs font-bold'>
                   {initialsOf(hero.creatorName)}
                 </span>
-                <span>
+                <span className='flex flex-col'>
                   <b className='font-semibold'>{hero.creatorName}</b>{' '}
                   <span className='text-muted-foreground'>
-                    · {hero.creatorRole ?? 'Course creator'}
+                    {hero.creatorRole ?? 'Course creator'}
                   </span>
                 </span>
               </div>

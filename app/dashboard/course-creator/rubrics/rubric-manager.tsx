@@ -301,7 +301,7 @@ const RUBRIC_AUTHOR_ONLY = 'Only the rubric’s author can change it';
 
 /** A write the API refused with 403 is someone else's rubric; say so instead of "failed". */
 function rubricWriteError(error: unknown, fallback: string) {
-  return isForbidden(error) ? RUBRIC_AUTHOR_ONLY : fallback;
+  return isForbidden(error) ? RUBRIC_AUTHOR_ONLY : getErrorMessage(error, fallback);
 }
 
 function successfulWrite<T extends { error?: unknown; success?: boolean }>(response: T): T {
@@ -457,10 +457,10 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
         uuid: criterion.uuid || '',
         scoring: Array.isArray(criterion.scoring)
           ? criterion.scoring.map(score => ({
-              ...score,
-              uuid: score.uuid || '',
-              points: score.score_range || '0',
-            }))
+            ...score,
+            uuid: score.uuid || '',
+            points: score.score_range || '0',
+          }))
           : [],
       })),
     };
@@ -541,7 +541,9 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
           body: getCreateRubricPayload(currentRubric),
         });
         if (response.error || response.success === false || !response.data?.uuid) {
-          throw new Error('Failed to create rubric draft');
+          throw new Error(getErrorMessage(response, 'Failed to create rubric draft'), {
+            cause: response,
+          });
         }
         rubricUuid = response.data.uuid;
         // Retain the draft ID even if the standard-level request fails, so retries reuse it.
@@ -550,7 +552,9 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
 
       const response = await addStandardScoringLevels.mutateAsync({ path: { rubricUuid } });
       if (response.error || response.success === false || !response.data?.length) {
-        throw new Error('Failed to create standard scoring levels');
+        throw new Error(getErrorMessage(response, 'Failed to create standard scoring levels'), {
+          cause: response,
+        });
       }
       const scoringLevels: RubricScoringLevel[] = [...response.data]
         .sort((a, b) => a.level_order - b.level_order)
@@ -1230,7 +1234,7 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
                 />
               </div>
               <div className='flex flex-col gap-1.5'>
-                <Label className='text-sm font-medium'>Min Passing Score</Label>
+                <Label className='text-sm font-medium'>Min Passing Score (%)</Label>
                 <input
                   type='number'
                   className='border-input bg-background text-foreground placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm shadow-sm focus-visible:ring-1 focus-visible:outline-none'
@@ -1348,8 +1352,8 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
                           const matchingScoring =
                             (scoringLevel.uuid
                               ? c.scoring.find(
-                                  s => s.rubric_scoring_level_uuid === scoringLevel.uuid
-                                )
+                                s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                              )
                               : undefined) ?? c.scoring[slIdx];
 
                           const scoringEntry = matchingScoring || {
@@ -1364,8 +1368,8 @@ const RubricManager: React.FC<{ rubricUuid?: string }> = ({ rubricUuid }) => {
                           // - Otherwise fall back to position index (slIdx)
                           const actualIdx = scoringLevel.uuid
                             ? c.scoring.findIndex(
-                                s => s.rubric_scoring_level_uuid === scoringLevel.uuid
-                              )
+                              s => s.rubric_scoring_level_uuid === scoringLevel.uuid
+                            )
                             : slIdx;
 
                           const resolvedIdx = actualIdx !== -1 ? actualIdx : slIdx;

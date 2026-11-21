@@ -20,6 +20,7 @@ import type { CourseBlockAsyncProps } from '../types';
 
 export interface CourseHeroProps extends CourseBlockAsyncProps {
   title?: string;
+  code?: string;
   /**
    * The short blurb under the title — two lines, always. It is a summary, not the
    * description: the full text renders in the Overview tab's "About this course".

@@ -1160,6 +1160,7 @@ export default function CreateCoursePage() {
                                                                                     void refreshAssessmentLists();
                                                                                 }}
                                                                                 onAssignmentSaved={() => {
+                                                                                    setInlineAssessmentOpen(false);
                                                                                     void refreshAssessmentLists();
                                                                                 }}
                                                                                 onQuizDeleted={() => {

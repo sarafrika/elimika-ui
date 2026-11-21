@@ -1,10 +1,5 @@
 'use client';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Camera, Upload, X } from 'lucide-react';
-import type React from 'react';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { toast } from 'sonner';
 import { SectionTabPanel, SectionTabs, useSectionTab } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -27,6 +22,12 @@ import type {
   UpdateUserData,
   User,
 } from '@/services/client/types.gen';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Camera, Upload, X } from 'lucide-react';
+import type React from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { toast } from 'sonner';
+import { toAuthenticatedMediaUrl } from '../../../lib/media-url';
 import {
   type EditableProfileDetails,
   type EditableProfileErrors,
@@ -450,7 +451,7 @@ export function ProfilePage({
       <ProfileHero
         name={displayFullName}
         initials={initials}
-        avatarUrl={previewUrl || profile.profile_image_url || profile.avatar_url}
+        avatarUrl={previewUrl || toAuthenticatedMediaUrl(profile.profile_image_url) || profile.avatar_url}
         headline={profile.professional_headline}
         isOnline={profile.is_online}
         badge={headerBadge}
