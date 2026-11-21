@@ -1,20 +1,5 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import {
-  BookOpen,
-  CalendarClock,
-  Clock,
-  FileCheck,
-  MoveRight,
-  Share2,
-  Star,
-  Users,
-} from 'lucide-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { AsyncSection } from '@/components/data/async-section';
-import { LazySection } from '@/components/data/lazy-section';
 import { type EntityFact, EntityHeaderCard } from '@/components/data-display/entity-header-card';
 import { surfaceTheme } from '@/components/data-display/page-shell';
 import {
@@ -23,6 +8,8 @@ import {
   SectionTabs,
   useSectionTab,
 } from '@/components/data-display/section-tabs';
+import { AsyncSection } from '@/components/data/async-section';
+import { LazySection } from '@/components/data/lazy-section';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -48,32 +35,46 @@ import { allCourseTrainingRequirementsOptions } from '@/services/course-training
 import { LOCATION_TYPE_LABELS, SESSION_FORMAT_LABELS } from '@/src/features/catalogue/course-page';
 import {
   AssessmentTab,
-  CurriculumTab,
   courseBulletLines,
+  CurriculumTab,
   OverviewTab,
   ReviewsTab,
 } from '@/src/features/course-record';
 import { useUserDomain } from '@/src/features/dashboard/context/user-domain-context';
 import StudentsAlsoBought from '@/src/features/dashboard/courses/shared/_components/StudentsAlsoBought';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
-import { 
+import { useQuery } from '@tanstack/react-query';
+import {
+  BookOpen,
+  CalendarClock,
+  Clock,
+  FileCheck,
+  MoveRight,
+  Share2,
+  Star,
+  Users,
+} from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import {
   averageRating,
   CLASS_COURSE_TABS,
   CLASS_HUB_TAB_LABELS,
   type ClassCourseTab,
-  type ClassHubViewer,enumLabel, 
+  type ClassHubViewer, enumLabel,
   reviewerNameMap,
   reviewerUuids,
   scheduleTotalDuration,
   scheduleWeekSpan,
   toBlockReviews,
-  toCurriculumLessons,} from './class-hub';
+  toCurriculumLessons,
+} from './class-hub';
 import {
   AssignmentQuizCounts,
   ClassHeaderMedia,
+  classInstructor,
   ClassInstructorCard,
   ClassSchedulePanel,
-  classInstructor,
   DeleteClassButton,
   ShareLinkSheet,
   WriteReviewButton,

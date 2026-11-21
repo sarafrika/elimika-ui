@@ -47,11 +47,6 @@
  * dead, and a route that has somewhere better to go passes the prop and wins.
  */
 
-import { useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Fragment, type ReactNode, useCallback, useMemo, useState } from 'react';
-import { toast } from 'sonner';
 import {
   type LessonContentPreviewItem,
   LessonContentViewerDialog,
@@ -73,6 +68,11 @@ import {
   routeSegmentToDomain,
 } from '@/src/features/dashboard/lib/dashboard-url';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Fragment, type ReactNode, useCallback, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 
 import { AsyncSection } from '../../../components/data/async-section';
 import { CourseDetailsAsideCard } from '../catalogue/components/CourseDetailsAsideCard';
@@ -82,18 +82,18 @@ import {
   ApplicationStatusPanel,
   AssessmentTab,
   ClassesTab,
-  COURSE_DEFAULT_CURRENCY,
   CommercialsTab,
+  COURSE_DEFAULT_CURRENCY,
   type CourseApplicationRow,
+  courseBulletLines,
   type CourseClassFormatTone,
   type CourseClassRow,
+  courseContentKind,
   type CourseCurriculumItem,
   type CourseCurriculumLesson,
   type CourseOrderRow,
   type CourseRailActionItem,
   CurriculumTab,
-  courseBulletLines,
-  courseContentKind,
   DeliveryTab,
   EnrolPanel,
   formatCourseDate,
@@ -112,9 +112,9 @@ import {
 import { CourseRecordView } from './CourseRecordView';
 import {
   type ClassDefinition,
+  type Course,
   COURSE_EXPORT_ACTION_LABEL,
   COURSE_RECORD_TABS,
-  type Course,
   type CourseAccess,
   type CourseRailCardId,
   type CourseRecordTabId,
@@ -239,7 +239,8 @@ export function CourseRecordPage({
     enabled: Boolean(course?.course_creator_uuid),
     staleTime: STALE_TIMES.entity,
   });
-  const creator = creatorQuery.data;
+  //@ts-ignore
+  const creator = creatorQuery?.data?.data;
 
   /* ── shapes the blocks ask the route to compose ─────────────────────── */
 
@@ -709,6 +710,7 @@ export function CourseRecordPage({
         onPrimaryAction={onPrimaryAction}
         hero={{
           title: course?.name,
+          code: course?.course_code!,
           summary: courseBulletLines(course?.description).join(' ') || undefined,
           categories: course?.category_names,
           status: course?.status,

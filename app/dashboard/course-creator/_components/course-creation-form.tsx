@@ -86,7 +86,7 @@ import {
   TrainingRequirementsSection,
 } from './training-requirement-section';
 
-type CategoryItem = { uuid?: string; name?: string };
+type CategoryItem = { uuid?: string; name?: string; parent_uuid?: string | null };
 type FormSectionProps = {
   title: string;
   description: string;
@@ -309,21 +309,17 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       }
     }, [initialValues, form, detailsDraftRef]);
 
-    const appendCategory = (uuid: string) => {
-      const existing = form.getValues('categories') ?? [];
-      if (!uuid || existing.includes(uuid)) return;
-      form.setValue('categories', [...existing, uuid], {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+    const selectCategories = (parentUuid: string, subjectUuid?: string) => {
+      form.setValue(
+        'categories',
+        parentUuid ? [parentUuid, ...(subjectUuid ? [subjectUuid] : [])] : [],
+        { shouldDirty: true, shouldValidate: true }
+      );
     };
 
     const removeCategory = (index: number) => {
-      form.setValue(
-        'categories',
-        form.getValues('categories').filter((_, categoryIndex) => categoryIndex !== index),
-        { shouldDirty: true, shouldValidate: true }
-      );
+      const selected = form.getValues('categories');
+      selectCategories(index === 0 ? '' : selected[0]);
     };
 
     const { data: trainingRequirements } = useQuery({
@@ -357,8 +353,15 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       getAllCategoriesOptions({ query: { pageable: { page: 0, size: 100 } } })
     );
 
-    const [selectedParentCategoryUuid, setSelectedParentCategoryUuid] = useState('');
-    const [selectedSubjectUuid, setSelectedSubjectUuid] = useState('');
+    const categoriesSelected = useWatch({ control: form.control, name: 'categories' }) ?? [];
+    const primaryCategory = categories?.data?.content?.find(
+      (cat: CategoryItem) => cat.uuid === categoriesSelected[0]
+    );
+    const selectedParentCategoryUuid = primaryCategory?.parent_uuid ?? categoriesSelected[0] ?? '';
+    const selectedSubjectUuid = primaryCategory?.parent_uuid
+      ? categoriesSelected[0]
+      : categoriesSelected[1] ?? '';
+    const [newSubjectParentUuid, setNewSubjectParentUuid] = useState('');
     const [categoryInput, setCategoryInput] = useState('');
 
     const rootCategories = useMemo(
@@ -371,18 +374,17 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     const subjectOptions = useMemo(() => {
       if (!selectedParentCategoryUuid) return [];
-      const parent = rootCategories.find(cat => cat.uuid === selectedParentCategoryUuid);
       const children = ((categories?.data?.content as CategoryItem[] | undefined) ?? []).filter(
         cat => cat.parent_uuid === selectedParentCategoryUuid
       );
-      return parent ? [{ uuid: parent.uuid, name: parent.name }, ...children] : children;
-    }, [categories?.data?.content, rootCategories, selectedParentCategoryUuid]);
+      return children;
+    }, [categories?.data?.content, selectedParentCategoryUuid]);
 
     const { mutate: createCategoryMutation, isPending: createCategoryPending } = useMutation({
       mutationFn: ({ body }: { body: { name: string; parent_uuid?: string | null } }) =>
         createCategory({ body, throwOnError: true }),
       onError: error => toast.error(getErrorMessage(error, 'Failed to add category.')),
-      onSuccess: ({ data, error }) => {
+      onSuccess: ({ data, error }, variables) => {
         if (error || data?.error || data?.success === false) {
           const message = getErrorMessage(error ?? data, 'Failed to add category.');
           if (message.toLowerCase().includes('duplicate key')) {
@@ -398,11 +400,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           return;
         }
 
-        if (selectedParentCategoryUuid) {
-          appendCategory(selectedParentCategoryUuid);
-        }
-        if (createdUuid) {
-          appendCategory(createdUuid);
+        if (variables.body.parent_uuid) {
+          selectCategories(variables.body.parent_uuid, createdUuid);
         }
 
         toast.success(data?.message || 'Category added successfully');
@@ -665,7 +664,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     }));
 
     const isFree = useWatch({ control: form.control, name: 'is_free' }) ?? [];
-    const categoriesSelected = useWatch({ control: form.control, name: 'categories' }) ?? [];
     useEffect(() => {
       if (isFree) {
         form.setValue('price', 0);
@@ -795,11 +793,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                       <Select
                         value={selectedParentCategoryUuid}
-                        onValueChange={value => {
-                          setSelectedParentCategoryUuid(value);
-                          appendCategory(value);
-                          setSelectedSubjectUuid('');
-                        }}
+                        onValueChange={value => selectCategories(value)}
                       >
                         <SelectTrigger id='parent-category-select' className='w-full'>
                           <SelectValue placeholder='Select category' />
@@ -832,12 +826,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                             onValueChange={uuid => {
                               if (!uuid) return;
 
-                              if (selectedParentCategoryUuid) {
-                                appendCategory(selectedParentCategoryUuid);
-                              }
-
-                              appendCategory(uuid);
-                              setSelectedSubjectUuid('');
+                              selectCategories(selectedParentCategoryUuid, uuid);
                             }}
                             disabled={!selectedParentCategoryUuid}
                           >
@@ -853,16 +842,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
                             <SelectContent>
                               {subjectOptions.length ? (
-                                subjectOptions
-                                  .filter(
-                                    (cat: CategoryItem) =>
-                                      !categoriesSelected.includes(cat.uuid ?? '')
-                                  )
-                                  .map((cat: CategoryItem) => (
-                                    <SelectItem key={cat.uuid} value={cat.uuid as string}>
-                                      {cat.name}
-                                    </SelectItem>
-                                  ))
+                                subjectOptions.map((cat: CategoryItem) => (
+                                  <SelectItem key={cat.uuid} value={cat.uuid as string}>
+                                    {cat.name}
+                                  </SelectItem>
+                                ))
                               ) : (
                                 <div className='text-muted-foreground px-2 py-2 text-sm'>
                                   No subjects available for this category
@@ -882,6 +866,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                               className='size-9 shrink-0'
                               aria-label='Add new subject'
                               title='Add new subject'
+                              onClick={() => setNewSubjectParentUuid(selectedParentCategoryUuid)}
                             >
                               <Plus className='size-4' />
                             </Button>
@@ -900,8 +885,8 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                                 <Label htmlFor='parent-category-name'>Parent category</Label>
 
                                 <Select
-                                  value={selectedParentCategoryUuid}
-                                  onValueChange={value => setSelectedParentCategoryUuid(value)}
+                                  value={newSubjectParentUuid}
+                                  onValueChange={setNewSubjectParentUuid}
                                 >
                                   <SelectTrigger className='w-full' id='parent-category-name'>
                                     <SelectValue placeholder='Choose parent category' />
@@ -935,7 +920,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                                 type='button'
                                 className='min-w-[75px]'
                                 onClick={() => {
-                                  if (!selectedParentCategoryUuid) {
+                                  if (!newSubjectParentUuid) {
                                     toast.error('Select a parent category first.');
                                     return;
                                   }
@@ -948,11 +933,11 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                                   createCategoryMutation({
                                     body: {
                                       name: categoryInput.trim(),
-                                      parent_uuid: selectedParentCategoryUuid,
+                                      parent_uuid: newSubjectParentUuid,
                                     },
                                   });
                                 }}
-                                disabled={createCategoryPending || !selectedParentCategoryUuid}
+                                disabled={createCategoryPending || !newSubjectParentUuid}
                               >
                                 {createCategoryPending ? <Spinner /> : 'Add'}
                               </Button>
@@ -972,6 +957,10 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                       </div>
                     </div>
                   </div>
+
+                  <p className='text-muted-foreground text-sm'>
+                    Select one category and one subcategory.
+                  </p>
 
                   {/* Selected Categories */}
                   {categoriesSelected.length > 0 && (

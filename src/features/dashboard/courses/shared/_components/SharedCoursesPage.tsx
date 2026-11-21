@@ -636,7 +636,15 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     refetchOnWindowFocus: false,
   });
 
-  const programs = useMemo(() => programsResponse?.data?.content ?? [], [programsResponse]);
+  const programs = useMemo(
+    () =>
+      programsResponse?.error || programsResponse?.success === false
+        ? []
+        : (programsResponse?.data?.content ?? []).filter(
+          program => program.published === true && program.admin_approved === true
+        ),
+    [programsResponse]
+  );
   const categories = useMemo(() => categoriesResponse?.data?.content ?? [], [categoriesResponse]);
 
   const { data: instructorCourseApplications, isFetching: instructorCourseApplicationsFetching } =
@@ -1177,8 +1185,12 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
     if (catalogPage !== 1) setCatalogPage(1);
   }, [pageResetKey, catalogPage, setCatalogPage]);
 
-  const serverTotalPages = Math.max(1, Number(typeSearch.metadata?.totalPages ?? 1));
-  const courseResultCount = Number(typeSearch.metadata?.totalElements ?? mappedCourses.length);
+  // Count and paginate the same course population that supplies the cards.
+  const courseMetadata = fromCatalogue
+    ? courseCatalogueQuery.data?.data?.metadata
+    : typeSearch.metadata;
+  const serverTotalPages = Math.max(1, Number(courseMetadata?.totalPages ?? 1));
+  const courseResultCount = Number(courseMetadata?.totalElements ?? mappedCourses.length);
   const hasLocalCatalogFilters = filters.price !== 'all' || filters.duration !== 'all';
   const totalCatalogPages = facetMode
     ? serverTotalPages

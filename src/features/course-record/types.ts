@@ -380,7 +380,7 @@ export interface CourseAccessCapability {
 
 const COURSE_KPI_TRAINER_CASE: CourseKpiCopy = {
   set: 'trainer-case',
-  title: 'The case for delivering this course',
+  title: 'Course performance',
   scope: 'Public performance — the same figures every trainer sees',
   learnersLabel: 'Learners trained',
   moneyLabel: 'Average class fill',
@@ -519,7 +519,7 @@ const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapability> =
     ],
     kpi: {
       set: 'scoped',
-      title: 'Your delivery of this course',
+      title: 'Course performance',
       scope: 'Scoped to your organisation',
       learnersLabel: 'Your learners',
       moneyLabel: 'Your earnings',
@@ -567,7 +567,7 @@ const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapability> =
     ],
     kpi: {
       set: 'scoped',
-      title: 'Your delivery of this course',
+      title: 'Course performance',
       scope: 'Scoped to your classes',
       learnersLabel: 'Your learners',
       moneyLabel: 'Your earnings',
@@ -705,7 +705,7 @@ const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapability> =
     ],
     kpi: {
       set: 'learner-case',
-      title: 'What learners get out of it',
+      title: 'Course performance',
       scope: 'Public performance across every provider',
       learnersLabel: 'Learners trained',
       moneyLabel: 'From',
@@ -782,8 +782,18 @@ const COURSE_ACCESS_CAPABILITIES: Record<CourseAccess, CourseAccessCapability> =
 };
 
 /** The one way to read the map. */
-export function courseCapability(access: CourseAccess): CourseAccessCapability {
-  return COURSE_ACCESS_CAPABILITIES[access];
+export function courseCapability(
+  access: CourseAccess,
+  contentKind: 'course' | 'program' = 'course'
+): CourseAccessCapability {
+  const capability = COURSE_ACCESS_CAPABILITIES[access];
+  if (contentKind === 'program' && capability.kpi) {
+    return {
+      ...capability,
+      kpi: { ...capability.kpi, title: 'Program performance' },
+    };
+  }
+  return capability;
 }
 
 /** True when this viewer's tab row includes the named tab. */

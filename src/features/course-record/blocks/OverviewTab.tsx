@@ -209,6 +209,8 @@ const COURSE_REQUIREMENT_TYPE_LABELS: Record<RequirementTypeEnum2, string> = {
  * Block
  * ────────────────────────────────────────────────────────────────────────── */
 
+export type OverviewTrainingRequirement = Omit<CourseTrainingRequirement, 'course_uuid'>;
+
 interface OverviewTabProps extends CourseBlockAsyncProps {
   /** From the API. Decides whether the fit cards appear, via the capability map. */
   access: CourseAccess;
@@ -228,7 +230,7 @@ interface OverviewTabProps extends CourseBlockAsyncProps {
   fitCards?: readonly CourseFitCard[];
 
   /* — requirements — */
-  requirements?: readonly CourseTrainingRequirement[];
+  requirements?: readonly OverviewTrainingRequirement[];
   /** Async state of the requirements query; it is a separate call from the course. */
   requirementsAsync?: CourseBlockAsyncProps;
   /** Leaves out the training requirements card, for a page that gives them their own tab. */
@@ -465,7 +467,7 @@ function FitCard({ card, vars }: { card: CourseFitCard; vars: CourseFitVars | un
   );
 }
 
-function RequirementCard({ requirement }: { requirement: CourseTrainingRequirement }) {
+function RequirementCard({ requirement }: { requirement: OverviewTrainingRequirement }) {
   const mandatory = requirement.is_mandatory === true;
   const type = COURSE_REQUIREMENT_TYPE_LABELS[requirement.requirement_type];
   const quantity = formatQuantity(requirement.quantity, requirement.unit);
@@ -548,7 +550,7 @@ function RequirementsSkeleton() {
 interface RequirementGroup {
   key: string;
   heading: string;
-  items: CourseTrainingRequirement[];
+  items: OverviewTrainingRequirement[];
 }
 
 /**
@@ -557,11 +559,11 @@ interface RequirementGroup {
  * can count the groups without re-deriving them.
  */
 function groupRequirements(
-  requirements: readonly CourseTrainingRequirement[] | undefined
+  requirements: readonly OverviewTrainingRequirement[] | undefined
 ): RequirementGroup[] {
   if (!requirements || requirements.length === 0) return [];
 
-  const buckets = new Map<string, CourseTrainingRequirement[]>();
+  const buckets = new Map<string, OverviewTrainingRequirement[]>();
   for (const requirement of requirements) {
     const key = requirement.provided_by ?? 'unstated';
     const bucket = buckets.get(key);

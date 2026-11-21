@@ -42,11 +42,10 @@ import { toast } from 'sonner';
 import type { ProgramFormValues } from '../program-schema';
 
 export function ProgramCategories({ categories }: { categories: Category[] }) {
-  const { control, getValues, setValue } = useFormContext<ProgramFormValues>();
+  const { control, setValue } = useFormContext<ProgramFormValues>();
   const selected = useWatch({ control, name: 'categoryUuids' });
   const queryClient = useQueryClient();
   const id = useId();
-  const [parentUuid, setParentUuid] = useState<string>();
   const [open, setOpen] = useState(false);
   const [newParentUuid, setNewParentUuid] = useState('');
   const [name, setName] = useState('');
@@ -57,16 +56,18 @@ export function ProgramCategories({ categories }: { categories: Category[] }) {
   );
   const roots = useMemo(() => available.filter(cat => cat.uuid && !cat.parent_uuid), [available]);
   const primary = available.find(cat => cat.uuid === selected[0]);
-  const activeParent = parentUuid ?? primary?.parent_uuid ?? primary?.uuid ?? '';
+  const activeParent = primary?.parent_uuid ?? selected[0] ?? '';
+  const selectedSubcategory = primary?.parent_uuid ? selected[0] : selected[1] ?? '';
   const children = useMemo(
     () => available.filter(cat => cat.uuid && cat.parent_uuid === activeParent),
     [available, activeParent]
   );
-  const append = (...uuids: string[]) => {
-    setValue('categoryUuids', [...new Set([...getValues('categoryUuids'), ...uuids])], {
-      shouldDirty: true,
-      shouldValidate: true,
-    });
+  const selectCategories = (parentUuid: string, subcategoryUuid?: string) => {
+    setValue(
+      'categoryUuids',
+      parentUuid ? [parentUuid, ...(subcategoryUuid ? [subcategoryUuid] : [])] : [],
+      { shouldDirty: true, shouldValidate: true }
+    );
   };
   const create = useMutation({
     ...createCategoryMutation(),
@@ -83,8 +84,7 @@ export function ProgramCategories({ categories }: { categories: Category[] }) {
       setCreated(current => [...current, category]);
       const parent = variables.body.parent_uuid;
       if (parent) {
-        setParentUuid(parent);
-        append(parent, category.uuid);
+        selectCategories(parent, category.uuid);
       }
       setOpen(false);
       setName('');
@@ -106,10 +106,7 @@ export function ProgramCategories({ categories }: { categories: Category[] }) {
                 <FormLabel>Category</FormLabel>
                 <Select
                   value={activeParent}
-                  onValueChange={uuid => {
-                    setParentUuid(uuid);
-                    append(uuid);
-                  }}
+                  onValueChange={uuid => selectCategories(uuid)}
                   disabled={!roots.length}
                 >
                   <FormControl>
@@ -130,8 +127,8 @@ export function ProgramCategories({ categories }: { categories: Category[] }) {
                 <Label htmlFor={`${id}-subcategory`}>Subcategory</Label>
                 <div className='flex items-center gap-2'>
                   <Select
-                    value=''
-                    onValueChange={uuid => append(activeParent, uuid)}
+                    value={selectedSubcategory}
+                    onValueChange={uuid => selectCategories(activeParent, uuid)}
                     disabled={!activeParent}
                   >
                     <SelectTrigger id={`${id}-subcategory`} className='min-w-0 flex-1'>
@@ -142,16 +139,14 @@ export function ProgramCategories({ categories }: { categories: Category[] }) {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {children
-                        .filter(cat => !selected.includes(cat.uuid!))
-                        .map(cat => (
-                          <SelectItem key={cat.uuid} value={cat.uuid!}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      {!children.some(cat => !selected.includes(cat.uuid!)) && (
+                      {children.map(cat => (
+                        <SelectItem key={cat.uuid} value={cat.uuid!}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                      {children.length === 0 && (
                         <p className='text-muted-foreground px-2 py-2 text-sm'>
-                          No more subcategories available. Add a new one.
+                          No subcategories available. Add a new one.
                         </p>
                       )}
                     </SelectContent>
@@ -192,7 +187,7 @@ export function ProgramCategories({ categories }: { categories: Category[] }) {
                         size='icon'
                         className='h-6 w-6'
                         aria-label={`Remove ${label}`}
-                        onClick={() => field.onChange(field.value.filter(value => value !== uuid))}
+                        onClick={() => selectCategories(index === 0 ? '' : activeParent)}
                       >
                         <X className='size-3' />
                       </Button>
@@ -202,7 +197,7 @@ export function ProgramCategories({ categories }: { categories: Category[] }) {
               </div>
             )}
             <FormDescription>
-              Select one or more. The first selection is the program’s primary category.
+              Select one category and one subcategory.
             </FormDescription>
             <FormMessage />
           </FormItem>

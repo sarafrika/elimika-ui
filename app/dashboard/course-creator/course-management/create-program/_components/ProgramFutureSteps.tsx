@@ -49,17 +49,24 @@ export function ProgramPricing({
   return (
     <section className='space-y-4' aria-label='Program pricing'>
       <h3 className='text-sm font-medium'>Pricing</h3>
-      <div className='max-w-sm'>
+      <div className='max-w-sm space-y-2'>
         <ProgramTextField
           name='price'
           label='Program price (KES)'
           type='number'
-          min={0}
-          placeholder='Enter 0 for a free program'
+          min={revenueShares?.totalMinimumFee ?? 0}
+          placeholder='Enter program price'
         />
+        {!isLoading && revenueShares && (
+          <p className='text-destructive text-sm font-medium'>
+            Minimum program price: {formatProgramTrainingFee(revenueShares.totalMinimumFee)}.
+            Enter at least the combined minimum training fees of the selected courses.
+          </p>
+        )}
       </div>
       <p className='text-muted-foreground text-xs'>
-        This is the total program price. Leave it blank for an unpriced draft, or enter 0 for free.
+        This is the total program price. Leave it blank for an unpriced draft.
+        {revenueShares?.totalMinimumFee === 0 && ' Enter 0 for a free program.'}
       </p>
       {isLoading ? (
         <p role='status' className='text-muted-foreground flex items-center gap-2 text-sm'>
