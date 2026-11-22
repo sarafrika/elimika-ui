@@ -415,44 +415,17 @@ export function TrainingRequirementsSection({
 
   const draftGroups = useMemo(() => {
     if (!activeProvider) return [];
-    const rows = draftsByProvider[activeProvider];
-    if (activeProvider !== 'instructor') {
-      return [{ id: activeProvider, label: '', education: false, rows }];
-    }
-    return [
-      // {
-      //   id: 'instructor-education',
-      //   label: 'Instructor Educational Requirements',
-      //   education: true,
-      //   rows: rows.filter(row => row.requirement_type === 'education'),
-      // },
-      {
-        id: 'instructor-other',
-        label: '',
-        education: false,
-        rows: rows.filter(row => row.requirement_type !== 'education'),
-      },
-    ];
+    // One list per provider: an instructor's education rows stay alongside the others, so
+    // switching a row's type to education must not move it out of view.
+    return [{ id: activeProvider, label: '', education: false, rows: draftsByProvider[activeProvider] }];
   }, [activeProvider, draftsByProvider]);
 
   const grouped = useMemo(
     () =>
-      PROVIDERS.flatMap(provider => {
-        const rows = existingRequirements.filter(row => row.provided_by === provider.value);
-        if (provider.value !== 'instructor') return [{ ...provider, rows }];
-        return [
-          // {
-          //   value: 'instructor-education',
-          //   label: 'Instructor Educational Requirements',
-          //   rows: rows.filter(row => row.requirement_type === 'education'),
-          // },
-          {
-            value: 'instructor',
-            label: 'Instructor',
-            rows: rows.filter(row => row.requirement_type !== 'education'),
-          },
-        ];
-      }).filter(group => group.rows.length > 0),
+      PROVIDERS.map(provider => ({
+        ...provider,
+        rows: existingRequirements.filter(row => row.provided_by === provider.value),
+      })).filter(group => group.rows.length > 0),
     [existingRequirements]
   );
 
