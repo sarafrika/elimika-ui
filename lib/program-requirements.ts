@@ -1,5 +1,16 @@
 import type { ProvidedByEnum } from '@/services/client/types.gen';
 
+export function writeRequirementText(resource: {
+  name: string;
+  requirement_type: string;
+  quantity: string;
+  unit: string;
+  description?: string;
+}) {
+  const description = resource.description?.trim();
+  return `Name: ${resource.name.trim()}\nType: ${resource.requirement_type}\nQuantity: ${resource.quantity || '0'}\nUnit: ${resource.unit}${description ? `\nDescription: ${description}` : ''}`;
+}
+
 /** Program requirement types identify the provider, rather than the resource type. */
 export function programRequirementProvider(value: string | null | undefined): ProvidedByEnum | undefined {
   switch (value?.trim().toUpperCase()) {

@@ -5,7 +5,9 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { formatProgramTrainingFee, type ProgramRevenueShares } from '../program-pricing';
+import type { ProgramFormValues } from '../program-schema';
 import type { PendingProgramMedia, ProgramMediaKey } from '../save-program-media';
 import { ProgramTextField } from './ProgramFields';
 import { ProgramMediaUpload } from './ProgramMediaUpload';
@@ -46,6 +48,13 @@ export function ProgramPricing({
   isLoading: boolean;
   onRetry: () => void;
 }) {
+  const { control } = useFormContext<ProgramFormValues>();
+  const price = useWatch({ control, name: 'price' });
+  const hasValidPrice =
+    price.trim() !== '' &&
+    Number.isFinite(Number(price)) &&
+    Number(price) >= (revenueShares?.totalMinimumFee ?? 0);
+
   return (
     <section className='space-y-4' aria-label='Program pricing'>
       <h3 className='text-sm font-medium'>Pricing</h3>
@@ -57,7 +66,7 @@ export function ProgramPricing({
           min={revenueShares?.totalMinimumFee ?? 0}
           placeholder='Enter program price'
         />
-        {!isLoading && revenueShares && (
+        {!isLoading && revenueShares && !hasValidPrice && (
           <p className='text-destructive text-sm font-medium'>
             Minimum program price: {formatProgramTrainingFee(revenueShares.totalMinimumFee)}.
             Enter at least the combined minimum training fees of the selected courses.

@@ -56,7 +56,7 @@ export function TrainingRequirementFields({
   quantityInvalid?: boolean;
 }) {
   const education = value.requirement_type === 'education';
-  const types = instructor ? [...requirementTypes, 'education'] : requirementTypes;
+  const types = instructor ? ['education', ...requirementTypes] : requirementTypes;
   return (
     <>
       <td className='px-3 py-2'>

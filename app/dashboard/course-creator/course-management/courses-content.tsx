@@ -120,8 +120,8 @@ type Offering = { type: 'courses'; item: Course } | { type: 'programs'; item: Tr
 function categoryUuidsOf(offering: Offering): string[] {
   return offering.type === 'courses'
     ? (offering.item.category_uuids ?? []).filter(
-        (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
-      )
+      (uuid): uuid is string => typeof uuid === 'string' && uuid.length > 0
+    )
     : offering.item.category_uuid
       ? [offering.item.category_uuid]
       : [];
@@ -1107,19 +1107,39 @@ function OfferingRow({
         <OfferingCount count={counts?.students} />
       </TableCell>
       <TableCell>
-        <span
-          className={cn(
-            'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap',
-            status === 'published'
-              ? 'bg-success/15 text-success'
-              : status === 'in_review'
-                ? 'bg-warning/15 text-warning'
-                : 'bg-muted text-muted-foreground'
-          )}
-        >
-          <span className='size-1.5 rounded-full bg-current' />
-          {statusLabel}
-        </span>
+        <div className='flex flex-col items-start gap-1.5'>
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap',
+              status === 'published'
+                ? 'bg-success/15 text-success'
+                : status === 'in_review'
+                  ? 'bg-warning/15 text-warning'
+                  : 'bg-muted text-muted-foreground'
+            )}
+          >
+            <span className='size-1.5 rounded-full bg-current' />
+            {statusLabel}
+          </span>
+
+          <span
+            className={cn(
+              'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap',
+              item.admin_approved === true
+                ? 'bg-success/15 text-success'
+                : item.admin_approved === false
+                  ? 'bg-warning/15 text-warning'
+                  : 'bg-muted text-muted-foreground'
+            )}
+          >
+            <span className='size-1.5 rounded-full bg-current' />
+            {item.admin_approved === true
+              ? 'Admin approved'
+              : item.admin_approved === false
+                ? 'Pending admin approval'
+                : 'Unavailable'}
+          </span>
+        </div>
       </TableCell>
       <TableCell className='text-muted-foreground whitespace-nowrap'>
         {updated && isValid(updated) ? format(updated, 'dd MMM yyyy') : '—'}
