@@ -134,6 +134,7 @@ export default function CourseBuilderPage() {
       creator_share_percentage: c.creator_share_percentage ?? 0,
       instructor_share_percentage: c.instructor_share_percentage ?? 0,
       revenue_share_notes: c.revenue_share_notes ?? '',
+      prerequisite_type: c.prerequisite_type ?? 'NONE',
       training_requirements: [],
     });
   }, [courseId, course]);

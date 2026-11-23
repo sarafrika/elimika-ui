@@ -1,5 +1,6 @@
 import { SchemaEnum6 } from '@/services/client/types.gen';
 import z from 'zod';
+import { coursePrerequisiteTypes } from '@/lib/course-setup';
 export const MAX_VIDEO_SIZE_MB = 150; // Adjust according to your backend limit
 export const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
 
@@ -28,6 +29,7 @@ export const courseCreationSchema = z.object({
   is_free: z.boolean().default(false),
   currency: z.string().optional(),
   prerequisites: z.string().max(999, 'Objectives must not exceed 1000 characters'),
+  prerequisite_type: z.enum(coursePrerequisiteTypes).default('NONE'),
   categories: z.string().array(),
   difficulty: z.string().min(1, 'Please select a difficulty level'),
   class_limit: z.coerce.number().min(1, 'Class limit must be at least 1'),

@@ -60,6 +60,7 @@ import {
   OrganisationTypeEnum,
   OwnerTypeEnum,
   PaymentStatusEnum,
+  PrerequisiteTypeEnum,
   PresentationEnum,
   PriorityEnum,
   ProficiencyLevelEnum,
@@ -13548,6 +13549,15 @@ export const zAttendanceRequest = z
   .describe("One learner's attendance for a session, with the instructor's rich-text comment");
 
 /**
+ * **[OPTIONAL]** How a learner qualifies: `NONE`, `INSTRUCTOR_PERMISSION`, or `COURSES` (the prior courses at `/courses/{uuid}/prerequisites`). Defaults to `NONE` on create; omit on update to keep the current value.
+ */
+export const zPrerequisiteTypeEnum = z
+  .nativeEnum(PrerequisiteTypeEnum)
+  .describe(
+    '**[OPTIONAL]** How a learner qualifies: `NONE`, `INSTRUCTOR_PERMISSION`, or `COURSES` (the prior courses at `/courses/{uuid}/prerequisites`). Defaults to `NONE` on create; omit on update to keep the current value.'
+  );
+
+/**
  * **[REQUIRED]** Resource category.
  */
 export const zRequirementTypeEnum2 = z
@@ -13694,6 +13704,7 @@ export const zCourse = z
         '**[OPTIONAL]** Required knowledge and skills students should have before taking this course.'
       )
       .optional(),
+    prerequisite_type: zPrerequisiteTypeEnum.optional(),
     duration_hours: z
       .number()
       .int()
@@ -21496,6 +21507,7 @@ export const zCourseWritable = z
         '**[OPTIONAL]** Required knowledge and skills students should have before taking this course.'
       )
       .optional(),
+    prerequisite_type: zPrerequisiteTypeEnum.optional(),
     duration_hours: z
       .number()
       .int()

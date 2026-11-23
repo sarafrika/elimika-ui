@@ -3165,6 +3165,7 @@ export type Course = {
    * **[OPTIONAL]** Required knowledge and skills students should have before taking this course.
    */
   prerequisites?: string;
+  prerequisite_type?: PrerequisiteTypeEnum;
   /**
    * **[OPTIONAL]** Legacy course duration in hours; course creators no longer set it.
    */
@@ -17225,6 +17226,20 @@ export const AttendanceStatusEnum = {
 export type AttendanceStatusEnum = (typeof AttendanceStatusEnum)[keyof typeof AttendanceStatusEnum];
 
 /**
+ * **[OPTIONAL]** How a learner qualifies: `NONE`, `INSTRUCTOR_PERMISSION`, or `COURSES` (the prior courses at `/courses/{uuid}/prerequisites`). Defaults to `NONE` on create; omit on update to keep the current value.
+ */
+export const PrerequisiteTypeEnum = {
+  NONE: 'NONE',
+  INSTRUCTOR_PERMISSION: 'INSTRUCTOR_PERMISSION',
+  COURSES: 'COURSES',
+} as const;
+
+/**
+ * **[OPTIONAL]** How a learner qualifies: `NONE`, `INSTRUCTOR_PERMISSION`, or `COURSES` (the prior courses at `/courses/{uuid}/prerequisites`). Defaults to `NONE` on create; omit on update to keep the current value.
+ */
+export type PrerequisiteTypeEnum = (typeof PrerequisiteTypeEnum)[keyof typeof PrerequisiteTypeEnum];
+
+/**
  * **[REQUIRED]** Resource category.
  */
 export const RequirementTypeEnum2 = {
@@ -19881,6 +19896,7 @@ export type CourseWritable = {
    * **[OPTIONAL]** Required knowledge and skills students should have before taking this course.
    */
   prerequisites?: string;
+  prerequisite_type?: PrerequisiteTypeEnum;
   /**
    * **[OPTIONAL]** Legacy course duration in hours; course creators no longer set it.
    */

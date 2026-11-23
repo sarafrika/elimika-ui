@@ -184,6 +184,7 @@ const mapCourseValues = (course?: Course | null): Partial<CourseCreationFormValu
         creator_share_percentage: course.creator_share_percentage ?? 0,
         instructor_share_percentage: course.instructor_share_percentage ?? 0,
         revenue_share_notes: course.revenue_share_notes || '',
+        prerequisite_type: course.prerequisite_type ?? 'NONE',
         training_requirements: [],
     };
 };
