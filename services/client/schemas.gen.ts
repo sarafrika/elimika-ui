@@ -33224,6 +33224,14 @@ export const AttendanceStatusEnumSchema = {
   enum: ['ATTENDED', 'ABSENT', 'EXCUSED'],
 } as const;
 
+export const PrerequisiteTypeEnumSchema = {
+  type: 'string',
+  description:
+    '**[OPTIONAL]** How a learner qualifies: `NONE`, `INSTRUCTOR_PERMISSION`, or `COURSES` (the prior courses at `/courses/{uuid}/prerequisites`). Defaults to `NONE` on create; omit on update to keep the current value.',
+  enum: ['NONE', 'INSTRUCTOR_PERMISSION', 'COURSES'],
+  example: 'COURSES',
+} as const;
+
 export const RequirementTypeEnum2Schema = {
   type: 'string',
   description: '**[REQUIRED]** Resource category.',

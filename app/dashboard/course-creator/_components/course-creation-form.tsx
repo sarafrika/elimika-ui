@@ -258,6 +258,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
         categories: [],
         class_limit: 1,
         prerequisites: '',
+        prerequisite_type: 'NONE',
         age_lower_limit: 1,
         age_upper_limit: 1,
         thumbnail_url: '',
@@ -518,6 +519,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
           category_uuids: data?.categories,
           difficulty_uuid: data?.difficulty,
           prerequisites: "",
+          prerequisite_type: data.prerequisite_type,
           duration_hours: 0,
           status: data.status,
           duration_minutes: 0,
@@ -581,6 +583,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
             category_uuids: data?.categories,
             difficulty_uuid: data?.difficulty,
             prerequisites: "",
+            prerequisite_type: data.prerequisite_type,
             duration_hours: 0,
             duration_minutes: 0,
             class_limit: data?.class_limit,
@@ -1079,12 +1082,20 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                 draftsRef={setupDraftRef}
                 isSaving={isSaving}
               /> */}
-              <CoursePrerequisitesEditor
-                courseUuid={targetCourseUuid}
-                isLive={isLive}
-                saveRef={prerequisitesSaveRef}
-                draftsRef={setupDraftRef}
-                isSaving={isSaving}
+              <FormField
+                control={form.control}
+                name='prerequisite_type'
+                render={({ field }) => (
+                  <CoursePrerequisitesEditor
+                    courseUuid={targetCourseUuid}
+                    isLive={isLive}
+                    prerequisiteType={field.value}
+                    onPrerequisiteTypeChange={field.onChange}
+                    saveRef={prerequisitesSaveRef}
+                    draftsRef={setupDraftRef}
+                    isSaving={isSaving}
+                  />
+                )}
               />
             </section>
 

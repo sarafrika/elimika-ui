@@ -10,12 +10,18 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Skeleton } from '@/components/ui/skeleton';
 import Spinner from '@/components/ui/spinner';
 import { Switch } from '@/components/ui/switch';
 import { isForbidden } from '@/lib/api-errors';
 import { getErrorMessage } from '@/lib/error-utils';
-import type { CoursePrerequisiteDraft, CourseSetupDrafts, CourseSetupSectionRef } from '@/lib/course-setup';
+import type {
+  CoursePrerequisiteDraft,
+  CoursePrerequisiteType,
+  CourseSetupDrafts,
+  CourseSetupSectionRef,
+} from '@/lib/course-setup';
 import { STALE_TIMES } from '@/lib/query-client';
 import {
   getCoursePrerequisitesOptions,
@@ -26,6 +32,20 @@ import {
 import type { CoursePrerequisite, GetPublishedCoursesResponse } from '@/services/client/types.gen';
 
 type PrerequisiteRow = CoursePrerequisiteDraft;
+
+const PREREQUISITE_TYPE_OPTIONS: { value: CoursePrerequisiteType; label: string; description: string }[] = [
+  { value: 'NONE', label: 'None', description: 'Anyone can start this course.' },
+  {
+    value: 'INSTRUCTOR_PERMISSION',
+    label: 'Instructor permission',
+    description: 'Learners need the instructor’s permission to join.',
+  },
+  {
+    value: 'COURSES',
+    label: 'Prerequisite courses',
+    description: 'Learners should complete the courses you pick first.',
+  },
+];
 
 function toRows(items: readonly CoursePrerequisite[] | undefined): PrerequisiteRow[] {
   return (items ?? [])
@@ -47,10 +67,15 @@ function toRows(items: readonly CoursePrerequisite[] | undefined): PrerequisiteR
  * for review, answering with the draft's rows (`course_uuid` is the draft). The live
  * course keeps its prerequisites until an admin approves, so the editor keeps showing
  * what was submitted and says so.
+ *
+ * The prerequisite type (none, instructor permission, prior courses) is a course field owned by
+ * the parent form; the course list only applies to `COURSES`, so any other type saves an empty list.
  */
 export function CoursePrerequisitesEditor({
   courseUuid = '',
   isLive = false,
+  prerequisiteType = 'NONE',
+  onPrerequisiteTypeChange,
   saveRef,
   draftsRef,
   isSaving = false,
@@ -58,12 +83,15 @@ export function CoursePrerequisitesEditor({
   courseUuid?: string;
   /** Published and admin-approved: edits go to the draft for review. */
   isLive?: boolean;
+  prerequisiteType?: CoursePrerequisiteType;
+  onPrerequisiteTypeChange?: (value: CoursePrerequisiteType) => void;
   saveRef?: Ref<CourseSetupSectionRef>;
   draftsRef?: RefObject<CourseSetupDrafts>;
   isSaving?: boolean;
 }) {
   const queryClient = useQueryClient();
   const headingId = useId();
+  const typeGroupId = useId();
   const [rows, setLocalRows] = useState<PrerequisiteRow[] | null>(() => draftsRef?.current.prerequisites ?? null);
   const setRows = (next: PrerequisiteRow[] | null) => {
     setLocalRows(next);
@@ -86,8 +114,10 @@ export function CoursePrerequisitesEditor({
     : null;
 
   const serverRows = toRows(responseError ? undefined : query.data?.data);
+  const usesCourses = prerequisiteType === 'COURSES';
   const current = rows ?? serverRows;
-  const dirty = rows !== null;
+  // Moving off COURSES clears the saved list; switching back restores what was there.
+  const dirty = rows !== null || (!usesCourses && serverRows.length > 0);
 
   const update = (next: PrerequisiteRow[]) => {
     setRows(next);
@@ -102,7 +132,7 @@ export function CoursePrerequisitesEditor({
       const response = await mutation.mutateAsync({
         path: { uuid },
         body: {
-          prerequisites: current.map(row => ({
+          prerequisites: (usesCourses ? current : []).map(row => ({
             prerequisite_course_uuid: row.courseUuid,
             is_mandatory: row.isMandatory,
           })),
@@ -140,7 +170,7 @@ export function CoursePrerequisitesEditor({
 
   useImperativeHandle(saveRef, () => ({
     savePending: async uuid => {
-      if (rows !== null && !submittedForReview) await save(uuid, true);
+      if (dirty && !submittedForReview) await save(uuid, true);
     },
   }));
 
@@ -152,12 +182,40 @@ export function CoursePrerequisitesEditor({
           Prerequisites
         </CardTitle>
         <CardDescription>
-          Courses a learner should complete before this one. Required ones are shown as
-          &ldquo;Complete X first&rdquo;; recommended ones as a suggestion.
+          What a learner needs before joining this course.
           {isLive ? ' This course is live, so changes are submitted for review.' : ''}
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-4'>
+        <RadioGroup
+          aria-labelledby={headingId}
+          value={prerequisiteType}
+          onValueChange={value => {
+            onPrerequisiteTypeChange?.(value as CoursePrerequisiteType);
+            setSaveError(null);
+            setSubmittedForReview(false);
+          }}
+          disabled={busy}
+          className='gap-2 sm:grid-cols-3'
+        >
+          {PREREQUISITE_TYPE_OPTIONS.map(option => {
+            const id = `${typeGroupId}-${option.value}`;
+            return (
+              <Label
+                key={option.value}
+                htmlFor={id}
+                className='has-[[data-state=checked]]:border-primary has-[[data-state=checked]]:bg-primary/5 flex cursor-pointer items-start gap-3 rounded-lg border p-3 font-normal'
+              >
+                <RadioGroupItem id={id} value={option.value} className='mt-0.5' />
+                <span className='grid gap-0.5'>
+                  <span className='text-sm font-medium'>{option.label}</span>
+                  <span className='text-muted-foreground text-xs'>{option.description}</span>
+                </span>
+              </Label>
+            );
+          })}
+        </RadioGroup>
+
         {submittedForReview ? (
           <Alert>
             <ClipboardCheck className='size-4' />
@@ -195,11 +253,11 @@ export function CoursePrerequisitesEditor({
           />
         ) : (
           <>
-            {current.length === 0 ? (
+            {!usesCourses ? null : current.length === 0 ? (
               <EmptyState
                 variant='compact'
-                title='No prerequisites'
-                description='Anyone can start this course. Add a course below if learners should take it first.'
+                title='No courses selected'
+                description='Pick the courses learners should complete first. Required ones are shown as “Complete X first”; recommended ones as a suggestion.'
               />
             ) : (
               <ul className='divide-border divide-y rounded-lg border'>
@@ -223,43 +281,45 @@ export function CoursePrerequisitesEditor({
               </ul>
             )}
 
-            <div className='space-y-1.5'>
-              <Label>Add a prerequisite course</Label>
-              <EntityCombobox
-                disabled={busy}
-                value=''
-                onChange={(value, option) => {
-                  if (!value || !option) return;
-                  if (current.some(row => row.courseUuid === value)) return;
-                  update([
-                    ...current,
-                    { courseUuid: value, name: option.label, isMandatory: true },
-                  ]);
-                }}
-                queryOptions={q =>
-                  getPublishedCoursesOptions({
-                    query: { ...(q ? { q } : {}), pageable: { page: 0, size: 20 } },
-                  })
-                }
-                toOptions={(data: GetPublishedCoursesResponse) =>
-                  (data.data?.content ?? [])
-                    .filter(course => Boolean(course.uuid && course.name))
-                    .map(
-                      (course): EntityOption => ({
-                        value: course.uuid ?? '',
-                        label: course.name ?? '',
-                        disabled:
-                          course.uuid === courseUuid ||
-                          current.some(row => row.courseUuid === course.uuid),
-                      })
-                    )
-                }
-                placeholder='Search published courses…'
-                searchPlaceholder='Search courses…'
-                emptyText='No published course matches'
-                aria-label='Add a prerequisite course'
-              />
-            </div>
+            {usesCourses ? (
+              <div className='space-y-1.5'>
+                <Label>Add a prerequisite course</Label>
+                <EntityCombobox
+                  disabled={busy}
+                  value=''
+                  onChange={(value, option) => {
+                    if (!value || !option) return;
+                    if (current.some(row => row.courseUuid === value)) return;
+                    update([
+                      ...current,
+                      { courseUuid: value, name: option.label, isMandatory: true },
+                    ]);
+                  }}
+                  queryOptions={q =>
+                    getPublishedCoursesOptions({
+                      query: { ...(q ? { q } : {}), pageable: { page: 0, size: 20 } },
+                    })
+                  }
+                  toOptions={(data: GetPublishedCoursesResponse) =>
+                    (data.data?.content ?? [])
+                      .filter(course => Boolean(course.uuid && course.name))
+                      .map(
+                        (course): EntityOption => ({
+                          value: course.uuid ?? '',
+                          label: course.name ?? '',
+                          disabled:
+                            course.uuid === courseUuid ||
+                            current.some(row => row.courseUuid === course.uuid),
+                        })
+                      )
+                  }
+                  placeholder='Search published courses…'
+                  searchPlaceholder='Search courses…'
+                  emptyText='No published course matches'
+                  aria-label='Add a prerequisite course'
+                />
+              </div>
+            ) : null}
 
             {saveError ? (
               <p className='text-destructive text-sm' role='alert'>
@@ -267,38 +327,41 @@ export function CoursePrerequisitesEditor({
               </p>
             ) : null}
 
-            {!courseUuid && dirty ? (
+            {!courseUuid && dirty && usesCourses ? (
               <p className='text-muted-foreground flex items-center gap-2 text-sm' role='status'>
                 {isSaving ? <Spinner /> : null}
                 Prerequisites will be saved after the course is created.
               </p>
             ) : null}
-            <div className='flex flex-wrap justify-end gap-2'>
-              {dirty ? (
-                <Button
-                  type='button'
-                  variant='ghost'
-                  onClick={() => {
-                    setRows(null);
-                    setSaveError(null);
-                    setSubmittedForReview(false);
-                  }}
-                  disabled={busy}
-                >
-                  Discard changes
-                </Button>
-              ) : null}
-              {courseUuid ? (
-                <Button
-                  type='button'
-                  onClick={() => void save(courseUuid).catch(() => undefined)}
-                  disabled={!dirty || busy}
-                >
-                  {mutation.isPending ? <Spinner /> : null}
-                  {isLive ? 'Submit for review' : 'Save prerequisites'}
-                </Button>
-              ) : null}
-            </div>
+            {/* Off COURSES the type change and the cleared list save together with the course. */}
+            {usesCourses ? (
+              <div className='flex flex-wrap justify-end gap-2'>
+                {dirty ? (
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    onClick={() => {
+                      setRows(null);
+                      setSaveError(null);
+                      setSubmittedForReview(false);
+                    }}
+                    disabled={busy}
+                  >
+                    Discard changes
+                  </Button>
+                ) : null}
+                {courseUuid ? (
+                  <Button
+                    type='button'
+                    onClick={() => void save(courseUuid).catch(() => undefined)}
+                    disabled={!dirty || busy}
+                  >
+                    {mutation.isPending ? <Spinner /> : null}
+                    {isLive ? 'Submit for review' : 'Save prerequisites'}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
           </>
         )}
       </CardContent>

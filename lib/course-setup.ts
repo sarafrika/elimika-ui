@@ -9,6 +9,10 @@ export type CourseSkillDraft = {
   active: boolean;
 };
 
+/** How a learner qualifies for a course (`prerequisite_type` on the course). */
+export const coursePrerequisiteTypes = ['NONE', 'INSTRUCTOR_PERMISSION', 'COURSES'] as const;
+export type CoursePrerequisiteType = (typeof coursePrerequisiteTypes)[number];
+
 export type CoursePrerequisiteDraft = {
   courseUuid: string;
   name: string;
