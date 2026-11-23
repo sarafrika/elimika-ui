@@ -13,64 +13,24 @@ import {
 } from '@/components/ui/select';
 import Spinner from '@/components/ui/spinner';
 import type { CourseSetupSectionRef } from '@/lib/course-setup';
-import { asRecord, getErrorMessage } from '@/lib/error-utils';
+import { getErrorMessage } from '@/lib/error-utils';
 import {
-  addCourseTrainingRequirementMutation,
-  deleteCourseTrainingRequirementMutation,
+  getCourseRequirementsQueryKey,
   getCourseTrainingRequirementsQueryKey,
-  updateCourseTrainingRequirementMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type {
-  AddCourseTrainingRequirementResponse,
-  CourseTrainingRequirement,
-} from '@/services/client/types.gen';
-import type { MutationFunction, QueryClient } from '@tanstack/react-query';
+import {
+  type CourseRequirementRecord as RequirementRecord,
+  removeCourseRequirement,
+  saveCourseRequirement,
+} from '@/services/course-education-requirements';
+import { type QueryClient, useMutation } from '@tanstack/react-query';
 import { CheckCircle2, Loader2, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
 import { type Dispatch, type Ref, type SetStateAction, useImperativeHandle, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { providedByOptions, requirementTypes } from './course-creation-types';
 import { REQUIREMENT_UNITS, TrainingRequirementFields } from './training-requirement-fields';
 
-type MutationVariables<T> = T extends {
-  mutationFn?: MutationFunction<unknown, infer TVariables>;
-}
-  ? TVariables
-  : never;
 export type Provider = (typeof providedByOptions)[number];
-type RequirementRecord = {
-  uuid?: string;
-  course_uuid: string;
-  requirement_type: string;
-  name: string;
-  description?: string;
-  quantity?: number;
-  unit?: string;
-  provided_by?: Provider;
-  is_mandatory?: boolean;
-  created_date?: CourseTrainingRequirement['created_date'];
-  created_by?: CourseTrainingRequirement['created_by'];
-  updated_date?: CourseTrainingRequirement['updated_date'];
-  updated_by?: CourseTrainingRequirement['updated_by'];
-};
-type AddRequirementVariables = MutationVariables<
-  ReturnType<typeof addCourseTrainingRequirementMutation>
->;
-type UpdateRequirementVariables = MutationVariables<
-  ReturnType<typeof updateCourseTrainingRequirementMutation>
->;
-type DeleteRequirementVariables = MutationVariables<
-  ReturnType<typeof deleteCourseTrainingRequirementMutation>
->;
-type RequirementMutation<TVariables> = {
-  mutate: (
-    variables: TVariables,
-    options?: {
-      onSuccess?: (data: unknown) => void;
-      onError?: (error: unknown) => void;
-    }
-  ) => void;
-  isPending: boolean;
-};
 
 const PROVIDERS: { value: Provider; label: string }[] = [
   { value: 'instructor', label: 'Instructor' },
@@ -81,7 +41,7 @@ const PROVIDERS: { value: Provider; label: string }[] = [
 const EDUCATION_QUANTITY = 1;
 const EDUCATION_UNIT = 'license';
 
-const INSTRUCTOR_REQUIREMENT_TYPES = [...requirementTypes, 'education'] as const;
+const INSTRUCTOR_REQUIREMENT_TYPES = ['education', ...requirementTypes] as const;
 
 const requirementTypesForProvider = (provider?: Provider | null) =>
   provider === 'instructor' ? INSTRUCTOR_REQUIREMENT_TYPES : requirementTypes;
@@ -128,13 +88,6 @@ type Props = {
   setExistingRequirements: React.Dispatch<React.SetStateAction<RequirementRecord[]>>;
   editingCourseId?: string;
   courseId?: string;
-  addTrainingReqMut: {
-    mutateAsync: (
-      variables: AddRequirementVariables
-    ) => Promise<AddCourseTrainingRequirementResponse>;
-  };
-  updateTrainingReqMut: RequirementMutation<UpdateRequirementVariables>;
-  deleteTrainingReqMut: RequirementMutation<DeleteRequirementVariables>;
   deletingId: string | null;
   setDeletingId: (id: string | null) => void;
   qc: QueryClient;
@@ -149,9 +102,6 @@ export function TrainingRequirementsSection({
   setDraftsByProvider,
   activeProvider,
   setActiveProvider,
-  addTrainingReqMut,
-  updateTrainingReqMut,
-  deleteTrainingReqMut,
   deletingId,
   setDeletingId,
   qc,
@@ -159,6 +109,22 @@ export function TrainingRequirementsSection({
   isSaving = false,
 }: Props) {
   const targetCourseUuid = editingCourseId ?? courseId;
+  const saveRequirementMut = useMutation({ mutationFn: saveCourseRequirement });
+  const deleteRequirementMut = useMutation({ mutationFn: removeCourseRequirement });
+  const invalidateRequirements = (courseUuid: string) => {
+    qc.invalidateQueries({
+      queryKey: getCourseTrainingRequirementsQueryKey({
+        path: { courseUuid },
+        query: { pageable: {} },
+      }),
+    });
+    qc.invalidateQueries({
+      queryKey: getCourseRequirementsQueryKey({
+        path: { courseUuid },
+        query: { pageable: {} },
+      }),
+    });
+  };
 
   const [savingProvider, setSavingProvider] = useState<Provider | null>(null);
 
@@ -219,27 +185,19 @@ export function TrainingRequirementsSection({
       // Each mutateAsync call owns its promise; consecutive mutate callbacks do not.
       const results = await Promise.allSettled(
         drafts.map(async draft => {
-          const response = await addTrainingReqMut.mutateAsync({
-            body: {
+          const requirement = await saveRequirementMut.mutateAsync({
+            courseUuid: uuid,
+            requirement: {
+              ...draft,
               name: draft.name.trim(),
-              requirement_type: draft.requirement_type,
-              ...(draft.requirement_type === 'education'
-                ? { quantity: EDUCATION_QUANTITY, unit: EDUCATION_UNIT }
-                : {
-                  quantity: draft.quantity ? Number(draft.quantity) : 0,
-                  unit: draft.unit,
-                }),
-              is_mandatory: draft.is_mandatory,
-              description: draft.description,
+              quantity: draft.requirement_type === 'education'
+                ? EDUCATION_QUANTITY : Number(draft.quantity || 0),
+              unit: draft.requirement_type === 'education' ? EDUCATION_UNIT : draft.unit,
               provided_by: provider,
               course_uuid: uuid,
-            } as AddRequirementVariables['body'],
-            path: { courseUuid: uuid },
+            },
           });
-          if (response.error || response.success === false || !response.data) {
-            throw new Error(getErrorMessage(response, 'Failed to save requirement.'));
-          }
-          return { draftId: draft.id, requirement: response.data };
+          return { draftId: draft.id, requirement };
         })
       );
 
@@ -250,12 +208,7 @@ export function TrainingRequirementsSection({
 
       if (succeeded.length > 0) {
         setExistingRequirements(prev => [...prev, ...succeeded.map(item => item.requirement)]);
-        qc.invalidateQueries({
-          queryKey: getCourseTrainingRequirementsQueryKey({
-            path: { courseUuid: uuid },
-            query: { pageable: {} },
-          }),
-        });
+        invalidateRequirements(uuid);
         const savedDraftIds = new Set(succeeded.map(item => item.draftId));
         setDraftsByProvider(prev => {
           const remaining = prev[provider].filter(draft => !savedDraftIds.has(draft.id));
@@ -318,99 +271,45 @@ export function TrainingRequirementsSection({
     setEditDraft({});
   };
 
-  const saveEdit = (req: RequirementRecord) => {
-    if (!targetCourseUuid || !req.uuid) return;
-    if (updateTrainingReqMut.isPending) return;
+  const saveEdit = async (req: RequirementRecord) => {
+    if (!targetCourseUuid || !req.uuid || saveRequirementMut.isPending) return;
     if (!editDraft.name?.trim()) {
       toast.error('Requirement name is required.');
       return;
     }
-    const requirementType = editDraft.requirement_type ?? req.requirement_type;
-    const isEducation = requirementType === 'education';
-    const variables = {
-      body: {
-        name: editDraft.name?.trim(),
-        requirement_type: requirementType,
-        ...(isEducation
-          ? { quantity: EDUCATION_QUANTITY, unit: EDUCATION_UNIT }
-          : {
-            quantity: editDraft.quantity ? Number(editDraft.quantity) : 0,
-            unit: editDraft.unit,
-          }),
-        is_mandatory: editDraft.is_mandatory,
-        description: editDraft.description,
-        provided_by: req.provided_by,
-        course_uuid: targetCourseUuid,
-      } as UpdateRequirementVariables['body'],
-      path: {
+    try {
+      const saved = await saveRequirementMut.mutateAsync({
         courseUuid: targetCourseUuid,
-        requirementUuid: req.uuid,
-      },
-    } as UpdateRequirementVariables;
-    updateTrainingReqMut.mutate(variables, {
-      onSuccess: response => {
-        const result = asRecord(response);
-        if (result?.error || result?.success === false) {
-          toast.error(getErrorMessage(response, 'Failed to update requirement.'));
-          return;
-        }
-        setExistingRequirements(prev =>
-          prev.map(r => {
-            if (r.uuid !== req.uuid) return r;
-            return {
-              ...r,
-              ...editDraft,
-              requirement_type: editDraft.requirement_type ?? r.requirement_type,
-              quantity: isEducation ? EDUCATION_QUANTITY : Number(editDraft.quantity),
-              unit: isEducation ? EDUCATION_UNIT : editDraft.unit,
-            };
-          })
-        );
-        qc.invalidateQueries({
-          queryKey: getCourseTrainingRequirementsQueryKey({
-            path: { courseUuid: targetCourseUuid as string },
-            query: { pageable: {} },
-          }),
-        });
-        toast.success('Requirement updated.');
-        cancelEdit();
-      },
-      onError: error => toast.error(getErrorMessage(error, 'Failed to update requirement.')),
-    });
+        existing: req,
+        requirement: {
+          ...req,
+          ...editDraft,
+          name: editDraft.name.trim(),
+          quantity: Number(editDraft.quantity || 0),
+        },
+      });
+      setExistingRequirements(prev => prev.map(row => row.uuid === req.uuid ? saved : row));
+      invalidateRequirements(targetCourseUuid);
+      toast.success('Requirement updated.');
+      cancelEdit();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to update requirement.'));
+    }
   };
 
-  const deleteReq = (req: RequirementRecord) => {
-    if (!targetCourseUuid || !req.uuid || deleteTrainingReqMut.isPending) return;
+  const deleteReq = async (req: RequirementRecord) => {
+    if (!targetCourseUuid || !req.uuid || deleteRequirementMut.isPending) return;
     setDeletingId(req.uuid);
-    const variables = {
-      path: {
-        courseUuid: targetCourseUuid,
-        requirementUuid: req.uuid,
-      },
-    } as DeleteRequirementVariables;
-    deleteTrainingReqMut.mutate(variables, {
-      onSuccess: response => {
-        const result = asRecord(response);
-        if (result?.error || result?.success === false) {
-          setDeletingId(null);
-          toast.error(getErrorMessage(response, 'Failed to delete requirement.'));
-          return;
-        }
-        qc.invalidateQueries({
-          queryKey: getCourseTrainingRequirementsQueryKey({
-            path: { courseUuid: targetCourseUuid },
-            query: { pageable: {} },
-          }),
-        });
-        setExistingRequirements(prev => prev.filter(r => r.uuid !== req.uuid));
-        setDeletingId(null);
-        if (editingReqId === req.uuid) cancelEdit();
-      },
-      onError: error => {
-        setDeletingId(null);
-        toast.error(getErrorMessage(error, 'Failed to delete requirement.'));
-      },
-    });
+    try {
+      await deleteRequirementMut.mutateAsync({ courseUuid: targetCourseUuid, requirement: req });
+      setExistingRequirements(prev => prev.filter(row => row.uuid !== req.uuid));
+      invalidateRequirements(targetCourseUuid);
+      if (editingReqId === req.uuid) cancelEdit();
+    } catch (error) {
+      toast.error(getErrorMessage(error, 'Failed to delete requirement.'));
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   const draftGroups = useMemo(() => {
@@ -629,7 +528,7 @@ export function TrainingRequirementsSection({
                       {group.rows.map(req => {
                         const isEditing = editingReqId === req.uuid;
                         const isDeleting = deletingId === req.uuid;
-                        const isSavingEdit = updateTrainingReqMut.isPending && isEditing;
+                        const isSavingEdit = saveRequirementMut.isPending && isEditing;
                         const isEducation =
                           (isEditing ? editDraft.requirement_type : req.requirement_type) ===
                           'education';

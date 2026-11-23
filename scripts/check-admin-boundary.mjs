@@ -12,9 +12,10 @@
  *   5. Every admin route ships a loading.tsx.
  */
 import { readFileSync, readdirSync, statSync } from 'node:fs';
-import { join, relative, resolve } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const ROOT = resolve(import.meta.dirname, '..');
+const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const ROUTE_DIR = 'app/dashboard/admin';
 const FEATURE_DIR = 'src/features/admin';
 const SCAN_DIRS = ['app', 'components', 'src', 'hooks', 'lib', 'services', 'context'];
@@ -105,7 +106,7 @@ const RETIRED_LINK = new RegExp(
   'g'
 );
 for (const file of allFiles) {
-  if (file === relative(ROOT, import.meta.filename)) continue;
+  if (file === relative(ROOT, fileURLToPath(import.meta.url))) continue;
   for (const match of read(file).matchAll(RETIRED_LINK)) {
     problems.push(
       `${file}: links to retired route ${match[0]} — use /dashboard/admin/${RETIRED_ROUTES[match[1]]}`

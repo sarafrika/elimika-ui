@@ -2,6 +2,7 @@
 'use client';
 
 import { SimpleEditor } from '@/components/tiptap-templates/simple/simple-editor-lazy';
+import { SectionError } from '@/components/data/async-section';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -41,17 +42,18 @@ import { type CourseSetupDrafts, type CourseSetupSectionRef, getCreatedCourse } 
 import { getErrorMessage, getFieldErrorMessage } from '@/lib/error-utils';
 import { createCategory } from '@/services/client';
 import {
-  addCourseTrainingRequirementMutation,
   createCourseMutation,
-  deleteCourseTrainingRequirementMutation,
   getAllCategoriesOptions,
   getAllCategoriesQueryKey,
   getCourseByUuidQueryKey,
   searchCoursesQueryKey,
   updateCourseMutation as updateCourseMutationOptions,
-  updateCourseTrainingRequirementMutation,
 } from '@/services/client/@tanstack/react-query.gen';
-import type { Course, CourseTrainingRequirement } from '@/services/client/types.gen';
+import type { Course } from '@/services/client/types.gen';
+import {
+  courseEducationRequirementsOptions,
+  type CourseRequirementRecord,
+} from '@/services/course-education-requirements';
 import { allCourseTrainingRequirementsOptions } from '@/services/course-training-requirements';
 import { CoursePrerequisitesEditor } from '@/src/features/course-prerequisites/course-prerequisites-editor';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -235,7 +237,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     const [editingRequirementId, setEditingRequirementId] = useState<string | null>(null);
     const requirementMode: RequirementFormMode = editingRequirementId ? 'edit' : 'add';
 
-    const [existingRequirements, setExistingRequirements] = useState<CourseTrainingRequirement[]>(
+    const [existingRequirements, setExistingRequirements] = useState<CourseRequirementRecord[]>(
       []
     );
     const [localRequirementDrafts, setLocalRequirementDrafts] = useState(createEmptyDraftsByProvider);
@@ -328,11 +330,21 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
       enabled: Boolean(targetCourseUuid),
     });
 
+    const {
+      data: educationRequirements,
+      error: educationRequirementsError,
+      refetch: refetchEducationRequirements,
+    } = useQuery({
+      ...courseEducationRequirementsOptions(targetCourseUuid),
+      enabled: Boolean(targetCourseUuid),
+    });
+
     useEffect(() => {
-      if (trainingRequirements?.data?.content) {
-        setExistingRequirements(trainingRequirements.data.content);
-      }
-    }, [trainingRequirements]);
+      setExistingRequirements([
+        ...(trainingRequirements?.data?.content ?? []),
+        ...(educationRequirements ?? []),
+      ]);
+    }, [trainingRequirements, educationRequirements]);
 
     const queryClient = useQueryClient();
     const instructor = useInstructor();
@@ -419,11 +431,7 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
 
     const { mutate: updateCourseMutation, isPending: updateCourseIsPending } = useMutation(updateCourseMutationOptions());
 
-    const addTrainingReqMut = useMutation(addCourseTrainingRequirementMutation());
-    const updateTrainingReqMut = useMutation(updateCourseTrainingRequirementMutation());
-
     const [deletingId, setDeletingId] = useState<string | null>(null);
-    const deleteTrainingReqMut = useMutation(deleteCourseTrainingRequirementMutation());
 
     const creatorShare =
       useWatch({ control: form.control, name: 'creator_share_percentage' }) ?? [];
@@ -675,7 +683,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
     }, [isFree, form]);
 
     const isSaving = !!saveStage;
-    const isRequirementSaving = addTrainingReqMut.isPending || updateTrainingReqMut.isPending;
 
     return (
       <>
@@ -1148,6 +1155,13 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                     )}
                   />
                   <div className='min-w-0 sm:col-span-3'>
+                    {educationRequirementsError && (
+                      <SectionError
+                        title='Could not load education requirements'
+                        error={educationRequirementsError}
+                        onRetry={() => void refetchEducationRequirements()}
+                      />
+                    )}
                     <TrainingRequirementsSection
                       existingRequirements={existingRequirements}
                       saveRef={requirementsSaveRef}
@@ -1159,9 +1173,6 @@ export const CourseCreationForm = forwardRef<CourseFormRef, CourseFormProps>(
                       setDraftsByProvider={controlledSetRequirementDrafts}
                       activeProvider={controlledActiveRequirementProvider}
                       setActiveProvider={controlledSetActiveRequirementProvider}
-                      addTrainingReqMut={addTrainingReqMut}
-                      updateTrainingReqMut={updateTrainingReqMut}
-                      deleteTrainingReqMut={deleteTrainingReqMut}
                       deletingId={deletingId}
                       setDeletingId={setDeletingId}
                       qc={qc}

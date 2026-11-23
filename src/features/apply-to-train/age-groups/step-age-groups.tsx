@@ -135,6 +135,7 @@ export function StepAgeGroups({
             lessons={lessons}
             errors={errors}
             onEdit={() => setOpenId(group.id)}
+            onRemove={() => remove(group.id)}
           />
         );
       })}
@@ -334,12 +335,12 @@ function GroupEditor({
         <Button
           type='button'
           variant='outline'
-          size='icon'
-          className='size-9'
+          className='text-destructive hover:text-destructive'
           aria-label={`Remove ${group.name.trim() || 'this group'}`}
           onClick={onRemove}
         >
-          <Trash2 aria-hidden className='text-muted-foreground' />
+          <Trash2 aria-hidden />
+          Remove age group
         </Button>
         <Button
           type='button'
@@ -459,12 +460,14 @@ function GroupSummary({
   lessons,
   errors,
   onEdit,
+  onRemove,
 }: {
   group: AgeGroupDraft;
   index: number;
   lessons: PlanLesson[];
   errors: string[];
   onEdit: () => void;
+  onRemove: () => void;
 }) {
   return (
     <section
@@ -486,6 +489,16 @@ function GroupSummary({
         </div>
         <Button type='button' variant='outline' onClick={onEdit}>
           Edit
+        </Button>
+        <Button
+          type='button'
+          variant='outline'
+          className='text-destructive hover:text-destructive'
+          aria-label={`Remove ${group.name.trim() || 'this group'}`}
+          onClick={onRemove}
+        >
+          <Trash2 aria-hidden />
+          Remove age group
         </Button>
       </div>
       {errors.length > 0 ? <ErrorList messages={errors} /> : null}
