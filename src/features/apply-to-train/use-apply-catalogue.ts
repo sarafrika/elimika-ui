@@ -4,6 +4,7 @@ import { keepPreviousData, useQueries } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { useCoursesByIds, useProgramsByIds } from '@/hooks/use-batched-lookups';
 import { isForbidden, isSearchUnavailable, retryUnlessClientOrSearchError } from '@/lib/api-errors';
 import { STALE_TIMES } from '@/lib/query-client';
 import { searchApplyToTrainCatalogueOptions } from '@/services/client/@tanstack/react-query.gen';
@@ -11,7 +12,7 @@ import { type CatalogueFilters, catalogueRequests, mergeCataloguePages } from '.
 
 export { CATALOGUE_PAGE_SIZE, type CatalogueFilters, type CatalogueFit, type CatalogueShow } from './catalogue-model';
 
-/** Search-only, with at most two requests per page to include every application status. */
+/** Two catalogue searches at most, with batched intro-video lookups scoped to the page. */
 export function useApplyCatalogue(filters: CatalogueFilters, enabled = true) {
   const q = useDebouncedValue(filters.q.trim());
   const requests = catalogueRequests(filters, q);
@@ -41,9 +42,38 @@ export function useApplyCatalogue(filters: CatalogueFilters, enabled = true) {
     },
   });
   const catalogue = useMemo(() => mergeCataloguePages(query.pages), [query.pages]);
+  // Catalogue summaries omit intro videos. Resolve only the current page's items in batches.
+  const courseIds = useMemo(
+    () =>
+      enabled
+        ? catalogue.items.filter(item => item.kind === 'course').map(item => item.uuid)
+        : [],
+    [catalogue.items, enabled]
+  );
+  const programIds = useMemo(
+    () =>
+      enabled
+        ? catalogue.items.filter(item => item.kind === 'program').map(item => item.uuid)
+        : [],
+    [catalogue.items, enabled]
+  );
+  const { courseMap } = useCoursesByIds(courseIds);
+  const { programMap } = useProgramsByIds(programIds);
+  const items = useMemo(
+    () =>
+      catalogue.items.map(item => ({
+        ...item,
+        introVideoUrl:
+          item.kind === 'program'
+            ? programMap[item.uuid]?.intro_video_url ?? null
+            : courseMap[item.uuid]?.intro_video_url ?? null,
+      })),
+    [catalogue.items, courseMap, programMap]
+  );
   return {
     query,
     ...catalogue,
+    items,
     unavailable: isSearchUnavailable(query.error),
     forbidden: isForbidden(query.error),
   };

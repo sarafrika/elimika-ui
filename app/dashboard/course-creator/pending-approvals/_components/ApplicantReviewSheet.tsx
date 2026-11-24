@@ -37,17 +37,22 @@ type Props = {
   organisation?: Organisation;
   applications: ReviewApplication[];
   creatorUuid: string;
+  /** Open this application first when reviewing from an applicant's dossier. */
+  initialApplicationKey?: string;
   onClose: () => void;
   onDecided: (entry: ReviewApplication, status: 'approved' | 'rejected' | 'revoked') => void;
 };
 
 export function ApplicantReviewSheet(props: Props) {
-  const { applicant, applications, onClose } = props;
+  const { applicant, applications, onClose, initialApplicationKey } = props;
   const [busy, setBusy] = useState(false);
-  const pending = useMemo(
-    () => pendingForApplicant(applications, applicant.uuid, applicant.type),
-    [applications, applicant.uuid, applicant.type]
-  );
+  const pending = useMemo(() => {
+    const entries = pendingForApplicant(applications, applicant.uuid, applicant.type);
+    const selected = entries.find(entry => applicationKey(entry) === initialApplicationKey);
+    return selected
+      ? [selected, ...entries.filter(entry => applicationKey(entry) !== initialApplicationKey)]
+      : entries;
+  }, [applications, applicant.uuid, applicant.type, initialApplicationKey]);
   const first = pending[0];
 
   return (
@@ -200,7 +205,7 @@ function ApplicationReview({
           `manage-applicant/${encodeURIComponent(applicant.uuid)}?type=${applicant.type}&tab=profile`
         )}
         aria-label={`View ${applicant.name}'s profile`}
-        className='group focus-visible:ring-ring flex items-start gap-3 rounded-md outline-none focus-visible:ring-2 bg-primary/5 p-3'
+        className='group focus-visible:ring-ring bg-primary/5 flex items-start gap-3 rounded-md p-3 outline-none focus-visible:ring-2'
       >
         <Avatar className='size-12'>
           <AvatarImage
@@ -230,8 +235,8 @@ function ApplicationReview({
           <h3 className='font-semibold'>{title}</h3>
           {application.application_notes && (
             <div className='space-y-1 text-sm'>
-              <div className='flex flex-row flex-wrap gap-4 items-center'>
-                <p className='font-medium mb-1'>Applicant’s note</p>
+              <div className='flex flex-row flex-wrap items-center gap-4'>
+                <p className='mb-1 font-medium'>Applicant’s note</p>
                 <p className='text-muted-foreground text-xs'>
                   Submitted {formatApplicationDate(application.created_date)}
                 </p>

@@ -15,7 +15,7 @@ import {
   Users,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { DetailGrid, SectionCard, StatusBadge, surfaceTheme } from '@/components/data-display';
 import {
@@ -58,6 +58,10 @@ import {
 } from '@/src/features/rate-card/hooks';
 import { toAuthenticatedMediaUrl } from '@/src/lib/media-url';
 import { stripHtml } from '../../../../../../src/features/dashboard/courses/shared/_components/courses-data';
+
+import { ApplicantReviewSheet } from '../../../pending-approvals/_components/ApplicantReviewSheet';
+import { applicationKey } from '../../../pending-approvals/_components/approval-queue';
+import type { ApplicantSummary } from '../../../pending-approvals/_components/PendingApprovalsPage';
 
 import { instructorDisplayName, resolveInstructorProfile } from './instructor-profile';
 
@@ -477,18 +481,36 @@ export default function ManageApplicantPage({
     { applicant_uuid_eq: uuid, course_creator_uuid: creatorUuid },
     Boolean(creatorUuid && uuid)
   );
+  const [reviewTarget, setReviewTarget] = useState<string | null>(null);
+  const [decisions, setDecisions] = useState<Record<string, 'approved' | 'rejected' | 'revoked'>>(
+    {}
+  );
+  const applicationEntries = useMemo(
+    () =>
+      applications.entries.map(entry => ({
+        ...entry,
+        application: {
+          ...entry.application,
+          status:
+            entry.application.status === 'pending'
+              ? (decisions[applicationKey(entry)] ?? entry.application.status)
+              : entry.application.status,
+        },
+      })),
+    [applications.entries, decisions]
+  );
   const courseApplications = useMemo(
-    () => applications.entries.filter(entry => entry.kind === 'course'),
-    [applications.entries]
+    () => applicationEntries.filter(entry => entry.kind === 'course'),
+    [applicationEntries]
   );
   const programApplications = useMemo(
-    () => applications.entries.filter(entry => entry.kind === 'program'),
-    [applications.entries]
+    () => applicationEntries.filter(entry => entry.kind === 'program'),
+    [applicationEntries]
   );
   // Decisions sit above the tabs; the tabs keep the rest of each history.
   const awaitingDecision = useMemo(
-    () => applications.entries.filter(entry => isAwaitingDecision(entry, creatorUuid)),
-    [applications.entries, creatorUuid]
+    () => applicationEntries.filter(entry => isAwaitingDecision(entry, creatorUuid)),
+    [applicationEntries, creatorUuid]
   );
   const courseHistory = useMemo(
     () => courseApplications.filter(entry => !isAwaitingDecision(entry, creatorUuid)),
@@ -566,10 +588,23 @@ export default function ManageApplicantPage({
     () => ({
       course: courseApplications.length,
       program: programApplications.length,
-      pending: applications.entries.filter(entry => entry.application.status === 'pending').length,
+      pending: applicationEntries.filter(entry => entry.application.status === 'pending').length,
     }),
-    [courseApplications, programApplications]
+    [courseApplications, programApplications, applicationEntries]
   );
+
+  const reviewApplicant: ApplicantSummary = {
+    uuid,
+    type: displayApplicantType,
+    name: applicantName || 'Applicant',
+    headline: applicantHeadline,
+    location: applicantLocation,
+    avatarUrl: applicantAvatar ?? undefined,
+    latestStatus: 'pending',
+    pendingCount: awaitingDecision.length,
+    courseCount: courseApplications.length,
+    programCount: programApplications.length,
+  };
 
   const isOrganisationApplicant = displayApplicantType === 'organisation';
   const tab: DossierTab =
@@ -738,13 +773,45 @@ export default function ManageApplicantPage({
         <div className=''>
           <div className='min-w-0 space-y-4'>
             {awaitingDecision.length > 0 ? (
-              <ApplicationsSection
+              <SectionCard
                 title='Awaiting your decision'
-                description='Pending applications for your courses and programs. Decide here whichever section is open below.'
-                entries={awaitingDecision}
-                creatorUuid={creatorUuid}
-                loading={false}
-              />
+                description='Review each submitted requirement before approving or declining an application.'
+              >
+                <div className='space-y-3'>
+                  {awaitingDecision.map(entry => (
+                    <article
+                      key={applicationKey(entry)}
+                      className='bg-card flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4'
+                    >
+                      <div className='min-w-0 space-y-2'>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <Badge variant='secondary'>
+                            {entry.kind === 'program' ? 'Program' : 'Course'}
+                          </Badge>
+                          <StatusBadge status='pending' label='Pending review' />
+                        </div>
+                        <h3 className='font-semibold'>
+                          {entry.title ??
+                            (entry.kind === 'program'
+                              ? 'Program application'
+                              : 'Course application')}
+                        </h3>
+                        <p className='text-muted-foreground text-sm'>
+                          Submitted {formatDate(entry.application.created_date)}
+                        </p>
+                      </div>
+                      <Button
+                        type='button'
+                        disabled={applications.loading || !creatorUuid || !applicantType}
+                        aria-label={`Review submitted requirements for ${entry.title ?? entry.kind}`}
+                        onClick={() => setReviewTarget(applicationKey(entry))}
+                      >
+                        <ClipboardList className='size-4' /> Review submitted requirements
+                      </Button>
+                    </article>
+                  ))}
+                </div>
+              </SectionCard>
             ) : null}
 
             <SectionTabs
@@ -892,6 +959,20 @@ export default function ManageApplicantPage({
           </aside> */}
         </div>
       </div>
+      {reviewTarget && creatorUuid ? (
+        <ApplicantReviewSheet
+          applicant={reviewApplicant}
+          instructor={instructor}
+          organisation={organisation}
+          applications={awaitingDecision}
+          creatorUuid={creatorUuid}
+          initialApplicationKey={reviewTarget}
+          onClose={() => setReviewTarget(null)}
+          onDecided={(entry, status) => {
+            setDecisions(previous => ({ ...previous, [applicationKey(entry)]: status }));
+          }}
+        />
+      ) : null}
     </main>
   );
 }

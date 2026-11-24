@@ -16,9 +16,9 @@ export function instructorApplyToTrainHref(
   return skillsMatchesHref('apply-to-train', params);
 }
 
-/** Instructors track training applications on their rate card page, opened on the item. */
+/** Open the rate cards page's Pending tab for the selected training item. */
 export function trackApplicationHref(kind: ApplyKind, parentUuid: string) {
-  const params = new URLSearchParams({ kind, parent: parentUuid });
+  const params = new URLSearchParams({ tab: 'pending', kind, parent: parentUuid });
   return dashboardUrl('instructor', `rate-card?${params.toString()}`);
 }
 

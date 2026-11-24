@@ -11,9 +11,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -21,7 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getErrorMessage } from '@/lib/error-utils';
 import { STALE_TIMES } from '@/lib/query-client';
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { AlertTriangle, Pencil, Plus, Save, Trash2, X } from 'lucide-react';
+import { AlertTriangle, Pencil, Plus, Save, Trash2 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '../../../../components/ui/button';
@@ -37,23 +43,23 @@ import Spinner from '../../../../components/ui/spinner';
 import {
   addCourseAssessmentMutation,
   deleteCourseAssessmentMutation,
-  deleteLineItemMutation,
   getCourseAssessmentsInfiniteOptions,
   getCourseAssessmentsInfiniteQueryKey,
   getCourseAssessmentsQueryKey,
   getCourseEvaluationPlanQueryKey,
-  getLineItemsOptions,
-  getLineItemsQueryKey,
+  searchAssessmentRubricsOptions,
   updateCourseAssessmentMutation,
 } from '../../../../services/client/@tanstack/react-query.gen';
 import type {
   CourseAssessment,
-  CourseAssessmentLineItem,
   CourseAssessmentWritable,
 } from '../../../../services/client/types.gen';
 import { ASSESSMENT_TYPES } from '../rubrics/rubric-manager';
-import { CATEGORY_META, LinkItemsModal, TaskItemType } from './assesment-link-items';
+import { LinkItemsModal } from './assesment-link-items';
+import { AssessmentLinkedTasks } from './assessment-linked-tasks';
 import { CoursePassMarkForm } from './course-pass-mark-form';
+import { EvaluationRubricPicker } from './evaluation-rubric-picker';
+import { EvaluationRubricPreview } from './evaluation-rubric-preview';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,79 +70,37 @@ type CourseAssessmentStructureProps = {
 
 type Assessment = CourseAssessment & { uuid: string };
 
-// ─── Per-row line items component ─────────────────────────────────────────────
-// Each assessment row fetches its own line items independently so the list
-// updates live after link / unlink actions without any parent state.
+const STRUCTURE_COLUMNS = [
+  'Code',
+  'Title',
+  'Weight',
+  'Gate % (Pass mark)',
+  'Scoring',
+  'Linked tasks',
+  'Selection',
+  'Attempt',
+  'Actions',
+];
 
-function AssessmentLineItems({
-  courseUuid,
-  assessmentUuid,
-}: {
-  courseUuid: string;
-  assessmentUuid: string;
-}) {
-  const qc = useQueryClient();
-
-  const { data, isLoading } = useQuery({
-    ...getLineItemsOptions({ path: { courseUuid, assessmentUuid } }),
-    enabled: Boolean(courseUuid && assessmentUuid),
-    staleTime: STALE_TIMES.entity,
-  });
-
-  const lineItems: CourseAssessmentLineItem[] =
-    data?.error || data?.success === false || !Array.isArray(data?.data) ? [] : data.data;
-
-  const deleteLineItemMut = useMutation(deleteLineItemMutation());
-
-  function handleRemove(lineItemUuid: string) {
-    deleteLineItemMut.mutate(
-      { path: { courseUuid, assessmentUuid, lineItemUuid } },
-      {
-        onSuccess: () => {
-          toast.success('Item removed.');
-          qc.invalidateQueries({
-            queryKey: getLineItemsQueryKey({ path: { courseUuid, assessmentUuid } }),
-          });
-        },
-        onError: err => toast.error(getErrorMessage(err, 'Failed to remove item.')),
-      }
-    );
-  }
-
-  if (isLoading) {
-    return <Skeleton className='h-5 w-24 rounded-full' />;
-  }
-
-  if (lineItems.length === 0) return null;
-
+function StructureHeader() {
   return (
-    <>
-      {lineItems.map(li => {
-        const itemType = (li.item_type?.toLowerCase() ?? 'assignment') as TaskItemType;
-        const meta = CATEGORY_META[itemType] ?? CATEGORY_META['assignment'];
-        const Icon = meta.icon;
+    <thead>
+      <tr className='bg-muted/40 divide-x border-b'>
+        {STRUCTURE_COLUMNS.map(column => (
+          <th scope='col' key={column} className='px-3 py-4 text-left font-semibold'>
+            {column}
+          </th>
+        ))}
+      </tr>
+    </thead>
+  );
+}
 
-        return (
-          <span
-            key={li.uuid}
-            className={`group flex w-max max-w-[200px] items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${meta.color}`}
-          >
-            <Icon size={11} className='shrink-0' />
-            <span className='truncate'>{li.title}</span>
-            {/* ×  remove button — visible on hover */}
-            <button
-              type='button'
-              title='Remove this item'
-              disabled={deleteLineItemMut.isPending}
-              onClick={() => li.uuid && handleRemove(li.uuid)}
-              className='hover:text-destructive ml-0.5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 disabled:cursor-not-allowed'
-            >
-              {deleteLineItemMut.isPending ? <Spinner className='h-2.5 w-2.5' /> : <X size={10} />}
-            </button>
-          </span>
-        );
-      })}
-    </>
+function UnavailableCell() {
+  return (
+    <td className='text-muted-foreground px-3 py-4'>
+      <span aria-label='Not available'>—</span>
+    </td>
   );
 }
 
@@ -148,6 +112,9 @@ type AssessmentDraft = {
   description: string;
   weight_percentage: number | '';
   per_lesson: boolean;
+  rubric_uuid: string | null;
+  rubricTitle?: string;
+  sync_class_attendance: boolean;
   savedWithoutId?: boolean;
 };
 
@@ -162,6 +129,8 @@ function newAssessmentDraft(assessment?: Assessment): AssessmentDraft {
     description: assessment?.description ?? '',
     weight_percentage: assessment?.weight_percentage ?? '',
     per_lesson: assessment ? assessment.per_lesson === true : true,
+    rubric_uuid: assessment?.rubric_uuid ?? null,
+    sync_class_attendance: assessment?.sync_class_attendance ?? false,
   };
 }
 
@@ -174,6 +143,9 @@ function AssessmentBatchEditor({
   onRefresh,
   onSaved,
   disabled,
+  rubricTitles,
+  onPreview,
+  onManageTasks,
 }: CourseAssessmentStructureProps & {
   assessments: Assessment[];
   editing: boolean;
@@ -181,6 +153,9 @@ function AssessmentBatchEditor({
   onRefresh: () => Promise<void>;
   onSaved: () => void;
   disabled: boolean;
+  rubricTitles: Map<string, string>;
+  onPreview: (uuid: string) => void;
+  onManageTasks: (assessment: Assessment) => void;
 }) {
   const [drafts, setDrafts] = useState<AssessmentDraft[]>(() =>
     editing ? assessments.map(newAssessmentDraft) : [newAssessmentDraft()]
@@ -201,10 +176,10 @@ function AssessmentBatchEditor({
   const savedWeight = editing
     ? 0
     : assessments.reduce(
-      (sum, assessment) =>
-        sum + (draftUuids.has(assessment.uuid) ? 0 : assessment.weight_percentage),
-      0
-    );
+        (sum, assessment) =>
+          sum + (draftUuids.has(assessment.uuid) ? 0 : assessment.weight_percentage),
+        0
+      );
   const totalWeight = Number(
     (
       savedWeight +
@@ -297,8 +272,8 @@ function AssessmentBatchEditor({
           weight_percentage: Number(draft.weight_percentage),
           is_required: draft.original?.is_required ?? true,
           aggregation_strategy: draft.original?.aggregation_strategy,
-          rubric_uuid: draft.original?.rubric_uuid,
-          sync_class_attendance: draft.original?.sync_class_attendance,
+          rubric_uuid: draft.rubric_uuid,
+          sync_class_attendance: draft.sync_class_attendance,
           per_lesson: draft.per_lesson,
         };
         if (
@@ -307,19 +282,21 @@ function AssessmentBatchEditor({
           body.assessment_type === draft.original.assessment_type &&
           body.description === (draft.original.description ?? '') &&
           body.weight_percentage === draft.original.weight_percentage &&
-          body.per_lesson === (draft.original.per_lesson ?? false)
+          body.per_lesson === (draft.original.per_lesson ?? false) &&
+          body.rubric_uuid === (draft.original.rubric_uuid ?? null) &&
+          body.sync_class_attendance === (draft.original.sync_class_attendance ?? false)
         )
           continue;
         try {
           const result = draft.original
             ? await updateMut.mutateAsync({
-              path: { courseUuid, assessmentUuid: draft.original.uuid },
-              body,
-            })
+                path: { courseUuid, assessmentUuid: draft.original.uuid },
+                body,
+              })
             : await createMut.mutateAsync({
-              path: { courseUuid },
-              body,
-            });
+                path: { courseUuid },
+                body,
+              });
           if (result.error || result.success === false)
             throw new Error(getErrorMessage(result, 'Failed to save assessment.'));
           changed = true;
@@ -330,10 +307,10 @@ function AssessmentBatchEditor({
             current.map(item =>
               item.id === draft.id
                 ? {
-                  ...item,
-                  original: uuid ? { ...body, ...result.data, uuid } : undefined,
-                  savedWithoutId: !uuid,
-                }
+                    ...item,
+                    original: uuid ? { ...body, ...result.data, uuid } : undefined,
+                    savedWithoutId: !uuid,
+                  }
                 : item
             )
           );
@@ -388,135 +365,187 @@ function AssessmentBatchEditor({
             description='Add a row to define an assessment component.'
           />
         )}
-        {drafts.map((draft, index) => {
-          const rowErrors = errors[draft.id];
-          return (
-            <fieldset
-              key={draft.id}
-              disabled={disabled || draft.savedWithoutId}
-              className='border-border grid min-w-0 gap-2 rounded-md border p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_110px_auto]'
-            >
-              <legend className='text-muted-foreground px-1 text-xs'>Assessment {index + 1}</legend>
-              <div className='min-w-0 space-y-1'>
-                <Input
-                  value={draft.title}
-                  aria-label={`Assessment ${index + 1} title`}
-                  aria-invalid={Boolean(rowErrors?.title)}
-                  aria-describedby={rowErrors?.title ? `${draft.id}-title-error` : undefined}
-                  placeholder='e.g. Final practical'
-                  onChange={event => patchDraft(draft.id, { title: event.target.value })}
-                />
-                {rowErrors?.title && (
-                  <p id={`${draft.id}-title-error`} className='text-destructive text-xs'>
-                    {rowErrors.title}
-                  </p>
-                )}
-              </div>
-              <div className='min-w-0 space-y-1'>
-                <Select
-                  value={draft.assessment_type}
-                  onValueChange={value => patchDraft(draft.id, { assessment_type: value })}
-                  disabled={isSaving || disabled || draft.savedWithoutId}
-                >
-                  <SelectTrigger
-                    className='w-full'
-                    aria-label={`Assessment ${index + 1} type`}
-                    aria-invalid={Boolean(rowErrors?.assessment_type)}
-                    aria-describedby={
-                      rowErrors?.assessment_type ? `${draft.id}-type-error` : undefined
-                    }
-                  >
-                    <SelectValue placeholder='Select type' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {draft.assessment_type && !ASSESSMENT_TYPES.includes(draft.assessment_type) && (
-                      <SelectItem value={draft.assessment_type}>{draft.assessment_type}</SelectItem>
-                    )}
-                    {ASSESSMENT_TYPES.map(type => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {rowErrors?.assessment_type && (
-                  <p id={`${draft.id}-type-error`} className='text-destructive text-xs'>
-                    {rowErrors.assessment_type}
-                  </p>
-                )}
-              </div>
-              <div className='space-y-1'>
-                <div className='flex items-center gap-1.5'>
-                  <Input
-                    type='number'
-                    min={0}
-                    max={100}
-                    step='any'
-                    value={draft.weight_percentage}
-                    aria-label={`Assessment ${index + 1} weight (%)`}
-                    aria-invalid={Boolean(rowErrors?.weight_percentage)}
-                    aria-describedby={
-                      rowErrors?.weight_percentage ? `${draft.id}-weight-error` : undefined
-                    }
-                    placeholder='Weight'
-                    onChange={event =>
-                      patchDraft(draft.id, {
-                        weight_percentage:
-                          event.target.value === '' ? '' : Number(event.target.value),
-                      })
-                    }
-                  />
-                  <span className='text-muted-foreground text-xs'>%</span>
-                </div>
-                {rowErrors?.weight_percentage && (
-                  <p id={`${draft.id}-weight-error`} className='text-destructive text-xs'>
-                    {rowErrors.weight_percentage}
-                  </p>
-                )}
-              </div>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon'
-                aria-label={`Remove assessment ${index + 1}`}
-                onClick={() => removeDraft(draft)}
-              >
-                <Trash2 className='text-destructive h-4 w-4' />
-              </Button>
-              <Textarea
-                rows={2}
-                className='sm:col-span-4'
-                value={draft.description}
-                aria-label={`Assessment ${index + 1} description`}
-                placeholder='What is assessed and how.'
-                onChange={event => patchDraft(draft.id, { description: event.target.value })}
-              />
-              <div className='flex items-center gap-2 sm:col-span-4'>
-                <Checkbox
-                  id={`${draft.id}-per-lesson`}
-                  checked={draft.per_lesson}
-                  disabled={isSaving || disabled || draft.savedWithoutId}
-                  onCheckedChange={checked => patchDraft(draft.id, { per_lesson: checked === true })}
-                />
-                <Label htmlFor={`${draft.id}-per-lesson`}>Grade per lesson</Label>
-              </div>
-              {draft.savedWithoutId && (
-                <p className='text-muted-foreground text-xs sm:col-span-4'>
-                  Saved. Reopen the editor to change this component.
-                </p>
-              )}
-            </fieldset>
-          );
-        })}
-        <div className='border-border bg-muted/40 flex flex-wrap items-center justify-between gap-2 rounded-md border px-3 py-2'>
-          <span className='text-muted-foreground text-sm'>Total course weight</span>
-          <Badge
-            variant={hasValidTotal ? 'default' : 'outline'}
-            className={hasValidTotal ? '' : 'border-destructive text-destructive'}
-            aria-live='polite'
-          >
-            {totalWeight}% {hasValidTotal ? '' : '— must be 100%'}
-          </Badge>
+        <div className='overflow-x-auto rounded-md border'>
+          <table className='w-full min-w-[1360px] text-sm'>
+            <caption className='sr-only'>Course assessment components</caption>
+            <StructureHeader />
+            <tbody className='divide-y'>
+              {drafts.map((draft, index) => {
+                const rowErrors = errors[draft.id];
+                const rowDisabled = isSaving || disabled || draft.savedWithoutId;
+                return (
+                  <tr key={draft.id} className='divide-x align-top'>
+                    <UnavailableCell />
+                    <td className='min-w-64 space-y-2 px-3 py-4'>
+                      <Input
+                        value={draft.title}
+                        disabled={rowDisabled}
+                        aria-label={`Assessment ${index + 1} title`}
+                        aria-invalid={Boolean(rowErrors?.title)}
+                        placeholder='Component title'
+                        onChange={event => patchDraft(draft.id, { title: event.target.value })}
+                      />
+                      {rowErrors?.title && (
+                        <p role='alert' className='text-destructive text-xs'>
+                          {rowErrors.title}
+                        </p>
+                      )}
+                      <details open={!draft.assessment_type || Boolean(rowErrors?.assessment_type)}>
+                        <summary className='text-muted-foreground cursor-pointer text-xs'>
+                          Component details
+                        </summary>
+                        <div className='space-y-3 pt-3'>
+                          <Select
+                            value={draft.assessment_type}
+                            disabled={rowDisabled}
+                            onValueChange={value =>
+                              patchDraft(draft.id, { assessment_type: value })
+                            }
+                          >
+                            <SelectTrigger
+                              className='w-full'
+                              aria-label={`Assessment ${index + 1} type`}
+                              aria-invalid={Boolean(rowErrors?.assessment_type)}
+                            >
+                              <SelectValue placeholder='Select type' />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {draft.assessment_type &&
+                                !ASSESSMENT_TYPES.includes(draft.assessment_type) && (
+                                  <SelectItem value={draft.assessment_type}>
+                                    {draft.assessment_type}
+                                  </SelectItem>
+                                )}
+                              {ASSESSMENT_TYPES.map(type => (
+                                <SelectItem key={type} value={type}>
+                                  {type}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {rowErrors?.assessment_type && (
+                            <p role='alert' className='text-destructive text-xs'>
+                              {rowErrors.assessment_type}
+                            </p>
+                          )}
+                          <Textarea
+                            rows={2}
+                            value={draft.description}
+                            disabled={rowDisabled}
+                            aria-label={`Assessment ${index + 1} description`}
+                            placeholder='What is assessed and how.'
+                            onChange={event =>
+                              patchDraft(draft.id, { description: event.target.value })
+                            }
+                          />
+                          <div className='flex items-center gap-2'>
+                            <Checkbox
+                              id={`${draft.id}-per-lesson`}
+                              checked={draft.per_lesson}
+                              disabled={rowDisabled}
+                              onCheckedChange={checked =>
+                                patchDraft(draft.id, { per_lesson: checked === true })
+                              }
+                            />
+                            <Label htmlFor={`${draft.id}-per-lesson`}>Grade per lesson</Label>
+                          </div>
+                        </div>
+                      </details>
+                      {draft.savedWithoutId && (
+                        <p className='text-muted-foreground text-xs'>
+                          Saved. Reopen the editor to change this component.
+                        </p>
+                      )}
+                    </td>
+                    <td className='w-32 px-3 py-4'>
+                      <div className='flex items-center gap-1'>
+                        <Input
+                          type='number'
+                          min={0}
+                          max={100}
+                          step='any'
+                          value={draft.weight_percentage}
+                          disabled={rowDisabled}
+                          aria-label={`Assessment ${index + 1} weight (%)`}
+                          aria-invalid={Boolean(rowErrors?.weight_percentage)}
+                          placeholder='Weight'
+                          onChange={event =>
+                            patchDraft(draft.id, {
+                              weight_percentage:
+                                event.target.value === '' ? '' : Number(event.target.value),
+                            })
+                          }
+                        />
+                        <span className='text-muted-foreground'>%</span>
+                      </div>
+                      {rowErrors?.weight_percentage && (
+                        <p role='alert' className='text-destructive mt-1 text-xs'>
+                          {rowErrors.weight_percentage}
+                        </p>
+                      )}
+                    </td>
+                    <UnavailableCell />
+                    <td className='min-w-64 space-y-3 px-3 py-4'>
+                      <EvaluationRubricPicker
+                        creatorUuid={createdBy}
+                        value={draft.rubric_uuid}
+                        title={draft.rubricTitle ?? rubricTitles.get(draft.rubric_uuid ?? '')}
+                        label={`Scoring rubric for assessment ${index + 1}`}
+                        emptyLabel='None / select rubric'
+                        disabled={rowDisabled}
+                        onPreview={onPreview}
+                        onChange={rubric =>
+                          patchDraft(draft.id, {
+                            rubric_uuid: rubric?.uuid ?? null,
+                            rubricTitle: rubric?.title,
+                          })
+                        }
+                      />
+                    </td>
+                    <td className='px-3 py-4'>
+                      {draft.original ? (
+                        <AssessmentLinkedTasks
+                          courseUuid={courseUuid}
+                          assessmentUuid={draft.original.uuid}
+                          assessmentTitle={draft.title}
+                          disabled={rowDisabled}
+                          onManage={() => draft.original && onManageTasks(draft.original)}
+                        />
+                      ) : (
+                        <p className='text-muted-foreground text-xs'>
+                          Save this assessment to link tasks.
+                        </p>
+                      )}
+                    </td>
+                    <UnavailableCell />
+                    <UnavailableCell />
+                    <td className='px-3 py-4'>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon'
+                        disabled={rowDisabled}
+                        aria-label={`Remove assessment ${index + 1}`}
+                        onClick={() => removeDraft(draft)}
+                      >
+                        <Trash2 className='text-destructive size-4' />
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className='bg-muted/40 divide-x border-t font-semibold'>
+                <td />
+                <td className='px-3 py-3'>Total</td>
+                <td className={`px-3 py-3 ${hasValidTotal ? 'text-success' : 'text-destructive'}`}>
+                  {totalWeight}%
+                </td>
+                <td colSpan={6} />
+              </tr>
+            </tfoot>
+          </table>
         </div>
         {removed.length > 0 && (
           <p className='text-destructive text-xs'>
@@ -689,6 +718,33 @@ export const CourseAssessmentStructure = ({
         .filter((assessment): assessment is Assessment => Boolean(assessment.uuid)),
     [assessmentsData]
   );
+  const rubricIds = useMemo(
+    () =>
+      [
+        ...new Set(assessments.flatMap(item => (item.rubric_uuid ? [item.rubric_uuid] : []))),
+      ].sort(),
+    [assessments]
+  );
+  const titlesQuery = useQuery({
+    ...searchAssessmentRubricsOptions({
+      query: {
+        searchParams: { uuid_in: rubricIds.join(',') },
+        pageable: { page: 0, size: Math.max(1, rubricIds.length) },
+      },
+    }),
+    enabled: rubricIds.length > 0,
+    staleTime: STALE_TIMES.entity,
+  });
+  const rubricTitles = useMemo(() => {
+    const titles = new Map<string, string>();
+    if (!titlesQuery.data?.error && titlesQuery.data?.success !== false) {
+      titlesQuery.data?.data?.content?.forEach(rubric => {
+        if (rubric.uuid) titles.set(rubric.uuid, rubric.title);
+      });
+    }
+    return titles;
+  }, [titlesQuery.data]);
+  const [previewUuid, setPreviewUuid] = useState<string | null>(null);
   const totalWeight = Number(
     assessments.reduce((sum, a) => sum + a.weight_percentage, 0).toFixed(2)
   );
@@ -724,14 +780,8 @@ export const CourseAssessmentStructure = ({
 
   return (
     <>
-      <div className='mb-4'>
-        <div className='flex flex-col gap-4'>
-          <CoursePassMarkForm courseUuid={courseUuid} />
-          {/* <CourseGradeBandsForm courseUuid={courseUuid} /> */}
-        </div>
-      </div>
-
-      <Card className='gap-0 py-0'>
+      <Card className='min-w-0 gap-0 overflow-hidden py-0'>
+        <CoursePassMarkForm courseUuid={courseUuid} compact />
         {/* Header */}
         <div className='flex flex-col gap-1 border-b px-6 py-5 sm:flex-row sm:items-center sm:justify-between'>
           <div>
@@ -780,6 +830,9 @@ export const CourseAssessmentStructure = ({
             onRefresh={refreshAssessments}
             onSaved={() => setMode(null)}
             disabled={loadingAssessments || Boolean(loadError)}
+            rubricTitles={rubricTitles}
+            onPreview={setPreviewUuid}
+            onManageTasks={setLinkModalTarget}
           />
         ) : (
           <CardContent className='px-0'>
@@ -826,103 +879,71 @@ export const CourseAssessmentStructure = ({
               }
             >
               <div className='overflow-x-auto'>
-                <table className='w-full text-sm'>
-                  <thead>
-                    <tr className='bg-muted/40 border-b'>
-                      <th className='text-foreground px-6 py-3 text-left font-semibold'>
-                        Component Title
-                      </th>
-                      <th className='text-foreground px-4 py-3 text-left font-semibold'>
-                        Weight (Score Range)
-                      </th>
-                      <th className='text-foreground px-4 py-3 text-left font-semibold'>
-                        Linked Tasks
-                      </th>
-                      <th className='text-foreground px-4 py-3 text-right font-semibold'>
-                        Actions
-                      </th>
-                    </tr>
-                  </thead>
-
+                <table className='w-full min-w-[1360px] text-sm'>
+                  <caption className='sr-only'>Course assessment components</caption>
+                  <StructureHeader />
                   <tbody className='divide-y'>
                     {assessments.map(a => (
-                      <tr key={a.uuid} className='hover:bg-muted/30 transition-colors'>
-                        {/* Title */}
-                        <td className='px-6 py-4'>
-                          <p className='text-foreground font-medium'>{a.title}</p>
+                      <tr key={a.uuid} className='hover:bg-muted/30 divide-x transition-colors'>
+                        <UnavailableCell />
+                        <td className='min-w-64 px-3 py-4'>
+                          <p className='font-medium'>{a.title}</p>
                           {a.description && (
-                            <p className='text-muted-foreground mt-0.5 line-clamp-1 text-xs'>
-                              {a.description}
-                            </p>
-                          )}
-                          {a.is_major_assessment && (
-                            <span className='bg-primary/15 text-primary mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold'>
-                              Major
-                            </span>
+                            <p className='text-muted-foreground mt-1 text-xs'>{a.description}</p>
                           )}
                         </td>
-
-                        {/* Weight */}
-                        <td className='px-4 py-4'>
-                          <div className='flex flex-col gap-1'>
-                            <span className='text-foreground font-semibold'>
-                              {a.weight_percentage}% (0–{a.weight_percentage})
-                            </span>
-                            <span
-                              className={`inline-flex max-w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${a.is_required
-                                ? 'bg-success/10 text-success/70'
-                                : 'bg-muted-foreground/10 text-muted-foreground'
-                                }`}
-                            >
-                              {a.is_required ? 'Required' : 'Not required'}
-                            </span>
-                          </div>
-                        </td>
-
-                        {/* Linked tasks — self-fetching per row */}
-                        <td className='px-4 py-4'>
-                          <div className='flex flex-col gap-1.5'>
-                            <AssessmentLineItems courseUuid={courseUuid} assessmentUuid={a.uuid} />
-                            <button
-                              type='button'
-                              onClick={() => setLinkModalTarget(a)}
-                              className='text-muted-foreground hover:text-foreground hover:bg-muted flex w-max items-center gap-1.5 rounded-full border border-dashed px-2.5 py-1 text-xs transition-colors'
-                            >
-                              <Plus size={11} />
-                              Link items
-                            </button>
-                          </div>
-                        </td>
-
-                        {/* Actions */}
-                        <td className='px-4 py-4'>
-                          <div className='flex items-center justify-end gap-1'>
+                        <td className='px-3 py-4 font-medium'>{a.weight_percentage}%</td>
+                        <UnavailableCell />
+                        <td className='min-w-56 px-3 py-4'>
+                          {a.rubric_uuid ? (
                             <Button
                               type='button'
-                              variant='ghost'
-                              size='icon'
-                              onClick={() => setDeletingAssessment(a)}
-                              className='text-muted-foreground hover:text-destructive hover:bg-destructive/10'
-                              aria-label={`Delete ${a.title}`}
+                              variant='link'
+                              className='h-auto max-w-72 p-0 text-left whitespace-normal'
+                              onClick={() => setPreviewUuid(a.rubric_uuid ?? null)}
                             >
-                              <Trash2 size={15} />
+                              {rubricTitles.get(a.rubric_uuid) || 'View selected rubric'}
                             </Button>
-                          </div>
+                          ) : !a.sync_class_attendance ? (
+                            <span className='text-muted-foreground'>None</span>
+                          ) : null}
+                          {a.sync_class_attendance && <p className='mt-1'>Verified attendance</p>}
+                        </td>
+                        <td className='px-3 py-4'>
+                          <AssessmentLinkedTasks
+                            courseUuid={courseUuid}
+                            assessmentUuid={a.uuid}
+                            assessmentTitle={a.title}
+                            onManage={() => setLinkModalTarget(a)}
+                          />
+                        </td>
+                        <UnavailableCell />
+                        <UnavailableCell />
+                        <td className='px-3 py-4'>
+                          <Button
+                            type='button'
+                            variant='ghost'
+                            size='icon'
+                            onClick={() => setDeletingAssessment(a)}
+                            className='text-muted-foreground hover:text-destructive'
+                            aria-label={`Delete ${a.title}`}
+                          >
+                            <Trash2 size={15} />
+                          </Button>
                         </td>
                       </tr>
                     ))}
                   </tbody>
-
                   <tfoot>
-                    <tr className='bg-muted/40 border-t'>
-                      <td className='text-foreground px-6 py-3 font-bold'>Total</td>
+                    <tr className='bg-muted/40 divide-x border-t font-bold'>
+                      <td />
+                      <td className='px-3 py-3'>Total</td>
                       <td
-                        className={`px-4 py-3 text-left font-bold ${totalWeight === 100 ? 'text-success' : totalWeight > 100 ? 'text-destructive' : 'text-warning'}`}
+                        className={`px-3 py-3 ${totalWeight === 100 ? 'text-success' : 'text-destructive'}`}
                       >
                         {totalWeight}%
                       </td>
-                      <td className='px-4 py-3' />
-                      <td className='px-4 py-3' />
+                      <td colSpan={6} />
                     </tr>
                   </tfoot>
                 </table>
@@ -943,6 +964,15 @@ export const CourseAssessmentStructure = ({
         )}
       </Card>
 
+      <Dialog open={Boolean(previewUuid)} onOpenChange={open => !open && setPreviewUuid(null)}>
+        <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-4xl'>
+          <DialogHeader>
+            <DialogTitle>Scoring rubric</DialogTitle>
+            <DialogDescription>Review the grading criteria for this assessment.</DialogDescription>
+          </DialogHeader>
+          {previewUuid && <EvaluationRubricPreview rubricUuid={previewUuid} />}
+        </DialogContent>
+      </Dialog>
       {/* Link items modal */}
       {linkModalTarget && (
         <LinkItemsModal

@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { ApplyToTrainWizard, headingFor, type WizardHeading } from './apply-to-train-wizard';
+import { TrainingItemDetails } from './components/training-item-details';
 import { trackApplicationHref } from './links';
 import type { ApplyKind } from './types';
 import { useDeepLinkItem } from './use-deep-link-item';
@@ -60,6 +61,11 @@ export function ApplyToTrainPage({ embedded = false }: { embedded?: boolean }) {
   const waitingItem = Boolean(itemUuid) && deepLink.loading;
   const waitingApplication =
     Boolean(applicationUuid) && edited.query.isLoading && !edited.application;
+  const applicationError =
+    edited.query.error ??
+    (edited.query.data?.error || edited.query.data?.success === false
+      ? new Error(edited.query.data.message || 'Could not load your application.')
+      : null);
 
   let body: React.ReactNode;
   if (itemUuid && deepLink.error) {
@@ -70,11 +76,11 @@ export function ApplyToTrainPage({ embedded = false }: { embedded?: boolean }) {
         onRetry={() => void deepLink.refetch()}
       />
     );
-  } else if (applicationUuid && edited.query.error) {
+  } else if (applicationUuid && applicationError) {
     body = (
       <SectionError
         title='Couldn’t load your application'
-        error={edited.query.error}
+        error={applicationError}
         onRetry={() => void edited.query.refetch()}
       />
     );
@@ -91,6 +97,28 @@ export function ApplyToTrainPage({ embedded = false }: { embedded?: boolean }) {
             Browse the catalogue
           </Button>
         }
+      />
+    );
+  } else if (applicationUuid && edited.query.isSuccess && !edited.application) {
+    body = (
+      <EmptyState
+        variant='card'
+        title='Application not found'
+        description='Return to the catalogue to view your available courses and programmes.'
+        action={
+          <Button variant='outline' onClick={onReset}>
+            Browse the catalogue
+          </Button>
+        }
+      />
+    );
+  } else if (applicationUuid && edited.application?.status === 'approved' && deepLink.item) {
+    body = (
+      <TrainingItemDetails
+        item={{
+          ...deepLink.item,
+          application: { uuid: applicationUuid, status: 'approved' },
+        }}
       />
     );
   } else if (applicationUuid && edited.application && edited.application.status !== 'pending') {

@@ -106,6 +106,11 @@ export function InstructorRateCards({ embedded = false }: { embedded?: boolean }
         entry =>
           entry.kind === linkKind &&
           entry.parentUuid === linkParent &&
+          entry.application.status === statusFilter
+      ) ?? sorted.find(
+        entry =>
+          entry.kind === linkKind &&
+          entry.parentUuid === linkParent &&
           entry.application.status === 'approved'
       ) ?? sorted.find(entry => entry.kind === linkKind && entry.parentUuid === linkParent))
     : undefined;
@@ -117,7 +122,6 @@ export function InstructorRateCards({ embedded = false }: { embedded?: boolean }
   useEffect(() => {
     if (!linkKey || !linked || handledLink.current === linkKey) return;
     if (statusFilter !== 'all' && linked.application.status !== statusFilter) {
-      setStatusFilter('all');
       return;
     }
     handledLink.current = linkKey;
@@ -127,7 +131,7 @@ export function InstructorRateCards({ embedded = false }: { embedded?: boolean }
     const { application } = linked;
     if (application.status === 'approved' && !application.pending_rate_update_uuid)
       setDialog({ entry: linked, focusBasis: linkBasis });
-  }, [linkKey, linked, linkBasis, statusFilter, setStatusFilter]);
+  }, [linkKey, linked, linkBasis, statusFilter]);
 
   return (
     <div className='w-full max-w-7xl space-y-6 px-4 py-4 pb-10 sm:px-6'>

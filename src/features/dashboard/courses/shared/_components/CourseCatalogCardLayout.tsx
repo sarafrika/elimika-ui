@@ -43,6 +43,7 @@ type CourseCatalogCardLayoutProps = {
   children: ReactNode;
   /** Off where reviews mean nothing, e.g. the apply-to-train picker. */
   showRating?: boolean;
+  videoButtonPosition?: 'top' | 'bottom';
   /** Opens details in place, with the card's action controls remaining independent. */
   onDetails?: () => void;
 };
@@ -61,6 +62,7 @@ export function CourseCatalogCardLayout({
   stats,
   children,
   showRating = true,
+  videoButtonPosition = 'bottom',
   onDetails,
 }: CourseCatalogCardLayoutProps) {
   const imageUrl = toAuthenticatedMediaUrl(card.imageUrl);
@@ -117,8 +119,15 @@ export function CourseCatalogCardLayout({
               size='icon'
               variant='secondary'
               aria-label={`Preview ${title}`}
-              className='bg-card text-foreground hover:bg-card/90 absolute top-3 right-3 z-10 h-8 w-8 rounded-full shadow-sm'
-              onClick={() => setVideoPreviewOpen(true)}
+              aria-haspopup='dialog'
+              className={cn(
+                'bg-card text-foreground hover:bg-card/90 absolute right-3 z-10 h-8 w-8 rounded-full shadow-sm',
+                videoButtonPosition === 'top' ? 'top-3' : 'bottom-3'
+              )}
+              onClick={event => {
+                event.stopPropagation();
+                setVideoPreviewOpen(true);
+              }}
             >
               <Play className='h-4 w-4' />
             </Button>

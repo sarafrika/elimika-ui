@@ -168,6 +168,10 @@ const ORGANISATION_NEW_CLASS_HREF = '/dashboard/organisation/classes/new';
 
 interface CourseRecordPageProps {
   courseUuid: string;
+  /** Keep record tabs local when rendered inside another page or modal. */
+  embedded?: boolean;
+  /** A caller may further restrict class creation while application approval is being verified. */
+  classCreationAllowed?: boolean;
   /** Where the shell's back link goes. Omitted, the link is not rendered. */
   backHref?: string;
 
@@ -199,6 +203,8 @@ interface CourseRecordPageProps {
 
 export function CourseRecordPage({
   courseUuid,
+  embedded = false,
+  classCreationAllowed,
   backHref,
   primaryAction,
   onPrimaryAction,
@@ -215,7 +221,8 @@ export function CourseRecordPage({
 }: CourseRecordPageProps) {
   // The same `?tab=` the shell reads; every viewer's first tab is Overview.
   const urlTab = useSectionTab(COURSE_RECORD_TABS, 'overview');
-  const record = useCourseRecord({ courseUuid, tab: urlTab.value });
+  const [embeddedTab, setEmbeddedTab] = useState<CourseRecordTabId>('overview');
+  const record = useCourseRecord({ courseUuid, tab: embedded ? embeddedTab : urlTab.value });
   const { access, capability } = record;
 
   const course = record.course.data;
@@ -476,13 +483,16 @@ export function CourseRecordPage({
   const railActions = useMemo<CourseRailActionItem[]>(
     () =>
       capability.railActions.flatMap(action => {
+        if (classCreationAllowed === false && action.label === 'Create a class for this course') {
+          return [{ ...action, disabled: true }];
+        }
         if (action.label === COURSE_EXPORT_ACTION_LABEL) {
           return onExport ? [{ ...action, onSelect: onExport }] : [];
         }
         const href = railActionHref(action.label, access, courseUuid, defaultClassesHref, segment);
         return [href ? { ...action, href } : { ...action }];
       }),
-    [capability.railActions, access, courseUuid, defaultClassesHref, onExport]
+    [capability.railActions, access, courseUuid, defaultClassesHref, onExport, classCreationAllowed]
   );
 
   /* ── bands ──────────────────────────────────────────────────────────── */
@@ -518,6 +528,10 @@ export function CourseRecordPage({
             {course && (
               <CourseDetailsAsideCard
                 course={course as Course}
+                canCreateClass={
+                  (access === 'instructor' || access === 'organisation') &&
+                  classCreationAllowed !== false
+                }
                 currencyCode={COURSE_DEFAULT_CURRENCY}
                 level={level}
                 classCount={record.classes.data?.length}
@@ -699,6 +713,8 @@ export function CourseRecordPage({
   return (
     <>
       <CourseRecordView
+        activeTab={embedded ? embeddedTab : undefined}
+        onTabChange={embedded ? setEmbeddedTab : undefined}
         access={access}
         className={className}
         courseName={course?.name}
