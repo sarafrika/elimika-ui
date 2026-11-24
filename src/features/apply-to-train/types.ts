@@ -21,6 +21,7 @@ export type ApplyItem = {
   category: string | null;
   creator: string | null;
   thumbnailUrl: string | null;
+  introVideoUrl?: string | null;
   /** Null bounds are open. */
   ageMin: number | null;
   ageMax: number | null;

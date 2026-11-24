@@ -34,12 +34,18 @@ import {
 const schema = z.object({ pass_mark: passMarkSchema });
 type Values = z.infer<typeof schema>;
 
-export function CoursePassMarkForm({ courseUuid }: { courseUuid: string }) {
+export function CoursePassMarkForm({
+  courseUuid,
+  compact = false,
+}: {
+  courseUuid: string;
+  compact?: boolean;
+}) {
   if (!courseUuid) return null;
-  return <SavedCoursePassMark courseUuid={courseUuid} />;
+  return <SavedCoursePassMark courseUuid={courseUuid} compact={compact} />;
 }
 
-function SavedCoursePassMark({ courseUuid }: { courseUuid: string }) {
+function SavedCoursePassMark({ courseUuid, compact }: { courseUuid: string; compact: boolean }) {
   const client = useQueryClient();
   const query = useQuery({
     ...getCourseByUuidOptions({ path: { uuid: courseUuid } }),
@@ -101,13 +107,19 @@ function SavedCoursePassMark({ courseUuid }: { courseUuid: string }) {
 
   return (
     <Form {...form}>
-      <div className='bg-card flex flex-col gap-4 rounded-xl border p-6 sm:flex-row sm:items-start'>
+      <div
+        className={
+          compact
+            ? 'bg-card flex flex-wrap items-end gap-4 border-b px-6 py-4'
+            : 'bg-card flex flex-col gap-4 rounded-xl border p-6 sm:flex-row sm:items-start'
+        }
+      >
         <FormField
           control={form.control}
           name='pass_mark'
           render={({ field }) => (
-            <FormItem className='flex-1'>
-              <FormLabel>Course pass mark (%) (optional)</FormLabel>
+            <FormItem className={compact ? 'w-48' : 'flex-1'}>
+              <FormLabel>Course pass mark (%)</FormLabel>
               <FormControl>
                 <Input
                   {...field}
@@ -123,16 +135,18 @@ function SavedCoursePassMark({ courseUuid }: { courseUuid: string }) {
                   }
                 />
               </FormControl>
-              <FormDescription>
-                Final grade needed to pass the course. Leave blank to clear the pass mark.
-              </FormDescription>
+              {!compact && (
+                <FormDescription>
+                  Final grade needed to pass the course. Leave blank to clear the pass mark.
+                </FormDescription>
+              )}
               <FormMessage />
             </FormItem>
           )}
         />
         <Button
           type='button'
-          className='sm:mt-6'
+          className={compact ? '' : 'sm:mt-6'}
           disabled={update.isPending || !isDirty}
           onClick={() => void form.handleSubmit(save)()}
         >

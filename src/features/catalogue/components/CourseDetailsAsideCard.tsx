@@ -15,6 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Briefcase, PlusSquare } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { useId } from 'react';
 import { formatPricingLabel } from '../format';
 import type { PublicCourseDetail, PublicCourseSummary } from '../types';
 
@@ -33,6 +34,8 @@ type CourseDetailsCardProps = {
   deliveryCount?: number;
   classesLoading?: boolean;
   dashboard?: 'organisation' | 'instructor';
+  /** Dashboard records supply the viewer's authorization to train this course. */
+  canCreateClass?: boolean;
 };
 
 export function CourseDetailsAsideCard(
@@ -115,7 +118,9 @@ function CourseDetailsCard({
   deliveryCount,
   classesLoading,
   dashboard,
+  canCreateClass = true,
 }: CourseDetailsCardProps) {
+  const classAuthorizationHintId = useId();
   const courseParams = new URLSearchParams({ courseUuid: course.uuid ?? '' }).toString();
   const trainingFee = course?.minimum_training_fee;
   const hasTrainingFee = typeof trainingFee === 'number' && Number.isFinite(trainingFee);
@@ -151,14 +156,32 @@ function CourseDetailsCard({
           </p>
         )}
 
-        {dashboard && course.uuid && (
-          <Button asChild variant='secondary' className='mt-4 w-full'>
-            <Link href={`/dashboard/${dashboard}/classes/new?${courseParams}`}>
-              <PlusSquare className='size-4' aria-hidden='true' />
-              Create class
-            </Link>
-          </Button>
-        )}
+        {dashboard &&
+          course.uuid &&
+          (canCreateClass ? (
+            <Button asChild variant='secondary' className='mt-4 w-full'>
+              <Link href={`/dashboard/${dashboard}/classes/new?${courseParams}`}>
+                <PlusSquare className='size-4' aria-hidden='true' />
+                Create class
+              </Link>
+            </Button>
+          ) : (
+            <div className='mt-4 space-y-2'>
+              <Button
+                type='button'
+                variant='secondary'
+                className='w-full'
+                disabled
+                aria-describedby={classAuthorizationHintId}
+              >
+                <PlusSquare className='size-4' aria-hidden='true' />
+                Create class
+              </Button>
+              <p id={classAuthorizationHintId} className='text-xs'>
+                You can’t create a class until you’re authorized to train this course.
+              </p>
+            </div>
+          ))}
         {dashboard === 'organisation' && course.uuid && (
           <Button
             asChild

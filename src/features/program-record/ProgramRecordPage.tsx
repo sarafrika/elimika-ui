@@ -39,7 +39,7 @@ import {
   summarise
 } from '@/src/features/course-record/blocks';
 import { CourseRecordView } from '@/src/features/course-record/CourseRecordView';
-import type { CourseStats } from '@/src/features/course-record/types';
+import type { CourseRecordTabId, CourseStats } from '@/src/features/course-record/types';
 import { roleScopedDashboardPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import {
   absoluteUrl,
@@ -52,7 +52,7 @@ import { programmeReportPrintHref } from '@/src/features/program-report/print-hr
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { type ReactNode, useCallback, useMemo } from 'react';
+import { type ReactNode, useCallback, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { ProgramAssessmentPlanPanel, useProgramAssessmentPlan } from './ProgramAssessmentPlan';
 import { ProgramCurriculumPanel } from './ProgramCurriculumPanel';
@@ -62,6 +62,8 @@ import { useProgramAccess } from './use-program-access';
 
 interface ProgramRecordPageProps {
   programUuid: string;
+  /** Keep record tabs local when rendered inside another page or modal. */
+  embedded?: boolean;
   /** Where the shell's back link goes. Omitted, the link is not rendered. */
   backHref?: string;
   /** The back link's text. */
@@ -94,6 +96,7 @@ interface ProgramRecordPageProps {
 
 export function ProgramRecordPage({
   programUuid,
+  embedded = false,
   backHref,
   backLabel = 'Back to courses',
   primaryAction,
@@ -220,7 +223,9 @@ export function ProgramRecordPage({
   const profile = useUserProfile();
   const learnerName =
     [profile?.first_name, profile?.last_name].filter(Boolean).join(' ') || undefined;
-  const openTab = useSearchParams()?.get('tab');
+  const urlTab = useSearchParams()?.get('tab');
+  const [embeddedTab, setEmbeddedTab] = useState<CourseRecordTabId>('overview');
+  const openTab = embedded ? embeddedTab : urlTab;
 
   const programAccess = useProgramAccess(
     programUuid,
@@ -229,10 +234,14 @@ export function ProgramRecordPage({
   );
   const { access } = programAccess;
 
-  // Builders and admins see the assessment plan; course components load once its tab is open.
-  const showsPlan = access === 'creator' || access === 'admin';
+  // Approved trainers can read the same plan; editing remains with the creator.
+  const showsPlan =
+    access === 'creator' ||
+    access === 'admin' ||
+    access === 'instructor' ||
+    access === 'organisation';
   const plan = useProgramAssessmentPlan(programUuid, {
-    enabled: showsPlan,
+    enabled: showsPlan && (access === 'creator' || access === 'admin' || openTab === 'assessment'),
     withComponents: openTab === 'assessment',
   });
 
@@ -516,6 +525,8 @@ export function ProgramRecordPage({
   return (
     <>
       <CourseRecordView
+        activeTab={embedded ? embeddedTab : undefined}
+        onTabChange={embedded ? setEmbeddedTab : undefined}
         access={access}
         accessLabel={programAccess.label}
         accessLoading={programAccess.loading}
@@ -529,9 +540,11 @@ export function ProgramRecordPage({
         onExport={onExport}
         primaryAction={primaryAction}
         secondaryAction={
-          <Button asChild variant='default' className='h-10 w-full rounded-[10px]'>
-            <Link href={availableClassesHref}>Enroll</Link>
-          </Button>
+          embedded ? undefined : (
+            <Button asChild variant='default' className='h-10 w-full rounded-[10px]'>
+              <Link href={availableClassesHref}>Enroll</Link>
+            </Button>
+          )
         }
         onPrimaryAction={onPrimaryAction}
         hero={{
@@ -560,7 +573,7 @@ export function ProgramRecordPage({
         tabPanels={tabPanels}
         tabCounts={tabCounts}
         tabFlags={
-          showsPlan && !plan.loading && plan.fixCount > 0
+          (access === 'creator' || access === 'admin') && !plan.loading && plan.fixCount > 0
             ? { assessment: { label: `${plan.fixCount} to fix`, tone: 'warning' } }
             : undefined
         }

@@ -800,6 +800,12 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
         : [],
     [courseCatalogueQuery.data, fromCatalogue]
   );
+  // Summary rows have no intro video; hydrate media for this visible page only.
+  const catalogueMediaIds = useMemo(
+    () => catalogueCourses.flatMap(item => (item.uuid ? [item.uuid] : [])),
+    [catalogueCourses]
+  );
+  const catalogueMedia = useCoursesByIds(catalogueMediaIds);
 
   const catalogueCountMap = useMemo(() => {
     const map = new Map<string, CardCounts>();
@@ -938,9 +944,12 @@ export function SharedCoursesPage({ domain }: SharedCoursesPageProps) {
   const mappedCourses = useMemo<UnifiedContentItem[]>(
     () =>
       fromCatalogue
-        ? catalogueCourses.map((item, index) => mapCatalogueCourse(item, index, domain))
+        ? catalogueCourses.map((item, index) => ({
+            ...mapCatalogueCourse(item, index, domain),
+            videoUrl: catalogueMedia.courseMap[item.uuid ?? '']?.intro_video_url ?? undefined,
+          }))
         : mappedFullCourses,
-    [catalogueCourses, domain, fromCatalogue, mappedFullCourses]
+    [catalogueCourses, catalogueMedia.courseMap, domain, fromCatalogue, mappedFullCourses]
   );
 
   const approvedInstructorCourseIds = useMemo(() => {

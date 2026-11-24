@@ -1,7 +1,9 @@
 'use client';
 
 import { Check } from 'lucide-react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,7 +11,11 @@ import { cn } from '@/lib/utils';
 import { CourseCatalogCardLayout } from '@/src/features/dashboard/courses/shared/_components/CourseCatalogCardLayout';
 import { getCardPresentation } from '@/src/features/dashboard/courses/shared/_components/courses-data';
 import { trackApplicationHref } from '../links';
-import { type ApplyItem, ageRangeLabel, isLocked, canReapply } from '../types';
+import { type ApplyItem, ageRangeLabel, canReapply } from '../types';
+
+const ItemRateCardDialog = dynamic(() =>
+  import('./item-rate-card-dialog').then(module => module.ItemRateCardDialog)
+);
 
 const STATUS_LABEL = {
   pending: 'Pending review',
@@ -36,9 +42,9 @@ export function ApplyItemCard({
   onChoose: () => void;
 }) {
   const presentation = getCardPresentation(index);
-  const locked = isLocked(item);
   const status = item.application?.status;
   const reapply = canReapply(item);
+  const [rateCardOpen, setRateCardOpen] = useState(false);
 
   return (
     <div
@@ -49,6 +55,7 @@ export function ApplyItemCard({
     >
       <CourseCatalogCardLayout
         showRating={false}
+        videoButtonPosition='top'
         onDetails={onDetails}
         card={{
           contentKind: item.kind,
@@ -57,6 +64,7 @@ export function ApplyItemCard({
           icon: presentation.icon,
           imageTone: presentation.imageTone,
           imageUrl: item.thumbnailUrl ?? undefined,
+          videoUrl: item.introVideoUrl ?? undefined,
           description: [item.code, item.category].filter(Boolean).join(' · ') || undefined,
         }}
         badges={
@@ -90,36 +98,56 @@ export function ApplyItemCard({
           </>
         }
       >
-        <div className='w-full'>
-          {locked && item.application ? (
-            <div className='space-y-2'>
-              <Button type='button' className='w-full' disabled>
-                Apply
+        <div className='grid w-full gap-2'>
+          {status === 'approved' ? (
+            <>
+              <Button type='button' className='w-full' onClick={onDetails}>
+                View approval
               </Button>
-              <Button asChild variant='outline' className='w-full'>
-                <Link href={trackApplicationHref(item.kind, item.uuid)}>
-                  {status === 'approved' ? 'View approval' : 'Track application'}
-                </Link>
+              <Button
+                type='button'
+                variant='outline'
+                className='w-full'
+                aria-haspopup='dialog'
+                onClick={() => setRateCardOpen(true)}
+              >
+                View rate cards
               </Button>
-            </div>
-          ) : (
-            <Button type='button' className='w-full' onClick={onChoose} aria-pressed={selected}>
-              {selected ? (
-                <>
-                  <Check aria-hidden /> Selected
-                </>
-              ) : reapply ? (
-                'Reapply'
-              ) : (
-                'Apply'
-              )}
+            </>
+          ) : status === 'pending' ? (
+            <Button asChild variant='outline' className='w-full'>
+              <Link href={trackApplicationHref(item.kind, item.uuid)}>Track application</Link>
             </Button>
+          ) : (
+            <>
+              <Button type='button' className='w-full' onClick={onChoose} aria-pressed={selected}>
+                {reapply ? (
+                  'Reapply'
+                ) : selected ? (
+                  <>
+                    <Check aria-hidden /> Selected
+                  </>
+                ) : (
+                  'Apply'
+                )}
+              </Button>
+              {status === 'revoked' ? (
+                <Button asChild variant='outline' className='w-full'>
+                  <Link href={trackApplicationHref(item.kind, item.uuid)}>Track application</Link>
+                </Button>
+              ) : null}
+            </>
           )}
         </div>
       </CourseCatalogCardLayout>
 
       {selected ? (
-        <span className='bg-primary text-primary-foreground pointer-events-none absolute top-3 right-3 z-20 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm'>
+        <span
+          className={cn(
+            'bg-primary text-primary-foreground pointer-events-none absolute top-3 z-20 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm',
+            item.introVideoUrl ? 'right-14' : 'right-3'
+          )}
+        >
           <Check aria-hidden className='size-3.5' />
           Selected
         </span>
@@ -136,6 +164,7 @@ export function ApplyItemCard({
           {STATUS_LABEL[status]}
         </span>
       ) : null}
+      {rateCardOpen ? <ItemRateCardDialog item={item} open onOpenChange={setRateCardOpen} /> : null}
     </div>
   );
 }
