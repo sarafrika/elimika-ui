@@ -10,7 +10,7 @@ import { useUserDomain } from '@/src/features/dashboard/context/user-domain-cont
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { CourseCreatorProfileFields } from '@/src/features/profile/forms/shared/components/CourseCreatorProfileFields';
-import { CourseCreatorUserInfoGrid } from '@/src/features/profile/forms/shared/components/CourseCreatorUserInfoGrid';
+import { UserInfoCard } from '@/src/features/profile/forms/shared/components/UserInfoCard';
 import {
   buildCourseCreatorFullName,
   type CourseCreatorProfileFormData,
@@ -88,7 +88,7 @@ export default function AddCourseCreatorProfileForm() {
       router.replace(buildDashboardSwitchPath('course_creator'));
     } catch (error) {
       // @ts-ignore
-      toast.error(error?.message)
+      toast.error(error?.message);
       toast.error(
         getErrorMessage(error, 'Failed to create course creator profile. Please try again.')
       );
@@ -150,17 +150,7 @@ export default function AddCourseCreatorProfileForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Information</CardTitle>
-              <CardDescription>
-                This information is from your user profile and cannot be changed here
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <CourseCreatorUserInfoGrid user={user} />
-            </CardContent>
-          </Card>
+          <UserInfoCard user={user} />
 
           <Card>
             <CardHeader>

@@ -1,4 +1,4 @@
-type CourseCreatorUserInfoGridProps = {
+export type UserInfoGridProps = {
   user?: {
     first_name?: string | null;
     middle_name?: string | null;
@@ -9,12 +9,12 @@ type CourseCreatorUserInfoGridProps = {
   } | null;
 };
 
-export function CourseCreatorUserInfoGrid({ user }: CourseCreatorUserInfoGridProps) {
+export function UserInfoGrid({ user }: UserInfoGridProps) {
   return (
     <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
       <ReadOnlyField
         label='Full Name'
-        value={`${user?.first_name ?? ''} ${user?.middle_name ?? ''} ${user?.last_name ?? ''}`.trim()}
+        value={[user?.first_name, user?.middle_name, user?.last_name].filter(Boolean).join(' ')}
       />
       <ReadOnlyField label='Email' value={user?.email} />
       <ReadOnlyField label='Username' value={user?.username} />

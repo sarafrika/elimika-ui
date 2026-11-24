@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import { UserInfoCard } from '@/src/features/profile/forms/shared/components/UserInfoCard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Spinner from '@/components/ui/spinner';
@@ -140,6 +141,8 @@ export function StudentOnboardingForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+          <UserInfoCard user={user} />
+
           {needsDob && (
             <Card>
               <CardHeader>

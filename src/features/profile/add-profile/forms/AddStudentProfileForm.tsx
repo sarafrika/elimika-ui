@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import { UserInfoCard } from '@/src/features/profile/forms/shared/components/UserInfoCard';
 import Spinner from '@/components/ui/spinner';
 import { getErrorMessage } from '@/lib/error-utils';
 import { createStudent } from '@/services/client';
@@ -105,6 +106,10 @@ export default function AddStudentProfileForm() {
             ? 'Create your student profile, then continue enrolling in your class.'
             : 'Set up your student profile - all fields are optional and can be completed later'}
         </p>
+      </div>
+
+      <div className='mb-6'>
+        <UserInfoCard user={user} />
       </div>
 
       <Card>

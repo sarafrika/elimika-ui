@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form } from '@/components/ui/form';
+import { UserInfoCard } from '@/src/features/profile/forms/shared/components/UserInfoCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getErrorMessage } from '@/lib/error-utils';
 import { createInstructor } from '@/services/client';
@@ -84,7 +85,7 @@ export default function AddInstructorProfileForm() {
       router.replace(buildDashboardSwitchPath('instructor'));
     } catch (error) {
       // @ts-ignore
-      toast.error(error?.message)
+      toast.error(error?.message);
       toast.error(getErrorMessage(error, 'Failed to create instructor profile. Please try again.'));
     } finally {
       setIsSubmitting(false);
@@ -161,6 +162,8 @@ export default function AddInstructorProfileForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
+          <UserInfoCard user={user} />
+
           <Card>
             <CardHeader>
               <CardTitle>Professional Information</CardTitle>

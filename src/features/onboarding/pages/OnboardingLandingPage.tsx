@@ -5,24 +5,30 @@ export function OnboardingLandingPage() {
   return (
     <div className='bg-background dark:bg-background flex min-h-screen items-center justify-center p-4'>
       <div className='w-full max-w-6xl'>
-        <div className='mb-12 text-center'>
-          <h1 className='text-foreground mb-4 text-4xl font-bold'>Welcome to Elimika!</h1>
-          <p className='text-muted-foreground mx-auto max-w-2xl text-lg'>
-            To help us personalize your experience, please select your primary role and we&apos;ll
-            guide you through the setup process.
-          </p>
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-elimika">Welcome to Elimika</p>
+          <h1 className="mt-3 text-4xl font-bold tracking-tight sm:text-5xl">What brings you to Elimika?</h1>
+          <p className="mt-3 text-muted-foreground">Choose what you want to achieve. You may add more profiles later.</p>
         </div>
 
         <ApplicationStatusPanel />
 
         <AccountTypeSelector />
-
-        <div className='mt-8 text-center'>
-          <p className='text-muted-foreground text-sm'>
-            Don&apos;t worry, you can always change your role or add additional roles later.
-          </p>
-        </div>
       </div>
     </div>
   );
 }
+
+// Development
+// Business
+// Finance & Accounting
+// IT & Software
+// Office Productivity
+// Personal Development
+// Design
+// Marketing
+// Lifestyle
+// Photography & Video
+// Health & Fitness
+// Music
+// Teaching & Academics

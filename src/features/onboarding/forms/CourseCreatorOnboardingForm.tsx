@@ -16,7 +16,7 @@ import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-sessi
 import { routeAfterDomainOnboarding } from '@/src/features/onboarding/lib/after-domain-onboarding';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { CourseCreatorProfileFields } from '@/src/features/profile/forms/shared/components/CourseCreatorProfileFields';
-import { CourseCreatorUserInfoGrid } from '@/src/features/profile/forms/shared/components/CourseCreatorUserInfoGrid';
+import { UserInfoCard } from '@/src/features/profile/forms/shared/components/UserInfoCard';
 import {
   buildCourseCreatorFullName,
   type CourseCreatorProfileFormData,
@@ -144,18 +144,7 @@ export function CourseCreatorOnboardingForm() {
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className='space-y-6'>
-          {/* User Information (Read-only) */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Your Information</CardTitle>
-              <CardDescription>
-                This information is from your user profile and cannot be changed here
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-4'>
-              <CourseCreatorUserInfoGrid user={user} />
-            </CardContent>
-          </Card>
+          <UserInfoCard user={user} />
 
           {/* Course Creator Profile */}
           <Card>
