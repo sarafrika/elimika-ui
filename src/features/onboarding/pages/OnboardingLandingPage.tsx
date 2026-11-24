@@ -32,3 +32,10 @@ export function OnboardingLandingPage() {
 // Health & Fitness
 // Music
 // Teaching & Academics
+
+// - Introduce goal-based starting paths with profile and age checks
+// - Add interests for all roles and require skills for teaching profiles
+// - Save wallet entries through existing profile APIs
+// - Share read-only account details across registration forms
+// - Refine step navigation, spacing, and wallet width
+// - Add wallet API mapping and error-handling tests
