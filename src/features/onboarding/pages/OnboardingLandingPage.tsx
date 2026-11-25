@@ -18,31 +18,3 @@ export function OnboardingLandingPage() {
     </div>
   );
 }
-
-// Development
-// Business
-// Finance & Accounting
-// IT & Software
-// Office Productivity
-// Personal Development
-// Design
-// Marketing
-// Lifestyle
-// Photography & Video
-// Health & Fitness
-// Music
-// Teaching & Academics
-
-// - Introduce goal-based starting paths with profile and age checks
-// - Add interests for all roles and require skills for teaching profiles
-// - Save wallet entries through existing profile APIs
-// - Share read-only account details across registration forms
-// - Refine step navigation, spacing, and wallet width
-// - Add wallet API mapping and error-handling tests
-
-// - Gate dashboard access until application approval
-// - Add application editing and return navigation
-// - Support approve, request changes, and reject decisions
-// - Add admin skills wallet moderation
-// - Introduce three-step organisation onboarding with payout uploads
-// - Restore saved application details and retain uploaded documents

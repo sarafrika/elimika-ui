@@ -3,6 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Inbox } from 'lucide-react';
+import Link from 'next/link';
 
 export function GuardianEmptyState() {
   return (
@@ -13,13 +14,13 @@ export function GuardianEmptyState() {
         </div>
         <CardTitle className='text-2xl'>No learners linked yet</CardTitle>
         <CardDescription className='text-sm'>
-          Ask an instructor or administrator to link your guardian profile to a learner so you can
-          monitor their progress from here.
+          Search for your child’s learner profile to connect your guardian account and follow their
+          learning. You can also ask the learner or their organisation to send a guardian invitation.
         </CardDescription>
       </CardHeader>
       <CardContent className='flex flex-col items-center gap-2'>
-        <Button variant='outline' size='sm'>
-          Contact support
+        <Button asChild variant='outline' size='sm'>
+          <Link href='/onboarding/parent'>Add a learner</Link>
         </Button>
       </CardContent>
     </Card>

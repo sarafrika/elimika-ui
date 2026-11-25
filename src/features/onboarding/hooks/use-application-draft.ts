@@ -100,9 +100,8 @@ export function useApplicationDraft<T extends FieldValues>({
           retry: false,
         })
       : undefined;
-  const [student] = useQueries({
-    queries: studentOptions ? [studentOptions] : [],
-  });
+  const studentQueries = studentOptions ? [studentOptions] : [];
+  const [student] = useQueries({ queries: studentQueries });
   const instructorOptions =
     role === 'instructor' && profileUuid
       ? queryOptions({
@@ -113,9 +112,8 @@ export function useApplicationDraft<T extends FieldValues>({
           retry: false,
         })
       : undefined;
-  const [instructor] = useQueries({
-    queries: instructorOptions ? [instructorOptions] : [],
-  });
+  const instructorQueries = instructorOptions ? [instructorOptions] : [];
+  const [instructor] = useQueries({ queries: instructorQueries });
   const creatorOptions =
     role === 'course-creator' && profileUuid
       ? queryOptions({
@@ -126,9 +124,8 @@ export function useApplicationDraft<T extends FieldValues>({
           retry: false,
         })
       : undefined;
-  const [creator] = useQueries({
-    queries: creatorOptions ? [creatorOptions] : [],
-  });
+  const creatorQueries = creatorOptions ? [creatorOptions] : [];
+  const [creator] = useQueries({ queries: creatorQueries });
   const organisationOptions =
     role === 'organisation' && profileUuid
       ? queryOptions({
@@ -139,9 +136,8 @@ export function useApplicationDraft<T extends FieldValues>({
           retry: false,
         })
       : undefined;
-  const [organisation] = useQueries({
-    queries: organisationOptions ? [organisationOptions] : [],
-  });
+  const organisationQueries = organisationOptions ? [organisationOptions] : [];
+  const [organisation] = useQueries({ queries: organisationQueries });
   const query =
     role === 'student'
       ? student

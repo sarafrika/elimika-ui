@@ -22,6 +22,7 @@ import type {
 } from '@/services/guardian';
 import { useGuardianDashboard, useGuardianStudents } from '@/services/guardian';
 import { RefreshCw } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { GuardianStudentSelector } from './GuardianStudentSelector';
 import { GuardianLearnerSummary } from './GuardianLearnerSummary';
@@ -238,6 +239,9 @@ export function ParentOverviewContent() {
               </p>
             </div>
             <div className='flex flex-wrap gap-2'>
+              <Button asChild variant='outline' size='sm'>
+                <Link href='/onboarding/parent'>Add a learner</Link>
+              </Button>
               <Button
                 variant='secondary'
                 size='sm'

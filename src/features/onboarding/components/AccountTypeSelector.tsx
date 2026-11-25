@@ -184,9 +184,7 @@ export function AccountTypeSelector() {
             {unavailable && (
               <p className='bg-primary-foreground/10 mt-4 flex gap-2 rounded-xl p-3 text-xs'>
                 <Info className='size-4 shrink-0' aria-hidden />{' '}
-                {intent?.id === 'child'
-                  ? 'Guardian access is set up through a learner invitation. Accept your invitation to access the Family Hub.'
-                  : 'Individual funder profile setup is not available yet. Please choose another starting path.'}
+                Individual funder profile setup is not available yet. Please choose another starting path.
               </p>
             )}
             {statusUnavailable && (

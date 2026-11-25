@@ -46,5 +46,6 @@ export function registrationPath(domain: string): string {
     return '/onboarding/organisation';
   if (domain === 'instructor') return '/onboarding/instructor';
   if (domain === 'student') return '/onboarding/student';
+  if (domain === 'parent') return '/onboarding/parent';
   return '/onboarding';
 }
