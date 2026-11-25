@@ -10,6 +10,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import Spinner from '@/components/ui/spinner';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import { AlertTriangle, ArrowRight, Check, ShieldAlert } from 'lucide-react';
@@ -145,6 +146,7 @@ export function ConfirmDialog({
             disabled={!canConfirm}
             onClick={onConfirm}
           >
+            {isPending ? <Spinner /> : null}
             {isPending ? 'Working…' : content.confirmLabel}
           </Button>
         </DialogFooter>

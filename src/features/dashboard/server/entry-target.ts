@@ -4,7 +4,7 @@ import type { Session } from 'next-auth';
 import { cache } from 'react';
 import type { UserDomain } from '@/lib/types';
 import { auth } from '@/services/auth';
-import type { User } from '@/services/client';
+import type { AccountStatus, User } from '@/services/client';
 import { getCurrentAccountStatus } from '@/services/client/sdk.gen';
 import { fetchCurrentUser } from '@/services/user/current-user';
 import { normalizeStoredUserDomain } from '@/src/features/dashboard/lib/active-domain-storage';
@@ -14,6 +14,10 @@ import {
   type RoleSegment,
 } from '@/src/features/dashboard/lib/dashboard-url';
 import { hasOrganisationAdminAffiliation } from '@/src/features/dashboard/lib/org-admin-affiliation';
+import {
+  awaitingApprovalPath,
+  sameReviewDomain,
+} from '@/src/features/onboarding/lib/application-review';
 
 /** The slice of the user record the guards route on. */
 type IdentityUser = {
@@ -136,27 +140,37 @@ export type OpenApplication = {
   reason: string | null;
 };
 
-/** Applications not yet approved; `/me` lists approved roles only, so these come from account status. */
-const fetchOpenApplications = cache(async (): Promise<OpenApplication[]> => {
+/** Approval is read fresh once per request; stale session roles cannot grant access. */
+const fetchAccountReview = cache(async (): Promise<AccountStatus | null> => {
   try {
-    const { data } = await getCurrentAccountStatus({
+    const { data, error } = await getCurrentAccountStatus({
       security: [{ scheme: 'bearer', type: 'http' }],
       next: { revalidate: 0 },
     });
-    return (data?.data?.domain_applications ?? []).flatMap(application => {
-      const domain = normalizeStoredUserDomain(application.domain);
-      if (!domain || !application.status || application.status === 'APPROVED') return [];
-      return [{ domain, status: application.status, reason: application.review_reason ?? null }];
-    });
+    if (error || data?.error || data?.success === false) return null;
+    return data?.data ?? null;
   } catch {
-    return [];
+    return null;
   }
+});
+
+/** Applications not yet approved, including rejected applications with review feedback. */
+const fetchOpenApplications = cache(async (): Promise<OpenApplication[]> => {
+  const account = await fetchAccountReview();
+  return (account?.domain_applications ?? []).flatMap(application => {
+    const domain = normalizeStoredUserDomain(application.domain);
+    if (!domain || !application.status || application.status === 'APPROVED') return [];
+    if (account?.approved_domains?.some(approved => sameReviewDomain(approved, domain))) return [];
+    return [{ domain, status: application.status, reason: application.review_reason ?? null }];
+  });
 });
 
 /** The application to show: the preferred role's first, then anything still pending. */
 function pickApplication(applications: OpenApplication[], preferred: UserDomain | null) {
   return (
-    applications.find(application => application.domain === preferred) ??
+    applications.find(application =>
+      sameReviewDomain(application.domain, preferred ?? undefined)
+    ) ??
     applications.find(application => application.status === 'PENDING') ??
     applications[0] ??
     null
@@ -193,13 +207,20 @@ export async function resolveDashboardEntryTarget(
     identity => evaluateEntryTarget(identity, preferredDomain, nextPath),
     result => result.redirectTo.startsWith('/onboarding')
   );
-  if (result.redirectTo !== '/onboarding') return result;
-
-  // No approved role yet, but an application is open: wait on that role's dashboard.
-  const application = pickApplication(await fetchOpenApplications(), preferredDomain);
+  if (result.redirectTo === '/') return result;
+  const account = await fetchAccountReview();
+  if (!account)
+    return { redirectTo: awaitingApprovalPath(preferredDomain ?? undefined), activeDomain: null };
+  const approved = account.approved_domains ?? [];
+  const requestedDomain = preferredDomain ?? result.activeDomain;
+  if (requestedDomain && approved.some(domain => sameReviewDomain(domain, requestedDomain)))
+    return result;
+  const application = pickApplication(await fetchOpenApplications(), requestedDomain);
   return application
-    ? { redirectTo: dashboardUrl(application.domain, nextPath), activeDomain: application.domain }
-    : result;
+    ? { redirectTo: awaitingApprovalPath(application.domain), activeDomain: application.domain }
+    : approved.length
+      ? result
+      : { redirectTo: '/onboarding', activeDomain: null };
 }
 
 function evaluateEntryTarget(
@@ -246,11 +267,21 @@ export async function resolveDashboardGuard(
     identity => evaluateGuard(identity, preferredDomain),
     result => result.redirectTo !== null
   );
-  if (result.redirectTo !== '/onboarding') return result;
-
-  // Let an applicant into the shell; the role layout shows the review status.
-  const application = pickApplication(await fetchOpenApplications(), preferredDomain);
-  return application ? { redirectTo: null, activeDomain: application.domain } : result;
+  if (result.redirectTo === '/') return result;
+  const account = await fetchAccountReview();
+  if (!account)
+    return { redirectTo: awaitingApprovalPath(preferredDomain ?? undefined), activeDomain: null };
+  const approved = account.approved_domains ?? [];
+  const requestedDomain = preferredDomain ?? result.activeDomain;
+  if (requestedDomain && approved.some(domain => sameReviewDomain(domain, requestedDomain)))
+    return result;
+  const application = pickApplication(await fetchOpenApplications(), requestedDomain);
+  if (application)
+    return {
+      redirectTo: awaitingApprovalPath(application.domain),
+      activeDomain: application.domain,
+    };
+  return approved.length ? result : { redirectTo: '/onboarding', activeDomain: null };
 }
 
 function evaluateGuard(
@@ -287,8 +318,6 @@ type RoleAccessResolution = {
   redirectTo: string | null;
   /** The viewer's own domain that satisfies this segment, when access is granted. */
   matchedDomain: UserDomain | null;
-  /** Set when the viewer applied for this role but is not approved: show its status instead. */
-  application?: OpenApplication;
   /** Organisation segment only: not an org admin. Show a no-access page; link home here. */
   deniedHomeHref?: string;
 };
@@ -308,14 +337,29 @@ export async function assertRoleAccess(segment: RoleSegment): Promise<RoleAccess
     identity => evaluateRoleAccess(identity, segment),
     result => result.redirectTo !== null
   );
-  if (!result.redirectTo || result.matchedDomain) return result;
-
+  if (result.redirectTo === '/') return result;
+  const account = await fetchAccountReview();
+  if (!account) return { redirectTo: '/awaiting-approval', matchedDomain: null };
+  if (
+    account.approved_domains?.some(domain => {
+      const normalized = normalizeStoredUserDomain(domain);
+      return normalized && domainToRouteSegment(normalized) === segment;
+    })
+  )
+    return result;
   const application = (await fetchOpenApplications()).find(
     open => domainToRouteSegment(open.domain) === segment
   );
-  if (application) return { redirectTo: null, matchedDomain: null, application };
+  if (application)
+    return { redirectTo: awaitingApprovalPath(application.domain), matchedDomain: null };
+  if (!result.redirectTo || result.matchedDomain)
+    return { redirectTo: '/onboarding', matchedDomain: null };
   // Students, instructors and parents get a clear no-access page, not a silent bounce.
-  if (segment === 'organisation' && result.redirectTo !== '/' && result.redirectTo !== '/onboarding') {
+  if (
+    segment === 'organisation' &&
+    result.redirectTo !== '/' &&
+    result.redirectTo !== '/onboarding'
+  ) {
     return { redirectTo: null, matchedDomain: null, deniedHomeHref: result.redirectTo };
   }
   return result;

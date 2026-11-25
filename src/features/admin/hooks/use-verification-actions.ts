@@ -12,6 +12,7 @@ import {
   verifyDocumentMutation,
   verifyInstructorMutation,
 } from '@/services/client/@tanstack/react-query.gen';
+import { isChangesRequested } from '@/src/features/onboarding/lib/application-review';
 import { invalidateAfterVerification } from '../lib/admin-queries';
 
 /** The API answers with its own status codes; these are what they mean to an admin. */
@@ -139,7 +140,9 @@ export function useRejectInstructor() {
       {
         onSuccess: async () => {
           await invalidateAfterVerification(queryClient);
-          toast.success(`${input.name ?? 'Instructor'}’s application was rejected`);
+          toast.success(isChangesRequested(input.reason)
+            ? `Changes requested from ${input.name ?? 'instructor'}`
+            : `${input.name ?? 'Instructor'}’s application was rejected`);
           onDone?.();
         },
         onError: error => {
@@ -170,7 +173,9 @@ export function useRejectCourseCreator() {
       {
         onSuccess: async () => {
           await invalidateAfterVerification(queryClient);
-          toast.success(`${input.name ?? 'Course creator'}’s application was rejected`);
+          toast.success(isChangesRequested(input.reason)
+            ? `Changes requested from ${input.name ?? 'course creator'}`
+            : `${input.name ?? 'Course creator'}’s application was rejected`);
           onDone?.();
         },
         onError: error => {

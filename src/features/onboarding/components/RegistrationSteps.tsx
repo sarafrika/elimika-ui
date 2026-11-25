@@ -1,21 +1,32 @@
 'use client';
 
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
-import Link from 'next/link';
-import { type ReactNode, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
+import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { type ReactNode, Suspense, useEffect, useState } from 'react';
 import { COURSE_CATEGORIES } from '../lib/registration-steps';
 import { RegistrationSkillsWallet } from './RegistrationSkillsWallet';
 
 type RegistrationRole = 'student' | 'instructor' | 'course-creator' | 'organisation';
 type Props = { role: RegistrationRole; children: ReactNode; backHref?: string };
 
-export function RegistrationSteps({ role, children, backHref = '/onboarding' }: Props) {
+export function RegistrationSteps(props: Props) {
+  return (
+    <Suspense fallback={<Skeleton className='mx-auto h-96 w-full max-w-3xl' />}>
+      <RegistrationStepsContent {...props} />
+    </Suspense>
+  );
+}
+
+function RegistrationStepsContent({ role, children, backHref = '/onboarding' }: Props) {
+  const searchParams = useSearchParams();
+  const requestedStep = searchParams.get('step');
   const user = useUserProfile();
   if (!user || user.isLoading)
     return (
@@ -33,8 +44,9 @@ export function RegistrationSteps({ role, children, backHref = '/onboarding' }: 
     );
   return (
     <AccountRegistrationSteps
-      key={`${user.uuid}:${role}`}
+      key={`${user.uuid}:${role}:${requestedStep}`}
       role={role}
+      initialDetails={requestedStep === 'user-information'}
       userUuid={user.uuid}
       backHref={backHref}
     >
@@ -48,11 +60,12 @@ function AccountRegistrationSteps({
   userUuid,
   children,
   backHref = '/onboarding',
-}: Props & { userUuid: string }) {
+  initialDetails = false,
+}: Props & { userUuid: string; initialDetails?: boolean }) {
   const needsWallet = role === 'instructor' || role === 'course-creator';
-  const [step, setStep] = useState(0);
-  const [detailsVisited, setDetailsVisited] = useState(false);
-  const [walletVisited, setWalletVisited] = useState(false);
+  const [step, setStep] = useState(initialDetails ? (needsWallet ? 2 : 1) : 0);
+  const [detailsVisited, setDetailsVisited] = useState(initialDetails);
+  const [walletVisited, setWalletVisited] = useState(initialDetails && needsWallet);
   const [categories, setCategories] = useState<string[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [storageUnavailable, setStorageUnavailable] = useState(false);
@@ -95,8 +108,14 @@ function AccountRegistrationSteps({
   };
 
   return (
-    <div className={cn('mx-auto w-full', needsWallet && step === 1 ? 'max-w-7xl' : 'max-w-4xl')}>
-      <div hidden={step !== 0}>
+    <div className={cn('mx-auto w-full', needsWallet && step === 1 ? 'max-w-7xl' : 'max-w-5xl')}>
+      <div hidden={step !== 0} className='space-y-4'>
+        <Button asChild variant='link' className='h-auto px-0 py-1 has-[>svg]:px-0'>
+          <Link href={backHref}>
+            <ArrowLeft className='size-4' aria-hidden='true' />
+            Back to profiles
+          </Link>
+        </Button>
         <Card>
           <CardHeader>
             <CardTitle>
@@ -153,10 +172,7 @@ function AccountRegistrationSteps({
                 Browser storage is unavailable. Your selections will be kept for this visit only.
               </p>
             ) : null}
-            <div className='flex justify-between gap-3'>
-              <Button asChild variant='outline'>
-                <Link href={backHref}>Back to profiles</Link>
-              </Button>
+            <div className='flex justify-end gap-3'>
               <Button
                 type='button'
                 disabled={!hydrated || categories.length === 0}
@@ -170,20 +186,11 @@ function AccountRegistrationSteps({
       </div>
       {needsWallet && walletVisited ? (
         <div hidden={step !== 1}>
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                <h1>Build your skills wallet</h1>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RegistrationSkillsWallet
-                active={step === 1}
-                onBack={() => setStep(0)}
-                onContinue={showDetails}
-              />
-            </CardContent>
-          </Card>
+          <RegistrationSkillsWallet
+            active={step === 1}
+            onBack={() => setStep(0)}
+            onContinue={showDetails}
+          />
         </div>
       ) : null}
       {detailsVisited ? (

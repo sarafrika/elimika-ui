@@ -17,13 +17,17 @@ import Spinner from '@/components/ui/spinner';
 import { getErrorMessage } from '@/lib/error-utils';
 import {
   createStudent,
+  updateStudent,
   getCurrentUser,
   type UpdateUserData,
   type User,
   updateUser,
 } from '@/services/client';
 import { useRefreshSessionIdentity } from '@/src/features/auth/use-refresh-session-identity';
-import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { ApplicationSubmissionDate } from '@/src/features/onboarding/components/ApplicationSubmissionDate';
+import { useApplicationDraft } from '@/src/features/onboarding/hooks/use-application-draft';
+import { acceptedProfileUuid } from '@/src/features/onboarding/lib/application-draft';
+import { routeAfterDomainOnboarding } from '@/src/features/onboarding/lib/after-domain-onboarding';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { StudentGuardianFields } from '@/src/features/profile/forms/shared/components/StudentGuardianFields';
 import {
@@ -63,6 +67,13 @@ export function StudentOnboardingForm() {
     },
   });
 
+  const application = useApplicationDraft({
+    userUuid: user?.uuid,
+    role: 'student',
+    form,
+    schema: studentProfileSchema,
+  });
+
   // The profile can load after mount (e.g. a reload); an empty user_uuid fails validation silently.
   useEffect(() => {
     if (user?.uuid && !form.getValues('user_uuid')) {
@@ -71,6 +82,10 @@ export function StudentOnboardingForm() {
   }, [user?.uuid, form]);
 
   const handleSubmit = async (data: StudentProfileFormData) => {
+    if (application.isLoading || application.isError) {
+      toast.error('Please wait for your saved application to load, or refresh to try again.');
+      return;
+    }
     if (!user?.uuid) {
       toast.error('User not found. Please try again.');
       return;
@@ -102,13 +117,11 @@ export function StudentOnboardingForm() {
         }
       }
 
-      const response = await createStudent({
-        body: data,
-      });
-
-      if (response.error) {
-        throw response.error;
-      }
+      const response = application.profileUuid
+        ? await updateStudent({ path: { uuid: application.profileUuid }, body: data })
+        : await createStudent({ body: data });
+      const profileUuid = acceptedProfileUuid(response);
+      application.save(data, profileUuid);
 
       // Invalidate student-related queries
       await queryClient.invalidateQueries({ queryKey: ['students'] });
@@ -118,9 +131,8 @@ export function StudentOnboardingForm() {
       await queryClient.invalidateQueries({ queryKey: ['profile'] });
       await user.invalidateQuery?.();
 
-      toast.success('Student account created successfully!');
       await refreshSessionIdentity();
-      router.replace(buildDashboardSwitchPath('student'));
+      await routeAfterDomainOnboarding('student', 'Student', path => router.replace(path));
     } catch (error) {
       toast.error(getErrorMessage(error, 'Failed to create student account. Please try again.'));
       setIsSubmitting(false);
@@ -129,6 +141,11 @@ export function StudentOnboardingForm() {
 
   return (
     <div className='border-border/60 bg-card/80 mx-auto max-w-3xl space-y-8 rounded-3xl border p-8 shadow-sm backdrop-blur-sm'>
+      <ApplicationSubmissionDate
+        submittedAt={application.submittedAt}
+        isLoading={application.isLoading}
+        isError={application.isError}
+      />
       <div className='text-center'>
         <div className='bg-primary/10 text-primary ring-primary/20 mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full ring-1'>
           <GraduationCap className='h-8 w-8' />
@@ -188,7 +205,11 @@ export function StudentOnboardingForm() {
             </CardContent>
           </Card>
 
-          <Button type='submit' className='w-full' disabled={isSubmitting}>
+          <Button
+            type='submit'
+            className='w-full'
+            disabled={isSubmitting || application.isLoading || application.isError}
+          >
             {isSubmitting ? (
               <>
                 <Spinner />

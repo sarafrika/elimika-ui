@@ -9,6 +9,7 @@ const admin = (path: string) => dashboardUrl('admin', path);
 export type PersonTab =
   | 'overview'
   | 'verification'
+  | 'skills-wallet'
   | 'teaching'
   | 'learning'
   | 'money'
@@ -49,7 +50,11 @@ export const adminRoutes = {
 
   people: (filters?: { role?: string; q?: string; status?: string; page?: string }) =>
     withQuery(admin('people'), filters ?? {}),
-  person: (userUuid: string, tab: PersonTab = 'overview', review?: { queue: string; item: string }) =>
+  person: (
+    userUuid: string,
+    tab: PersonTab = 'overview',
+    review?: { queue: string; item: string }
+  ) =>
     withQuery(admin(`people/${userUuid}`), {
       tab,
       review: review?.queue,
@@ -74,8 +79,7 @@ export const adminRoutes = {
     instructor?: string;
     q?: string;
     class?: string;
-  }) =>
-    withQuery(admin('classes'), filters ?? {}),
+  }) => withQuery(admin('classes'), filters ?? {}),
   catalogue: () => admin('catalogue'),
   rubrics: (filters?: { q?: string }) => withQuery(admin('rubrics'), filters ?? {}),
   marketplace: (filters?: { q?: string; status?: string }) =>

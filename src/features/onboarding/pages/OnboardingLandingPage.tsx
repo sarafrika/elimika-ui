@@ -39,3 +39,10 @@ export function OnboardingLandingPage() {
 // - Share read-only account details across registration forms
 // - Refine step navigation, spacing, and wallet width
 // - Add wallet API mapping and error-handling tests
+
+// - Gate dashboard access until application approval
+// - Add application editing and return navigation
+// - Support approve, request changes, and reject decisions
+// - Add admin skills wallet moderation
+// - Introduce three-step organisation onboarding with payout uploads
+// - Restore saved application details and retain uploaded documents

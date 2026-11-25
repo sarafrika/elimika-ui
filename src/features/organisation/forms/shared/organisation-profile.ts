@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { organisationReviewDescription } from '@/src/features/onboarding/lib/organisation-onboarding';
 import { zOrganisation } from '@/services/client/zod.gen';
 import type { Organisation } from '@/services/client/types.gen';
 
@@ -36,6 +37,9 @@ const optionalCoordinate = z.preprocess(value => {
 
 export const organisationRegistrationSchema = z.object({
   name: z.string().trim().min(1, 'Organisation name is required').max(50),
+  category: z.string().default(''),
+  capabilities: z.array(z.enum(['train', 'publish', 'fund', 'hire'])).default([]),
+  is_representative: z.boolean().default(false),
   description: optionalTrimmedString(2000),
   active: z.boolean().default(true),
   licence_no: optionalTrimmedString(100),
@@ -52,7 +56,7 @@ export function buildOrganisationRegistrationPayload(
 ): Organisation {
   return {
     name: data.name,
-    description: data.description,
+    description: organisationReviewDescription(data),
     active: true,
     licence_no: data.licence_no,
     location: data.location,

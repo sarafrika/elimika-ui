@@ -2,10 +2,10 @@ import { toast } from 'sonner';
 import type { UserDomain } from '@/lib/types';
 import { getCurrentAccountStatus } from '@/services/client';
 import { buildDashboardSwitchPath } from '@/src/features/dashboard/lib/active-domain-storage';
+import { awaitingApprovalPath, sameReviewDomain } from './application-review';
 
 /**
- * Where to go once a domain profile is created: that role's dashboard. Instructor, course
- * creator and organisation start PENDING, so the dashboard shows the review status until approved.
+ * Keep applicants outside the dashboard until the API confirms this profile is approved.
  */
 export async function routeAfterDomainOnboarding(
   domain: UserDomain,
@@ -16,7 +16,11 @@ export async function routeAfterDomainOnboarding(
   let approved = false;
   try {
     const response = await getCurrentAccountStatus();
-    approved = response.data?.data?.approved_domains?.includes(domain) ?? false;
+    if (!response.error && !response.data?.error && response.data?.success !== false) {
+      approved =
+        response.data?.data?.approved_domains?.some(item => sameReviewDomain(item, domain)) ??
+        false;
+    }
   } catch {
     approved = false;
   }
@@ -28,5 +32,5 @@ export async function routeAfterDomainOnboarding(
         : `${label} application submitted. An Elimika admin will review it before your dashboard opens.`
     );
   }
-  navigate(buildDashboardSwitchPath(domain));
+  navigate(approved ? buildDashboardSwitchPath(domain) : awaitingApprovalPath(domain));
 }

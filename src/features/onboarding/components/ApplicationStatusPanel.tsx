@@ -1,10 +1,13 @@
 'use client';
 
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { getCurrentAccountStatusOptions } from '@/services/client/@tanstack/react-query.gen';
+import { awaitingApprovalPath, isChangesRequested } from '@/src/features/onboarding/lib/application-review';
+import { plainText } from '@/src/features/onboarding/lib/plain-text';
 import { useQuery } from '@tanstack/react-query';
 import { Clock3, ShieldAlert } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { getCurrentAccountStatusOptions } from '@/services/client/@tanstack/react-query.gen';
-import { plainText } from '@/src/features/onboarding/lib/plain-text';
+import Link from 'next/link';
 
 const DOMAIN_LABELS: Record<string, string> = {
   instructor: 'Instructor',
@@ -27,10 +30,12 @@ export function ApplicationStatusPanel() {
   if (!applications.length) return null;
 
   return (
-    <div className='mx-auto mb-10 max-w-3xl space-y-3'>
+    <div className='mx-auto my-10 max-w-3xl space-y-3'>
       {applications.map(application => {
         const label = DOMAIN_LABELS[application.domain ?? ''] ?? application.domain;
         const pending = application.status === 'PENDING';
+        const feedback = plainText(application.review_reason);
+        const changesRequested = !pending && isChangesRequested(feedback);
         const Icon = pending ? Clock3 : ShieldAlert;
         return (
           <Alert
@@ -41,13 +46,18 @@ export function ApplicationStatusPanel() {
             <AlertTitle className={pending ? undefined : 'text-destructive'}>
               {pending
                 ? `${label} application awaiting approval`
-                : `${label} application not approved`}
+                : changesRequested
+                  ? `${label} application needs changes`
+                  : `${label} application not approved`}
             </AlertTitle>
             <AlertDescription>
               {pending
                 ? `We have your ${label} details. An Elimika admin will review them and your dashboard opens once approved. You do not need to submit again.`
-                : plainText(application.review_reason) ||
-                  `Your ${label} application was ${application.status?.toLowerCase()}. Contact support for help.`}
+                : feedback ||
+                `Your ${label} application was ${application.status?.toLowerCase()}. Contact support for help.`}
+              <Button asChild variant='link' size='sm' className='mt-2 h-auto p-0'>
+                <Link href={awaitingApprovalPath(application.domain)}>View application status</Link>
+              </Button>
             </AlertDescription>
           </Alert>
         );

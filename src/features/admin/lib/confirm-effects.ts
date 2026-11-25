@@ -32,6 +32,28 @@ export interface ConfirmSubject {
 type Builder = (subject: ConfirmSubject) => ConfirmContent;
 
 export const confirmEffects = {
+  approveWalletItem: subject => ({
+    title: `Approve ${subject.name}’s ${subject.detail ?? 'wallet item'}?`,
+    confirmLabel: 'Approve item',
+    tone: 'default',
+    effects: [
+      'This item is marked VERIFIED after review of its evidence',
+      'Any review note is stored with the decision',
+      'The verdict applies across the person’s instructor and course creator profiles',
+    ],
+  }),
+
+  rejectWalletItem: subject => ({
+    title: `Reject ${subject.name}’s ${subject.detail ?? 'wallet item'}?`,
+    confirmLabel: 'Reject item',
+    tone: 'danger',
+    effects: [
+      'This item is marked REJECTED with your review note',
+      'The verdict applies across the person’s instructor and course creator profiles',
+      'Editing the claim returns it to PENDING for another review',
+    ],
+  }),
+
   verifyDocument: subject => ({
     title: `Verify ${subject.name}’s ${subject.detail ?? 'document'}?`,
     confirmLabel: 'Verify record',
@@ -44,9 +66,21 @@ export const confirmEffects = {
     warnings: ['There is no API to reject or un-verify a document afterwards.'],
   }),
 
+  requestApplicationChanges: subject => ({
+    title: `Request changes from ${subject.name}?`,
+    confirmLabel: 'Request changes',
+    tone: 'default',
+    effects: [
+      'Your feedback is saved with a Changes requested label',
+      'The applicant sees the requested changes on their application page and can update their skills wallet',
+      'Platform access stays closed until an admin approves the application',
+    ],
+    warnings: ['The API stores this as a rejected application with changes-requested feedback.'],
+  }),
+
   verifyInstructor: subject => ({
-    title: `Verify ${subject.name} as an instructor?`,
-    confirmLabel: 'Verify instructor',
+    title: `Approve ${subject.name} as an instructor?`,
+    confirmLabel: 'Approve',
     tone: 'default',
     effects: [
       'The instructor profile is marked admin-verified',
@@ -59,7 +93,7 @@ export const confirmEffects = {
 
   verifyCourseCreator: subject => ({
     title: `Approve ${subject.name} as a course creator?`,
-    confirmLabel: 'Approve course creator',
+    confirmLabel: 'Approve',
     tone: 'default',
     effects: [
       'The course creator profile is marked approved and admin-verified',
@@ -75,7 +109,7 @@ export const confirmEffects = {
     tone: 'danger',
     effects: [
       'The instructor application is marked rejected and the dashboard stays closed',
-      `${subject.name} sees your reason on the onboarding page and can pick another role`,
+      `${subject.name} sees your rejection reasons on their application page`,
       'You can still verify them later from this record',
     ],
   }),
@@ -86,7 +120,7 @@ export const confirmEffects = {
     tone: 'danger',
     effects: [
       'The course creator application is marked rejected and the dashboard stays closed',
-      `${subject.name} sees your reason on the onboarding page and can pick another role`,
+      `${subject.name} sees your rejection reasons on their application page`,
       'You can still approve them later from this record',
     ],
   }),

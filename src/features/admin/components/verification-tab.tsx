@@ -16,9 +16,11 @@ import {
 } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import Spinner from '@/components/ui/spinner';
 import { formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import type { DocumentTypeOption, Instructor, InstructorDocument, User } from '@/services/client';
+import { CHANGES_REQUESTED_PREFIX } from '@/src/features/onboarding/lib/application-review';
 import { useInstructorEducation } from '../hooks/use-person-record';
 import {
   useRejectCourseCreator,
@@ -46,7 +48,7 @@ const reasonSchema = z.object({
     .string()
     .refine(
       value => noteToPlainText(value).length >= 10,
-      'Say why this profile is being verified.'
+      'Explain your decision and any changes needed — at least a sentence.'
     ),
 });
 
@@ -555,10 +557,10 @@ function ProfileDecision({
       }
       prompt={
         unlocked
-          ? `Verify ${personName} as an instructor?`
-          : `You can still verify ${personName}; say in the reason what you checked instead.`
+          ? `Approve ${personName} as an instructor?`
+          : `Review ${personName}’s application and choose a decision below.`
       }
-      buttonLabel='Verify instructor'
+      buttonLabel='Approve'
       action='verifyInstructor'
       personName={personName}
       disabled={!instructorUuid}
@@ -608,7 +610,7 @@ export function CourseCreatorDecision({
     <ApprovalDecision
       title='Course creator application'
       prompt={`Approve ${personName} as a course creator?`}
-      buttonLabel='Approve course creator'
+      buttonLabel='Approve'
       action='verifyCourseCreator'
       personName={personName}
       disabled={!courseCreatorUuid}
@@ -657,9 +659,8 @@ function ApprovalDecision({
   };
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  /** Which button opened the confirmation: approve or reject share the one reason. */
-  const [choice, setChoice] = useState<'approve' | 'reject'>('approve');
-  const rejecting = choice === 'reject' && reject;
+  const [choice, setChoice] = useState<'approve' | 'changes' | 'reject'>('approve');
+  const rejecting = choice !== 'approve' && reject;
   const busy = isPending || Boolean(reject?.isPending);
   /** Frozen when the form validates, so the modal quotes what will be sent. */
   const [pendingReason, setPendingReason] = useState('');
@@ -672,29 +673,36 @@ function ApprovalDecision({
 
   return (
     <div className='border-primary bg-primary/5 flex flex-col gap-3 rounded-md border px-4 py-3'>
-      <div className='flex flex-wrap items-center gap-3'>
-        <ShieldCheck className='text-primary size-4' />
-        <div className='flex-1'>
+      <div className='flex items-start gap-3'>
+        <ShieldCheck className='text-primary mt-0.5 size-4 shrink-0' />
+        <div className='flex-1 space-y-0.5'>
           <p className='text-foreground text-sm font-semibold'>{title}</p>
           <p className='text-muted-foreground text-sm'>{prompt}</p>
         </div>
       </div>
+
+      <p className='text-muted-foreground text-sm'>
+        Approve completes onboarding and opens platform access. Request changes sends feedback
+        for the applicant to address. Reject turns down the application with your reasons.
+      </p>
+
       <form
-        className='flex flex-wrap items-end gap-2'
+        className='flex flex-col gap-3'
         onSubmit={form.handleSubmit(values => {
           setChoice('approve');
           setPendingReason(values.reason.trim());
           setConfirmOpen(true);
         })}
       >
-        <div className='flex min-w-[260px] flex-1 flex-col gap-1.5'>
+        <div className='w-full'>
           <Controller
             control={form.control}
             name='reason'
             render={({ field }) => (
               <NoteField
                 id={fieldId}
-                label='Reason'
+                label='Decision feedback'
+                helper='For requested changes, explain what to update. For rejection, explain why the application is turned down.'
                 required
                 value={field.value}
                 onChange={field.onChange}
@@ -703,36 +711,64 @@ function ApprovalDecision({
             )}
           />
         </div>
-        {reject ? (
-          <Button
-            type='button'
-            variant='outline'
-            className='border-destructive/50 text-destructive hover:bg-destructive/10 rounded-md'
-            disabled={busy || reject.disabled}
-            onClick={form.handleSubmit(values => {
-              setChoice('reject');
-              setPendingReason(values.reason.trim());
-              setConfirmOpen(true);
-            })}
-          >
-            Reject
+
+        <div className='flex flex-wrap items-center justify-end gap-2 pt-1'>
+          {reject ? (
+            <>
+              <Button
+                type='button'
+                variant='outline'
+                className='border-destructive/50 text-destructive hover:bg-destructive/10 rounded-md'
+                disabled={busy || reject.disabled}
+                onClick={form.handleSubmit(values => {
+                  setChoice('reject');
+                  setPendingReason(values.reason.trim());
+                  setConfirmOpen(true);
+                })}
+              >
+                {busy && choice === 'reject' ? <Spinner /> : null}
+                Reject
+              </Button>
+              <Button
+                type='button'
+                variant='outline'
+                className='rounded-md'
+                disabled={busy || reject.disabled}
+                onClick={form.handleSubmit(values => {
+                  setChoice('changes');
+                  setPendingReason(values.reason.trim());
+                  setConfirmOpen(true);
+                })}
+              >
+                {busy && choice === 'changes' ? <Spinner /> : null}
+                Request changes
+              </Button>
+            </>
+          ) : null}
+
+          <Button type='submit' className='rounded-md' disabled={busy || disabled}>
+            {busy && choice === 'approve' ? <Spinner /> : null}
+            {buttonLabel}
           </Button>
-        ) : null}
-        <Button type='submit' className='rounded-md' disabled={busy || disabled}>
-          {buttonLabel}
-        </Button>
+        </div>
       </form>
 
       <ConfirmDialog
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
-        action={rejecting ? rejecting.action : action}
+        action={
+          choice === 'changes'
+            ? 'requestApplicationChanges'
+            : rejecting
+              ? rejecting.action
+              : action
+        }
         subject={{ name: personName }}
         note={pendingReason}
         isPending={busy}
         onConfirm={() =>
           (rejecting ? rejecting.onConfirm : onConfirm)(
-            noteToPlainText(pendingReason).trim(),
+            `${choice === 'changes' ? CHANGES_REQUESTED_PREFIX : ''}${noteToPlainText(pendingReason).trim()}`,
             () => {
               setConfirmOpen(false);
               form.reset();

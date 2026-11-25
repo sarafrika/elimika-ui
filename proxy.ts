@@ -38,7 +38,7 @@ export default auth(req => {
   }
 
   // Define protected routes that require authentication
-  const protectedRoutes = ['/dashboard', '/onboarding'];
+  const protectedRoutes = ['/dashboard', '/onboarding', '/awaiting-approval'];
 
   // Check if current path is a protected route
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));

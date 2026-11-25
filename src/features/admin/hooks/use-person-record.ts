@@ -78,7 +78,7 @@ export function usePersonRecord(userUuid: string) {
 export function useInstructorProfile(userUuid: string) {
   const query = useQuery({
     ...searchInstructorsOptions({
-      query: { searchParams: { user_uuid: userUuid }, pageable: SINGLE_PROFILE_PAGE },
+      query: { searchParams: { user_uuid_eq: userUuid }, pageable: SINGLE_PROFILE_PAGE },
     }),
     ...listQuery,
     enabled: Boolean(userUuid),
@@ -95,7 +95,7 @@ export function useInstructorProfile(userUuid: string) {
 export function useCourseCreatorProfile(userUuid: string) {
   const query = useQuery({
     ...searchCourseCreatorsOptions({
-      query: { searchParams: { user_uuid: userUuid }, pageable: SINGLE_PROFILE_PAGE },
+      query: { searchParams: { user_uuid_eq: userUuid }, pageable: SINGLE_PROFILE_PAGE },
     }),
     ...listQuery,
     enabled: Boolean(userUuid),

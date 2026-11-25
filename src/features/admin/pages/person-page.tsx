@@ -11,6 +11,7 @@ import {
   useSectionTab,
 } from '@/components/data-display';
 import { Button } from '@/components/ui/button';
+import { EmptyState } from '@/components/ui/empty-state';
 import { useSearchState } from '@/hooks/use-search-state';
 import { formatDate } from '@/lib/date';
 import { stringParam } from '@/lib/search-state';
@@ -23,6 +24,7 @@ import { MoneyTab } from '../components/money-tab';
 import { OverviewTab } from '../components/overview-tab';
 import { type RecordBadge, RecordHeader } from '../components/record-header';
 import { SectionBoundary } from '../components/section-boundary';
+import { SkillsWalletTab } from '../components/skills-wallet-tab';
 import { TeachingTab } from '../components/teaching-tab';
 import { CourseCreatorDecision, VerificationTab } from '../components/verification-tab';
 import { useSavePerson } from '../hooks/use-person-actions';
@@ -38,6 +40,7 @@ import type { PersonTab } from '../lib/admin-routes';
 
 const PERSON_TABS: readonly PersonTab[] = [
   'overview',
+  'skills-wallet',
   'verification',
   'teaching',
   'learning',
@@ -47,6 +50,7 @@ const PERSON_TABS: readonly PersonTab[] = [
 
 const TAB_LABELS: Record<PersonTab, string> = {
   overview: 'Overview',
+  'skills-wallet': 'Skills Wallet',
   verification: 'Verification',
   teaching: 'Teaching',
   learning: 'Learning',
@@ -68,7 +72,7 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
   const { person, query: personQuery } = usePersonRecord(userUuid);
   const { instructor, query: instructorQuery } = useInstructorProfile(userUuid);
   const { documents, query: documentsQuery } = useInstructorDocuments(instructor?.uuid);
-  const { courseCreator } = useCourseCreatorProfile(userUuid);
+  const { courseCreator, query: courseCreatorQuery } = useCourseCreatorProfile(userUuid);
   const { byUuid, documentTypes } = useDocumentTypes();
   // Only the tabs that need a learner profile ask for one.
   const { student } = useStudentProfile(
@@ -107,7 +111,10 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
     });
   }
 
-  const tabs: SectionTab<PersonTab>[] = PERSON_TABS.map(id => ({
+  const hasTeachingProfile = Boolean(instructor || courseCreator);
+  const tabs: SectionTab<PersonTab>[] = PERSON_TABS.filter(
+    id => id !== 'skills-wallet' || hasTeachingProfile || tab === 'skills-wallet'
+  ).map(id => ({
     id,
     label: TAB_LABELS[id],
     count: id === 'verification' && pendingDocuments > 0 ? pendingDocuments : undefined,
@@ -163,6 +170,36 @@ export function AdminPersonPage({ userUuid }: { userUuid: string }) {
                 error={personQuery.error}
                 onRetry={() => personQuery.refetch()}
               />
+            ) : null}
+          </SectionTabPanel>
+
+          <SectionTabPanel value='skills-wallet'>
+            {tab === 'skills-wallet' ? (
+              <SectionBoundary
+                label='the applicant profiles'
+                loading={
+                  !hasTeachingProfile &&
+                  ((instructorQuery.isPending && !instructorQuery.data) ||
+                    (courseCreatorQuery.isPending && !courseCreatorQuery.data))
+                }
+                error={
+                  hasTeachingProfile ? null : (instructorQuery.error ?? courseCreatorQuery.error)
+                }
+                onRetry={() => {
+                  void instructorQuery.refetch();
+                  void courseCreatorQuery.refetch();
+                }}
+                skeleton={<SectionCardSkeleton rows={5} />}
+              >
+                {hasTeachingProfile ? (
+                  <SkillsWalletTab userUuid={userUuid} personName={name} />
+                ) : (
+                  <EmptyState
+                    title='No instructor or course creator profile'
+                    description='Skills wallets are available here for instructor and course creator applications.'
+                  />
+                )}
+              </SectionBoundary>
             ) : null}
           </SectionTabPanel>
 
