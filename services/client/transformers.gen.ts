@@ -8,6 +8,7 @@ import type {
   AddAchievementResponse,
   AddAvailabilityRuleResponse,
   AddCertificationResponse,
+  AddChildResponse,
   AddCompetencyResponse,
   AddCourseAssessmentResponse,
   AddCourseCreatorAchievementResponse,
@@ -36,6 +37,7 @@ import type {
   AddMembersResponse,
   AddOrganisationPayoutMethodResponse,
   AddPayoutApproverResponse,
+  AddPayoutBatchWithdrawalsResponse,
   AddPayoutMethodResponse,
   AddPortfolioItemResponse,
   AddProgramCourseResponse,
@@ -58,6 +60,7 @@ import type {
   ApplyToJobResponse,
   ApproveAdminWithdrawalResponse,
   ApproveOrganisationWithdrawalResponse,
+  ApprovePayoutBatchResponse,
   ArchiveCourseResponse,
   ArchiveProgramResponse,
   AssignAdminDomainResponse,
@@ -67,6 +70,7 @@ import type {
   CancelJobResponse,
   CancelObligationResponse,
   CancelOrganisationWithdrawalResponse,
+  CancelPayoutBatchResponse,
   CancelWithdrawalResponse,
   CertificationsResponse,
   CheckAdminWithdrawalResponse,
@@ -103,6 +107,7 @@ import type {
   CreateLinkResponse,
   CreateOrganisationResponse,
   CreateOrganisationUserResponse,
+  CreatePayoutBatchResponse,
   CreatePracticeActivityResponse,
   CreateQuizResponse,
   CreateQuizScheduleResponse,
@@ -135,6 +140,7 @@ import type {
   GetActiveProgramsResponse,
   GetActivityFeedResponse,
   GetAdminEligibleUsersResponse,
+  GetAdminSaleSplitResponse,
   GetAdminUsersResponse,
   GetAllActiveClassDefinitionsResponse,
   GetAllAssessmentRubricsResponse,
@@ -282,9 +288,11 @@ import type {
   GetOrganisationStatisticsResponse,
   GetOrganisationTimetableResponse,
   GetOrganisationWalletResponse,
+  GetOrganisationWalletSaleResponse,
   GetOrganisationWithdrawalResponse,
   GetOrganizationAdminUsersResponse,
   GetPassingScoringLevelsResponse,
+  GetPayoutBatchResponse,
   GetPayoutRulesResponse,
   GetPayoutSettingsResponse,
   GetPayoutSummaryResponse,
@@ -373,6 +381,7 @@ import type {
   GetUsersByOrganisationResponse,
   GetVerifiedCourseCreatorsResponse,
   GetWalletResponse,
+  GetWalletSaleResponse,
   GetWeeklyGrowthResponse,
   GetWithdrawalResponse,
   GlobalSearchResponse2,
@@ -380,6 +389,7 @@ import type {
   GradeSubmissionResponse,
   JoinWaitlistResponse,
   ListAchievementsResponse,
+  ListAdminOrderSaleSplitsResponse,
   ListAdminWithdrawalsResponse,
   ListAuditResponse,
   ListAvailabilityRulesResponse,
@@ -411,11 +421,13 @@ import type {
   ListOrganisationInvitationsResponse,
   ListOrganisationPayoutMethodsResponse,
   ListOrganisationWalletAuditResponse,
+  ListOrganisationWalletSalesResponse,
   ListOrganisationWalletStatementsResponse,
   ListOrganisationWalletTransactionsResponse,
   ListOrganisationWithdrawalsResponse,
   ListPaymentsResponse,
   ListPayoutApproversResponse,
+  ListPayoutBatchesResponse,
   ListPayoutMethodsResponse,
   ListPendingCourseEditsResponse,
   ListPendingCoursesResponse,
@@ -425,6 +437,7 @@ import type {
   ListProgramTrainingApplicationsResponse,
   ListProgramTrainingRateUpdatesResponse,
   ListResourcesResponse,
+  ListResponse,
   ListRosterResponse,
   ListRulesResponse,
   ListSalesResponse,
@@ -438,6 +451,7 @@ import type {
   ListTrainingRateUpdatesResponse,
   ListTransactions1Response,
   ListTransactionsResponse,
+  ListWalletSalesResponse,
   ListWithdrawalsResponse,
   MakeOrganisationPayoutMethodDefaultResponse,
   MakePayoutMethodDefaultResponse,
@@ -455,8 +469,10 @@ import type {
   RecordSessionResponse,
   RegisterAndAcceptResponse,
   RejectAdminWithdrawalResponse,
+  RejectPayoutBatchResponse,
   RemoveAdminDomainResponse,
   RemoveItemResponse,
+  RemovePayoutBatchWithdrawalResponse,
   ReopenSessionReportResponse,
   ReplaceLearnerSkillGoalsResponse,
   RequestOrganisationVerificationResponse,
@@ -470,12 +486,15 @@ import type {
   ResendOrganisationWithdrawalCodeResponse,
   ResendPayoutMethodCodeResponse,
   ResendWithdrawalCodeResponse,
+  ResetResponse,
   ResolveByCourseOrClassResponse,
   RestoreCourseVersionResponse,
+  ReturnPayoutBatchToDraftResponse,
   ReturnSubmissionResponse,
   ReviewApplicationResponse,
   RevokeOrganisationInvitationResponse,
   SaveQuizResponsesResponse,
+  SaveResponse,
   ScheduleClassResponse,
   Search1Response,
   Search2Response,
@@ -533,6 +552,7 @@ import type {
   SubmitDomainOnboardingResponse,
   SubmitGuardianDetailsResponse,
   SubmitInstructorReviewResponse,
+  SubmitPayoutBatchResponse,
   SubmitProgramReviewResponse,
   SubmitProgramTrainingApplicationResponse,
   SubmitProgramTrainingRateUpdateResponse,
@@ -541,6 +561,7 @@ import type {
   SubmitTrainingApplicationResponse,
   SubmitTrainingRateUpdateResponse,
   SummaryResponse,
+  TransferBetweenPursesResponse,
   TransferResponse,
   UnpublishCourseResponse,
   UnpublishProgramResponse,
@@ -2989,6 +3010,30 @@ export const updateAssignmentResponseTransformer = async (
   return data;
 };
 
+const smsTemplateResponseSchemaResponseTransformer = (data: any) => {
+  if (data.updated_at) {
+    data.updated_at = new Date(data.updated_at);
+  }
+  return data;
+};
+
+const apiResponseSmsTemplateResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = smsTemplateResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const resetResponseTransformer = async (data: any): Promise<ResetResponse> => {
+  data = apiResponseSmsTemplateResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const saveResponseTransformer = async (data: any): Promise<SaveResponse> => {
+  data = apiResponseSmsTemplateResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 const skillSchemaResponseTransformer = (data: any) => {
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
@@ -3048,6 +3093,16 @@ export const updatePayoutSettingsResponseTransformer = async (
   return data;
 };
 
+const walletCheckSchemaResponseTransformer = (data: any) => {
+  if (data.held_count) {
+    data.held_count = BigInt(data.held_count.toString());
+  }
+  if (data.checked_at) {
+    data.checked_at = new Date(data.checked_at);
+  }
+  return data;
+};
+
 const withdrawalSchemaResponseTransformer = (data: any) => {
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
@@ -3060,6 +3115,9 @@ const withdrawalSchemaResponseTransformer = (data: any) => {
   }
   if (data.completed_at) {
     data.completed_at = new Date(data.completed_at);
+  }
+  if (data.wallet_check) {
+    data.wallet_check = walletCheckSchemaResponseTransformer(data.wallet_check);
   }
   return data;
 };
@@ -3164,6 +3222,13 @@ export const cancelWithdrawalResponseTransformer = async (
   return data;
 };
 
+const walletPurseSchemaResponseTransformer = (data: any) => {
+  if (data.sales_count) {
+    data.sales_count = BigInt(data.sales_count.toString());
+  }
+  return data;
+};
+
 const walletSchemaResponseTransformer = (data: any) => {
   if (data.created_date) {
     data.created_date = new Date(data.created_date);
@@ -3173,6 +3238,9 @@ const walletSchemaResponseTransformer = (data: any) => {
   }
   if (data.sales_count) {
     data.sales_count = BigInt(data.sales_count.toString());
+  }
+  if (data.purses) {
+    data.purses = data.purses.map((item: any) => walletPurseSchemaResponseTransformer(item));
   }
   return data;
 };
@@ -3199,6 +3267,47 @@ export const transferResponseTransformer = async (data: any): Promise<TransferRe
   return data;
 };
 
+const saleFeeRuleSchemaResponseTransformer = (data: any) => {
+  if (data.evaluated_at) {
+    data.evaluated_at = new Date(data.evaluated_at);
+  }
+  return data;
+};
+
+const saleSplitSchemaResponseTransformer = (data: any) => {
+  if (data.captured_at) {
+    data.captured_at = new Date(data.captured_at);
+  }
+  if (data.fee_rule) {
+    data.fee_rule = saleFeeRuleSchemaResponseTransformer(data.fee_rule);
+  }
+  return data;
+};
+
+const pagedDtoSaleSplitSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => saleSplitSchemaResponseTransformer(item));
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoSaleSplitSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoSaleSplitSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listWalletSalesResponseTransformer = async (
+  data: any
+): Promise<ListWalletSalesResponse> => {
+  data = apiResponsePagedDtoSaleSplitSchemaResponseTransformer(data);
+  return data;
+};
+
 const apiResponseWalletSchemaResponseTransformer = (data: any) => {
   if (data.data) {
     data.data = walletSchemaResponseTransformer(data.data);
@@ -3208,6 +3317,30 @@ const apiResponseWalletSchemaResponseTransformer = (data: any) => {
 
 export const creditSaleResponseTransformer = async (data: any): Promise<CreditSaleResponse> => {
   data = apiResponseWalletSchemaResponseTransformer(data);
+  return data;
+};
+
+const purseTransferResponseSchemaResponseTransformer = (data: any) => {
+  if (data.from_wallet) {
+    data.from_wallet = walletSchemaResponseTransformer(data.from_wallet);
+  }
+  if (data.to_wallet) {
+    data.to_wallet = walletSchemaResponseTransformer(data.to_wallet);
+  }
+  return data;
+};
+
+const apiResponsePurseTransferResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = purseTransferResponseSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const transferBetweenPursesResponseTransformer = async (
+  data: any
+): Promise<TransferBetweenPursesResponse> => {
+  data = apiResponsePurseTransferResponseSchemaResponseTransformer(data);
   return data;
 };
 
@@ -5169,6 +5302,11 @@ export const createAvailabilitySlotResponseTransformer = async (
   return data;
 };
 
+export const addChildResponseTransformer = async (data: any): Promise<AddChildResponse> => {
+  data = guardianStudentLinkSchemaResponseTransformer(data);
+  return data;
+};
+
 export const createLinkResponseTransformer = async (data: any): Promise<CreateLinkResponse> => {
   data = guardianStudentLinkSchemaResponseTransformer(data);
   return data;
@@ -6988,6 +7126,120 @@ export const approveAdminWithdrawalResponseTransformer = async (
   return data;
 };
 
+const payoutBatchSchemaResponseTransformer = (data: any) => {
+  if (data.submitted_at) {
+    data.submitted_at = new Date(data.submitted_at);
+  }
+  if (data.approved_at) {
+    data.approved_at = new Date(data.approved_at);
+  }
+  if (data.rejected_at) {
+    data.rejected_at = new Date(data.rejected_at);
+  }
+  if (data.paid_count) {
+    data.paid_count = BigInt(data.paid_count.toString());
+  }
+  if (data.failed_count) {
+    data.failed_count = BigInt(data.failed_count.toString());
+  }
+  if (data.in_flight_count) {
+    data.in_flight_count = BigInt(data.in_flight_count.toString());
+  }
+  if (data.released_at) {
+    data.released_at = new Date(data.released_at);
+  }
+  if (data.completed_at) {
+    data.completed_at = new Date(data.completed_at);
+  }
+  if (data.created_date) {
+    data.created_date = new Date(data.created_date);
+  }
+  if (data.updated_date) {
+    data.updated_date = new Date(data.updated_date);
+  }
+  return data;
+};
+
+const pagedDtoPayoutBatchSchemaResponseTransformer = (data: any) => {
+  if (data.content) {
+    data.content = data.content.map((item: any) => payoutBatchSchemaResponseTransformer(item));
+  }
+  if (data.metadata) {
+    data.metadata = pageMetadataSchemaResponseTransformer(data.metadata);
+  }
+  return data;
+};
+
+const apiResponsePagedDtoPayoutBatchSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = pagedDtoPayoutBatchSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const listPayoutBatchesResponseTransformer = async (
+  data: any
+): Promise<ListPayoutBatchesResponse> => {
+  data = apiResponsePagedDtoPayoutBatchSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponsePayoutBatchSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = payoutBatchSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const createPayoutBatchResponseTransformer = async (
+  data: any
+): Promise<CreatePayoutBatchResponse> => {
+  data = apiResponsePayoutBatchSchemaResponseTransformer(data);
+  return data;
+};
+
+export const addPayoutBatchWithdrawalsResponseTransformer = async (
+  data: any
+): Promise<AddPayoutBatchWithdrawalsResponse> => {
+  data = apiResponsePayoutBatchSchemaResponseTransformer(data);
+  return data;
+};
+
+export const submitPayoutBatchResponseTransformer = async (
+  data: any
+): Promise<SubmitPayoutBatchResponse> => {
+  data = apiResponsePayoutBatchSchemaResponseTransformer(data);
+  return data;
+};
+
+export const returnPayoutBatchToDraftResponseTransformer = async (
+  data: any
+): Promise<ReturnPayoutBatchToDraftResponse> => {
+  data = apiResponsePayoutBatchSchemaResponseTransformer(data);
+  return data;
+};
+
+export const rejectPayoutBatchResponseTransformer = async (
+  data: any
+): Promise<RejectPayoutBatchResponse> => {
+  data = apiResponsePayoutBatchSchemaResponseTransformer(data);
+  return data;
+};
+
+export const cancelPayoutBatchResponseTransformer = async (
+  data: any
+): Promise<CancelPayoutBatchResponse> => {
+  data = apiResponsePayoutBatchSchemaResponseTransformer(data);
+  return data;
+};
+
+export const approvePayoutBatchResponseTransformer = async (
+  data: any
+): Promise<ApprovePayoutBatchResponse> => {
+  data = apiResponsePayoutBatchSchemaResponseTransformer(data);
+  return data;
+};
+
 export const createOrganisationUserResponseTransformer = async (
   data: any
 ): Promise<CreateOrganisationUserResponse> => {
@@ -7131,6 +7383,20 @@ export const listStatementsResponseTransformer = async (
   data: any
 ): Promise<ListStatementsResponse> => {
   data = apiResponseListWalletStatementSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseSaleSplitSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = saleSplitSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getWalletSaleResponseTransformer = async (
+  data: any
+): Promise<GetWalletSaleResponse> => {
+  data = apiResponseSaleSplitSchemaResponseTransformer(data);
   return data;
 };
 
@@ -8319,6 +8585,9 @@ const walletBalanceSummarySchemaResponseTransformer = (data: any) => {
   if (data.sales_count) {
     data.sales_count = BigInt(data.sales_count.toString());
   }
+  if (data.purses) {
+    data.purses = data.purses.map((item: any) => walletPurseSchemaResponseTransformer(item));
+  }
   return data;
 };
 
@@ -8354,6 +8623,20 @@ export const listOrganisationWalletStatementsResponseTransformer = async (
   data: any
 ): Promise<ListOrganisationWalletStatementsResponse> => {
   data = apiResponseListWalletStatementSchemaResponseTransformer(data);
+  return data;
+};
+
+export const listOrganisationWalletSalesResponseTransformer = async (
+  data: any
+): Promise<ListOrganisationWalletSalesResponse> => {
+  data = apiResponsePagedDtoSaleSplitSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getOrganisationWalletSaleResponseTransformer = async (
+  data: any
+): Promise<GetOrganisationWalletSaleResponse> => {
+  data = apiResponseSaleSplitSchemaResponseTransformer(data);
   return data;
 };
 
@@ -10855,6 +11138,18 @@ export const getAdminEligibleUsersResponseTransformer = async (
   return data;
 };
 
+const apiResponseListSmsTemplateResponseSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => smsTemplateResponseSchemaResponseTransformer(item));
+  }
+  return data;
+};
+
+export const listResponseTransformer = async (data: any): Promise<ListResponse> => {
+  data = apiResponseListSmsTemplateResponseSchemaResponseTransformer(data);
+  return data;
+};
+
 const searchIndexStatusResponseSchemaResponseTransformer = (data: any) => {
   if (data.rebuild_checkpoint_id) {
     data.rebuild_checkpoint_id = BigInt(data.rebuild_checkpoint_id.toString());
@@ -10888,6 +11183,27 @@ const apiResponseListSearchIndexStatusResponseSchemaResponseTransformer = (data:
 
 export const listIndexesResponseTransformer = async (data: any): Promise<ListIndexesResponse> => {
   data = apiResponseListSearchIndexStatusResponseSchemaResponseTransformer(data);
+  return data;
+};
+
+export const getAdminSaleSplitResponseTransformer = async (
+  data: any
+): Promise<GetAdminSaleSplitResponse> => {
+  data = apiResponseSaleSplitSchemaResponseTransformer(data);
+  return data;
+};
+
+const apiResponseListSaleSplitSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = data.data.map((item: any) => saleSplitSchemaResponseTransformer(item));
+  }
+  return data;
+};
+
+export const listAdminOrderSaleSplitsResponseTransformer = async (
+  data: any
+): Promise<ListAdminOrderSaleSplitsResponse> => {
+  data = apiResponseListSaleSplitSchemaResponseTransformer(data);
   return data;
 };
 
@@ -11045,6 +11361,42 @@ export const getPayoutSummaryResponseTransformer = async (
   data: any
 ): Promise<GetPayoutSummaryResponse> => {
   data = apiResponsePayoutSummarySchemaResponseTransformer(data);
+  return data;
+};
+
+const payoutFloatSchemaResponseTransformer = (data: any) => {
+  if (data.reported_at) {
+    data.reported_at = new Date(data.reported_at);
+  }
+  return data;
+};
+
+const payoutBatchDetailSchemaResponseTransformer = (data: any) => {
+  if (data.batch) {
+    data.batch = payoutBatchSchemaResponseTransformer(data.batch);
+  }
+  if (data.withdrawals) {
+    data.withdrawals = data.withdrawals.map((item: any) =>
+      withdrawalSchemaResponseTransformer(item)
+    );
+  }
+  if (data.payout_float) {
+    data.payout_float = payoutFloatSchemaResponseTransformer(data.payout_float);
+  }
+  return data;
+};
+
+const apiResponsePayoutBatchDetailSchemaResponseTransformer = (data: any) => {
+  if (data.data) {
+    data.data = payoutBatchDetailSchemaResponseTransformer(data.data);
+  }
+  return data;
+};
+
+export const getPayoutBatchResponseTransformer = async (
+  data: any
+): Promise<GetPayoutBatchResponse> => {
+  data = apiResponsePayoutBatchDetailSchemaResponseTransformer(data);
   return data;
 };
 
@@ -11430,5 +11782,12 @@ export const removeAdminDomainResponseTransformer = async (
   data: any
 ): Promise<RemoveAdminDomainResponse> => {
   data = apiResponseUserSchemaResponseTransformer(data);
+  return data;
+};
+
+export const removePayoutBatchWithdrawalResponseTransformer = async (
+  data: any
+): Promise<RemovePayoutBatchWithdrawalResponse> => {
+  data = apiResponsePayoutBatchSchemaResponseTransformer(data);
   return data;
 };

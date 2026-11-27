@@ -1,4 +1,4 @@
-import { SchemaEnum6 } from '@/services/client/types.gen';
+import { CourseStatus } from '@/lib/course-status';
 import z from 'zod';
 import { coursePrerequisiteTypes } from '@/lib/course-setup';
 export const MAX_VIDEO_SIZE_MB = 150; // Adjust according to your backend limit
@@ -17,7 +17,7 @@ export const courseCreationSchema = z.object({
     value => value === '' || /^[A-Za-z0-9-]{2,30}$/.test(value),
     'Course code must be 2-30 letters, digits or hyphens'
   ).optional(),
-  status: z.nativeEnum(SchemaEnum6).default(SchemaEnum6.DRAFT),
+  status: z.nativeEnum(CourseStatus).default(CourseStatus.DRAFT),
   description: z.string().min(10, 'Course description is required'),
   objectives: z
     .string()

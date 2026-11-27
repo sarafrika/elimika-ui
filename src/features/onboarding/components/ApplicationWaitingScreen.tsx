@@ -20,18 +20,20 @@ import {
   buildDashboardSwitchPath,
   normalizeStoredUserDomain,
 } from '@/src/features/dashboard/lib/active-domain-storage';
-import { readApplicationDraft, registrationPath } from '@/src/features/onboarding/lib/application-draft';
+import {
+  readApplicationDraft,
+  registrationPath,
+} from '@/src/features/onboarding/lib/application-draft';
 import {
   isChangesRequested,
   REVIEW_PROFILES,
   reviewDomain,
   sameReviewDomain,
 } from '@/src/features/onboarding/lib/application-review';
+import { interestDomain } from '@/src/features/onboarding/lib/interests';
+import { SavedInterestsSummary } from './SavedInterestsSummary';
 import { plainText } from '@/src/features/onboarding/lib/plain-text';
-import {
-  COURSE_CATEGORIES,
-  WALLET_SECTIONS,
-} from '@/src/features/onboarding/lib/registration-steps';
+import { WALLET_SECTIONS } from '@/src/features/onboarding/lib/registration-steps';
 import { requireApiData } from '@/src/features/onboarding/lib/user-onboarding';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
 import { useQuery } from '@tanstack/react-query';
@@ -67,8 +69,8 @@ export function ApplicationWaitingScreen({
     normalizeStoredUserDomain(
       query.data?.domain_applications?.find(application => application.status === 'PENDING')
         ?.domain ??
-      query.data?.domain_applications?.[0]?.domain ??
-      query.data?.approved_domains?.[0]
+        query.data?.domain_applications?.[0]?.domain ??
+        query.data?.approved_domains?.[0]
     );
   const approved =
     !!domain && !!query.data?.approved_domains?.some(item => sameReviewDomain(item, domain));
@@ -138,6 +140,7 @@ function ApplicationReviewDetails({
   const user = useUserProfile();
   const { zone } = useTimeZone();
   const canonicalDomain = reviewDomain(domain);
+  const interestsDomain = interestDomain(canonicalDomain);
   const profile =
     REVIEW_PROFILES[canonicalDomain === 'organisation_user' ? 'organisation_user' : domain];
   const label = profile?.label ?? domain;
@@ -185,15 +188,6 @@ function ApplicationReviewDetails({
       if (typeof category === 'string' && category) setCategories([category]);
       return;
     }
-    try {
-      const stored: unknown = JSON.parse(
-        localStorage.getItem(`elimika:onboarding:${user.uuid}:${role}:interests`) ?? '[]'
-      );
-      if (Array.isArray(stored))
-        setCategories(COURSE_CATEGORIES.filter(category => stored.includes(category)));
-    } catch {
-      /* Interests are optional summary data when browser storage is unavailable. */
-    }
   }, [user?.uuid, role]);
   const walletStep = onboarding?.steps?.find(
     step => step.key === 'skills_wallet' || step.key === 'wallet'
@@ -208,9 +202,9 @@ function ApplicationReviewDetails({
       ? Number(completedSections)
       : counts && walletKeys.some(key => key in counts)
         ? walletKeys.filter(
-          key =>
-            Number(counts[key] ?? (key === 'certifications' ? counts.credentials : 0) ?? 0) > 0
-        ).length
+            key =>
+              Number(counts[key] ?? (key === 'certifications' ? counts.credentials : 0) ?? 0) > 0
+          ).length
         : null;
   const hasWallet = canonicalDomain === 'instructor' || canonicalDomain === 'course_creator';
   const submittedAt = application?.submitted_at ?? onboarding?.submitted_at ?? savedSubmittedAt;
@@ -276,9 +270,14 @@ function ApplicationReviewDetails({
           )}
           <dl className='divide-border border-border mt-6 w-full divide-y overflow-hidden rounded-md border text-left'>
             <SummaryRow label='Profile'>{label}</SummaryRow>
-            <SummaryRow label={canonicalDomain === 'organisation_user' ? 'Organisation category' : 'Categories'}>
-              {categories.join(', ') || '—'}
-            </SummaryRow>
+            {canonicalDomain === 'organisation_user' && (
+              <SummaryRow label='Organisation category'>{categories.join(', ') || '—'}</SummaryRow>
+            )}
+            {interestsDomain && (
+              <SummaryRow label='Interests'>
+                <SavedInterestsSummary domain={interestsDomain} userUuid={user?.uuid} />
+              </SummaryRow>
+            )}
             {hasWallet && (
               <SummaryRow label='Skills wallet'>
                 {walletCount === null
@@ -337,18 +336,35 @@ function ApplicationReviewDetails({
                   Profile selection
                 </Link>
               </Button>
+              {interestsDomain && (
+                <Button asChild variant='outline' size='sm'>
+                  <Link
+                    href={`${registrationPath(canonicalDomain)}?${new URLSearchParams({ step: 'interests', domain: canonicalDomain })}`}
+                  >
+                    Interests
+                  </Link>
+                </Button>
+              )}
+              {canonicalDomain === 'organisation_user' && (
+                <Button asChild variant='outline' size='sm'>
+                  <Link
+                    href={`${registrationPath(canonicalDomain)}?${new URLSearchParams({ step: 'activities', domain: canonicalDomain })}`}
+                  >
+                    Activities
+                  </Link>
+                </Button>
+              )}
               <Button asChild variant='outline' size='sm'>
-                <Link href={`${registrationPath(canonicalDomain)}?${new URLSearchParams({ step: canonicalDomain === 'organisation_user' ? 'activities' : 'interests', domain: canonicalDomain })}`}>
-                  {canonicalDomain === 'organisation_user' ? 'Activities' : 'Interests'}
-                </Link>
-              </Button>
-              <Button asChild variant='outline' size='sm'>
-                <Link href={`/onboarding/skills-wallet?${new URLSearchParams({ domain: canonicalDomain })}`}>
+                <Link
+                  href={`/onboarding/skills-wallet?${new URLSearchParams({ domain: canonicalDomain })}`}
+                >
                   Edit skills wallet
                 </Link>
               </Button>
               <Button asChild variant='outline' size='sm'>
-                <Link href={`${registrationPath(canonicalDomain)}?${new URLSearchParams({ step: 'user-information', domain: canonicalDomain })}`}>
+                <Link
+                  href={`${registrationPath(canonicalDomain)}?${new URLSearchParams({ step: 'user-information', domain: canonicalDomain })}`}
+                >
                   User information
                 </Link>
               </Button>

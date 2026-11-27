@@ -1,16 +1,16 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { useUserProfile } from '@/src/features/profile/context/profile-context';
-import { ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { type ReactNode, Suspense, useEffect, useState } from 'react';
-import { COURSE_CATEGORIES } from '../lib/registration-steps';
+import { type ReactNode, Suspense, useState } from 'react';
+import { interestDomain } from '../lib/interests';
+import { RegistrationInterests } from './RegistrationInterests';
 import { RegistrationSkillsWallet } from './RegistrationSkillsWallet';
 
 type RegistrationRole = 'student' | 'instructor' | 'course-creator' | 'organisation';
@@ -46,7 +46,11 @@ function RegistrationStepsContent({ role, children, backHref = '/onboarding' }: 
     <AccountRegistrationSteps
       key={`${user.uuid}:${role}:${requestedStep}`}
       role={role}
-      initialDetails={requestedStep === 'user-information'}
+      initialDetails={
+        requestedStep === 'user-information' ||
+        (role === 'organisation' &&
+          (requestedStep === 'activities' || requestedStep === 'verification'))
+      }
       userUuid={user.uuid}
       backHref={backHref}
     >
@@ -66,41 +70,14 @@ function AccountRegistrationSteps({
   const [step, setStep] = useState(initialDetails ? (needsWallet ? 2 : 1) : 0);
   const [detailsVisited, setDetailsVisited] = useState(initialDetails);
   const [walletVisited, setWalletVisited] = useState(initialDetails && needsWallet);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [hydrated, setHydrated] = useState(false);
-  const [storageUnavailable, setStorageUnavailable] = useState(false);
-  const storageKey = `elimika:onboarding:${userUuid}:${role}:interests`;
+  const domain = interestDomain(role);
   const detailsStep = needsWallet ? 2 : 1;
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) {
-        const stored: unknown = JSON.parse(raw);
-        if (Array.isArray(stored))
-          setCategories(COURSE_CATEGORIES.filter(category => stored.includes(category)));
-      }
-    } catch {
-      setStorageUnavailable(true);
-    }
-    setHydrated(true);
-  }, [storageKey]);
-
-  useEffect(() => {
-    if (!hydrated) return;
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(categories));
-    } catch {
-      setStorageUnavailable(true);
-    }
-  }, [categories, hydrated, storageKey]);
 
   const showDetails = () => {
     setDetailsVisited(true);
     setStep(detailsStep);
   };
   const continueFromInterests = () => {
-    if (!categories.length) return;
     if (needsWallet) {
       setWalletVisited(true);
       setStep(1);
@@ -116,73 +93,13 @@ function AccountRegistrationSteps({
             Back to profiles
           </Link>
         </Button>
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              <h1>Select your interests</h1>
-            </CardTitle>
-            <CardDescription>
-              {role === 'student'
-                ? 'What would you like to learn? Select at least one category to continue.'
-                : role === 'organisation'
-                  ? 'Select the categories your organisation is interested in.'
-                  : 'Select the categories you want to offer courses in.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-5'>
-            {!hydrated ? (
-              <Skeleton className='h-64 w-full' />
-            ) : (
-              <div className='grid gap-2 sm:grid-cols-2'>
-                {COURSE_CATEGORIES.map(category => {
-                  const selected = categories.includes(category);
-                  return (
-                    <Button
-                      key={category}
-                      type='button'
-                      variant='outline'
-                      aria-pressed={selected}
-                      onClick={() =>
-                        setCategories(current =>
-                          selected
-                            ? current.filter(item => item !== category)
-                            : [...current, category]
-                        )
-                      }
-                      className={cn(
-                        'h-auto min-h-12 justify-between gap-3 px-4 py-3 text-left whitespace-normal',
-                        selected
-                          ? 'border-primary bg-primary/5 text-foreground'
-                          : 'border-border bg-background text-muted-foreground'
-                      )}
-                    >
-                      {category}
-                      {selected ? <CheckCircle2 className='text-primary size-4 shrink-0' /> : null}
-                    </Button>
-                  );
-                })}
-              </div>
-            )}
-            <p className='text-muted-foreground text-sm'>
-              Your interests are saved on this browser. You can change them by returning to this
-              step.
-            </p>
-            {storageUnavailable ? (
-              <p role='status' className='text-warning text-sm'>
-                Browser storage is unavailable. Your selections will be kept for this visit only.
-              </p>
-            ) : null}
-            <div className='flex justify-end gap-3'>
-              <Button
-                type='button'
-                disabled={!hydrated || categories.length === 0}
-                onClick={continueFromInterests}
-              >
-                Continue
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {step === 0 && domain && (
+          <RegistrationInterests
+            domain={domain}
+            userUuid={userUuid}
+            onContinue={continueFromInterests}
+          />
+        )}
       </div>
       {needsWallet && walletVisited ? (
         <div hidden={step !== 1}>

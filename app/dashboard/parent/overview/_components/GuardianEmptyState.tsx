@@ -14,13 +14,13 @@ export function GuardianEmptyState() {
         </div>
         <CardTitle className='text-2xl'>No learners linked yet</CardTitle>
         <CardDescription className='text-sm'>
-          Search for your child’s learner profile to connect your guardian account and follow their
-          learning. You can also ask the learner or their organisation to send a guardian invitation.
+          Add your child to create a learner profile and follow their learning. If they already have
+          an account, ask them or their organisation to send you a guardian invitation.
         </CardDescription>
       </CardHeader>
       <CardContent className='flex flex-col items-center gap-2'>
         <Button asChild variant='outline' size='sm'>
-          <Link href='/onboarding/parent'>Add a learner</Link>
+          <Link href='/dashboard/parent/add-child'>Add a child</Link>
         </Button>
       </CardContent>
     </Card>

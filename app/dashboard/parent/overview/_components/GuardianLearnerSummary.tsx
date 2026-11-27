@@ -6,10 +6,27 @@ import { Button } from '@/components/ui/button';
 import type { GuardianShareScope } from '@/services/guardian';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
-import { CalendarDays, } from 'lucide-react';
+import { CalendarDays, Unlink } from 'lucide-react';
+import { useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import Spinner from '@/components/ui/spinner';
+import { getErrorMessage } from '@/lib/error-utils';
+import { revokeLinkMutation } from '@/services/client/@tanstack/react-query.gen';
+import { requireApiSuccess } from '@/src/features/onboarding/lib/user-onboarding';
 
 interface GuardianLearnerSummaryProps {
   studentName?: string;
+  linkUuid?: string;
+  onRevoked?: () => void | Promise<void>;
   relationship?: string;
   gradeLevel?: string;
   shareScope?: GuardianShareScope;
@@ -24,11 +41,32 @@ const shareScopeDescriptions: Record<GuardianShareScope, string> = {
 
 export function GuardianLearnerSummary({
   studentName,
+  linkUuid,
+  onRevoked,
   relationship,
   gradeLevel,
   shareScope = 'FULL',
   lastSyncedAt,
 }: GuardianLearnerSummaryProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [error, setError] = useState('');
+  const revoke = useMutation({ ...revokeLinkMutation(), retry: false });
+
+  async function revokeAccess() {
+    if (!linkUuid || revoke.isPending) return;
+    setError('');
+    try {
+      const response = await revoke.mutateAsync({ path: { linkUuid } });
+      if (response) requireApiSuccess(response);
+    } catch (failure) {
+      setError(getErrorMessage(failure, 'Unable to revoke your access. Please try again.'));
+      return;
+    }
+    setConfirmOpen(false);
+    toast.success(`Your access to ${studentName || 'this child'} has been revoked.`);
+    await onRevoked?.();
+  }
+
   const lastSyncedLabel =
     lastSyncedAt && !Number.isNaN(Date.parse(lastSyncedAt))
       ? formatDistanceToNow(new Date(lastSyncedAt), { addSuffix: true })
@@ -64,6 +102,55 @@ export function GuardianLearnerSummary({
             View attendance
           </Link>
         </Button>
+        <Button
+          variant='destructive'
+          disabled={!linkUuid || revoke.isPending}
+          onClick={() => {
+            setError('');
+            setConfirmOpen(true);
+          }}
+        >
+          <Unlink className='size-4' aria-hidden /> Revoke my access
+        </Button>
+        <AlertDialog
+          open={confirmOpen}
+          onOpenChange={open => {
+            if (!revoke.isPending) setConfirmOpen(open);
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Revoke access to {studentName || 'this child'}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                You will lose guardian access to this child’s learning information, and they will be
+                removed from your Family Hub. Their learner account will remain. You will need a new
+                guardian link to regain access.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            {error && (
+              <p role='alert' className='text-destructive text-sm whitespace-pre-line'>
+                {error}
+              </p>
+            )}
+            <AlertDialogFooter>
+              <Button
+                variant='outline'
+                disabled={revoke.isPending}
+                onClick={() => setConfirmOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant='destructive'
+                disabled={!linkUuid || revoke.isPending}
+                onClick={() => void revokeAccess()}
+              >
+                {revoke.isPending && <Spinner />}
+                {revoke.isPending ? 'Revoking access…' : 'Revoke my access'}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

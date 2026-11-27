@@ -76,7 +76,14 @@ export interface WalletCheck {
  */
 export type BatchWithdrawal = Omit<
   Withdrawal,
-  'created_date' | 'confirmed_at' | 'sent_at' | 'completed_at'
+  | 'created_date'
+  | 'confirmed_at'
+  | 'sent_at'
+  | 'completed_at'
+  | 'payout_batch_uuid'
+  | 'purse'
+  | 'wallet_check'
+  | 'wallet_flags'
 > & {
   payout_batch_uuid?: string | null;
   /** The purse the withdrawal is paid from, e.g. INSTRUCTOR. */

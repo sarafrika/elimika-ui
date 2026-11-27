@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { formatDate } from '@/lib/date';
-import type { SchemaEnum, SchemaEnum2, ScopeEnum, ValueTypeEnum } from '@/services/client';
+import type { ScopeEnum, ValueTypeEnum } from '@/services/client';
 import { ConfirmDialog } from '../components/confirm-dialog';
 import { FilterBar } from '../components/filter-bar';
 import { FormSheet } from '../components/form-sheet';
@@ -41,9 +41,14 @@ const statusParam = stringParam('any');
 const ruleParam = stringParam();
 const pageParam = numberParam(0);
 
-const CATEGORIES: SchemaEnum[] = ['PLATFORM_FEE', 'AGE_GATE', 'ENROLLMENT_GUARD', 'CUSTOM'];
+const CATEGORIES: RuleFormValues['category'][] = [
+  'PLATFORM_FEE',
+  'AGE_GATE',
+  'ENROLLMENT_GUARD',
+  'CUSTOM',
+];
 const SCOPES: ScopeEnum[] = ['GLOBAL', 'TENANT', 'REGION', 'DEMOGRAPHIC', 'SEGMENT'];
-const STATUSES: SchemaEnum2[] = ['DRAFT', 'ACTIVE', 'INACTIVE'];
+const STATUSES: RuleFormValues['status'][] = ['DRAFT', 'ACTIVE', 'INACTIVE'];
 const VALUE_TYPES: ValueTypeEnum[] = ['JSON', 'DECIMAL', 'INTEGER', 'BOOLEAN', 'STRING'];
 
 const blankRule: RuleFormValues = {
@@ -313,7 +318,7 @@ export function RulesPage() {
             <Select
               value={form.category}
               onValueChange={value =>
-                setForm(current => ({ ...current, category: value as SchemaEnum }))
+                setForm(current => ({ ...current, category: value as RuleFormValues['category'] }))
               }
             >
               <SelectTrigger className='rounded-md'>
@@ -406,7 +411,7 @@ export function RulesPage() {
             <Select
               value={form.status}
               onValueChange={value =>
-                setForm(current => ({ ...current, status: value as SchemaEnum2 }))
+                setForm(current => ({ ...current, status: value as RuleFormValues['status'] }))
               }
             >
               <SelectTrigger className='rounded-md'>

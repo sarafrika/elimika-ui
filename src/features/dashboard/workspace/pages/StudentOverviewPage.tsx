@@ -8,6 +8,7 @@ import type {
   StudentClassInvite,
   StudentOverviewOpportunity,
 } from '@/src/features/dashboard/workspace/student-overview/useStudentOverviewData';
+import { InviteGuardianBanner } from '@/src/features/guardians/InviteGuardianBanner';
 import { CourseRecommendationsCard } from '@/src/features/recommendations/course-recommendation-rail';
 import { useUserProfile } from '../../../profile/context/profile-context';
 import StudentOpportunities from './StudentOpportunities';
@@ -23,6 +24,7 @@ export default function StudentOverviewPage() {
   return (
     <div className='bg-background mb-10 w-full max-w-[1480px] overflow-x-clip px-2 py-3 sm:px-3 sm:py-4 lg:px-4'>
       <div className='min-w-0 space-y-4'>
+        <InviteGuardianBanner />
         <StudentOverviewHeroCard profile={profile} />
 
         <section className='grid gap-4 lg:grid-cols-3'>

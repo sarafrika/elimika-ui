@@ -9,8 +9,6 @@ import { getErrorMessage } from '@/lib/error-utils';
 import { invalidateGeneratedQueryIds } from '@/src/features/dashboard/workflow-query-invalidation';
 import {
   createRule,
-  type SchemaEnum,
-  type SchemaEnum2,
   type ScopeEnum,
   type SystemRuleRequest,
   type SystemRuleResponse,
@@ -52,10 +50,10 @@ export function useSystemRules(filters: RuleFilters) {
     ...listRulesOptions({
       query: {
         ...(filters.category && filters.category !== 'any'
-          ? { category: filters.category as SchemaEnum }
+          ? { category: filters.category as SystemRuleRequest['category'] }
           : {}),
         ...(filters.status && filters.status !== 'any'
-          ? { status: filters.status as SchemaEnum2 }
+          ? { status: filters.status as NonNullable<SystemRuleRequest['status']> }
           : {}),
         pageable: { page, size: RULES_PAGE_SIZE },
       },
@@ -95,12 +93,12 @@ export function useSystemRule(uuid: string | undefined) {
 }
 
 export interface RuleFormValues {
-  category: SchemaEnum;
+  category: SystemRuleRequest['category'];
   key: string;
   scope: ScopeEnum;
   scopeReference?: string;
   priority: number;
-  status: SchemaEnum2;
+  status: NonNullable<SystemRuleRequest['status']>;
   valueType: ValueTypeEnum;
   /** Raw JSON text; parsed before it is sent. */
   valuePayload: string;

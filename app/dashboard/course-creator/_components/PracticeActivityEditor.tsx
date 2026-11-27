@@ -1,5 +1,7 @@
 'use client';
 
+import { CourseStatus as PracticeActivityStatus } from '@/lib/course-status';
+
 import { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Trash2 } from 'lucide-react';
@@ -21,7 +23,6 @@ import {
 import {
   ActivityTypeEnum,
   type LessonPracticeActivity,
-  SchemaEnum6 as PracticeActivityStatus,
 } from '@/services/client/types.gen';
 
 const draftSchema = z.object({

@@ -1,5 +1,7 @@
 'use client';
 
+import { CourseStatus as PracticeActivityStatus } from '@/lib/course-status';
+
 import DeleteModal from '@/components/custom-modals/delete-modal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -51,7 +53,6 @@ import {
   ActivityTypeEnum,
   GroupingEnum,
   type LessonPracticeActivity,
-  SchemaEnum6 as PracticeActivityStatus,
 } from '@/services/client/types.gen';
 import {
   closestCenter,

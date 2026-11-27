@@ -205,13 +205,23 @@ export async function resolveDashboardEntryTarget(
 ): Promise<DashboardEntryResolution> {
   const result = await decide(
     identity => evaluateEntryTarget(identity, preferredDomain, nextPath),
-    result => result.redirectTo.startsWith('/onboarding')
+    result => result.redirectTo.startsWith('/awaiting-approval')
   );
   if (result.redirectTo === '/') return result;
   const account = await fetchAccountReview();
   if (!account)
     return { redirectTo: awaitingApprovalPath(preferredDomain ?? undefined), activeDomain: null };
   const approved = account.approved_domains ?? [];
+  // Dashboard entry and legacy dashboard links must never restart onboarding.
+  // Approved roles still pass through the layout and role guards at their target.
+  if (result.redirectTo.startsWith('/awaiting-approval')) {
+    const domain = normalizeStoredUserDomain(
+      approved.find(domain => sameReviewDomain(domain, preferredDomain ?? undefined)) ?? approved[0]
+    );
+    return domain
+      ? { redirectTo: dashboardUrl(domain, nextPath), activeDomain: domain }
+      : { redirectTo: awaitingApprovalPath(preferredDomain ?? undefined), activeDomain: null };
+  }
   const requestedDomain = preferredDomain ?? result.activeDomain;
   if (requestedDomain && approved.some(domain => sameReviewDomain(domain, requestedDomain)))
     return result;
@@ -220,7 +230,7 @@ export async function resolveDashboardEntryTarget(
     ? { redirectTo: awaitingApprovalPath(application.domain), activeDomain: application.domain }
     : approved.length
       ? result
-      : { redirectTo: '/onboarding', activeDomain: null };
+      : { redirectTo: awaitingApprovalPath(preferredDomain ?? undefined), activeDomain: null };
 }
 
 function evaluateEntryTarget(
@@ -232,26 +242,26 @@ function evaluateEntryTarget(
     return { redirectTo: '/', activeDomain: null };
   }
 
-  // Nothing to route on and no reason to believe they are signed out. Onboarding is
-  // the one destination that is safe to show either way, and it never loops back here.
+  // Missing identity must not send a signed-in dashboard viewer back to onboarding.
+  // The account review below can recover an approved role from the API.
   if (identity.status === 'unavailable') {
-    return { redirectTo: '/onboarding', activeDomain: null };
+    return { redirectTo: awaitingApprovalPath(preferredDomain ?? undefined), activeDomain: null };
   }
 
   const { user } = identity;
   const { domains } = user;
   if (!domains.length) {
-    return { redirectTo: '/onboarding', activeDomain: null };
+    return { redirectTo: awaitingApprovalPath(preferredDomain ?? undefined), activeDomain: null };
   }
 
   const activeDomain = pickActiveDomain(domains, preferredDomain);
 
   if (!activeDomain) {
-    return { redirectTo: '/onboarding', activeDomain: null };
+    return { redirectTo: awaitingApprovalPath(preferredDomain ?? undefined), activeDomain: null };
   }
 
   if (needsOrganisationOnboarding(user, activeDomain)) {
-    return { redirectTo: '/onboarding/organisation', activeDomain };
+    return { redirectTo: awaitingApprovalPath(activeDomain ?? undefined), activeDomain };
   }
 
   return {
@@ -265,9 +275,12 @@ export async function resolveDashboardGuard(
 ): Promise<DashboardGuardResolution> {
   const result = await decide(
     identity => evaluateGuard(identity, preferredDomain),
-    result => result.redirectTo !== null
+    result => result.redirectTo !== null || Boolean(result.unavailable)
   );
   if (result.redirectTo === '/') return result;
+  // Existing dashboard navigation must stay in the workspace when profile or
+  // affiliation data is incomplete. Do not restart onboarding or grant access.
+  if (result.unavailable) return result;
   const account = await fetchAccountReview();
   if (!account)
     return { redirectTo: awaitingApprovalPath(preferredDomain ?? undefined), activeDomain: null };
@@ -281,7 +294,9 @@ export async function resolveDashboardGuard(
       redirectTo: awaitingApprovalPath(application.domain),
       activeDomain: application.domain,
     };
-  return approved.length ? result : { redirectTo: '/onboarding', activeDomain: null };
+  return approved.length
+    ? result
+    : { redirectTo: null, activeDomain: result.activeDomain, unavailable: true };
 }
 
 function evaluateGuard(
@@ -301,13 +316,13 @@ function evaluateGuard(
   const { user } = identity;
   const { domains } = user;
   if (!domains.length) {
-    return { redirectTo: '/onboarding', activeDomain: null };
+    return { redirectTo: null, activeDomain: null, unavailable: true };
   }
 
   const activeDomain = pickActiveDomain(domains, preferredDomain);
 
   if (needsOrganisationOnboarding(user, activeDomain)) {
-    return { redirectTo: '/onboarding/organisation', activeDomain };
+    return { redirectTo: null, activeDomain, unavailable: true };
   }
 
   return { redirectTo: null, activeDomain };
@@ -353,12 +368,11 @@ export async function assertRoleAccess(segment: RoleSegment): Promise<RoleAccess
   if (application)
     return { redirectTo: awaitingApprovalPath(application.domain), matchedDomain: null };
   if (!result.redirectTo || result.matchedDomain)
-    return { redirectTo: '/onboarding', matchedDomain: null };
+    return { redirectTo: '/awaiting-approval', matchedDomain: null };
   // Students, instructors and parents get a clear no-access page, not a silent bounce.
   if (
     segment === 'organisation' &&
-    result.redirectTo !== '/' &&
-    result.redirectTo !== '/onboarding'
+    result.redirectTo !== '/'
   ) {
     return { redirectTo: null, matchedDomain: null, deniedHomeHref: result.redirectTo };
   }
@@ -379,7 +393,7 @@ function evaluateRoleAccess(identity: Identity, segment: RoleSegment): RoleAcces
   const { user } = identity;
   const { domains } = user;
   if (!domains.length) {
-    return { redirectTo: '/onboarding', matchedDomain: null };
+    return { redirectTo: '/awaiting-approval', matchedDomain: null };
   }
 
   const matchedDomain = domains.find(domain => domainToRouteSegment(domain) === segment) ?? null;
@@ -389,13 +403,13 @@ function evaluateRoleAccess(identity: Identity, segment: RoleSegment): RoleAcces
     // `/dashboard`: that resolves back into this stack and loops.
     const [primaryDomain] = domains;
     return {
-      redirectTo: primaryDomain ? dashboardUrl(primaryDomain, 'overview') : '/onboarding',
+      redirectTo: primaryDomain ? dashboardUrl(primaryDomain, 'overview') : '/awaiting-approval',
       matchedDomain: null,
     };
   }
 
   if (segment === 'organisation' && !user.hasOrganisationAffiliation) {
-    return { redirectTo: '/onboarding/organisation', matchedDomain };
+    return { redirectTo: '/awaiting-approval', matchedDomain };
   }
 
   return { redirectTo: null, matchedDomain };

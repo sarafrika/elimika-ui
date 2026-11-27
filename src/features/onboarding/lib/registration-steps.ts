@@ -162,14 +162,3 @@ export const WALLET_SECTIONS: WalletSection[] = [
     ],
   },
 ];
-
-export const COURSE_CATEGORIES = [
-  'Music & Performing Arts',
-  'Visual Arts & Design',
-  'Technology & Digital Skills',
-  'Business & Entrepreneurship',
-  'Languages & Communication',
-  'Sciences & Mathematics',
-  'Health & Wellbeing',
-  'Trades & Technical Skills',
-];

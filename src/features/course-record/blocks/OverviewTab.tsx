@@ -199,6 +199,7 @@ const COURSE_REQUIREMENT_PROVIDER_LABELS: Record<ProvidedByEnum, string> = {
 };
 
 const COURSE_REQUIREMENT_TYPE_LABELS: Record<RequirementTypeEnum2, string> = {
+  education: 'Education',
   material: 'Material',
   equipment: 'Equipment',
   facility: 'Facility',

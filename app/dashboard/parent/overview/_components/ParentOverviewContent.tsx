@@ -20,7 +20,14 @@ import type {
   GuardianLinkedStudent,
   GuardianShareScope,
 } from '@/services/guardian';
-import { useGuardianDashboard, useGuardianStudents } from '@/services/guardian';
+import {
+  guardianDashboardQueryKey,
+  guardianStudentsQueryKey,
+  useGuardianDashboard,
+  useGuardianStudents,
+} from '@/services/guardian';
+import { useQueryClient } from '@tanstack/react-query';
+import { getMyStudentsQueryKey } from '@/services/client/@tanstack/react-query.gen';
 import { RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -43,6 +50,7 @@ const STUDENT_SELECTION_KEY = 'guardian-dashboard:selected-student';
 
 export function ParentOverviewContent() {
   const { replaceBreadcrumbs } = useBreadcrumb();
+  const queryClient = useQueryClient();
   const profile = useUserProfile();
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(() => {
     if (typeof window === 'undefined') {
@@ -66,7 +74,9 @@ export function ParentOverviewContent() {
     isLoading: isLoadingStudents,
     error: studentsError,
     refetch: refetchStudents,
-  } = useGuardianStudents();
+  } = useGuardianStudents({
+    select: linkedStudents => linkedStudents.filter(student => student.status !== 'REVOKED'),
+  });
 
   const activeStudent = useMemo(
     () => students.find(student => student.student_uuid === selectedStudentId),
@@ -92,8 +102,9 @@ export function ParentOverviewContent() {
   }, [students, selectedStudentId, isLoadingStudents]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && selectedStudentId) {
-      localStorage.setItem(STUDENT_SELECTION_KEY, selectedStudentId);
+    if (typeof window !== 'undefined') {
+      if (selectedStudentId) localStorage.setItem(STUDENT_SELECTION_KEY, selectedStudentId);
+      else localStorage.removeItem(STUDENT_SELECTION_KEY);
     }
   }, [selectedStudentId]);
 
@@ -137,6 +148,29 @@ export function ParentOverviewContent() {
     await Promise.all(tasks);
   };
 
+  const handleAccessRevoked = async (studentUuid: string) => {
+    await Promise.allSettled([
+      queryClient.cancelQueries({ queryKey: guardianStudentsQueryKey }),
+      queryClient.cancelQueries({ queryKey: guardianDashboardQueryKey(studentUuid), exact: true }),
+    ]);
+    queryClient.setQueryData<GuardianLinkedStudent[]>(guardianStudentsQueryKey, current =>
+      current?.filter(student => student.student_uuid !== studentUuid)
+    );
+    queryClient.removeQueries({ queryKey: guardianDashboardQueryKey(studentUuid), exact: true });
+    setSelectedStudentId(current =>
+      current === studentUuid
+        ? (students.find(
+            student => student.student_uuid !== studentUuid && student.status === 'ACTIVE'
+          )?.student_uuid ?? null)
+        : current
+    );
+    setLiveMessage('Guardian access revoked.');
+    await Promise.allSettled([
+      queryClient.invalidateQueries({ queryKey: guardianStudentsQueryKey }),
+      queryClient.invalidateQueries({ queryKey: getMyStudentsQueryKey() }),
+    ]);
+  };
+
   const renderDashboard = (snapshot?: GuardianDashboardSnapshot) => {
     if (!snapshot) {
       return null;
@@ -159,6 +193,13 @@ export function ParentOverviewContent() {
     return (
       <>
         <GuardianLearnerSummary
+          key={activeStudent?.link_uuid ?? activeStudent?.student_uuid}
+          linkUuid={activeStudent?.link_uuid}
+          onRevoked={() =>
+            activeStudent?.student_uuid
+              ? handleAccessRevoked(activeStudent.student_uuid)
+              : undefined
+          }
           studentName={snapshot.student_name}
           relationship={snapshot.relationship ?? activeStudent?.relationship}
           gradeLevel={activeStudent?.grade_level}
@@ -240,7 +281,7 @@ export function ParentOverviewContent() {
             </div>
             <div className='flex flex-wrap gap-2'>
               <Button asChild variant='outline' size='sm'>
-                <Link href='/onboarding/parent'>Add a learner</Link>
+                <Link href='/dashboard/parent/add-child'>Add a child</Link>
               </Button>
               <Button
                 variant='secondary'

@@ -23,8 +23,8 @@ export function DashboardUnavailable() {
           We couldn&apos;t load your workspace
         </h1>
         <p className='text-muted-foreground mt-2 text-sm'>
-          Your session is still valid — we just couldn&apos;t reach your profile. Try again in a
-          moment.
+          You&apos;re still signed in. We couldn&apos;t confirm your workspace access. Try again in
+          a moment.
         </p>
         <Button className='mt-6' onClick={() => router.refresh()}>
           Try again

@@ -10,6 +10,7 @@ const guardianLinkStatusSchema = z.enum(['ACTIVE', 'PENDING', 'REVOKED']).catch(
 
 const guardianStudentSchema = z
   .object({
+    link_uuid: z.string().optional(),
     student_uuid: z.string(),
     student_name: z.string(),
     relationship: z.string().optional(),
@@ -150,11 +151,13 @@ async function fetchGuardianDashboard(studentUuid: string): Promise<GuardianDash
 
   // The API wraps every answer in { success, data }; accept the bare snapshot too.
   const body = response.data as { data?: unknown } | undefined;
-  return guardianDashboardSchema.parse(body && typeof body === 'object' && 'data' in body ? body.data : body);
+  return guardianDashboardSchema.parse(
+    body && typeof body === 'object' && 'data' in body ? body.data : body
+  );
 }
 
-const guardianStudentsQueryKey = ['guardian', 'students'] as const;
-const guardianDashboardQueryKey = (studentUuid?: string) =>
+export const guardianStudentsQueryKey = ['guardian', 'students'] as const;
+export const guardianDashboardQueryKey = (studentUuid?: string) =>
   ['guardian', 'dashboard', studentUuid ?? 'unselected'] as const;
 
 export function useGuardianStudents(
